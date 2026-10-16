@@ -115,7 +115,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
 
 const AC_SPEED = 50;
 const AC_HOLD_MS = 50;
-const CHECK_MS = 15_000;
+const CHECK_MS = 8000; // 9 checks: worst case 72 s, under the driver's 90 s
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Polls, so it also covers state no engine event reports (the speaker iframe's text).
@@ -133,33 +133,70 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
   for (const ev of ["step", "transition", "end"] as const) stepper.on(ev, (data) => log.push({ ev, data }));
   const since = (n: number, ev: string) => log.slice(n).filter((e) => e.ev === ev).map((e) => e.data);
 
-  const key = (k: string) => document.body.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
   const at = (i: number) => (i >= 0 ? `${i} ${formatHash(steps[i])}` : String(i));
-  const reach = async (i: number, what: string, ms = 2000) =>
-    (await until(() => stepper.index === i, ms)) ? "" : `${what}: at ${at(stepper.index)}, want ${at(i)}`;
   const lastOf = (section: string) => steps.map((a) => a.section).lastIndexOf(section);
   const sceneOf = (i: number) =>
     deck.sections.find((s: any) => s.id === steps[i].section)?.scenes.find((s: any) => s.id === steps[i].scene);
   const stepText = (i: number): string => sceneOf(i)?.steps[steps[i].step - 1]?.text ?? "";
   const pose = (el: HTMLElement) => ["x", "y", "scaleX", "scaleY"].map((p) => gsap.getProperty(el, p)).join(",");
 
-  const check = async (name: string, fn: () => Promise<(string | false | undefined)[]>) => {
+  // A timed-out check runs on in the background. Its helpers throw once it is dead, so it stops
+  // at its next wait or move and cannot act during the checks after it. Each check shadows the
+  // outer stepper, until, sleep with these.
+  const hold = motion.autoHoldMs;
+  const helpers = (dead: () => boolean) => {
+    const live = () => {
+      if (dead()) throw new Error("check aborted after its timeout");
+    };
+    const wait = async <T>(f: () => Promise<T>): Promise<T> => {
+      live();
+      const r = await f();
+      live();
+      return r;
+    };
+    const waitUntil = (cond: () => boolean, ms?: number) => wait(() => until(() => dead() || cond(), ms));
+    return {
+      stepper: {
+        get index() {
+          return stepper.index;
+        },
+        goto: (i: number, how: "play" | "cut") => wait(() => stepper.goto(i, how)),
+        next: () => wait(() => stepper.next()),
+        prev: () => wait(() => stepper.prev()),
+      },
+      until: waitUntil,
+      sleep: (ms: number) => wait(() => sleep(ms)),
+      key: (k: string) => {
+        live();
+        document.body.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
+      },
+      reach: async (i: number, what: string, ms = 2000) =>
+        (await waitUntil(() => stepper.index === i, ms)) ? "" : `${what}: at ${at(stepper.index)}, want ${at(i)}`,
+    };
+  };
+
+  const check = async (name: string, fn: (h: ReturnType<typeof helpers>) => Promise<(string | false | undefined)[]>) => {
     let timer = 0;
+    let dead = false;
+    const run = fn(helpers(() => dead));
+    run.catch(() => {}); // a dead check's abort throw is expected, not an unhandled rejection
     try {
       const timeout = new Promise<never>((_, no) => (timer = window.setTimeout(() => no(new Error(`timed out after ${CHECK_MS} ms`)), CHECK_MS)));
-      const bad = (await Promise.race([fn(), timeout])).filter(Boolean);
+      const bad = (await Promise.race([run, timeout])).filter(Boolean);
       checks.push({ name, ok: !bad.length, detail: bad.join("; ") || undefined });
     } catch (e) {
       checks.push({ name, ok: false, detail: e instanceof Error ? e.message : String(e) });
     } finally {
+      dead = true;
       clearTimeout(timer);
       overview.close();
       selector.close();
       autoplay.stop();
+      motion.autoHoldMs = hold;
     }
   };
 
-  await check("AC-1", async () => {
+  await check("AC-1", async ({ stepper, reach }) => {
     await stepper.goto(0, "cut");
     const want = steps.findIndex((a) => a.section === "value-stream" && a.scene === "clarification" && a.step === 2);
     if (want < 0) return ["the demo deck has no #/value-stream/clarification/2"];
@@ -167,7 +204,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     return [await reach(want, "deep link")];
   });
 
-  await check("AC-2", async () => {
+  await check("AC-2", async ({ stepper, key, reach }) => {
     await stepper.goto(0, "cut");
     key("ArrowRight");
     const right = await reach(1, "ArrowRight");
@@ -177,7 +214,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     return [right, left, await reach(1, "click on the stage")];
   });
 
-  await check("AC-3", async () => {
+  await check("AC-3", async ({ stepper, until, reach }) => {
     await stepper.goto(0, "cut");
     const frame = document.createElement("iframe");
     Object.assign(frame.style, { position: "fixed", right: "0", bottom: "0", width: "640px", height: "400px", border: "0" });
@@ -207,7 +244,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     }
   });
 
-  await check("AC-4", async () => {
+  await check("AC-4", async ({ stepper, key, until }) => {
     await stepper.goto(0, "cut");
     key("o");
     if (!overview.isOpen) return ["O did not open the overview"];
@@ -226,7 +263,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     return [...bad, !landed && `marker click: at ${at(stepper.index)}, want scene analysis`, overview.isOpen && "overview still open"];
   });
 
-  await check("AC-5", async () => {
+  await check("AC-5", async ({ stepper }) => {
     const last = lastOf("opening");
     await stepper.goto(last, "cut");
     const n = log.length;
@@ -243,7 +280,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     ];
   });
 
-  await check("AC-6", async () => {
+  await check("AC-6", async ({ stepper }) => {
     const last = lastOf("value-stream");
     const to = steps[last + 1];
     if (to?.section !== "global-team" || to.canvas !== steps[last].canvas)
@@ -261,7 +298,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     ];
   });
 
-  await check("AC-7", async () => {
+  await check("AC-7", async ({ stepper, key, reach }) => {
     await stepper.goto(steps.length - 1, "cut"); // so each jump moves
     key("s");
     if (!selector.isOpen) return ["S did not open the selector"];
@@ -278,7 +315,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     return bad;
   });
 
-  await check("AC-8", async () => {
+  await check("AC-8", async ({ stepper, until, sleep, key, reach }) => {
     const hold = motion.autoHoldMs;
     motion.autoHoldMs = AC_HOLD_MS;
     try {
@@ -304,7 +341,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     }
   });
 
-  await check("History", async () => {
+  await check("History", async ({ stepper, reach }) => {
     await stepper.goto(0, "cut");
     await stepper.next();
     await stepper.next();
