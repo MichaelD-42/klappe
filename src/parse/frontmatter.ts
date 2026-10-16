@@ -21,6 +21,8 @@ function splitTop(s: string): string[] {
 function parseValue(raw: string): unknown {
   const v = raw.trim();
   if (v.startsWith("[") && v.endsWith("]")) return splitTop(v.slice(1, -1)).map(parseValue);
+  const q = /^(["'])(.*)\1$/.exec(v);
+  if (q) return q[2];
   if (v === "true") return true;
   if (v === "false") return false;
   if (v !== "" && !isNaN(Number(v))) return Number(v);
@@ -28,10 +30,11 @@ function parseValue(raw: string): unknown {
 }
 
 export function parseFrontmatter(md: string): { data: Record<string, unknown>; body: string } {
-  const m = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/.exec(md);
+  md = md.replace(/^\uFEFF/, "");
+  const m = /^---\r?\n(?:([\s\S]*?)\r?\n)?---\r?\n?([\s\S]*)$/.exec(md);
   if (!m) return { data: {}, body: md };
   const data: Record<string, unknown> = {};
-  for (const line of m[1].split(/\r?\n/)) {
+  for (const line of (m[1] ?? "").split(/\r?\n/)) {
     const i = line.indexOf(":");
     if (i > 0) data[line.slice(0, i).trim()] = parseValue(line.slice(i + 1));
   }

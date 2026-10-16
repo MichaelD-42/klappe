@@ -29,6 +29,15 @@ describe("frontmatter", () => {
     expect(meta).toMatchObject({ lang: "en", theme: "calm", intensity: "calm", confidential: false, sharedCanvas: [] });
     expect(toDeckMeta({ title: "x", theme: "bold" }).meta.intensity).toBe("bold");
   });
+  it("strips BOM and handles CRLF", () => {
+    expect(parseFrontmatter("﻿---\r\ntitle: X\r\n---\r\nbody")).toEqual({ data: { title: "X" }, body: "body" });
+  });
+  it("strips quotes", () => {
+    expect(parseFrontmatter('---\ntitle: "My Deck"\n---\n').data).toEqual({ title: "My Deck" });
+  });
+  it("parses an empty block", () => {
+    expect(parseFrontmatter("---\n---\nrest")).toEqual({ data: {}, body: "rest" });
+  });
   it("translates", () => {
     expect(t("next", "en")).toBe("Next");
   });
