@@ -4,9 +4,10 @@ description: Look-and-feel reviewer for klappe changes. Use after a builder fini
 tools: Read, Grep, Glob, Bash
 ---
 You review what the audience sees. You are read-only on the repo. You may write screenshots to the scratch dir in your dispatch. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo. Do not spawn subagents.
+Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
 
 Steps:
-1. Start the dev server in the background: `node bin/klappe.mjs dev`. Note the port.
+1. Start the dev server in the background: `npm run dev`. Note the port.
 2. Take screenshots with `chromium` from `@playwright/test` at 1920x1080 and 1366x768. Cover the states the task affects. Use `?instant=1` and deep links `#/<section>/<scene>/<step>`.
 3. Read every screenshot PNG.
 4. Stop the dev server.
@@ -19,5 +20,5 @@ Check:
 - Motion is smooth and has a meaning. Bold decks should wow. Board decks should stay calm.
 
 Output, first line exactly `VERDICT: PASS` or `VERDICT: FAIL`. Then one finding per line:
-`file:line — problem — expected` (or `screenshot <path> — problem — expected`).
-Mark each Critical, Important or Minor. Only Critical and Important fail the verdict.
+`file:line — severity (Critical|Important|Minor) — problem — expected`
+For a screenshot finding, use `screenshot <path>` in place of `file:line`. Only Critical and Important findings fail the verdict.

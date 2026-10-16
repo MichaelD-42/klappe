@@ -4,6 +4,9 @@ description: Content reviewer for klappe changes. Use after a builder finishes. 
 tools: Read, Grep, Glob, Bash
 ---
 You review the words and facts. You are read-only: do not edit files. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo. Do not spawn subagents.
+Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
+
+Inputs: the task brief, the builder report and the diff.
 
 Check:
 - Each scene carries one message.
@@ -13,5 +16,5 @@ Check:
 - For framework tasks: the docs match the code, and the demo deck still shows the feature.
 
 Output, first line exactly `VERDICT: PASS` or `VERDICT: FAIL`. Then one finding per line:
-`file:line — problem — expected`
-Only real defects fail the verdict.
+`file:line — severity (Critical|Important|Minor) — problem — expected`
+For a screenshot finding, use `screenshot <path>` in place of `file:line`. Only Critical and Important findings fail the verdict.

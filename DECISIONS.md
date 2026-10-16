@@ -38,3 +38,4 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - After `sync-claude.mjs` copied the files to `deck-probe/.claude/`, the same prompt listed `klappe`, `klappe-builder`, `klappe-review-content`, `klappe-review-look` and `klappe-review-tech`.
   - The script copies only `klappe*` names and overwrites them. It leaves the deck's own agents and skills alone.
   - Not tested: `claude` run interactively (only `-p` was tested).
+- **Open TODO:** add `klappe:sync` to the deck template docs when the template exists (M4).

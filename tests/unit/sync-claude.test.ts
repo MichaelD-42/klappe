@@ -12,6 +12,7 @@ test('copies klappe* entries, overwrites them, leaves others', () => {
   mkdirSync(join(src, '.claude/skills/klappe'), { recursive: true });
   writeFileSync(join(src, '.claude/agents/klappe-a.md'), 'new');
   writeFileSync(join(src, '.claude/agents/other.md'), 'x');
+  writeFileSync(join(src, '.claude/agents/klappeish.md'), 'x');
   writeFileSync(join(src, '.claude/skills/klappe/SKILL.md'), 'skill');
   mkdirSync(join(dest, '.claude/agents'), { recursive: true });
   writeFileSync(join(dest, '.claude/agents/klappe-a.md'), 'old');
@@ -22,5 +23,7 @@ test('copies klappe* entries, overwrites them, leaves others', () => {
   expect(readFileSync(join(dest, '.claude/agents/klappe-a.md'), 'utf8')).toBe('new');
   expect(readFileSync(join(dest, '.claude/agents/mine.md'), 'utf8')).toBe('keep');
   expect(existsSync(join(dest, '.claude/agents/other.md'))).toBe(false);
+  expect(existsSync(join(dest, '.claude/agents/klappeish.md'))).toBe(false);
+  expect(syncClaude(src, src)).toBeNull();
   expect(readFileSync(join(dest, '.claude/skills/klappe/SKILL.md'), 'utf8')).toBe('skill');
 });

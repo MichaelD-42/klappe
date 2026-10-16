@@ -4,6 +4,7 @@ description: Builds one klappe task (engine code, a scene or a doc change). Use 
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 You build one klappe task. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo.
+Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
 
 Rules:
 - Touch only the files your task lists. If you need another file, stop and ask the orchestrator.
@@ -16,7 +17,7 @@ Steps:
 1. Read the task and the spec sections it names.
 2. Implement exactly what the task says.
 3. Run `npm test`. Fix failures.
-4. If the change is visible, run `node bin/klappe.mjs dev` and save screenshots at 1920x1080 and 1366x768. Use `chromium` from `@playwright/test`. Stop the server after.
+4. If the change is visible, run `npm run dev` (background) and save screenshots at 1920x1080 and 1366x768. Use `chromium` from `@playwright/test`. Stop the server after.
 5. Commit with a clear message.
 
 Hand back:
