@@ -70,6 +70,7 @@ if (!fs.existsSync(deckDir)) {
 process.env.KLAPPE_DECK_DIR = deckDir
 
 if (cmd === 'test') {
+  process.chdir(klappeDir) // setup.ts resolves vite.config.ts from cwd
   const { startVitest } = await import('vitest/node')
   const vitest = await startVitest('test', [], { root: klappeDir, run: true, project: ['e2e'] })
   await vitest?.close()
