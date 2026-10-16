@@ -25,28 +25,58 @@ if (cmd === 'init') {
     console.error('usage: klappe init --deck <id>  (letters, digits, dashes)')
     process.exit(1)
   }
+  if (process.cwd() === klappeDir) {
+    console.error('Run init in the deck repo root, not in the klappe folder.')
+    process.exit(1)
+  }
   const dir = path.join(decksDir, id)
   if (fs.existsSync(dir)) {
     console.error(`Deck already exists: ${dir}. Nothing changed.`)
     process.exit(1)
   }
-  fs.mkdirSync(path.join(dir, 'sections'), { recursive: true })
-  fs.writeFileSync(
-    path.join(dir, 'deck.md'),
-    `---\ntitle: ${id}\nlang: en\ntheme: calm\nintensity: calm\nconfidential: false\n---\n`,
-  )
+  // Parse package.json first so a bad file leaves nothing half-made.
   const pkgFile = path.join(process.cwd(), 'package.json')
-  const pkg = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')) : { name: 'deck-repo', private: true }
+  let pkg = { name: 'deck-repo', private: true }
+  if (fs.existsSync(pkgFile)) {
+    try {
+      pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'))
+    } catch (e) {
+      console.error(`Cannot parse ${pkgFile}: ${e.message}. Nothing changed.`)
+      process.exit(1)
+    }
+  }
+  delete pkg.devDependencies?.klappe
   pkg.dependencies = { ...pkg.dependencies, klappe: 'file:./klappe' }
-  // Existing scripts with the same name are replaced; other scripts stay.
-  pkg.scripts = {
-    ...pkg.scripts,
+  const wanted = {
     dev: 'node klappe/bin/klappe.mjs dev',
     build: 'node klappe/bin/klappe.mjs build',
     test: 'node klappe/bin/klappe.mjs test',
     'klappe:sync': 'node klappe/bin/sync-claude.mjs',
   }
-  fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
+  pkg.scripts ??= {}
+  for (const [k, v] of Object.entries(wanted)) {
+    if (pkg.scripts[k] === undefined || pkg.scripts[k] === v) pkg.scripts[k] = v
+    else console.log(`Kept your script "${k}": ${pkg.scripts[k]}
+  klappe expects: ${v}`)
+  }
+  fs.mkdirSync(path.join(dir, 'sections'), { recursive: true })
+  fs.writeFileSync(
+    path.join(dir, 'deck.md'),
+    `---
+title: ${id}
+lang: en
+theme: calm
+intensity: calm
+confidential: false
+---
+`,
+  )
+  fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '
+')
+  const ignore = path.join(process.cwd(), '.gitignore')
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'node_modules/
+dist/
+')
   const synced = syncClaude(klappeDir, process.cwd())
   console.log(`Created decks/${id}. Synced: ${synced?.join(', ') || 'nothing'}`)
   process.exit(0)
@@ -70,7 +100,6 @@ if (!fs.existsSync(deckDir)) {
 process.env.KLAPPE_DECK_DIR = deckDir
 
 if (cmd === 'test') {
-  process.chdir(klappeDir) // setup.ts resolves vite.config.ts from cwd
   const { startVitest } = await import('vitest/node')
   const vitest = await startVitest('test', [], { root: klappeDir, run: true, project: ['e2e'] })
   await vitest?.close()

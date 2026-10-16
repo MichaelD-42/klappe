@@ -1,4 +1,5 @@
 import { createServer } from 'vite'
+import { fileURLToPath } from 'node:url'
 import type { TestProject } from 'vitest/node'
 
 declare module 'vitest' {
@@ -8,7 +9,7 @@ declare module 'vitest' {
 }
 
 export default async function setup(project: TestProject) {
-  const server = await createServer({ configFile: 'vite.config.ts', server: { port: 0, strictPort: false } })
+  const server = await createServer({ configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)), server: { port: 0, strictPort: false } })
   await server.listen()
   project.provide('BASE_URL', server.resolvedUrls!.local[0])
   return () => server.close()
