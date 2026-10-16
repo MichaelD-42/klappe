@@ -1,5 +1,6 @@
 import type { gsap } from "gsap";
 import type { Rect } from "./types";
+import { motion } from "./theme";
 
 export interface Pose {
   x: number;
@@ -9,8 +10,6 @@ export interface Pose {
 
 const W = 1920;
 const H = 1080;
-// Placeholder until the theme motion token (Task 10) exists.
-const CAMERA_DURATION = 1.6;
 
 export function frame(t: Rect): Pose {
   const scale = Math.min(W / t.w, H / t.h);
@@ -42,7 +41,7 @@ export function addCameraMove(
   opts: { duration?: number; at?: number | string; instant?: boolean } = {},
 ): void {
   const poses = flight(from, to).slice(1); // the camera is already at `from`
-  const duration = opts.instant ? 0 : (opts.duration ?? CAMERA_DURATION);
+  const duration = opts.instant ? 0 : (opts.duration ?? motion.camera);
   tl.to(
     world,
     { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease: "power2.inOut" })) },

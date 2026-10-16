@@ -1,0 +1,101 @@
+:root {
+  --k-bg: #0f1b2d;
+  --k-fg: #e8edf5;
+  --k-accent: #4da3ff;
+  --k-font: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.k-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font-family: var(--k-font);
+  transform-origin: 50% 50%;
+}
+
+.k-worlds,
+.k-ui,
+.k-world,
+.k-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.k-worlds,
+.k-ui {
+  width: 100%;
+  height: 100%;
+}
+
+.k-ui {
+  pointer-events: none;
+}
+
+.k-world {
+  transform-origin: 0 0;
+}
+
+.k-scene {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 140px 160px;
+}
+
+.k-scene h2 {
+  margin: 0 0 64px;
+  font-size: 88px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.k-scene p {
+  margin: 0 0 32px;
+  font-size: 44px;
+  line-height: 1.35;
+  max-width: 1500px;
+}
+
+.k-scene p.k-shout {
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--k-accent);
+}
+
+.k-problems {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  max-width: 900px;
+  max-height: 600px;
+  overflow: auto;
+  padding: 28px 36px;
+  background: #3a0d12;
+  border: 2px solid #ff6b6b;
+  border-radius: 8px;
+  font-size: 24px;
+  pointer-events: auto;
+}
+
+.k-problems h2 {
+  margin: 0 0 16px;
+  font-size: 30px;
+}
+
+.k-problems ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
