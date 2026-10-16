@@ -1,11 +1,14 @@
 import "./styles.css";
+import { Autoplay } from "./autoplay";
 import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
 import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
 import { renderWorld } from "./render/world";
 import { runSelftestIfAsked } from "./selftest";
+import { Router } from "./router";
 import { Stepper } from "./stepper";
+import { motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
@@ -34,7 +37,14 @@ function startDeck() {
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
-  const go = (i: number) => stepper.goto(i, "cut");
+  const autoplay = new Autoplay(stepper, () => motion.autoHoldMs);
+  // Every manual jump (selector, overview, speaker, history) stops auto-play.
+  const go = (i: number) => {
+    autoplay.stop();
+    return stepper.goto(i, "cut");
+  };
+  const router = new Router(steps, go);
+  stepper.on("step", (a: StepAddr) => router.push(a.index));
   const selector = new Selector(ui, deck, steps, () => stepper.index, go);
   const overview = new Overview(ui, deck, canvases, steps, () => stepper.index, go);
   const speaker = {
@@ -46,20 +56,22 @@ function startDeck() {
       window.open(url, `klappe-speaker:${deck.meta.title}`, "popup,width=1280,height=800");
     },
   };
-  bindInput(stepper, { overview, selector, speaker }, stage, steps.length - 1);
+  bindInput(stepper, { overview, selector, speaker, autoplay }, stage, steps.length - 1);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   stepper.on("step", (a: StepAddr) => channel.send({ t: "state", index: a.index }));
   channel.on((m) => {
     if (m.t === "hello" && stepper.index >= 0) channel.send({ t: "state", index: stepper.index });
     if (m.t !== "cmd") return;
+    autoplay.stop();
     if (m.cmd === "next") stepper.next();
     else if (m.cmd === "prev") stepper.prev();
     else if (m.index! < steps.length) go(m.index!);
   });
 
-  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel };
+  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router };
   showProblems(ui, problems, deck.meta.lang);
-  stepper.goto(0, "cut");
+  const first = stepper.goto(router.start(), "cut");
+  if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
   runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors });
 }
