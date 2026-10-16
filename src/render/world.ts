@@ -56,7 +56,22 @@ function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTML
   }
 }
 
-export function renderWorld(deck: Deck, canvases: CanvasLayout[], root: HTMLElement): CanvasRuntime[] {
+// A step always takes time on both sides of its content, so a zero-duration tween (or none)
+// never lands on a label and leaks into the previous step on seek or play.
+const PAD = 0.001;
+export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): void {
+  tl.to({}, { duration: PAD });
+  add(tl);
+  tl.to({}, { duration: PAD });
+  tl.addLabel(label);
+}
+
+export function renderWorld(
+  deck: Deck,
+  canvases: CanvasLayout[],
+  root: HTMLElement,
+  opts: { reducedMotion?: boolean } = {},
+): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
   const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement }>();
   const runtimes = canvases.map((layout) => {
@@ -78,9 +93,10 @@ export function renderWorld(deck: Deck, canvases: CanvasLayout[], root: HTMLElem
     const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
     let cam = first;
     const camera: Ctx["camera"] = {
-      to(t, target, opts) {
+      to(t, target, o) {
         if (["x", "y", "w", "h"].every((k) => cam[k as keyof Rect] === target[k as keyof Rect])) return; // already there
-        addCameraMove(t, world, cam, target, opts);
+        // Reduced motion: camera flights become cuts (spec §7); the step padding keeps them off the labels.
+        addCameraMove(t, world, cam, target, { ...o, instant: opts.reducedMotion });
         cam = target;
       },
     };
@@ -121,16 +137,17 @@ export function renderWorld(deck: Deck, canvases: CanvasLayout[], root: HTMLElem
     if (!rt) continue;
     for (const sc of s.scenes) {
       const { ctx, refs, title } = perScene.get(sc)!;
-      sc.steps.forEach((_, i) => {
-        if (i === 0) {
-          ctx.camera.to(rt.tl, ctx.rect);
-          if (title) rt.tl.to(title, { autoAlpha: 1, duration: motion.step });
-        }
-        const fn = sc.module?.steps?.[i];
-        if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(rt.tl, refs, ctx));
-        else defaultStep(rt.tl, sc, i + 1, ctx.html);
-        rt.tl.addLabel(`e:${index++}`);
-      });
+      sc.steps.forEach((_, i) =>
+        appendStep(rt.tl, `e:${index++}`, (tl) => {
+          if (i === 0) {
+            ctx.camera.to(tl, ctx.rect);
+            if (title) tl.to(title, { autoAlpha: 1, duration: motion.step });
+          }
+          const fn = sc.module?.steps?.[i];
+          if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
+          else defaultStep(tl, sc, i + 1, ctx.html);
+        }),
+      );
     }
   }
   return runtimes;

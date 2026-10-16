@@ -21,6 +21,7 @@ export class Stepper {
   private i = -1;
   private queue: Promise<void> = Promise.resolve();
   private running: gsap.core.Animation[] = [];
+  private pending = 0;
   private fns = new Map<Ev, ((data: any) => void)[]>();
 
   constructor(
@@ -51,7 +52,11 @@ export class Stepper {
   // The target is read when the move runs, so fast presses each advance exactly once.
   private enqueue(target: () => number, how: How): Promise<void> {
     for (const a of this.running) a.progress(1);
-    const run = this.queue.then(() => this.move(target(), how));
+    this.pending++;
+    const run = this.queue.then(() => {
+      this.pending--;
+      return this.move(target(), how);
+    });
     this.queue = run.catch(() => {});
     return run;
   }
@@ -100,6 +105,8 @@ export class Stepper {
     if (play) anims.push(c.tl.tweenFromTo(prev, label));
     else c.tl.seek(label);
 
+    // More moves wait behind this one: skip to its end so only the last one plays.
+    if (this.pending) for (const a of anims) a.progress(1);
     this.running = anims;
     await Promise.all(anims);
     this.running = [];
