@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opening Spike</title>
+<style>
+  :root {
+    --stage-bg: #04060c;
+    --slide-a: #18264a;
+    --slide-b: #0a1226;
+    --accent: #4c9bff;
+    /* KNOB phosphor colour: green #7dffa0 / amber #ffb547 */
+    --phosphor: #7dffa0;
+    --ink: #e6eeff;            /* line-drawing stroke */
+  }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: #fff; }
+
+  #stage {
+    position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px;
+    transform-origin: 0 0; background: var(--stage-bg); overflow: hidden;
+  }
+  #shards { perspective: 1400px; }
+  .layer { position: absolute; inset: 0; }
+
+  /* ---------- title slide ---------- */
+  .slide {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(900px 520px at 50% 46%, rgba(76,155,255,.18), transparent 70%),
+      linear-gradient(140deg, var(--slide-a), var(--slide-b));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .slide .logo { width: 170px; height: 170px; margin-bottom: 48px; }
+  .slide h1 { margin: 0; font-size: 112px; font-weight: 700; letter-spacing: -1px; }
+  .slide .rule { width: 160px; height: 6px; background: var(--accent); margin: 44px 0 36px; }
+  .slide .sub { font-size: 46px; color: #a9bddc; font-weight: 400; }
+  .slide .foot { position: absolute; left: 120px; right: 120px; bottom: 70px;
+    display: flex; justify-content: space-between; font-size: 26px; color: #6f84a8; }
+
+  #cracks { pointer-events: none; filter: drop-shadow(0 0 3px rgba(200,230,255,.9)); }
+  #cracks polyline { fill: none; stroke: #f4f9ff; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1; }
+  #flash { background: radial-gradient(circle at var(--ix) var(--iy), #fff 0, rgba(255,255,255,.85) 6%, rgba(160,200,255,.25) 22%, transparent 45%); opacity: 0; }
+
+  .shard { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; visibility: hidden; }
+  .shard .slide { will-change: transform; }
+  .shard > svg { position: absolute; inset: 0; overflow: visible; }
+  .shard polygon { fill: none; stroke: rgba(220,236,255,.55); stroke-width: 1.5; }
+
+  /* ---------- CRT ---------- */
+  #crt { visibility: hidden; }
+  #screen {
+    position: absolute; inset: 40px; border-radius: 60px / 50px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--phosphor) 11%, #000) 0%, color-mix(in srgb, var(--phosphor) 5%, #000) 60%, #010201 100%);
+    animation: flicker 3.2s infinite steps(1);
+  }
+  #term {
+    position: absolute; left: 170px; top: 140px; right: 170px;
+    font: 500 46px/1.5 "Cascadia Mono", Consolas, "Courier New", monospace;
+    color: var(--phosphor); white-space: pre;
+    text-shadow: 0 0 4px var(--phosphor), 0 0 18px color-mix(in srgb, var(--phosphor) 55%, transparent);
+  }
+  #term .cur { display: inline-block; width: .6em; height: 1em; vertical-align: -0.12em;
+    background: var(--phosphor); box-shadow: 0 0 14px var(--phosphor); animation: blink 1s infinite steps(1); }
+  .scan { position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.32) 0 2px, transparent 2px 4px); }
+  .vignette { position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 30% 18%, rgba(255,255,255,.07), transparent 40%),
+      radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.75) 100%);
+    box-shadow: inset 0 0 120px 30px rgba(0,0,0,.85); border-radius: inherit; }
+  #beam { position: absolute; inset: 40px; border-radius: 60px / 50px; background: #fff;
+    box-shadow: 0 0 60px 20px rgba(220,255,230,.7); }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes flicker { 0% { opacity: 1; } 31% { opacity: .94; } 33% { opacity: 1; } 67% { opacity: .97; } 69% { opacity: 1; } }
+
+  /* ---------- line drawing ---------- */
+  #draw { visibility: hidden; }
+  #draw svg * { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1; stroke-dashoffset: 1; }
+
+  #hint { position: fixed; right: 14px; bottom: 10px; font-size: 12px; color: rgba(255,255,255,.32);
+    user-select: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="slideLayer" class="layer">
+    <div class="slide" id="slide">
+      <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M60 8 L106 34 V86 L60 112 L14 86 V34 Z" fill="none" stroke="#4c9bff" stroke-width="6" stroke-linejoin="round"/>
+        <path d="M34 74 L60 44 L86 74" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="60" cy="88" r="6" fill="#4c9bff"/>
+      </svg>
+      <h1>Engineering Excellence 2026</h1>
+      <div class="rule"></div>
+      <div class="sub">Annual engineering update</div>
+      <div class="foot"><span>October 2026</span><span>Engineering</span></div>
+    </div>
+  </div>
+  <svg id="cracks" class="layer" viewBox="0 0 1920 1080"></svg>
+  <div id="flash" class="layer"></div>
+  <div id="shards" class="layer"></div>
+
+  <div id="crt" class="layer">
+    <div id="screen"><div id="term"></div><div class="scan"></div><div class="vignette"></div></div>
+    <div id="beam"></div>
+  </div>
+
+  <div id="draw" class="layer">
+    <svg viewBox="0 0 1920 1080">
+      <!-- room -->
+      <path d="M300 960 H1620"/>
+      <rect x="1270" y="190" width="250" height="220" rx="6"/>
+      <path d="M1395 190 V410"/>
+      <path d="M1270 300 H1520"/>
+      <!-- gears on the wall -->
+      <circle cx="520" cy="300" r="60"/>
+      <circle cx="520" cy="300" r="20"/>
+      <path d="M580 300 L600 300 M562.4 342.4 L576.6 356.6 M520 360 L520 380 M477.6 342.4 L463.4 356.6 M460 300 L440 300 M477.6 257.6 L463.4 243.4 M520 240 L520 220 M562.4 257.6 L576.6 243.4"/>
+      <circle cx="615" cy="395" r="40"/>
+      <circle cx="615" cy="395" r="12"/>
+      <path d="M655 395 L670 395 M635 429.6 L642.5 442.6 M595 429.6 L587.5 442.6 M575 395 L560 395 M595 360.4 L587.5 347.4 M635 360.4 L642.5 347.4"/>
+      <!-- desk -->
+      <path d="M560 760 H1360"/>
+      <path d="M560 760 V785 H1360 V760"/>
+      <path d="M590 785 V960"/>
+      <path d="M1330 785 V960"/>
+      <path d="M1190 785 V850 H1330"/>
+      <path d="M1245 815 H1275"/>
+      <!-- laptop -->
+      <rect x="860" y="610" width="200" height="130" rx="10"/>
+      <circle cx="960" cy="675" r="14"/>
+      <path d="M830 760 L848 742 H1072 L1090 760"/>
+      <!-- engineer -->
+      <circle cx="960" cy="470" r="62"/>
+      <path d="M900 452 Q904 398 960 396 Q1016 398 1020 448"/>
+      <path d="M938 466 V476"/>
+      <path d="M982 466 V476"/>
+      <path d="M944 500 Q960 512 976 500"/>
+      <path d="M898 458 Q884 470 900 486"/>
+      <path d="M1022 458 Q1036 470 1020 486"/>
+      <path d="M946 531 V550"/>
+      <path d="M974 531 V550"/>
+      <path d="M935 552 L960 576 L985 552"/>
+      <path d="M935 552 Q898 560 880 592"/>
+      <path d="M985 552 Q1022 560 1040 592"/>
+      <path d="M880 592 Q832 622 818 690 Q810 734 850 748"/>
+      <path d="M1040 592 Q1088 622 1102 690 Q1110 734 1070 748"/>
+      <!-- desk lamp -->
+      <path d="M620 760 H700"/>
+      <path d="M660 760 L632 650 L700 588"/>
+      <path d="M686 572 L756 610 L726 652 Z"/>
+      <!-- mug -->
+      <path d="M1180 760 V700 H1240 V760"/>
+      <path d="M1240 712 Q1266 712 1266 730 Q1266 748 1240 748"/>
+      <path d="M1196 684 q-10 -15 0 -30 q10 -15 0 -30"/>
+      <path d="M1224 684 q-10 -15 0 -30 q10 -15 0 -30"/>
+      <!-- plant -->
+      <path d="M1420 960 L1435 880 H1505 L1520 960"/>
+      <path d="M1470 880 Q1440 820 1460 760"/>
+      <path d="M1470 880 Q1500 810 1545 790"/>
+      <path d="M1470 880 Q1420 850 1398 800"/>
+      <path d="M1470 880 Q1484 828 1506 770"/>
+      <!-- light bulb (last, gets the glow) -->
+      <g id="bulb">
+        <path d="M932 282 Q892 252 900 206 Q914 160 960 158 Q1006 160 1020 206 Q1028 252 988 282 Z"/>
+        <path d="M936 296 H984"/>
+        <path d="M940 310 H980"/>
+        <path d="M948 324 H972"/>
+        <path d="M948 262 V240 Q960 222 972 240 V262"/>
+        <path d="M875 215 L840 215"/>
+        <path d="M886 172 L856 155"/>
+        <path d="M917 141 L900 111"/>
+        <path d="M960 130 L960 95"/>
+        <path d="M1003 141 L1020 111"/>
+        <path d="M1034 172 L1064 155"/>
+        <path d="M1045 215 L1080 215"/>
+      </g>
+    </svg>
+  </div>
+</div>
+<div id="hint">Space / &rarr; next &nbsp;&middot;&nbsp; &larr; back &nbsp;&middot;&nbsp; R restart &nbsp;&middot;&nbsp; A auto</div>
+
+<script src="gsap.min.js"></script>
+<script>
+const W = 1920, H = 1080;
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+
+// letterbox: scale the 1920x1080 stage to the window
+function fit() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  stage.style.transform = `scale(${s}) translate(-50%, -50%)`;
+}
+addEventListener('resize', fit); fit();
+
+// ---------- geometry ----------
+function rng(seed) {            // mulberry32: deterministic shards and cracks
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const rand = rng(1986);
+const R = (a, b) => a + rand() * (b - a);
+
+const IMPACT = { x: 1240, y: 430 };          // KNOB impact point
+// KNOB shard count: radial cracks x rings (shards = the cells that land on screen)
+const RAYS = 9;
+const RINGS = [0, 130, 340, 640, 1050, 2600];
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const polar = (ang, r) => ({ x: IMPACT.x + Math.cos(ang) * r, y: IMPACT.y + Math.sin(ang) * r });
+// jagged line a -> b: subdivide and nudge the inner points sideways
+function jag(a, b, amp) {
+  const L = dist(a, b) || 1, n = Math.max(1, Math.round(L / 45)), nx = -(b.y - a.y) / L, ny = (b.x - a.x) / L;
+  return Array.from({ length: n + 1 }, (_, i) => { const t = i / n, j = i && i < n ? R(-amp, amp) : 0;
+    return { x: a.x + (b.x - a.x) * t + nx * j, y: a.y + (b.y - a.y) * t + ny * j }; });
+}
+const off = rand() * Math.PI * 2;
+const angles = Array.from({ length: RAYS }, (_, i) => off + (i + R(-.25, .25)) * Math.PI * 2 / RAYS);
+// node[i][j]: where ray i crosses ring j; wobble so it is not a perfect spider web
+const node = angles.map(a => RINGS.map((r, j) => j ? polar(a + R(-.08, .08), r * R(.85, 1.15)) : { ...IMPACT }));
+const ray = node.map(ns => ns.slice(1).map((p, j) => jag(ns[j], p, 9)));                           // ring j -> j+1 along ray i
+const ring = node.map((ns, i) => ns.map((p, j) => j ? jag(p, node[(i + 1) % RAYS][j], 7) : [p]));  // ray i -> i+1 along ring j
+
+// clip a polygon to the slide rectangle (Sutherland-Hodgman, one edge at a time)
+function clipBy(poly, f) {                   // keeps the side where f(v) <= 0
+  const out = [];
+  poly.forEach((a, i) => {
+    const b = poly[(i + 1) % poly.length], sa = f(a), sb = f(b);
+    if (sa <= 0) out.push(a);
+    if ((sa < 0) !== (sb < 0) && sa !== sb) { const t = sa / (sa - sb); out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }); }
+  });
+  return out;
+}
+const clipRect = P => [v => -v.x, v => v.x - W, v => -v.y, v => v.y - H].reduce((p, f) => p.length ? clipBy(p, f) : p, P);
+const area = P => Math.abs(P.reduce((s, a, i) => { const b = P[(i + 1) % P.length]; return s + a.x * b.y - b.x * a.y; }, 0) / 2);
+const rev = a => [...a].reverse();
+const cells = [];
+for (let i = 0; i < RAYS; i++) for (let j = 0; j < RINGS.length - 1; j++) {
+  const k = (i + 1) % RAYS;
+  const P = clipRect([...ray[i][j], ...ring[i][j + 1].slice(1), ...rev(ray[k][j]).slice(1), ...(j ? rev(ring[i][j]).slice(1, -1) : [])]);
+  if (P.length > 2 && area(P) > 600) cells.push(P);
+}
+
+// crack lines are exactly the shard borders, so cracks and shards line up
+const svgNS = 'http://www.w3.org/2000/svg';
+const RING_KEEP = [0, 1, 1, .7, .4, 0];      // share of ring segments that crack before the shatter
+const cracks = [];
+const addCrack = (pts, r0) => {
+  const el = document.createElementNS(svgNS, 'polyline');
+  el.setAttribute('points', pts.map(v => v.x.toFixed(1) + ',' + v.y.toFixed(1)).join(' '));
+  el.setAttribute('pathLength', '1');
+  el.setAttribute('stroke-width', r0 < 300 ? 3.4 : r0 < 700 ? 2.4 : 1.6);
+  $('#cracks').appendChild(el);
+  cracks.push({ el, d: r0, len: pts.reduce((s, v, i) => i ? s + dist(pts[i - 1], v) : 0, 0) });
+};
+ray.forEach(segs => segs.forEach((pts, j) => addCrack(pts, RINGS[j])));
+ring.forEach(segs => segs.forEach((pts, j) => j && rand() < RING_KEEP[j] && addCrack(pts, RINGS[j] + 40)));
+
+// shards: clone the slide, clip each clone to one cell
+const shards = cells.map(P => {
+  const cx = P.reduce((s, v) => s + v.x, 0) / P.length, cy = P.reduce((s, v) => s + v.y, 0) / P.length;
+  const wrap = document.createElement('div');
+  wrap.className = 'shard';
+  const clone = $('#slide').cloneNode(true);
+  clone.removeAttribute('id');
+  clone.style.clipPath = `polygon(${P.map(v => `${v.x.toFixed(1)}px ${v.y.toFixed(1)}px`).join(',')})`;
+  wrap.appendChild(clone);
+  wrap.insertAdjacentHTML('beforeend', `<svg viewBox="0 0 ${W} ${H}"><polygon points="${P.map(v => v.x.toFixed(1) + ',' + v.y.toFixed(1)).join(' ')}"/></svg>`);
+  $('#shards').appendChild(wrap);
+  return { el: wrap, cx, cy, d: Math.hypot(cx - IMPACT.x, cy - IMPACT.y) };
+});
+$('#flash').style.setProperty('--ix', IMPACT.x + 'px');
+$('#flash').style.setProperty('--iy', IMPACT.y + 'px');
+
+// ---------- the timeline ----------
+gsap.defaults({ overwrite: false });
+const tl = gsap.timeline({ paused: true });
+window.tl = tl;
+
+// shake helper: a short decaying jitter on the target
+const shake = (amp, n = 8) => ({ keyframes: Array.from({ length: n }, (_, i) => {
+  const k = amp * (1 - i / n); return { x: R(-k, k), y: R(-k, k), duration: .035 }; }).concat([{ x: 0, y: 0, duration: .05 }]) });
+
+tl.addLabel('title', 0);
+tl.addLabel('cracks', 2);                          // ~2 s title hold (auto mode)
+
+// beat: cracks — two impacts, cracks race outward from the impact point
+const PULSE1 = 300;                                 // KNOB how far the first impact cracks
+tl.fromTo('#flash', { opacity: 1 }, { opacity: 0, duration: .45, ease: 'power2.out', immediateRender: false }, 'cracks+=0.02');
+tl.to('#slideLayer, #cracks', shake(22), 'cracks+=0.02');
+cracks.filter(c => c.d < PULSE1).forEach(c =>
+  tl.to(c.el, { strokeDashoffset: 0, duration: Math.max(.04, c.len / 2400), ease: 'power1.out' }, `cracks+=${c.d / 1800}`));
+tl.addLabel('crack2', 'cracks+=1.0');
+tl.fromTo('#flash', { opacity: .7 }, { opacity: 0, duration: .35, ease: 'power2.out', immediateRender: false }, 'crack2');
+tl.to('#slideLayer, #cracks', shake(12), 'crack2');
+cracks.filter(c => c.d >= PULSE1).forEach(c =>
+  tl.to(c.el, { strokeDashoffset: 0, duration: Math.max(.05, c.len / 2400), ease: 'power1.out' }, `crack2+=${(c.d - PULSE1) / 2200}`));
+
+// beat: shatter — swap the slide for shards, pop apart, fall with gravity
+tl.addLabel('shatter', tl.duration() + 0.5);   // '>' would mean the last-added crack, not the slowest
+tl.set('#slideLayer, #cracks', { autoAlpha: 0 }, 'shatter+=0.02');
+tl.set('.shard', { autoAlpha: 1 }, 'shatter+=0.02');
+tl.fromTo('#flash', { opacity: .9 }, { opacity: 0, duration: .5, ease: 'power2.out', immediateRender: false }, 'shatter+=0.02');
+tl.to('#shards', shake(16, 6), 'shatter+=0.02');
+const FALL = 1.0;                                   // KNOB fall-speed multiplier (higher = slower)
+shards.forEach(s => {
+  const ux = (s.cx - IMPACT.x) / (s.d || 1), uy = (s.cy - IMPACT.y) / (s.d || 1);
+  const delay = .08 + s.d / 1900 * .45 + R(0, .15);
+  const toViewer = s.d < 520 && rand() < .55;      // KNOB share of shards that tumble toward the viewer
+  gsap.set(s.el, { transformOrigin: `${s.cx}px ${s.cy}px` });
+  tl.to(s.el, { x: ux * R(8, 18), y: uy * R(8, 18), duration: .12, ease: 'power2.out' }, 'shatter+=0.02');
+  if (toViewer) {
+    gsap.set(s.el, { filter: 'blur(0px)' });     // blur layer only where needed
+    tl.to(s.el, { x: `+=${ux * R(200, 420)}`, y: `+=${R(250, 650)}`, scale: R(1.9, 2.8),
+      rotation: R(-40, 40), rotationX: R(-60, 60), rotationY: R(-60, 60),
+      filter: 'blur(9px)', autoAlpha: 0, duration: R(1.0, 1.35) * FALL, ease: 'power2.in' }, `shatter+=${delay}`);
+  } else {
+    tl.to(s.el, { x: `+=${ux * R(60, 260)}`, y: `+=${R(1300, 1700)}`,
+      rotation: R(-55, 55), rotationX: R(-35, 35), rotationY: R(-35, 35),
+      duration: R(1.35, 1.9) * FALL, ease: 'power2.in' }, `shatter+=${delay}`);
+  }
+});
+
+// beat: black — silence
+tl.addLabel('black', tl.duration());          // after the slowest shard
+tl.set('.shard', { autoAlpha: 0 }, 'black');
+tl.addLabel('crt', 'black+=2');                    // KNOB black hold
+
+// beat: CRT power-on
+tl.set('#crt', { autoAlpha: 1 }, 'crt');
+tl.set('#screen', { autoAlpha: 0 }, 'crt');
+tl.fromTo('#beam', { scaleX: 0, scaleY: .004, autoAlpha: 1 }, { scaleX: 1, duration: .22, ease: 'power3.out' }, 'crt');
+tl.to('#beam', { scaleY: 1, duration: .2, ease: 'expo.in' }, '>');
+tl.set('#screen', { autoAlpha: 1 }, '>');
+tl.to('#beam', { autoAlpha: 0, duration: .7, ease: 'power2.out' }, '>');
+tl.fromTo('#screen', { filter: 'brightness(2.2) blur(2px)' }, { filter: 'brightness(1) blur(0px)', duration: 1.1, ease: 'power2.out' }, '<');
+
+// boot text: each line types itself (state derived from tween progress, so seeking works)
+const BOOT = [                                       // KNOB boot text
+  ['DEMO-OS v1.0  (c) 1986', .5],
+  ['', .1],
+  ['MEMORY TEST: ', .1, 640],
+  ['DRIVES A: B: C: ... OK', .3],
+  ['', .1],
+  ['Loading: AI agents ............ OK', .35],
+  ['Loading: knowledge graph ...... OK', .35],
+  ['Loading: new ways of working .. OK', .6],
+  ['', .1],
+];
+const CPS = 34;                                      // KNOB typing speed, characters per second
+const term = $('#term');
+let at = 'crt+=0.9';
+BOOT.forEach(([text, pause, mem]) => {
+  const line = document.createElement('div');
+  line.innerHTML = '&nbsp;';
+  term.appendChild(line);
+  const p = { v: 0 };
+  const total = mem ? text.length : Math.max(1, text.length);
+  tl.fromTo(p, { v: 0 }, { v: 1, duration: total / CPS, ease: 'none', immediateRender: false, onUpdate() {
+    const n = Math.round(p.v * text.length), live = p.v > 0 && p.v < 1;
+    line.textContent = text.slice(0, n) + (live ? '█' : '') || ' ';
+  } }, at);
+  at = `>+${pause}`;
+  if (mem) {                                         // memory counter ticks up in 16K steps
+    const m = { k: 0 };
+    tl.fromTo(m, { k: 0 }, { k: mem, duration: 1.4, ease: 'none', immediateRender: false, onUpdate() {
+      line.textContent = text + String(Math.round(m.k / 16) * 16).padStart(3, ' ') + 'K' + (m.k >= mem ? ' OK' : '');
+    } }, '>');
+    at = `>+${pause}`;
+  }
+});
+const ready = document.createElement('div');
+ready.innerHTML = 'READY.<br><span class="cur"></span>';
+term.appendChild(ready);
+gsap.set(ready, { autoAlpha: 0 });
+tl.fromTo(ready, { autoAlpha: 0 }, { autoAlpha: 1, duration: .01, immediateRender: false }, at);
+tl.addLabel('ready', '>');
+
+// beat: line drawing (bonus)
+tl.addLabel('draw', 'ready+=1.5');
+tl.to('#crt', { autoAlpha: 0, duration: .9, ease: 'power2.inOut' }, 'draw');
+tl.set('#draw', { autoAlpha: 1 }, '>');
+let first = true;
+document.querySelectorAll('#draw svg > :not(g), #bulb > *').forEach(el => {
+  const len = el.getTotalLength();
+  el.setAttribute('pathLength', '1');
+  tl.to(el, { strokeDashoffset: 0, duration: Math.min(1.1, Math.max(.25, len / 700)), ease: 'power1.inOut' },
+    first ? '>' : '<+=0.11');                        // KNOB drawing stagger
+  first = false;
+});
+tl.to('#bulb > *', { stroke: '#ffd66b', duration: .5 }, tl.duration());
+tl.fromTo('#bulb', { filter: 'drop-shadow(0 0 0px #ffd66b)' }, { filter: 'drop-shadow(0 0 22px #ffd66b)', duration: .6, ease: 'power2.out' }, '<');
+tl.to({}, { duration: .3 }, '>');
+tl.addLabel('end', '>');
+
+// ---------- controls ----------
+const STOPS = ['cracks', 'shatter', 'crt', 'draw', 'end'];   // where manual stepping pauses
+const stopTimes = () => STOPS.map(l => tl.labels[l]);
+let stepper = null, target = 0;
+function stop() { stepper && stepper.kill(); stepper = null; tl.pause(); }
+function next() {
+  if (stepper && stepper.progress() < 1) { stop(); tl.seek(target, false); return; }   // cut to beat end
+  stop();
+  if (tl.time() < tl.labels.cracks) tl.seek('cracks', false);
+  const to = stopTimes().find(t => t > tl.time() + .001);
+  if (to !== undefined) { target = to; stepper = tl.tweenTo(to); }
+}
+function back() {
+  stop();
+  const prev = stopTimes().filter(t => t < tl.time() - .001).pop();
+  tl.seek(prev ?? 0, false);
+}
+addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); next(); }
+  else if (e.key === 'ArrowLeft') back();
+  else if (e.key === 'r' || e.key === 'R') { stop(); tl.seek(0, false); }
+  else if (e.key === 'a' || e.key === 'A') { stop(); if (tl.progress() >= 1) tl.seek(0, false); tl.play(); }
+});
+
+const t0 = parseFloat(new URLSearchParams(location.search).get('t'));
+tl.seek(isNaN(t0) ? 0 : t0, false);
+</script>
+</body>
+</html>
