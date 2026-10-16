@@ -34,6 +34,12 @@ export class Stepper {
     return this.i;
   }
 
+  // Back to "nothing shown yet", like a fresh page load. Call only when no move is queued.
+  reset(): void {
+    this.i = -1;
+    this.running = [];
+  }
+
   on(ev: Ev, fn: (data: any) => void): void {
     this.fns.set(ev, [...(this.fns.get(ev) ?? []), fn]);
   }

@@ -1,18 +1,6 @@
 import { chromium } from '@playwright/test'
-
-export interface SelftestCheck {
-  name: string
-  ok: boolean
-  detail?: string
-}
-export interface SelftestResult {
-  mode: string
-  ok: boolean
-  steps: number
-  checks: SelftestCheck[]
-  problems: string[]
-  errors: string[]
-}
+import type { SelftestResult } from '../../src/types'
+export type { SelftestCheck, SelftestResult } from '../../src/types'
 
 export async function runSelftest(
   url: string,

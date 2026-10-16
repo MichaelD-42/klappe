@@ -82,3 +82,16 @@ export interface StepAddr {
   scene: string;
   step: number;
 }
+export interface SelftestCheck {
+  name: string;
+  ok: boolean;
+  detail?: string;
+}
+export interface SelftestResult {
+  mode: string;
+  ok: boolean;
+  steps: number;
+  checks: SelftestCheck[];
+  problems: string[];
+  errors: string[];
+}
