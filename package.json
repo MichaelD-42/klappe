@@ -1,0 +1,35 @@
+{
+  "name": "klappe",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "dev": "node bin/klappe.mjs dev",
+    "build": "node bin/klappe.mjs build",
+    "test:unit": "vitest run tests/unit tests/lint",
+    "test:e2e": "vitest run tests/e2e"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MichaelD-42/klappe.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "markdown-it": "^15.0.3"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}
