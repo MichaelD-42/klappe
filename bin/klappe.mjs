@@ -56,27 +56,16 @@ if (cmd === 'init') {
   pkg.scripts ??= {}
   for (const [k, v] of Object.entries(wanted)) {
     if (pkg.scripts[k] === undefined || pkg.scripts[k] === v) pkg.scripts[k] = v
-    else console.log(`Kept your script "${k}": ${pkg.scripts[k]}
-  klappe expects: ${v}`)
+    else console.log(`Kept your script "${k}": ${pkg.scripts[k]}\n  klappe expects: ${v}`)
   }
   fs.mkdirSync(path.join(dir, 'sections'), { recursive: true })
   fs.writeFileSync(
     path.join(dir, 'deck.md'),
-    `---
-title: ${id}
-lang: en
-theme: calm
-intensity: calm
-confidential: false
----
-`,
+    `---\ntitle: ${id}\nlang: en\ntheme: calm\nintensity: calm\nconfidential: false\n---\n`,
   )
-  fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '
-')
+  fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
   const ignore = path.join(process.cwd(), '.gitignore')
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'node_modules/
-dist/
-')
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'node_modules/\ndist/\n')
   const synced = syncClaude(klappeDir, process.cwd())
   console.log(`Created decks/${id}. Synced: ${synced?.join(', ') || 'nothing'}`)
   process.exit(0)
