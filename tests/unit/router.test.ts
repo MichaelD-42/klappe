@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { formatHash, resolveHash } from "../../src/router";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { formatHash, resolveHash, Router } from "../../src/router";
 import type { StepAddr } from "../../src/types";
 
 const spec: [string, string, number][] = [
@@ -32,5 +32,44 @@ describe("resolveHash", () => {
   });
   it("round-trips formatHash for every step", () => {
     for (const s of steps) expect(resolveHash(formatHash(s), steps)).toEqual({ index: s.index, exact: true });
+  });
+});
+
+describe("empty deck", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("resolves to 0", () => {
+    expect(resolveHash("", [])).toEqual({ index: 0, exact: false });
+  });
+  it("start() and push() do not throw", () => {
+    const history = { pushState: vi.fn(), replaceState: vi.fn() };
+    vi.stubGlobal("window", { addEventListener: vi.fn() });
+    vi.stubGlobal("location", { hash: "" });
+    vi.stubGlobal("history", history);
+    const r = new Router([], () => {});
+    expect(r.start()).toBe(0);
+    r.push(0);
+    expect(history.pushState).not.toHaveBeenCalled();
+    expect(history.replaceState).not.toHaveBeenCalled();
+  });
+});
+
+describe("Router.push", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("is idempotent and silent during an async popstate", async () => {
+    const history = { pushState: vi.fn(), replaceState: vi.fn() };
+    const loc = { hash: formatHash(steps[2]) };
+    let pop = () => {};
+    vi.stubGlobal("window", { addEventListener: (_: string, f: () => void) => (pop = f) });
+    vi.stubGlobal("location", loc);
+    vi.stubGlobal("history", history);
+    const r: Router = new Router(steps, async () => {
+      await Promise.resolve();
+      r.push(3); // late emit after an await
+    });
+    r.push(2); // same hash: no entry
+    await pop();
+    expect(history.pushState).not.toHaveBeenCalled();
+    r.push(3);
+    expect(history.pushState).toHaveBeenCalledTimes(1);
   });
 });

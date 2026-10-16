@@ -18,12 +18,13 @@ export class Router {
 
   constructor(
     private steps: StepAddr[],
-    private onNavigate: (index: number) => void,
+    private onNavigate: (index: number) => void | Promise<void>,
   ) {
-    window.addEventListener("popstate", () => {
+    window.addEventListener("popstate", async () => {
+      if (!this.steps.length) return;
       this.navigating = true;
       try {
-        this.onNavigate(resolveHash(location.hash, this.steps).index);
+        await this.onNavigate(resolveHash(location.hash, this.steps).index);
       } finally {
         this.navigating = false;
       }
@@ -31,10 +32,14 @@ export class Router {
   }
 
   push(index: number): void {
-    if (!this.navigating) history.pushState(null, "", formatHash(this.steps[index]));
+    const step = this.steps[index];
+    // Idempotent: a late async 'step' event must not add a duplicate history entry.
+    if (!step || this.navigating || location.hash === formatHash(step)) return;
+    history.pushState(null, "", formatHash(step));
   }
 
   start(): number {
+    if (!this.steps.length) return 0;
     const { index, exact } = resolveHash(location.hash, this.steps);
     if (!exact) history.replaceState(null, "", formatHash(this.steps[index]));
     return index;
