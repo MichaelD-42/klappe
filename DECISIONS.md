@@ -23,3 +23,10 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: cheap, exact deep links. Effects then only need to be seekable, not reversible.
 - **Build loop: an orchestrator, one builder per task, and three reviewers (technical, look and feel, content).**
   - The same loop is used for deck building in the skill.
+
+## 2026-10-16 (browser driver)
+
+- **E2E driver: Playwright's bundled Chromium (`chromium.launch()` from `@playwright/test`). No Edge fallback.**
+  - Why: Edge has the policy `RemoteDebuggingAllowed=0`, so Playwright cannot drive it. The key `HKLM\SOFTWARE\Policies\Chromium` does not exist, so the bundled Chromium is not blocked.
+  - The spike passed: `npx playwright install chromium` worked through the proxy, and `npm run test:e2e` passed 2/2.
+  - The driver sits behind `runSelftest(url, viewport?)` in `tests/e2e/driver.ts`. A different driver can replace it without touching the tests. The Edge `--dump-dom` fallback was not ported.
