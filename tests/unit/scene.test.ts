@@ -1,0 +1,62 @@
+import { describe, it, expect } from "vitest";
+import { parseScene } from "../../src/parse/scene";
+import { parseSection } from "../../src/parse/section";
+
+// Verbatim from docs/storyteller-init-prompt.md, section 4, Example B.
+const CLARIFICATION_MD = `## Clarification
+
+- The camera follows the stream to Clarification.
+- A person picks up the stack of open questions and walks to the customer.
+- Questions and answers appear as speech bubbles.
+- The stack of questions shrinks to zero.
+- The person walks back. The stream moves on.
+
+### What is still left for humans to do?
+
+The conversations that build trust.
+`;
+
+describe("parseScene", () => {
+  it("parses the Clarification scene", () => {
+    const { scene, problems } = parseScene(CLARIFICATION_MD, "30-clarification");
+    expect(problems).toEqual([]);
+    expect(scene.id).toBe("clarification");
+    expect(scene.order).toBe(30);
+    expect(scene.title).toBe("Clarification");
+    expect(scene.steps.map((s) => s.kind)).toEqual([
+      "step", "step", "step", "step", "step",
+      "shout-enter", "shout-hold", "shout-fade", "shout-answer",
+    ]);
+    expect(scene.steps[0].text).toBe("The camera follows the stream to Clarification.");
+    expect(scene.steps[5].text).toBe("What is still left for humans to do?");
+    expect(scene.steps[8].text).toBe("The conversations that build trust.");
+  });
+  it("puts notes on the step above, or on the scene", () => {
+    expect(parseScene("## A\n\n- one\n\n> say this\n", "10-a").scene.steps[0].notes).toBe("say this");
+    expect(parseScene("## A\n\n> intro\n\n- one\n", "10-a").scene.notes).toBe("intro");
+  });
+  it("joins nested list content into text", () => {
+    expect(parseScene("## A\n\n- one\n  - two\n", "10-a").scene.steps[0].text).toBe("one two");
+  });
+  it("gives a scene with no steps one step with the title", () => {
+    expect(parseScene("## Solo\n", "10-solo").scene.steps).toEqual([
+      { text: "Solo", notes: "", kind: "step" },
+    ]);
+  });
+  it("reports a missing title and handles CRLF", () => {
+    expect(parseScene("- x\n", "10-a").problems).toContain("10-a/scene.md: missing ## title");
+    const { scene } = parseScene("## A\r\n\r\n- one\r\n- two\r\n", "10-a");
+    expect(scene.steps.map((s) => s.text)).toEqual(["one", "two"]);
+  });
+});
+
+describe("parseSection", () => {
+  it("reads title and notes", () => {
+    const { section, problems } = parseSection("# Intro\n\n> hello\r\n", "10-intro");
+    expect(problems).toEqual([]);
+    expect(section).toEqual({ id: "intro", order: 10, title: "Intro", notes: "hello" });
+  });
+  it("reports a missing title", () => {
+    expect(parseSection("text", "10-x").problems).toContain("10-x/section.md: missing # title");
+  });
+});
