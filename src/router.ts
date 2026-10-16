@@ -2,8 +2,17 @@ import type { StepAddr } from "./types";
 
 export const formatHash = (a: StepAddr): string => `#/${a.section}/${a.scene}/${a.step}`;
 
+// A bad escape stays raw: it matches no id, so the hash falls back like any other garbage.
+const decode = (s: string) => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+};
+
 export function resolveHash(hash: string, steps: StepAddr[]): { index: number; exact: boolean } {
-  const [section, scene, step] = hash.replace(/^#\/?/, "").split("/");
+  const [section, scene, step] = hash.replace(/^#\/?/, "").split("/").map(decode);
   const n = step === undefined ? 1 : Number(step);
   const inScene = steps.filter((s) => s.section === section && s.scene === scene);
   const exact = inScene.find((s) => s.step === n);
@@ -34,7 +43,7 @@ export class Router {
   push(index: number): void {
     const step = this.steps[index];
     // Idempotent: a late async 'step' event must not add a duplicate history entry.
-    if (!step || this.navigating || location.hash === formatHash(step)) return;
+    if (!step || this.navigating || decode(location.hash) === formatHash(step)) return;
     history.pushState(null, "", formatHash(step));
   }
 

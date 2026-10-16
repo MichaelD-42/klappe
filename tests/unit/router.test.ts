@@ -30,6 +30,13 @@ describe("resolveHash", () => {
     expect(resolveHash("#garbage", steps).index).toBe(0);
     expect(resolveHash("", steps).index).toBe(0);
   });
+  it("decodes percent-encoded ids", () => {
+    const s: StepAddr[] = [0, 1].map((i) => ({ index: i, canvas: 0, section: "übersicht", scene: "old way", step: i + 1 }));
+    expect(resolveHash("#/%C3%BCbersicht/old%20way/2", s)).toEqual({ index: 1, exact: true });
+  });
+  it("treats a bad escape as garbage", () => {
+    expect(resolveHash("#/%E0%A4%A/x/1", steps)).toEqual({ index: 0, exact: false });
+  });
   it("round-trips formatHash for every step", () => {
     for (const s of steps) expect(resolveHash(formatHash(s), steps)).toEqual({ index: s.index, exact: true });
   });
@@ -71,5 +78,14 @@ describe("Router.push", () => {
     expect(history.pushState).not.toHaveBeenCalled();
     r.push(3);
     expect(history.pushState).toHaveBeenCalledTimes(1);
+  });
+  it("compares the decoded hash", () => {
+    const history = { pushState: vi.fn(), replaceState: vi.fn() };
+    const s: StepAddr[] = [{ index: 0, canvas: 0, section: "übersicht", scene: "old way", step: 1 }];
+    vi.stubGlobal("window", { addEventListener: vi.fn() });
+    vi.stubGlobal("location", { hash: "#/%C3%BCbersicht/old%20way/1" });
+    vi.stubGlobal("history", history);
+    new Router(s, () => {}).push(0);
+    expect(history.pushState).not.toHaveBeenCalled();
   });
 });
