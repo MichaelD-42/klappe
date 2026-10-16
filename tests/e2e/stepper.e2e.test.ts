@@ -1,7 +1,7 @@
 import { chromium, type Browser, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
 
-// Review focus 2: keys pressed while a step plays.
+// Review focus 2: keys pressed while a step plays. Runs on an in-code fixture deck, not the user's deck.
 let browser: Browser
 beforeAll(async () => {
   browser = await chromium.launch()
@@ -10,14 +10,14 @@ afterAll(() => browser?.close())
 
 async function open(): Promise<Page> {
   const page = await browser.newPage()
-  await page.goto(inject('BASE_URL'))
+  await page.goto(`${inject('BASE_URL')}/?fixture=two-scenes`)
   await page.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
   return page
 }
 
 const shown = (page: Page, n: number) =>
   page.evaluate((n) => {
-    const s = getComputedStyle(document.querySelector(`[data-scene="old-way"] [data-step="${n}"]`)!)
+    const s = getComputedStyle(document.querySelector(`[data-scene="first"] [data-step="${n}"]`)!)
     return s.visibility === 'visible' && s.opacity === '1'
   }, n)
 

@@ -17,6 +17,16 @@ for (const vp of [
   })
 }
 
+// Text of an earlier scene stays visible off camera; only the current scene is checked for legibility.
+test('walk passes on a canvas with two scenes and a camera flight', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=two-scenes`, { w: 1366, h: 768 })
+  expect(r.problems).toEqual([])
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.steps).toBe(7)
+  expect(r.ok).toBe(true)
+})
+
 // Review focus 3: a step-count mismatch must fail the self-test and name the file.
 test('walk fails on a deck whose scene.ts and scene.md disagree', async () => {
   const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=broken-step-count`)
