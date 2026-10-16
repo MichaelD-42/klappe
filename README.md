@@ -75,7 +75,7 @@ Run `npm run klappe:sync` after every klappe update. It overwrites the copied fi
 ## Deck format
 
 Quick reference. The demo deck in `decks/demo` shows every rule.
-It covers spec examples A (old way), B and C (where we are). Boot, Coming together and Working on the topic come in M2.
+It covers spec examples A (old way), B (value stream), C (global team). Boot, Coming together and Working on the topic come in M2.
 
 ### Folders
 
@@ -109,23 +109,23 @@ Frontmatter keys:
 - `## Title` names the scene. It is required.
 - Each list item is one step.
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene.
-- A `### Question?` followed by a paragraph is a shout-out. It makes 4 steps: enter, hold, fade, answer.
+- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 
 ### scene.ts
 
 Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneModule`.
 
-- `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` are the canvas rects from the section.
+- `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a 1920x1080 frame at x = its position on the canvas times 1920.
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
-- `steps` is an array with one function or `null` per step. A step function is `(tl, refs, ctx) => void`.
+- `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
 - In a step, only add tweens to `tl`. Do not use `.from()`. Do not change the DOM in callbacks.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Keep one master timeline per canvas. The engine owns it.
 
 ### section.ts
 
-Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole canvas and returns refs and rects. Scenes read them from `ctx.canvas.refs` and `ctx.canvas.rects`.
+Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole canvas and returns refs. Scenes read them from `ctx.canvas.refs`. `ctx.canvas.rects` holds each scene's home frame, keyed by scene id. The layout supplies it, not the section.
 
 ### Types in deck repos
 

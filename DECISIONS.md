@@ -48,12 +48,12 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 
 ## 2026-10-16 (M1 engine core)
 
-- **Content-dependent tests (R8, R10) run on fixture decks, not on the demo deck.**
-  - Why: the demo deck changes in M2; the tests must not break with it.
-- **Steps are padded off labels, not placed at the end.**
-  - Why: a zero-duration step leaked into the next step's tweens when it sat at the timeline end.
+- **Content-dependent e2e tests use in-code fixtures (`?fixture=two-scenes`, `?fixture=broken-step-count`).**
+  - Why: `klappe test` must stay green in deck repos, where the demo deck is not present.
+- **Each step is padded 1 ms before and after its content.**
+  - Why: zero-duration tweens leaked into the previous step's label state on seek and play.
 - **Reduced motion turns camera flights into cuts and nothing else.**
-  - Why: the content animations are small; flights cause the motion sickness. `?instant=1` is separate and seeks every play.
+  - Why: spec §7 says camera flights become cuts. `?instant=1` is separate and seeks every play.
 - **`place()` is the scene's home frame. The engine flies there on entry; `ctx.camera.to` is for moves after that.**
   - Why: one rule for entry; scenes do not write their own entry flight.
 - **The acceptance suite (AC-1..8) runs on the demo deck only.**
