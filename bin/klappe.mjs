@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { createServer, build } from 'vite'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -77,6 +76,8 @@ if (cmd === 'test') {
   process.exit(vitest && vitest.state.getCountOfFailedTests() === 0 && !vitest.state.getUnhandledErrors().length ? 0 : 1)
 }
 
+// Imported late: init runs before npm i, when vite is not installed yet.
+const { createServer, build } = await import('vite')
 const configFile = path.join(klappeDir, 'vite.config.ts')
 
 if (cmd === 'build') {
