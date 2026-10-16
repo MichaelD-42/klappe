@@ -6,7 +6,10 @@ import { mountStage } from "./render/stage";
 import { renderWorld } from "./render/world";
 import { runSelftestIfAsked } from "./selftest";
 import { Stepper } from "./stepper";
+import { bindInput } from "./input";
+import { Overview } from "./ui/overview";
 import { showProblems } from "./ui/problems";
+import { Selector } from "./ui/selector";
 
 const errors = installErrorCapture();
 const { deck, problems } = loadDeck();
@@ -21,7 +24,12 @@ const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
 const steps = buildStepList(deck, layout.canvases);
 const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
-window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems };
+const go = (i: number) => stepper.goto(i, "cut");
+const selector = new Selector(ui, deck, steps, () => stepper.index, go);
+const overview = new Overview(ui, deck, canvases, steps, () => stepper.index, go);
+bindInput(stepper, { overview, selector }, stage, steps.length - 1);
+
+window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview };
 showProblems(ui, problems, deck.meta.lang);
 stepper.goto(0, "cut");
 runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors });
