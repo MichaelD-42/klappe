@@ -45,3 +45,18 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **No klappe skill for now. The stub is removed. The four build-loop agents stay.**
   - Why: a skill written before any real deck is a guess. Skills will be written from experience (reverse-engineered from chat logs) after a few real decks exist.
   - `bin/sync-claude.mjs` still copies `klappe*` skills if any exist later.
+
+## 2026-10-16 (M1 engine core)
+
+- **Content-dependent tests (R8, R10) run on fixture decks, not on the demo deck.**
+  - Why: the demo deck changes in M2; the tests must not break with it.
+- **Steps are padded off labels, not placed at the end.**
+  - Why: a zero-duration step leaked into the next step's tweens when it sat at the timeline end.
+- **Reduced motion turns camera flights into cuts and nothing else.**
+  - Why: the content animations are small; flights cause the motion sickness. `?instant=1` is separate and seeks every play.
+- **`place()` is the scene's home frame. The engine flies there on entry; `ctx.camera.to` is for moves after that.**
+  - Why: one rule for entry; scenes do not write their own entry flight.
+- **The acceptance suite (AC-1..8) runs on the demo deck only.**
+  - Why: it checks the engine, and the demo is the one deck that is always present.
+- **Deck code imports types from `klappe/types`. Deck repos map it in `tsconfig.json`; `klappe init` writes the file.**
+  - Why: the same import works in the klappe repo and in a deck repo, with no relative paths into the subtree.

@@ -64,6 +64,11 @@ if (cmd === 'init') {
     `---\ntitle: ${id}\nlang: en\ntheme: calm\nintensity: calm\nconfidential: false\n---\n`,
   )
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
+  const tsconfig = path.join(process.cwd(), 'tsconfig.json')
+  if (!fs.existsSync(tsconfig)) {
+    const ts = { compilerOptions: { paths: { 'klappe/types': ['./klappe/src/types'] } }, include: ['decks'] }
+    fs.writeFileSync(tsconfig, JSON.stringify(ts, null, 2) + '\n')
+  }
   const ignore = path.join(process.cwd(), '.gitignore')
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, 'node_modules/\ndist/\n')
   const synced = syncClaude(klappeDir, process.cwd())
