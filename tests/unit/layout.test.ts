@@ -38,6 +38,11 @@ describe("layoutDeck", () => {
     layoutDeck(two([], (r) => ((seen = Object.keys(r)), { x: 0, y: 0, w: 1, h: 1 })));
     expect(seen).toEqual(["a1"]);
   });
+  it("reports a place() that throws and uses the default rect", () => {
+    const { canvases, problems } = layoutDeck(two([], () => { throw new Error("boom"); }));
+    expect(problems).toEqual(["a2: place() boom"]);
+    expect(canvases[0].rects.a2).toEqual({ x: 1920, y: 0, w: 1920, h: 1080 });
+  });
   it("reports an unknown shared id", () => {
     const { problems } = layoutDeck(two([["a", "nope"]]));
     expect(problems.some((p) => p.includes("nope"))).toBe(true);

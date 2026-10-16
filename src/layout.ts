@@ -22,7 +22,13 @@ export function layoutDeck(deck: Deck): { canvases: CanvasLayout[]; problems: st
     const rects: Record<string, Rect> = {};
     let i = 0;
     for (const sc of members.flatMap((m) => m.scenes)) {
-      rects[sc.id] = sc.module?.place?.({ ...rects }) ?? { x: i * 1920, y: 0, w: 1920, h: 1080 };
+      let rect: Rect | undefined;
+      try {
+        rect = sc.module?.place?.({ ...rects });
+      } catch (e) {
+        problems.push(`${sc.source}: place() ${e instanceof Error ? e.message : e}`);
+      }
+      rects[sc.id] = rect ?? { x: i * 1920, y: 0, w: 1920, h: 1080 };
       i++;
     }
     const all = Object.values(rects);

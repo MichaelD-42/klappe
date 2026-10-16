@@ -119,7 +119,7 @@ export function renderWorld(
     }
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = ctxAt(layout.rects[sc.id], "data-scene", sc.id, "k-scene");
+        const ctx = ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene");
         const build = sc.module?.build;
         perScene.set(
           sc,
