@@ -30,7 +30,7 @@ describe("frontmatter", () => {
     expect(toDeckMeta({ title: "x", theme: "bold" }).meta.intensity).toBe("bold");
   });
   it("strips BOM and handles CRLF", () => {
-    expect(parseFrontmatter("﻿---\r\ntitle: X\r\n---\r\nbody")).toEqual({ data: { title: "X" }, body: "body" });
+    expect(parseFrontmatter("\uFEFF---\r\ntitle: X\r\n---\r\nbody")).toEqual({ data: { title: "X" }, body: "body" });
   });
   it("strips quotes", () => {
     expect(parseFrontmatter('---\ntitle: "My Deck"\n---\n').data).toEqual({ title: "My Deck" });
