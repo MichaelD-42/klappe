@@ -72,7 +72,6 @@ tests/e2e/driver.ts           runSelftest(url, viewport) → SelftestResult
 tests/e2e/*.e2e.test.ts       Vitest + driver
 tests/lint/design.test.ts     static design-rule lint
 .claude/agents/klappe-*.md    builder + 3 reviewers
-.claude/skills/klappe/SKILL.md  stub (filled in M4)
 ```
 
 ---
@@ -152,11 +151,11 @@ tests/lint/design.test.ts     static design-rule lint
   - **Either way:** record which driver won, and why, in `DECISIONS.md`.
 - [ ] **Step 5.** Commit: `test: add swappable browser driver (<playwright|edge>)`.
 
-### Task 3: Loop agents, skill stub and discovery check
+### Task 3: Loop agents and discovery check
 
 **Files:**
 
-- Create: `.claude/agents/klappe-builder.md`, `.claude/agents/klappe-review-tech.md`, `.claude/agents/klappe-review-look.md`, `.claude/agents/klappe-review-content.md`, `.claude/skills/klappe/SKILL.md`.
+- Create: `.claude/agents/klappe-builder.md`, `.claude/agents/klappe-review-tech.md`, `.claude/agents/klappe-review-look.md`, `.claude/agents/klappe-review-content.md`.
 - Modify: `DECISIONS.md`.
 
 **Interfaces:**
@@ -170,9 +169,9 @@ tests/lint/design.test.ts     static design-rule lint
   - **Look and feel:** screenshots at 1920×1080 and 1366×768; the spec §2 design rules and theme tokens; framing and legibility; motion that is smooth and has meaning; "wow" for bold decks, calm for board decks.
   - **Content:** one message per scene; every number has a source, with no invented facts; wording and notes; open TODOs; for framework tasks, docs and the demo deck.
 - **The builder** may touch only the files its task lists. It hands back a green `npm test` result plus screenshot paths.
-- **The skill stub** has a `name` and a `description` ("Build and review klappe decks…") and a body that says "Filled in M4."
+- **No skill.** Skills are deferred until real decks exist.
 
-- [ ] **Step 1.** Write the five files.
+- [ ] **Step 1.** Write the four agent files.
 - [ ] **Step 2. Discovery check.**
   - Make a scratch repo: `<scratchpad>/deck-probe/`, then `git init`, then copy this repo to `deck-probe/klappe/`.
   - Run `claude -p "List the names of all skills and subagent types you can use. Output names only."` with `deck-probe/` as the working directory.
@@ -180,7 +179,7 @@ tests/lint/design.test.ts     static design-rule lint
 - [ ] **Step 3. Act on the result.**
   - **If they do not appear:** create `bin/sync-claude.mjs`. It copies `klappe/.claude/{agents,skills}` into the deck repo's `.claude/`, overwriting only `klappe*` names. Add `"klappe:sync"` to the deck template docs.
   - **Either way:** record the result in `DECISIONS.md`.
-- [ ] **Step 4.** Commit: `feat: add build-loop agents and skill stub`.
+- [ ] **Step 4.** Commit: `feat: add build-loop agents`.
 
 ### Task 4: Subtree round trip and README
 

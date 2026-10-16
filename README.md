@@ -67,7 +67,7 @@ git subtree push --prefix klappe https://github.com/MichaelD-42/klappe.git my-fi
 
 ## Claude agents
 
-klappe ships agents and skills in `klappe/.claude/`.
+klappe ships agents in `klappe/.claude/`. Skills are deferred: they will be written from experience after a few real decks.
 Claude Code does not find a `.claude` folder nested in a subfolder.
-So `klappe init` and `npm run klappe:sync` copy the `klappe*` agents and skills to `.claude/` in the deck repo root.
+So `klappe init` and `npm run klappe:sync` copy the `klappe*` agents (and any `klappe*` skills) to `.claude/` in the deck repo root.
 Run `npm run klappe:sync` after every klappe update. It overwrites the copied files. It never deletes. Remove stale `klappe*` files in `.claude/` by hand.

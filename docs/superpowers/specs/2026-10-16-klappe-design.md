@@ -23,8 +23,8 @@ Which deck goes first is decided after the framework is done. Until then, the de
 **Order of work:**
 
 1. The framework.
-2. The matching Claude skill. Decks are made by a human and Claude together.
-3. Then the real decks (a separate brainstorm).
+2. Then the real decks (a separate brainstorm). Decks are made by a human and Claude together, using the build-loop agents.
+3. Skills come later, written from experience (see Skill).
 
 ## Decisions (user-confirmed)
 
@@ -133,16 +133,9 @@ Modules follow spec §7: parser, world/renderer interface, camera, timeline/step
    - Text boxes must sit inside their frame.
    - Lists missing media and data.
 
-### Skill (`klappe/.claude/skills/klappe/`)
+### Skill
 
-The skill ships inside the framework repo:
-
-- The deck format reference.
-- The scene.ts API.
-- The workflows: storyboard, build scene, review deck, convert deck (spec §5).
-- The image-prompt workflow.
-
-Claude Code may discover nested `.claude/skills` inside a subtree. Check this in M0. If it doesn't, a `klappe/scripts/sync-skill` copies the skill into the deck repo's `.claude/skills/`, and the update procedure runs it.
+Deferred: skills will be written from experience after a few real decks. The image-prompt workflow and the storyboard, build-scene, review-deck and convert-deck workflows move to "later, as skills from experience".
 
 ### Non-goals (v1)
 
@@ -176,8 +169,8 @@ Claude Code may discover nested `.claude/skills` inside a subtree. Check this in
    - **Pass:** use Playwright for integration, acceptance, PDF export and review-deck.
    - **Fail:** port `presentation-v2/test/edge.mjs` (headless Edge `--dump-dom`, `--screenshot`, `--virtual-time-budget`) behind the same driver interface.
 2. **Skill and agent discovery spike.**
-   - Check whether a nested `klappe/.claude/skills/x/SKILL.md` and `klappe/.claude/agents/x.md` show up in a session started in the parent repo.
-   - If not, `sync-skill` copies both into the deck repo.
+   - Check whether a nested `klappe/.claude/agents/x.md` shows up in a session started in the parent repo.
+   - If not, `bin/sync-claude.mjs` copies the agents into the deck repo.
 3. **Reviewer agents.** Write the four agent definitions first, so that M0's own scaffold already goes through the loop.
 4. **Scaffold.** Create `package.json`, Vite + TS config, Vitest, the folder skeleton, and `npm test` running all layers.
 5. **Subtree round trip.** Create a throwaway deck repo in the scratchpad. Run `git subtree add`, then `pull`. `npm i && npm run dev` must serve. Document the steps in `README.md`.
@@ -214,9 +207,8 @@ Claude Code may discover nested `.claude/skills` inside a subtree. Check this in
 - PDF export.
 - Reduced motion.
 
-### M4: Skill and workflows
+### M4: Template and agents
 
-- Write the klappe skill: format, API, storyboard, build-scene, review-deck, convert-deck, image prompts.
 - `template/`: a starter deck that the new-deck procedure copies.
 - **Accept:** a fresh session in a new deck repo builds a scene from a storyboard and gets a green test run.
 
@@ -263,7 +255,7 @@ The framework and every deck are built with the same loop.
      - Every number has a source, with no invented facts.
      - Wording and notes.
      - Open TODOs: images, data.
-     - For framework tasks: docs, skill text and the demo deck.
+     - For framework tasks: docs and the demo deck.
 4. **Loop.**
    - The builder fixes the findings, and only the failed reviewers run again.
    - At most 3 rounds; after that the orchestrator escalates to the user.
@@ -272,16 +264,15 @@ The framework and every deck are built with the same loop.
 The parts ship in the framework so that deck repos get them through the subtree:
 
 - `klappe/.claude/agents/`: `klappe-builder`, `klappe-review-tech`, `klappe-review-look`, `klappe-review-content`.
-- The skill's workflow section.
 
-The klappe skill runs the same loop for decks:
+The same loop works for decks (a skill for it comes later):
 
 - The human and Claude agree the storyboard.
 - The orchestrator assigns one builder per scene.
 - The three reviewers check each scene.
 - The human gives the final review.
 
-M0 checks agent discovery together with skill discovery.
+M0 checks agent discovery.
 
 ## Verification
 

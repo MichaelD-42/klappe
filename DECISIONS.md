@@ -22,7 +22,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **One master GSAP timeline per canvas. Back cuts to the previous step's end state.**
   - Why: cheap, exact deep links. Effects then only need to be seekable, not reversible.
 - **Build loop: an orchestrator, one builder per task, and three reviewers (technical, look and feel, content).**
-  - The same loop is used for deck building in the skill.
+  - The same loop can be used for deck building. The skill that would describe it is deferred.
 
 ## 2026-10-16 (browser driver)
 
@@ -38,4 +38,10 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - After `sync-claude.mjs` copied the files to `deck-probe/.claude/`, the same prompt listed `klappe`, `klappe-builder`, `klappe-review-content`, `klappe-review-look` and `klappe-review-tech`.
   - The script copies only `klappe*` names and overwrites them. It leaves the deck's own agents and skills alone.
   - Not tested: `claude` run interactively (only `-p` was tested).
-- **Open TODO:** add `klappe:sync` to the deck template docs when the template exists (M4).
+- **Open TODO (see also the skill decision below):** add `klappe:sync` to the deck template docs when the template exists (M4).
+
+## 2026-10-16 (skills deferred)
+
+- **No klappe skill for now. The stub is removed. The four build-loop agents stay.**
+  - Why: a skill written before any real deck is a guess. Skills will be written from experience (reverse-engineered from chat logs) after a few real decks exist.
+  - `bin/sync-claude.mjs` still copies `klappe*` skills if any exist later.
