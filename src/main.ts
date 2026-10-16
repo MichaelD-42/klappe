@@ -22,6 +22,7 @@ const { deck, problems } = loadDeck();
 const layout = layoutDeck(deck);
 problems.push(...layout.problems);
 const steps = buildStepList(deck, layout.canvases);
+if (!steps.length) problems.push("deck has no steps");
 const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
 

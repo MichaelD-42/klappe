@@ -58,15 +58,19 @@ if (cmd === 'init') {
     if (pkg.scripts[k] === undefined || pkg.scripts[k] === v) pkg.scripts[k] = v
     else console.log(`Kept your script "${k}": ${pkg.scripts[k]}\n  klappe expects: ${v}`)
   }
-  fs.mkdirSync(path.join(dir, 'sections'), { recursive: true })
+  // A starter scene, so a fresh deck shows a step and its tests pass.
+  const intro = path.join(dir, 'sections', '10-intro')
+  fs.mkdirSync(path.join(intro, '10-hello'), { recursive: true })
   fs.writeFileSync(
     path.join(dir, 'deck.md'),
     `---\ntitle: ${id}\nlang: en\ntheme: calm\nintensity: calm\nconfidential: false\n---\n`,
   )
+  fs.writeFileSync(path.join(intro, 'section.md'), '# Intro\n')
+  fs.writeFileSync(path.join(intro, '10-hello', 'scene.md'), '## Hello\n\n- Welcome.\n')
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
   const tsconfig = path.join(process.cwd(), 'tsconfig.json')
   if (!fs.existsSync(tsconfig)) {
-    const ts = { compilerOptions: { paths: { 'klappe/types': ['./klappe/src/types'] } }, include: ['decks'] }
+    const ts = { compilerOptions: { strict: true, noEmit: true, paths:{ 'klappe/types': ['./klappe/src/types'] } }, include: ['decks'] }
     fs.writeFileSync(tsconfig, JSON.stringify(ts, null, 2) + '\n')
   }
   const ignore = path.join(process.cwd(), '.gitignore')

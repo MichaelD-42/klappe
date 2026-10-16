@@ -132,7 +132,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 Import types from `"klappe/types"`. `klappe init` writes a `tsconfig.json` with this mapping if none exists:
 
 ```json
-{ "compilerOptions": { "paths": { "klappe/types": ["./klappe/src/types"] } }, "include": ["decks"] }
+{ "compilerOptions": { "strict": true, "noEmit": true, "paths": { "klappe/types": ["./klappe/src/types"] } }, "include": ["decks"] }
 ```
 
 If you have your own `tsconfig.json`, add the `paths` entry yourself.

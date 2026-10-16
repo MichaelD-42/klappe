@@ -9,8 +9,9 @@ test('deck content loads without errors', async () => {
     page.on('pageerror', (e) => errors.push(e.message))
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
     await page.goto(inject('BASE_URL'))
-    await page.waitForFunction(() => document.body.innerText.trim().length > 0, undefined, { timeout: 30_000 })
+    await page.waitForFunction(() => window.klappe?.stepper, undefined, { timeout: 30_000 })
     expect(errors).toEqual([])
+    expect(await page.evaluate(() => [...window.klappe.problems, ...window.klappe.errors])).toEqual([])
   } finally {
     await browser.close()
   }
