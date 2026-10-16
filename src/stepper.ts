@@ -68,7 +68,13 @@ export class Stepper {
   }
 
   private emit(ev: Ev, data: any) {
-    for (const fn of this.fns.get(ev) ?? []) fn(data);
+    // A failing listener must not stop the move or the other listeners; console.error lands in klappe.errors.
+    for (const fn of this.fns.get(ev) ?? [])
+      try {
+        fn(data);
+      } catch (e) {
+        console.error(`stepper '${ev}' listener: ${e instanceof Error ? e.message : e}`);
+      }
   }
 
   private async move(i: number, how: How) {

@@ -19,6 +19,15 @@ export function isMsg(x: unknown): x is Msg {
   return false;
 }
 
+// One wire message for channel `name`, or null. Remembers ids in `seen` so a repeat is dropped.
+export function parseWire(wire: unknown, name: string, seen: Set<string>): Msg | null {
+  if (!wire || typeof wire !== "object") return null;
+  const { k, id, msg } = wire as Record<string, unknown>;
+  if (k !== name || typeof id !== "string" || seen.has(id) || !isMsg(msg)) return null;
+  seen.add(id);
+  return msg;
+}
+
 // BroadcastChannel, plus postMessage to the opener and to any window that has written to us.
 // Every message goes out on both, so each carries an id and the receiver drops repeats.
 export function openChannel(deckTitle: string): Channel {
@@ -30,13 +39,7 @@ export function openChannel(deckTitle: string): Channel {
   const me = Math.random().toString(36).slice(2);
   if (window.opener) peers.add(window.opener);
 
-  const valid = (wire: unknown): Msg | null => {
-    if (!wire || typeof wire !== "object") return null;
-    const { k, id, msg } = wire as Record<string, unknown>;
-    if (k !== name || typeof id !== "string" || seen.has(id) || !isMsg(msg)) return null;
-    seen.add(id);
-    return msg;
-  };
+  const valid = (wire: unknown) => parseWire(wire, name, seen);
   const deliver = (msg: Msg | null) => {
     if (msg) for (const fn of fns) fn(msg);
   };
@@ -62,7 +65,9 @@ export function openChannel(deckTitle: string): Channel {
       bc?.postMessage(wire);
       for (const p of peers) {
         if (p.closed) peers.delete(p);
-        else p.postMessage(wire, location.origin);
+        // An opaque origin (file://) reads "null" and cannot be a target. The trust boundary is the
+        // receiver: parseWire() plus the bounds check on the index, not the target origin.
+        else p.postMessage(wire, location.origin === "null" ? "*" : location.origin);
       }
     },
     on(fn) {
