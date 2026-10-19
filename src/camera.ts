@@ -41,7 +41,9 @@ export function addCameraMove(
   opts: { duration?: number; at?: number | string; instant?: boolean } = {},
 ): void {
   const poses = flight(from, to).slice(1); // the camera is already at `from`
-  const duration = opts.instant ? 0 : (opts.duration ?? motion.camera);
+  // A cut is a set: keyframes of duration 0 make an empty nested timeline that a seek does not render.
+  if (opts.instant) return void tl.set(world, frame(to), opts.at);
+  const duration = opts.duration ?? motion.camera;
   tl.to(
     world,
     { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease: "power2.inOut" })) },
