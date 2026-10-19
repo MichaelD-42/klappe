@@ -1,5 +1,5 @@
 import { iconTile } from "klappe/fx";
-import type { Ctx, Rect, SectionModule } from "klappe/types";
+import type { Ctx, Rect, SectionModule, StepFn } from "klappe/types";
 
 const SVG = "http://www.w3.org/2000/svg";
 const NAMES = ["Requirements", "Analysis", "Clarification", "Design", "Verification"];
@@ -54,6 +54,25 @@ export function label(ctx: Ctx, text: string, x: number, y: number): HTMLElement
   return d;
 }
 
+type TL = Parameters<StepFn>[0];
+// The pulled-back overview enlarges the stages so the whole stream reads at a glance; Analysis shrinks them back.
+// Boxes and line rise by `lift` so the bigger boxes stay inside the canvas (the SVG layer clips at y 1080).
+export const GROW = { box: 1.5, tile: 2, lift: 20, tileLift: 113, line: 14, glyph: 5 };
+export function grow(tl: TL, stream: Record<string, any>, on: boolean, at?: number | string): void {
+  const [big, small] = [
+    { box: { scale: GROW.box, y: -GROW.lift }, tile: { scale: GROW.tile, y: -GROW.tileLift }, glyph: GROW.glyph, line: { y: -GROW.lift, w: GROW.line } },
+    { box: { scale: 1, y: 0 }, tile: { scale: 1, y: 0 }, glyph: 2, line: { y: 0, w: 6 } },
+  ];
+  const [a, b] = on ? [small, big] : [big, small];
+  // Growing writes its start at load (fromTo), so play and seek leave the same transform; shrinking follows it.
+  const d = { duration: 1.6, ease: "power2.inOut", immediateRender: on };
+  const o = { transformOrigin: "50% 50%" };
+  tl.fromTo(stream.boxes, { ...a.box, ...o }, { ...b.box, ...o, ...d }, at);
+  tl.fromTo(stream.tileEls, { ...a.tile, ...o }, { ...b.tile, ...o, ...d }, "<");
+  tl.fromTo(stream.glyphs, { attr: { "stroke-width": a.glyph } }, { attr: { "stroke-width": b.glyph }, ...d }, "<");
+  tl.fromTo(stream.line, { y: a.line.y, attr: { "stroke-width": a.line.w } }, { y: b.line.y, attr: { "stroke-width": b.line.w }, ...d }, "<");
+}
+
 const section: SectionModule = {
   build(ctx) {
     const x1 = X0;
@@ -83,11 +102,13 @@ const section: SectionModule = {
       iconTile(ctx, ICONS[i], { x: X0 + GAP * i, y: Y - BOX.height / 2 - 20 - TILE / 2, size: TILE, tone: "accent" }),
     );
 
+    const tileEls = [...ctx.svg.querySelectorAll(".k-tile")];
+
     // The box outlines of the whole stream, first box to last.
     const bounds: Rect = { x: x1 - BOX.width / 2, y: Y - BOX.height / 2, w: x2 - x1 + BOX.width, h: BOX.height };
     return {
       stages: Object.fromEntries(NAMES.map((n) => [n.toLowerCase(), stageFrame(n.toLowerCase())])),
-      stream: { line, boxes, tiles, bounds },
+      stream: { line, boxes, tiles, tileEls, glyphs: tileEls.flatMap((g) => [...g.querySelectorAll(".k-icon [stroke-width]")]), bounds },
     };
   },
 };

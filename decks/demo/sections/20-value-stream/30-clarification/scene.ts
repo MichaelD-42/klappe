@@ -6,11 +6,11 @@ import { heading, label, stageFrame, svgEl } from "../section";
 const FLOOR = 930; // the figures' feet, just above the stream band
 const PERSON = 600; // where the person starts, beside the Clarification tile
 const PICK = 690; // where the person stands to pick it up
-const CARRY = 70; // the stack rides this far right of the body, so the walk shows
+const CARRY = 85; // the stack rides this far right of the body, so the arm, torso and walk show
 const STACK = PICK + CARRY; // where the stack of open questions waits
 const MEET = 960; // where the person stops in front of the customer
 const CUSTOMER = 1180;
-const HANDS = 50; // the carried stack sits this far above the feet
+const HANDS = 30; // the carried stack sits this far above the feet: in front of the hip, below the hand
 const CARDS = 5; // the stack the counter counts down: the cards drawn here, not a statistic
 const PULSE = { from: 650, to: 1290, y: 1022 }; // along the line, from the Clarification box to the Design box
 
@@ -64,7 +64,9 @@ const scene: SceneModule = {
     // The camera follows the stream to Clarification.
     (tl, r, ctx) => {
       tl.to(r.title, { autoAlpha: 1, duration: 0.6 });
-      ctx.canvas.refs.stream.tiles[2].light(tl, "<");
+      const { boxes, tiles } = ctx.canvas.refs.stream;
+      tl.to([boxes[0], boxes[2]], { autoAlpha: 1, duration: 0.6 }, "<"); // Analysis faded them
+      tiles[2].light(tl, "<");
       r.person.appear(tl);
       tl.to([r.stack, r.name], { autoAlpha: 1, duration: 0.5 }, "<");
       r.customer.appear(tl);

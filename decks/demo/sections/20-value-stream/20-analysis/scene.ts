@@ -1,6 +1,6 @@
 import { iconTile, morph, swarm } from "klappe/fx";
 import type { Rect, SceneModule } from "klappe/types";
-import { heading, label, stageFrame, svgEl } from "../section";
+import { grow, heading, label, stageFrame, svgEl } from "../section";
 
 // Scene-local layout around the Analysis stage, centred in the frame: tile at (960, 887), box below it.
 const FROM: Rect = { x: 120, y: 320, w: 260, h: 420 }; // from the Requirements side, at the left
@@ -70,8 +70,13 @@ const scene: SceneModule = {
   steps: [
     // The camera flies to the Analysis stage.
     (tl, r, ctx) => {
+      const stream = ctx.canvas.refs.stream;
+      // "<": with this step's entry flight. The overview's grown stages shrink back as the camera dives in,
+      // and the neighbour boxes, cut by the frame edges, fade (Clarification brings them back).
+      grow(tl, stream, false, "<");
+      tl.fromTo([stream.boxes[0], stream.boxes[2]], { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.8 }, "<"); // start written at load: play = seek
       tl.to(r.title, { autoAlpha: 1, duration: 0.6 });
-      ctx.canvas.refs.stream.tiles[1].light(tl, "<");
+      stream.tiles[1].light(tl, "<");
     },
     // Thousands of documents stream in.
     (tl, r) => {
