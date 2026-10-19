@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { limbAngle } from "../../src/fx/figure";
 
 describe("limbAngle", () => {
-  it("is a pure function of progress", () => {
-    for (const p of [0, 0.13, 0.5, 0.77, 1]) expect(limbAngle(p, 4)).toBe(limbAngle(p, 4));
+  it("never swings past the swing", () => {
+    for (let p = 0; p <= 1; p += 0.01) {
+      expect(Math.abs(limbAngle(p, 3))).toBeLessThanOrEqual(25);
+      expect(Math.abs(limbAngle(p, 7, 40))).toBeLessThanOrEqual(40);
+    }
   });
   it("stands straight at the start and the end of a walk", () => {
     expect(limbAngle(0, 3)).toBeCloseTo(0);

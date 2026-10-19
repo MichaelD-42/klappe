@@ -39,7 +39,7 @@ const walkElement: SceneModule = {
   },
   steps: [
     (tl, { f }) => f.appear(tl),
-    (tl, { f, route }) => f.walk(tl, route, { duration: 2.5 }),
+    (tl, { f, route }) => f.walk(tl, route, { duration: 2.5, at: "+=0.2" }),
   ],
 };
 
@@ -47,22 +47,24 @@ const walkElement: SceneModule = {
 const gather: SceneModule = {
   build(ctx) {
     title(ctx, "Gather at a table");
-    line(ctx, "M160 960 L1760 960");
     const fs = [
-      figure(ctx, { x: 1500, y: 960, color: "var(--k-accent)" }),
-      figure(ctx, { x: 240, y: 960, scale: 0.9, color: "var(--k-fg)" }),
-      figure(ctx, { x: 1720, y: 960, scale: 0.9, color: "var(--k-fg)" }),
+      figure(ctx, { x: 1500, y: 960, scale: 1.25, color: "var(--k-accent)" }),
+      figure(ctx, { x: 260, y: 960, scale: 1.25, color: "var(--k-fg)" }),
+      figure(ctx, { x: 1760, y: 960, scale: 1.25, color: "var(--k-fg)" }),
     ];
-    line(ctx, "M780 852 L780 960 L1140 960 L1140 852 Z", { fill: "var(--k-bg)" });
-    line(ctx, "M740 840 L1180 840 L1180 856 L740 856 Z", { fill: "var(--k-bg)" });
+    line(ctx, "M712 960 L712 806 L1208 806 L1208 960", { fill: "var(--k-bg)" }); // table front, open at the floor
+    line(ctx, "M160 960 L1760 960"); // floor, over the table front
+    line(ctx, "M680 790 L1240 790 L1240 806 L680 806 Z", { fill: "var(--k-bg)" }); // table top
+    line(ctx, "M752 782 L752 730 L840 730 L840 782 M736 790 L856 790"); // laptop
+    line(ctx, "M1140 788 L1140 754 L1168 754 L1168 788 M1168 762 Q1182 762 1182 771 Q1182 780 1168 780"); // mug
     return { fs };
   },
   steps: [
     (tl, { fs }) => fs.forEach((f: ReturnType<typeof figure>) => f.appear(tl)),
     (tl, { fs }) => {
-      fs[0].gather(tl, 960, 960);
-      fs[1].gather(tl, 680, 960);
-      fs[2].gather(tl, 1240, 960);
+      fs[0].gather(tl, 960, 955, undefined, 2); // behind the table: feet clear of the floor line
+      fs[1].gather(tl, 600, 960, "<", 2);
+      fs[2].gather(tl, 1320, 960, "<", 2);
     },
   ],
 };
