@@ -6,7 +6,7 @@ export function showProblems(ui: HTMLElement, problems: string[], lang: string):
   if (!problems.length) return;
   const box = document.createElement("details");
   box.className = "k-problems";
-  box.setAttribute("role", "alert");
+  box.setAttribute("aria-live", "assertive"); // role="alert" is not allowed on <details>
   box.dataset.noAdvance = "";
   const summary = document.createElement("summary");
   summary.textContent = `${t("problems", lang)} (${problems.length})`;
