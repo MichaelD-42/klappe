@@ -390,9 +390,16 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     await stepper.goto(zoom - 1, "cut");
     await stepper.next();
     const c = canvases[steps[zoom].canvas];
-    const label = [...c.el.querySelectorAll("[data-k-map] text")].find((e) => e.textContent === "[Host site]" && shows(e));
-    const dot = label?.previousElementSibling;
-    if (!label || dot?.tagName !== "circle") return ["after zoomTo: no visible [Host site] label and marker on the map"];
+    // The deck draws its own host label; the marker is the map's site dot nearest to it.
+    const label = [...c.el.querySelectorAll("*")].find((e) => !e.children.length && e.textContent === "[Host site]" && shows(e));
+    if (!label) return ["after zoomTo: no visible [Host site] label"];
+    const lr = label.getBoundingClientRect();
+    const gap = (e: Element) => {
+      const r = e.getBoundingClientRect();
+      return Math.hypot(r.left + r.width / 2 - lr.left, r.top + r.height / 2 - lr.bottom);
+    };
+    const dot = [...c.el.querySelectorAll("[data-k-map] circle")].filter(shows).sort((a, b) => gap(a) - gap(b))[0];
+    if (!dot || gap(dot) > 3 * lr.height) return ["after zoomTo: no visible host site marker next to the [Host site] label"];
     // The check runs at any viewport; this is the size the label renders at 1366 (stage width 1366).
     const px = parseFloat(getComputedStyle(label).fontSize) * Number(gsap.getProperty(c.el, "scaleX")) * (1366 / 1920);
     const box = stage.getBoundingClientRect();
