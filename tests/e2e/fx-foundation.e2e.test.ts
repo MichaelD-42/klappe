@@ -33,6 +33,14 @@ test('walk fails when onUpdate writes wall-clock time into data-k-text', async (
   expect(r.checks.find((c) => !c.ok)?.detail).toContain('text=')
 })
 
+// The snapshot also covers dash draw-ons, glows and tints.
+for (const prop of ['strokeDasharray', 'strokeDashoffset', 'filter', 'fillOpacity', 'color'])
+  test(`walk fails when onUpdate writes wall-clock state into ${prop}`, async () => {
+    const r = await walk(`style-clock&prop=${prop}`)
+    expect(r.ok).toBe(false)
+    expect(r.checks.find((c) => !c.ok)?.name).toContain('play≠seek')
+  })
+
 test('an unknown fixture fails the walk instead of walking another deck', async () => {
   const r = await walk('no-such-fixture')
   expect(r.ok).toBe(false)

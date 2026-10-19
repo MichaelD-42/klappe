@@ -30,6 +30,8 @@ function path(e: Element, root: Element): string {
 // One line per element: the world camera pose, then every inline-styled or SVG-transformed element
 // under it. GSAP writes SVG transforms to the attribute, so that is recorded too. Effects that write
 // from onUpdate mark their output: data-k-text (its text) and data-k-progress (a progress value).
+// Dash, filter, fill-opacity and colour are recorded too, for draw-ons, glows and tints. They are read
+// computed: GSAP rewinds an unset inline filter to "none", which renders the same as unset.
 // Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.el, p)}`).join(" ");
@@ -37,10 +39,11 @@ export function snapshot(c: CanvasRuntime): string {
   for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
     if (e.closest("[data-k-ignore]")) continue;
     const s = e.style;
+    const k = getComputedStyle(e);
     const attr = e.getAttribute("transform") ?? "";
     const progress = e.getAttribute("data-k-progress") ?? "";
     const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
-    lines.push(`${path(e, c.el)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}`)}${text}`);
+    lines.push(`${path(e, c.el)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}`)}${text}`);
   }
   return lines.join("\n");
 }
