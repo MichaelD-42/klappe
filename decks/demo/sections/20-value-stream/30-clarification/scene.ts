@@ -1,12 +1,13 @@
 import { bubble, counter, figure, shout } from "klappe/fx";
 import type { SceneModule } from "klappe/types";
-import { heading, stageFrame, svgEl } from "../section";
+import { heading, label, stageFrame, svgEl } from "../section";
 
 // Scene-local layout. The Clarification stage sits at x 420 (box 190..650), Design at 1520 (box 1290..1750).
 const FLOOR = 930; // the figures' feet, just above the stream band
 const PERSON = 600; // where the person starts, beside the Clarification tile
-const STACK = 750; // where the stack of open questions waits
 const PICK = 690; // where the person stands to pick it up
+const CARRY = 70; // the stack rides this far right of the body, so the walk shows
+const STACK = PICK + CARRY; // where the stack of open questions waits
 const MEET = 960; // where the person stops in front of the customer
 const CUSTOMER = 1180;
 const HANDS = 50; // the carried stack sits this far above the feet
@@ -22,13 +23,8 @@ const scene: SceneModule = {
     const title = heading(ctx, "Clarification");
     const person = figure(ctx, { x: PERSON, y: FLOOR, color: "var(--k-fg)" });
     const customer = figure(ctx, { x: CUSTOMER, y: FLOOR, color: "var(--k-accent)" });
-    const label = document.createElement("div");
-    label.textContent = "Customer";
-    Object.assign(label.style, {
-      position: "absolute", left: `${CUSTOMER - 150}px`, top: `${FLOOR - 285}px`, width: "300px",
-      textAlign: "center", fontSize: "32px", fontWeight: "600", color: "var(--k-accent)", ...hidden,
-    });
-    ctx.html.append(label);
+    const figures = [...ctx.svg.querySelectorAll("[data-k-figure]")];
+    const name = label(ctx, "Customer", CUSTOMER, FLOOR - 280);
 
     // The stack: question cards fanned upward from the feet line, a question mark on the top one.
     const stack = svgEl("g", { transform: `translate(${STACK} ${FLOOR})` });
@@ -55,12 +51,14 @@ const scene: SceneModule = {
     ctx.svg.append(pulse);
 
     // Placeholder words: the spec gives no actual question or answer.
-    const ask = bubble(ctx, { x: MEET - 30, y: FLOOR - 350, text: "Question?", side: "left" });
-    const reply = bubble(ctx, { x: CUSTOMER + 30, y: FLOOR - 350, text: "Answer.", side: "right" });
+    // The tails point at the heads (head centre: 197 above the feet).
+    const ask = bubble(ctx, { x: MEET - 40, y: FLOOR - 205, text: "[Question]", side: "left" });
+    const reply = bubble(ctx, { x: CUSTOMER + 40, y: FLOOR - 205, text: "[Answer]", side: "right" });
     const open = counter(ctx, { x: (MEET + CUSTOMER) / 2, y: 330, from: CARDS, to: 0, label: "Open questions" });
+    const count = ctx.html.lastElementChild; // counter() appends its box last; the shout clears it
     // Last, so it sits above the scene. Text as in scene.md; "calm" as in deck.md.
     const out = shout(ctx, { question: "What is still left for humans to do?", answer: "The conversations that build trust.", intensity: "calm" });
-    return { title, person, customer, label, stack, cards, pulse, ask, reply, open, out };
+    return { title, person, customer, name, figures, stack, cards, pulse, ask, reply, open, count, out };
   },
   steps: [
     // The camera follows the stream to Clarification.
@@ -68,15 +66,15 @@ const scene: SceneModule = {
       tl.to(r.title, { autoAlpha: 1, duration: 0.6 });
       ctx.canvas.refs.stream.tiles[2].light(tl, "<");
       r.person.appear(tl);
-      tl.to([r.stack, r.label], { autoAlpha: 1, duration: 0.5 }, "<");
+      tl.to([r.stack, r.name], { autoAlpha: 1, duration: 0.5 }, "<");
       r.customer.appear(tl);
     },
     // A person picks up the stack of open questions and walks to the customer.
     (tl, r) => {
       r.person.walk(tl, `M${PERSON} ${FLOOR} L${PICK} ${FLOOR}`, { duration: 0.7 });
-      tl.fromTo(r.stack, { x: STACK, y: FLOOR }, { x: PICK, y: FLOOR - HANDS, duration: 0.5, ease: "power2.out" });
+      tl.fromTo(r.stack, { x: STACK, y: FLOOR }, { x: STACK, y: FLOOR - HANDS, duration: 0.5, ease: "power2.out" });
       r.person.walk(tl, `M${PICK} ${FLOOR} L${MEET} ${FLOOR}`, { duration: 1.8 });
-      tl.fromTo(r.stack, { x: PICK }, { x: MEET, duration: 1.8, ease: "none", immediateRender: false }, "<");
+      tl.fromTo(r.stack, { x: STACK }, { x: MEET + CARRY, duration: 1.8, ease: "none", immediateRender: false }, "<");
     },
     // Questions and answers appear as speech bubbles.
     (tl, r) => {
@@ -103,7 +101,11 @@ const scene: SceneModule = {
       tl.to(r.pulse, { autoAlpha: 0, duration: 0.3 }, t + 1.7);
       ctx.canvas.refs.stream.tiles[3].light(tl, t + 1.7);
     },
-    (tl, r) => r.out.enter(tl),
+    // The question gets clean space: the people, the caption and the counter leave first.
+    (tl, r) => {
+      tl.to([...r.figures, r.name, r.count], { autoAlpha: 0, duration: 0.5 });
+      r.out.enter(tl);
+    },
     (tl, r) => r.out.hold(tl),
     (tl, r) => r.out.fade(tl),
     (tl, r) => r.out.answer(tl),

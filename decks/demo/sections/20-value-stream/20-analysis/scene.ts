@@ -1,14 +1,14 @@
 import { iconTile, morph, swarm } from "klappe/fx";
 import type { Rect, SceneModule } from "klappe/types";
-import { heading, stageFrame, svgEl } from "../section";
+import { heading, label, stageFrame, svgEl } from "../section";
 
-// Scene-local layout. The Analysis stage tile sits at (1450, 907), its box below it.
-const FROM: Rect = { x: 40, y: 300, w: 260, h: 480 }; // above Requirements, at the left edge
-const HEAP: Rect = { x: 1050, y: 560, w: 400, h: 240 }; // the documents land left of the stage tile
-const AGENT = { x: 1250, y: 360 };
+// Scene-local layout around the Analysis stage, centred in the frame: tile at (960, 887), box below it.
+const FROM: Rect = { x: 120, y: 320, w: 260, h: 420 }; // from the Requirements side, at the left
+const HEAP: Rect = { x: 760, y: 560, w: 400, h: 240 }; // right over the Analysis tile
+const AGENT = { x: 960, y: 330 };
 const FACT_Y = 470; // the row the key facts rise to, between the heap and the agent
 const FACT = { w: 170, h: 46 };
-const CARD = { x: 1620, y: 640, w: 230, h: 150, rise: 44 }; // the stack next to the stage; each card sits higher
+const CARD = { x: 1300, y: 640, w: 230, h: 150, dx: 26, dy: 40 }; // the stack right of the stage; each card fans up and right
 const FACTS = 3;
 
 const hidden = { opacity: "0", visibility: "hidden" };
@@ -50,14 +50,22 @@ const scene: SceneModule = {
       });
       bar(fact, "100%", { margin: "15px 0 0", opacity: "0.9" });
       // The structured card it becomes: a header and three fields.
-      const card = div(ctx.html, { x: CARD.x, y: CARD.y - i * CARD.rise, w: CARD.w, h: CARD.h }, {
+      const card = div(ctx.html, { x: CARD.x + i * CARD.dx, y: CARD.y - i * CARD.dy, w: CARD.w, h: CARD.h }, {
         border: "3px solid var(--k-accent)", borderRadius: "6px", padding: "0 18px", background: "var(--k-bg)",
+        boxShadow: "0 8px 18px rgb(0 0 0 / 0.45)",
       });
       bar(card, "calc(100% + 36px)", { height: "22px", margin: "0 -18px 6px", borderRadius: "0", background: "var(--k-accent)", opacity: "1" });
       for (const w of ["90%", "70%", "80%"]) bar(card, w);
       return { doc, lift: morph(ctx, { from: doc, to: fact }), stack: morph(ctx, { from: fact, to: card }) };
     });
-    return { docs, title, agent, beam, items };
+    // Captions in the spec's own words.
+    const names = {
+      docs: label(ctx, "Documents", HEAP.x - 130, HEAP.y + HEAP.h - 30),
+      agent: label(ctx, "AI agent", AGENT.x + 190, AGENT.y),
+      facts: label(ctx, "Key facts", AGENT.x + 1.5 * (FACT.w + 20) + 90, FACT_Y),
+      cards: label(ctx, "Cards", CARD.x + CARD.w / 2 + CARD.dx, CARD.y + CARD.h + 30),
+    };
+    return { docs, title, agent, beam, items, names };
   },
   steps: [
     // The camera flies to the Analysis stage.
@@ -66,20 +74,27 @@ const scene: SceneModule = {
       ctx.canvas.refs.stream.tiles[1].light(tl, "<");
     },
     // Thousands of documents stream in.
-    (tl, r) => r.docs.stream(tl, { duration: 3 }),
+    (tl, r) => {
+      r.docs.stream(tl, { duration: 3 });
+      tl.to(r.names.docs, { autoAlpha: 1, duration: 0.5 });
+    },
     // An AI agent scans them. Key facts light up and move into structured cards.
     (tl, r) => {
       r.agent.draw(tl);
+      tl.to(r.names.agent, { autoAlpha: 1, duration: 0.5 }, "<");
       r.agent.light(tl);
       tl.fromTo(r.beam, { autoAlpha: 0, x: 0 }, { autoAlpha: 0.9, duration: 0.3 });
       tl.fromTo(r.beam, { x: 0 }, { x: HEAP.w, duration: 1.4, ease: "sine.inOut" });
       tl.to(r.beam, { autoAlpha: 0, duration: 0.3 });
       tl.fromTo(r.items.map((it: { doc: HTMLElement }) => it.doc), { autoAlpha: 0, scale: 0.4 }, { autoAlpha: 1, scale: 1, duration: 0.4, stagger: 0.15, ease: "back.out(3)" });
       for (const it of r.items) it.lift.play(tl);
+      tl.to(r.names.facts, { autoAlpha: 1, duration: 0.5 });
     },
     // The cards stack up next to the stage.
     (tl, r) => {
+      tl.to(r.names.facts, { autoAlpha: 0, duration: 0.4 });
       for (const it of r.items) it.stack.play(tl);
+      tl.to(r.names.cards, { autoAlpha: 1, duration: 0.5 });
     },
   ],
 };

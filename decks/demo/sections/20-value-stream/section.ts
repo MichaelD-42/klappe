@@ -12,11 +12,11 @@ const GAP = 1100;
 const Y = 1022;
 const BOX = { width: 460, height: 90 };
 const LABEL_PX = 62; // stays >= 14 px at 1366x768 when the overview frames the whole stream
-const TILE = 96; // the stage's icon tile, just above its box
+const TILE = 140; // the stage's icon tile, just above its box
 
-// Where the stage sits inside its scene frame (x, stage px). Analysis sits right and
-// Clarification left, so one scene's text never shows inside the next scene's frame.
-const FRAME_AT: Record<string, number> = { analysis: 1450, clarification: 420 };
+// Where the stage sits inside its scene frame (x, stage px); default the centre. Clarification
+// sits left, so its frame starts right of the Analysis cards (Analysis x < 1640, scene-local).
+const FRAME_AT: Record<string, number> = { clarification: 420 };
 
 const centre = (name: string) => {
   const i = NAMES.findIndex((n) => n.toLowerCase() === name);
@@ -42,6 +42,18 @@ export function heading(ctx: Ctx, text: string): HTMLElement {
   return h;
 }
 
+// A hidden caption centred on (x, y), scene-local, in the accent colour: names a thing on screen.
+export function label(ctx: Ctx, text: string, x: number, y: number): HTMLElement {
+  const d = document.createElement("div");
+  d.textContent = text;
+  Object.assign(d.style, {
+    position: "absolute", left: `${x}px`, top: `${y}px`, width: "max-content", translate: "-50% -50%",
+    fontSize: "32px", fontWeight: "600", color: "var(--k-accent)", opacity: "0", visibility: "hidden",
+  });
+  ctx.html.append(d);
+  return d;
+}
+
 const section: SectionModule = {
   build(ctx) {
     const x1 = X0;
@@ -53,12 +65,13 @@ const section: SectionModule = {
 
     const boxes = NAMES.map((name, i) => {
       const g = svgEl("g", { "data-stage": name.toLowerCase() });
-      Object.assign(g.style, { opacity: "0", visibility: "hidden" }); // the overview fades the stages in
+      // The box fill is there from the start and hides the line under it; the overview draws the
+      // outline and fades the name in.
       const r = svgEl("rect", { x: X0 + GAP * i - BOX.width / 2, y: Y - BOX.height / 2, ...BOX, rx: 6, "stroke-width": 4 });
       r.style.fill = "var(--k-bg)";
       r.style.stroke = "var(--k-accent)";
       const t = svgEl("text", { x: X0 + GAP * i, y: Y, "text-anchor": "middle", "dominant-baseline": "central", "font-size": LABEL_PX });
-      t.style.fill = "var(--k-fg)";
+      Object.assign(t.style, { fill: "var(--k-fg)", opacity: "0", visibility: "hidden" });
       t.textContent = name;
       g.append(r, t);
       ctx.svg.append(g);
