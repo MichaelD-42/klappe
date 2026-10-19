@@ -112,6 +112,7 @@ Frontmatter keys:
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
+- A missing file shows a placeholder box (IMAGE MISSING, VIDEO MISSING or DATA MISSING) and a deck problem, not a blank slide. `klappe test` writes `media/TODO.md` and `data/TODO.md` with one line per missing file. For an image, the line holds a prompt made from the link's title (the `"prompt"` part, else the alt text) and the scene heading.
 
 ### scene.ts
 
@@ -176,7 +177,11 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // worldMap: draw the land, then sites and an arc between them.
 { build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 60, w: 1800, h: 960 }, sites: [{ id: "s1", label: "[Site 1]", lon: 9, lat: 48 }, { id: "s2", label: "[Site 2]", lon: 121, lat: 31 }] }),
-  steps: [(tl, m) => m.draw(tl), (tl, m) => (m.site(tl, "s1"), m.site(tl, "s2")), (tl, m) => m.arc(tl, "s1", "s2")] }
+  steps: [(tl, m) => m.draw(tl), (tl, m) => (m.site(tl, "s1"), m.site(tl, "s2")), (tl, m) => m.arc(tl, "s1", "s2"),
+          (tl, m) => m.zoomTo(tl, "s1"), (tl, m) => m.world(tl)] } // the camera zooms to a site and shows its label, then back
+
+// parseCsv: read a data/ file yourself, for an effect that is not a chart. A "# source: ..." line rides along as .source.
+{ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }), steps: [] }
 
 // figure: a stick figure appears, then walks along a path (scene-local SVG path data).
 { build: (ctx) => figure(ctx, { x: 260, y: 960, color: "var(--k-fg)" }), steps: [(tl, f) => f.appear(tl), (tl, f) => f.walk(tl, "M 260 960 L 1600 960", { duration: 3 })] }
@@ -193,12 +198,17 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, r) => r.m.play(tl), (tl, r) => r.b.show(tl), (tl, r) => (r.b.hide(tl), r.n.run(tl))] }
 
 // image and video: a file from media/ (or a YouTube or Vimeo link for video), with a placeholder when it is missing.
+// A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 
 // shout with its own intensity: the scene.md has the 4 steps of a shout-out (### Question? and an answer).
 { build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
   steps: [(tl, s) => s.enter(tl), (tl, s) => s.hold(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
+
+// A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
+{ transition: "zoom", zoomTarget: "hostSite" }
+{ transition: "shatter", transitionOptions: { shards: 20 } }
 ```
 
 ### Types in deck repos
