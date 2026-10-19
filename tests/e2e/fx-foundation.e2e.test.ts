@@ -91,6 +91,39 @@ test('a media slot chart reads JSON {source, rows}, shows Sample data and no tit
   await page.close()
 })
 
+// The problems panel sits top-left, stays small, and clicks on it do not advance.
+test('the problems panel leaves the media placeholders and the scene text visible', async () => {
+  const page = await open('?fixture=media-layout#/a/media/2')
+  const uncovered = (step: number) =>
+    page.evaluate((n) => {
+      const box = document.querySelector<HTMLElement>(`div[data-k-media="${n}"] > div`)!
+      const r = box.getBoundingClientRect()
+      const scene = document.querySelector<HTMLElement>('[data-scene] h2')!.getBoundingClientRect()
+      const pts = [
+        [r.left + 2, r.top + 2], [r.right - 2, r.top + 2], [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+        [scene.left + 2, scene.top + 2],
+      ]
+      return pts.filter(([x, y]) => document.elementFromPoint(x, y)?.closest('.k-problems')).length
+    }, step)
+  const panel = () =>
+    page.evaluate(() => {
+      const p = document.querySelector<HTMLDetailsElement>('.k-problems')!
+      const r = p.getBoundingClientRect()
+      return { open: p.open, h: r.height / document.querySelector('.k-stage')!.getBoundingClientRect().height, text: p.textContent }
+    })
+  expect((await panel()).text).toContain('IMAGE MISSING')
+  expect(await uncovered(2)).toBe(0)
+  await page.click('.k-problems summary')
+  const opened = await panel()
+  expect(opened.open).toBe(true)
+  expect(opened.h).toBeLessThanOrEqual(0.31)
+  expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(1) // the click did not advance
+  await page.click('.k-problems summary')
+  await page.evaluate(() => window.klappe.stepper.goto(4, 'cut'))
+  expect(await uncovered(5)).toBe(0)
+  await page.close()
+})
+
 test('a data file that does not parse shows DATA ERROR and records a problem', async () => {
   const page = await open('?fixture=media-layout#/a/media/5')
   const box = await page.evaluate(() => document.querySelector('div[data-k-media="5"]')?.textContent)
