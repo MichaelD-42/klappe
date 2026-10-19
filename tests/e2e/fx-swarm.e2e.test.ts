@@ -39,12 +39,46 @@ test('the swarm canvas sits in the world and ends its step at progress 1', async
   await page.close()
 })
 
-test('the counter shows to after its step and from before it', async () => {
-  const page = await open('?fixture=fx-motion#/a/counts/1')
+test('each counter shows from before its step and to after it', async () => {
+  const page = await open('?fixture=fx-motion#/a/talk/4')
   const texts = () => page.evaluate(() => [...document.querySelectorAll('[data-k-text]')].map((e) => e.textContent))
+  expect(await texts()).toEqual(['128', '0'])
+  await page.evaluate(() => window.klappe.stepper.next())
   expect(await texts()).toEqual(['0', '0'])
   await page.evaluate(() => window.klappe.stepper.next())
-  expect(await texts()).toEqual(['0', '2000'])
+  expect(await texts()).toEqual(['0', '2,000'])
+  await page.close()
+})
+
+test('morph keeps a transform the author set', async () => {
+  const page = await open('?fixture=fx-motion#/a/shapes/1')
+  const placed = () => page.evaluate(() => document.querySelector('rect')!.getBoundingClientRect().toJSON())
+  const before = await placed()
+  // At 1920 the camera rests on the scene at scale 1: translate(300 450) puts the square at (300, 450).
+  expect(before.left).toBeCloseTo(300, 0)
+  expect(before.top).toBeCloseTo(450, 0)
+  expect(before.width).toBeCloseTo(160, 0)
+  await page.close()
+})
+
+// Report only: the cost of one swarm redraw at 2000 points, from seeks across the stream.
+test('draw-cost report: seek the 2000-point stream', async () => {
+  const page = await open('?fixture=fx-swarm')
+  const r = await page.evaluate(() => {
+    const tl = window.klappe.canvases[0].tl
+    const end = tl.labels['e:0']
+    tl.pause()
+    const ms: number[] = []
+    for (let n = 0; n < 120; n++) {
+      const t0 = performance.now()
+      tl.seek(((n % 60) / 60) * end + 0.01, false)
+      ms.push(performance.now() - t0)
+    }
+    ms.sort((a, b) => a - b)
+    return { median: ms[60], p95: ms[Math.floor(ms.length * 0.95)] }
+  })
+  console.log(`swarm 2000 points, one seek and redraw: median ${r.median.toFixed(2)} ms, p95 ${r.p95.toFixed(2)} ms`)
+  expect(r.median).toBeGreaterThan(0)
   await page.close()
 })
 

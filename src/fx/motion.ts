@@ -21,19 +21,31 @@ export interface CounterOpts {
 }
 
 const TAIL = 24; // bubble tail size in scene units
+const LINE = 3; // bubble stroke width
 
-// The counter's text at progress p: round(lerp(from, to, p)).
+// shortcut: the deck language is not on ctx, so numbers use English grouping; pass meta.lang in once ctx has it.
+const numbers = new Intl.NumberFormat("en");
+
+// The counter's text at progress p: round(lerp(from, to, p)) with thousands separators.
 export function counterText(from: number, to: number, p: number): string {
-  return String(Math.round(from + (to - from) * p));
+  return numbers.format(Math.round(from + (to - from) * p));
 }
 
-// Moves `from` onto `to` while it fades out, and `to` grows out of `from` while it fades in.
-// `to` is hidden until play. Chains work (doc -> fact -> card): each play measures untransformed layout.
+type Pose = { x: number; y: number; scaleX: number; scaleY: number };
+const pose = (e: Element): Pose => {
+  const get = gsap.getProperty(e);
+  return { x: Number(get("x")), y: Number(get("y")), scaleX: Number(get("scaleX")), scaleY: Number(get("scaleY")) };
+};
+
+// Moves `from` onto `to` and crossfades them.
+// Both scale uniformly, so text keeps its aspect. Transforms the author set (an SVG translate,
+// a GSAP x) stay: the move is added on top. `to` is hidden until play. Chains work (doc -> fact -> card).
 export function morph(ctx: Ctx, opts: MorphOpts): { play: StepAdder } {
   const { from, to } = opts;
-  // Identity transforms at load: a seek renders them anyway, so play must start from the same attributes.
-  gsap.set([from, to], { x: 0, y: 0, scaleX: 1, scaleY: 1 });
-  gsap.set(to, { autoAlpha: 0 });
+  const [p, q] = [pose(from), pose(to)];
+  // Re-set the current pose: a seek writes it in GSAP's form anyway, so play must start from the same attributes.
+  gsap.set(from, { ...p, transformOrigin: "50% 50%" });
+  gsap.set(to, { ...q, transformOrigin: "50% 50%", autoAlpha: 0 });
   return {
     play(tl) {
       // Screen boxes divided by the world's on-screen scale give world units, for HTML and SVG alike.
@@ -43,17 +55,26 @@ export function morph(ctx: Ctx, opts: MorphOpts): { play: StepAdder } {
       const [a, b] = [from.getBoundingClientRect(), to.getBoundingClientRect()];
       const dx = (b.left + b.width / 2 - (a.left + a.width / 2)) / k;
       const dy = (b.top + b.height / 2 - (a.top + a.height / 2)) / k;
-      const sx = a.width && b.width ? b.width / a.width : 1;
-      const sy = a.height && b.height ? b.height / a.height : 1;
-      const common = { duration: motion.step * 2, ease: "power2.inOut", transformOrigin: "50% 50%", immediateRender: false };
-      tl.fromTo(from, { x: 0, y: 0, scaleX: 1, scaleY: 1, autoAlpha: 1 }, { x: dx, y: dy, scaleX: sx, scaleY: sy, autoAlpha: 0, ...common });
-      tl.fromTo(to, { x: -dx, y: -dy, scaleX: 1 / sx, scaleY: 1 / sy, autoAlpha: 0 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, autoAlpha: 1, ...common }, "<");
+      // One factor for both axes (the geometric mean of the size ratios): no stretched text mid-way.
+      const s = a.width && a.height && b.width && b.height ? Math.sqrt((b.width / a.width) * (b.height / a.height)) : 1;
+      const d = motion.step * 2;
+      const move = { duration: d, ease: "power2.inOut", immediateRender: false };
+      // The crossfade runs over the middle 70% of the move: each shape shows alone at its end, half and half mid-way.
+      const fade = { duration: d * 0.7, ease: "none", immediateRender: false };
+      tl.fromTo(from, p, { x: p.x + dx, y: p.y + dy, scaleX: p.scaleX * s, scaleY: p.scaleY * s, ...move });
+      tl.fromTo(to, { x: q.x - dx, y: q.y - dy, scaleX: q.scaleX / s, scaleY: q.scaleY / s }, { ...q, ...move }, "<");
+      tl.fromTo(from, { autoAlpha: 1 }, { autoAlpha: 0, ...fade }, `<${d * 0.15}`);
+      tl.fromTo(to, { autoAlpha: 0 }, { autoAlpha: 1, ...fade }, "<");
     },
   };
 }
 
 // A speech bubble whose tail points at (x, y), scene-local. side: where the bubble sits from that point.
-export function bubble(ctx: Ctx, opts: BubbleOpts): { show: StepAdder; hide: StepAdder } {
+// hide takes an optional position, for example "<" to hide together with another bubble.
+export function bubble(
+  ctx: Ctx,
+  opts: BubbleOpts,
+): { show: StepAdder; hide: (tl: gsap.core.Timeline, at?: gsap.Position) => void } {
   const { x, y, text, side } = opts;
   const right = side === "right";
   const box = document.createElement("div");
@@ -66,21 +87,27 @@ export function bubble(ctx: Ctx, opts: BubbleOpts): { show: StepAdder; hide: Ste
     maxWidth: "640px",
     boxSizing: "border-box",
     padding: "20px 32px",
-    borderRadius: "16px",
-    background: "var(--k-accent)",
-    color: "var(--k-bg)",
+    borderRadius: "6px",
+    // An outline, like the line art: accent stroke on the background colour.
+    border: `${LINE}px solid var(--k-accent)`,
+    background: "var(--k-bg)",
+    color: "var(--k-fg)",
     fontSize: "36px",
     fontWeight: "600",
     lineHeight: "1.3",
   });
+  // The tail: a diamond with the stroke on its two outer sides; its inner half covers the box's stroke.
   const tail = document.createElement("div");
+  const stroke = `${LINE}px solid var(--k-accent)`;
   Object.assign(tail.style, {
     position: "absolute",
     top: `calc(50% - ${TAIL / 2}px)`,
-    [right ? "left" : "right"]: `${-TAIL / 2}px`,
+    [right ? "left" : "right"]: `${-TAIL / 2 - LINE / 2}px`,
     width: `${TAIL}px`,
     height: `${TAIL}px`,
-    background: "var(--k-accent)",
+    boxSizing: "border-box",
+    background: "var(--k-bg)",
+    ...(right ? { borderLeft: stroke, borderBottom: stroke } : { borderTop: stroke, borderRight: stroke }),
     rotate: "45deg",
   });
   box.append(tail);
@@ -90,8 +117,8 @@ export function bubble(ctx: Ctx, opts: BubbleOpts): { show: StepAdder; hide: Ste
     show(tl) {
       tl.fromTo(box, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)", immediateRender: false });
     },
-    hide(tl) {
-      tl.to(box, { autoAlpha: 0, duration: motion.step });
+    hide(tl, at) {
+      tl.to(box, { autoAlpha: 0, duration: motion.step }, at);
     },
   };
 }

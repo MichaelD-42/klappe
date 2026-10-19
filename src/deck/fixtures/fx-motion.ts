@@ -58,7 +58,8 @@ const shapes: SceneModule = {
       ctx.svg.append(e);
       return e;
     };
-    const sq = make("rect", { x: 300, y: 450, width: 160, height: 160, fill: "var(--k-fg)" });
+    // Placed by the author with an SVG translate: the morph must keep it.
+    const sq = make("rect", { x: 0, y: 0, width: 160, height: 160, fill: "var(--k-fg)", transform: "translate(300 450)" });
     const dot = make("circle", { cx: 1400, cy: 600, r: 160, fill: "var(--k-accent)" });
     gsap.set(sq, { autoAlpha: 0 });
     return { h, sq, m: morph(ctx, { from: sq, to: dot }) };
@@ -86,7 +87,7 @@ const talk: SceneModule = {
     (tl, { shown }) => tl.to(shown, { autoAlpha: 1, duration: 0.6 }),
     (tl, { q }) => q.show(tl),
     (tl, { a }) => a.show(tl),
-    (tl, { q, a }) => (q.hide(tl), a.hide(tl)),
+    (tl, { q, a }) => (q.hide(tl), a.hide(tl, "<")),
   ],
 };
 

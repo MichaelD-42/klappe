@@ -34,7 +34,8 @@ function frame(ctx: Ctx, title: string, boxes: [Rect, string][]): HTMLElement[] 
 // Thousands of documents stream from the inbox into Analysis: the default 2000 points.
 const big = (from: Rect, to: Rect): SceneModule => ({
   build(ctx) {
-    return { shown: frame(ctx, "Documents stream in", [[from, "Inbox"], [to, "Analysis"]]), s: swarm(ctx, { rect: FULL, from, to, seed: 1 }) };
+    const s = swarm(ctx, { rect: FULL, from, to, seed: 1 }); // first, so the labels sit above the canvas
+    return { s, shown: frame(ctx, "Documents stream in", [[from, "Inbox"], [to, "Analysis"]]) };
   },
   steps: [
     (tl, { shown, s }) => {
@@ -48,7 +49,8 @@ const big = (from: Rect, to: Rect): SceneModule => ({
 const small = (from: Rect, to: Rect): SceneModule => ({
   build(ctx) {
     const rect = { x: 200, y: 260, w: 1520, h: 760 };
-    return { shown: frame(ctx, "A small swarm", [[from, "Top"], [to, "Bottom"]]), s: swarm(ctx, { rect, count: 150, from, to, seed: 42 }) };
+    const s = swarm(ctx, { rect, count: 150, from, to, seed: 42 });
+    return { s, shown: frame(ctx, "A small swarm", [[from, "Top"], [to, "Bottom"]]) };
   },
   steps: [
     (tl, { shown }) => tl.to(shown, { autoAlpha: 1, duration: 0.6 }),

@@ -15,7 +15,7 @@ export interface SwarmHandle {
 
 const UNIT: Rect = { x: 0, y: 0, w: 1, h: 1 };
 const FLIGHT = 0.4; // each object flies for this share of the stream; start times spread over the rest
-const MAX_BACKING = 4096; // canvas side limit in device pixels
+const MAX_BACKING = 2560; // canvas side limit in device pixels
 
 // A seeded number in [0, 1) for object i, draw k. Integer hash, no state.
 function rand(seed: number, i: number, k: number): number {
@@ -26,12 +26,13 @@ function rand(seed: number, i: number, k: number): number {
 }
 
 // Object i of the swarm at progress p (0..1). Pure: the same inputs give the same point.
-// It starts at a seeded spot in from, leaves at a seeded time, and lands at a seeded spot in to,
-// on a curve that stays inside the bounding box of from and to. Without rects both are the unit square.
+// It starts at a seeded spot in from, leaves at a seeded time, and lands on a heap at the bottom of to
+// (wide at the base, narrow at the top), on a curve that stays inside the bounding box of from and to. Without rects both are the unit square.
 export function swarmPoint(seed: number, i: number, p: number, from: Rect = UNIT, to: Rect = UNIT): { x: number; y: number } {
   const r = (k: number) => rand(seed, i, k);
   const s = { x: from.x + r(0) * from.w, y: from.y + r(1) * from.h };
-  const e = { x: to.x + r(2) * to.w, y: to.y + r(3) * to.h };
+  const height = r(3) * r(7); // product of two uniforms: most documents land low
+  const e = { x: to.x + (0.5 + (r(2) - 0.5) * (1 - height)) * to.w, y: to.y + (1 - height) * to.h };
   const x0 = Math.min(from.x, to.x);
   const y0 = Math.min(from.y, to.y);
   // Control point: a convex mix of the midpoint and a seeded spot in the bounding box, so the curve stays inside it.
@@ -65,29 +66,29 @@ export function swarm(ctx: Ctx, opts: SwarmOpts): SwarmHandle {
   ctx.html.append(canvas);
   gsap.set(canvas, { autoAlpha: 0 });
   const c2d = canvas.getContext("2d");
-  let colors: [string, string] | undefined;
 
   // A pure function of p: the whole frame is redrawn from swarmPoint.
   const draw = (p: number) => {
     canvas.setAttribute("data-k-progress", String(p));
     if (!c2d) return;
-    if (!colors) {
-      const css = getComputedStyle(canvas);
-      const fg = css.getPropertyValue("--k-fg").trim();
-      const accent = css.getPropertyValue("--k-accent").trim();
-      if (fg) colors = [fg, accent || fg]; // empty before the stylesheet applies: draw in white this once
-    }
+    // Theme colours, read each frame; before the stylesheet applies, the inherited text colour.
+    const css = getComputedStyle(canvas);
+    const fg = css.getPropertyValue("--k-fg").trim() || css.color;
+    const accent = css.getPropertyValue("--k-accent").trim() || fg;
     c2d.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale);
     c2d.clearRect(rect.x, rect.y, rect.w, rect.h);
-    // Small document shapes; every 25th is a key fact in the accent colour.
-    for (const [k, color] of [[1, colors?.[0] ?? "#fff"], [0, colors?.[1] ?? "#fff"]] as const) {
-      c2d.fillStyle = color;
-      c2d.globalAlpha = k ? 0.6 : 1;
+    // Small documents; every 25th is a key fact: larger, accent, glowing while the stream runs.
+    for (const fact of [false, true]) {
+      c2d.fillStyle = fact ? accent : fg;
+      c2d.globalAlpha = fact ? 1 : 0.55;
+      c2d.shadowColor = accent;
+      c2d.shadowBlur = fact ? 16 * scale * Math.sin(Math.PI * p) : 0;
       c2d.beginPath();
       for (let i = 0; i < count; i++) {
-        if ((i % 25 === 0 ? 0 : 1) !== k) continue;
+        if ((i % 25 === 0) !== fact) continue;
         const pt = swarmPoint(seed, i, p, from, to);
-        c2d.rect(pt.x - 3, pt.y - 4, 6, 8);
+        if (fact) c2d.rect(pt.x - 5, pt.y - 7, 10, 14);
+        else c2d.rect(pt.x - 3, pt.y - 4, 6, 8);
       }
       c2d.fill();
     }
