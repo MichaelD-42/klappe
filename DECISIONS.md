@@ -100,3 +100,5 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **The `onUpdate` rule (see M2 fx foundation) held through M2.** CRT typing, the counter and the swarm canvas write the DOM from `onUpdate` as a pure function of progress, and the walk checks play against seek for each of them.
 - **A video box has a theme-token border and its title as a caption underneath.**
   - Why: offline, a bare black box reads as a hole in the slide. The caption sits outside `data-k-ignore`, so the self-test checks its size.
+- **A background is one cover image per scene frame, in a layer under the SVG and HTML layers, visible from load; only its Ken Burns push is on the timeline.**
+  - Why: one image over a wide canvas would show each scene a crop of it; a per-frame copy keeps camera moves correct. Visible from load, it crossfades in with its canvas instead of popping in after the transition.

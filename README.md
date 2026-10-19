@@ -112,7 +112,7 @@ Frontmatter keys:
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
-- A missing file shows a placeholder box (IMAGE MISSING, VIDEO MISSING or DATA MISSING) and a deck problem, not a blank slide. `klappe test` writes `media/TODO.md` and `data/TODO.md` with one line per missing file. For an image, the line holds a prompt made from the link's title (the `"prompt"` part, else the alt text) and the scene heading.
+- A missing file shows a placeholder box (IMAGE MISSING, VIDEO MISSING or DATA MISSING) and a deck problem, not a blank slide. `klappe test` writes `media/TODO.md` and `data/TODO.md` with one line per missing file. For an image, the line holds a prompt made from the link's title (the `"prompt"` part, else the alt text) and the scene heading. A prompt made from alt text ends with ", 16:9, 1920x1080, no text, no logos", so the picture fits a full slide; a title stays as written. Full-screen pictures and backgrounds need `scene.ts` or `section.ts` (see Effects); there is no Markdown syntax for them.
 
 ### scene.ts
 
@@ -133,6 +133,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `transition` sets how the deck enters this section when it moves forward by one step onto a new canvas. Default `fade`. A back move, a jump and `?instant=1` always cut.
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
+- `background` puts a full-screen picture from `media/` behind every scene of the section: `{ href: "media/sky.png", scrim: 0.45, kenBurns: true }`. Each scene frame gets its own copy, so camera moves stay correct. A `scene.ts` can set its own `background` too; it replaces the section's for that scene. The picture shows with its canvas. `scrim` (0 to 1) darkens it for text on top. `kenBurns` adds a slow 6 s push on the scene's first step; `?reducedmotion=1` leaves it out.
 
 ### Effects
 
@@ -202,6 +203,22 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
+
+// A full-screen picture: fit "cover" with no rect fills the whole scene frame and crops to keep the aspect.
+// kenBurns: true makes show() a slow 6 s push (1.0 to 1.08 with a slight drift); pass { from, to } poses
+// ({ scale, x, y }) for your own. move(tl, { duration }) plays the push on its own. hide(tl) fades it out.
+// scrim (0 to 1) darkens the picture. Build your text after the image and position it, so it paints on top.
+// A missing file shows IMAGE MISSING over the full frame, with the alt text and a prompt for an image generator.
+{ build: (ctx) => image(ctx, { href: "media/hero.png", alt: "A dawn sky over a factory", fit: "cover", kenBurns: true }),
+  steps: [(tl, i) => i.show(tl), (tl, i) => i.hide(tl)] }
+{ build: (ctx) => { const img = image(ctx, { href: "media/hero.png", alt: "A dawn sky over a factory", fit: "cover", scrim: 0.55 });
+                    const text = document.createElement("h2"); text.textContent = "Why now";
+                    Object.assign(text.style, { position: "absolute", left: "160px", top: "700px" });
+                    ctx.html.append(text); gsap.set(text, { autoAlpha: 0 }); return { img, text } },
+  steps: [(tl, r) => (r.img.show(tl), tl.to(r.text, { autoAlpha: 1 }, "<"))] }
+
+// A background, in a section.ts (or scene.ts) default export. Plain scene.md text shows on top.
+{ background: { href: "media/sky.png", scrim: 0.45, kenBurns: true } }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 
 // shout with its own intensity: the scene.md has the 4 steps of a shout-out (### Question? and an answer).
