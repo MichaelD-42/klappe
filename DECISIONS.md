@@ -60,3 +60,17 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: it checks the engine, and the demo is the one deck that is always present.
 - **Deck code imports types from `klappe/types`. Deck repos map it in `tsconfig.json`; `klappe init` writes the file.**
   - Why: the same import works in the klappe repo and in a deck repo, with no relative paths into the subtree.
+
+## 2026-10-19 (M2 fx foundation)
+
+- **`onUpdate` may write the DOM, but only as a pure function of the tween's progress.** `onComplete` and `.call()` still must not change state.
+  - Why: typing text, count-up numbers and canvas swarms need it, and a value computed from progress is the same after play and after seek.
+  - The self-test snapshot records the text of `[data-k-text]` elements and the `data-k-progress` attribute, and skips anything under `data-k-ignore` (CSS loops, video).
+- **The engine seeks canvas timelines with events on (`tl.seek(label, false)`).**
+  - Why: GSAP's `seek()` suppresses callbacks by default, so `onUpdate` never ran on a deep link and typed text stayed empty. The walk's reset seeks to 0 the same way, so it now catches an `onUpdate` that is not a function of progress.
+- **The `transition` event reports the transition that actually played.** A transition that throws (an effect not built yet, or a bug) falls back to `fade` and logs with `console.error`.
+  - Why: the move must land; the log makes the self-test fail, so the fallback is never silent.
+- **The default renderer falls back quietly to M1 text when the `shout` stub is not built yet.** A media step whose effect is missing shows "EFFECT MISSING: <kind>" and records a problem.
+  - Why: the demo walk must stay green during Wave 1; missing media must be visible.
+- **Helpers record deck problems through `ctx.problem(msg)`.** They are kept on the canvas runtime, and the self-test adds them to its problems.
+  - Open: `main.ts` does not pass them to the on-screen problems panel yet (one line, outside Task 0's files).

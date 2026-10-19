@@ -28,14 +28,19 @@ function path(e: Element, root: Element): string {
 }
 
 // One line per element: the world camera pose, then every inline-styled or SVG-transformed element
-// under it. GSAP writes SVG transforms to the attribute, so that is recorded too.
+// under it. GSAP writes SVG transforms to the attribute, so that is recorded too. Effects that write
+// from onUpdate mark their output: data-k-text (its text) and data-k-progress (a progress value).
+// Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.el, p)}`).join(" ");
   const lines = [`world|${round(pose)}`];
-  for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform]")) {
+  for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
+    if (e.closest("[data-k-ignore]")) continue;
     const s = e.style;
     const attr = e.getAttribute("transform") ?? "";
-    lines.push(`${path(e, c.el)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}`)}`);
+    const progress = e.getAttribute("data-k-progress") ?? "";
+    const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
+    lines.push(`${path(e, c.el)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}`)}${text}`);
   }
   return lines.join("\n");
 }
@@ -53,13 +58,18 @@ function firstDiff(a: string, b: string): string {
 
 // Every element with visible own text in the current scene: rendered size and on-stage box.
 // Earlier scenes on the same canvas keep their text, off camera, so they are not checked.
+// Section text (a backdrop for the whole canvas) is checked for size where it shows on stage.
 function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string[] {
   const fit = stage.getBoundingClientRect().width / 1920;
   const cam = Number(gsap.getProperty(c.el, "scaleX"));
   const box = stage.getBoundingClientRect();
   const bad: string[] = [];
   const seen = new Set<Element>();
-  for (const root of c.el.querySelectorAll(`[data-scene="${CSS.escape(scene)}"]`)) {
+  const roots = [
+    ...[...c.el.querySelectorAll(`[data-scene="${CSS.escape(scene)}"]`)].map((r) => ({ r, section: false })),
+    ...[...c.el.querySelectorAll("[data-section]")].map((r) => ({ r, section: true })),
+  ];
+  for (const { r: root, section } of roots) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = walker.nextNode(); t; t = walker.nextNode()) {
       const e = t.parentElement;
@@ -68,10 +78,12 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
       if (!e.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
       const px = parseFloat(getComputedStyle(e).fontSize) * cam * fit;
       const r = e.getBoundingClientRect();
+      const outside = r.left < box.left - 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.bottom > box.bottom + 1;
+      const offStage = r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom;
+      if (section && offStage) continue;
       const where = `${path(e, c.el)} "${t.textContent.trim().slice(0, 30)}"`;
       if (innerWidth === 1366 && px < MIN_PX_1366) bad.push(`${where}: ${px.toFixed(1)} px < ${MIN_PX_1366} px`);
-      if (r.left < box.left - 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.bottom > box.bottom + 1)
-        bad.push(`${where}: box ${[r.left, r.top, r.right, r.bottom].map(Math.round)} outside stage`);
+      if (!section && outside) bad.push(`${where}: box ${[r.left, r.top, r.right, r.bottom].map(Math.round)} outside stage`);
     }
   }
   return bad;
@@ -81,7 +93,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
   const { stepper, canvases, steps, stage } = ctx;
   const reset = () => {
     for (const c of canvases) {
-      c.tl.seek(0);
+      c.tl.seek(0, false); // fire onUpdate, as a fresh page load would show it
       gsap.set(c.el, { autoAlpha: 0 });
     }
     stepper.reset();
@@ -372,12 +384,13 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
     ctx.errors.push(`selftest: ${e instanceof Error ? e.message : e}`);
   }
   // Always write a result, so a failure reads as a failure and not as a driver timeout.
+  const problems = [...ctx.problems, ...ctx.canvases.flatMap((c) => c.problems)];
   const result: SelftestResult = {
     mode,
-    ok: checks.every((c) => c.ok) && !ctx.problems.length && !ctx.errors.length,
+    ok: checks.every((c) => c.ok) && !problems.length && !ctx.errors.length,
     steps: ctx.steps.length,
     checks,
-    problems: [...ctx.problems],
+    problems,
     errors: [...ctx.errors],
   };
   const out = document.createElement("script");

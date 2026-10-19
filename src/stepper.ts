@@ -1,12 +1,12 @@
 import { gsap } from "gsap";
+import { playTransition } from "./fx/transitions";
 import type { CanvasRuntime } from "./render/world";
 import type { StepAddr } from "./types";
 
 type How = "play" | "cut";
 type Ev = "step" | "transition" | "end";
 
-const CROSSFADE = 0.4;
-
+// transition "fade" means: play the target section's entry transition (default fade).
 export function planMove(
   from: StepAddr | null,
   to: StepAddr,
@@ -68,8 +68,12 @@ export class Stepper {
   }
 
   private emit(ev: Ev, data: any) {
-    // A failing listener must not stop the move or the other listeners; console.error lands in klappe.errors.
-    for (const fn of this.fns.get(ev) ?? [])
+    this.call(ev, this.fns.get(ev) ?? [], data);
+  }
+
+  // A failing listener must not stop the move or the other listeners; console.error lands in klappe.errors.
+  private call(ev: string, fns: ((data: any) => void)[], data: any) {
+    for (const fn of fns)
       try {
         fn(data);
       } catch (e) {
@@ -96,26 +100,27 @@ export class Stepper {
 
     this.i = i;
     this.emit("step", to);
+    // Helpers (video) hear every move: the step's time span on its own canvas, null on the others.
+    const span: [number, number] = [typeof prev === "number" ? prev : c.tl.labels[prev], c.tl.labels[label]];
+    this.canvases.forEach((cv, k) => this.call("step", cv.stepListeners, { play, span: k === to.canvas ? span : null }));
     const anims: gsap.core.Animation[] = [];
     if (from?.canvas !== to.canvas) {
       const old = from ? this.canvases[from.canvas] : undefined;
-      const kind = play ? plan.transition : "cut";
-      c.tl.seek(play ? prev : label);
-      if (kind === "fade" && old)
-        anims.push(
-          gsap
-            .timeline()
-            .to(old.el, { autoAlpha: 0, duration: CROSSFADE }, 0)
-            .fromTo(c.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: CROSSFADE }, 0),
-        );
-      else {
+      let kind: string = "cut";
+      c.tl.seek(play ? prev : label, false); // false: fire onUpdate, so effects that write from progress land
+      if (play && plan.transition === "fade" && old) {
+        const entry = c.entries[to.section] ?? { kind: "fade", opts: {} };
+        const tr = playTransition(entry.kind, old, c, entry.opts);
+        kind = tr.kind; // after a fallback, the one that plays
+        anims.push(tr.tl);
+      } else {
         if (old) gsap.set(old.el, { autoAlpha: 0 });
         gsap.set(c.el, { autoAlpha: 1 });
       }
       this.emit("transition", { kind, from: from?.canvas ?? null, to: to.canvas });
     }
     if (play) anims.push(c.tl.tweenFromTo(prev, label));
-    else c.tl.seek(label);
+    else c.tl.seek(label, false);
 
     // More moves wait behind this one: skip to its end so only the last one plays.
     if (this.pending) for (const a of anims) a.progress(1);

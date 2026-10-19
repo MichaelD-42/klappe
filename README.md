@@ -111,6 +111,7 @@ Frontmatter keys:
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene.
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
+- A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
 
 ### scene.ts
 
@@ -119,7 +120,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a 1920x1080 frame at x = its position on the canvas times 1920.
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
-- In a step, only add tweens to `tl`. Do not use `.from()`. Do not change the DOM in callbacks.
+- In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Keep one master timeline per canvas. The engine owns it.
 
@@ -127,15 +128,29 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 
 Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole canvas and returns refs. Scenes read them from `ctx.canvas.refs`. `ctx.canvas.rects` holds each scene's home frame, keyed by scene id. The layout supplies it, not the section.
 
+- `transition` sets how the deck enters this section when it moves forward by one step onto a new canvas. Default `fade`. A back move, a jump and `?instant=1` always cut.
+- `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
+
+### Effects
+
+Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } from "klappe/fx"`.
+
+- A helper is `name(ctx, opts)`. Call it in `build()`. It builds its DOM, hidden, in `ctx.svg` or `ctx.html`.
+- It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
+- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`.
+- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error.
+- `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
+- `ctx.problem(msg)` reports a deck problem. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
+
 ### Types in deck repos
 
-Import types from `"klappe/types"`. `klappe init` writes a `tsconfig.json` with this mapping if none exists:
+Import types from `"klappe/types"` and effects from `"klappe/fx"`. `klappe init` writes a `tsconfig.json` with these mappings if none exists:
 
 ```json
-{ "compilerOptions": { "strict": true, "noEmit": true, "paths": { "klappe/types": ["./klappe/src/types"] } }, "include": ["decks"] }
+{ "compilerOptions": { "strict": true, "noEmit": true, "paths": { "klappe/types": ["./klappe/src/types"], "klappe/fx": ["./klappe/src/fx"] } }, "include": ["decks"] }
 ```
 
-If you have your own `tsconfig.json`, add the `paths` entry yourself.
+If you have your own `tsconfig.json`, add the `paths` entries yourself.
 
 ### Keys
 

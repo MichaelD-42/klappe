@@ -1,4 +1,5 @@
 import type { gsap } from "gsap";
+import type { registry } from "./fx/transitions";
 
 export interface Rect {
   x: number;
@@ -20,6 +21,8 @@ export interface StepDoc {
   text: string;
   notes: string;
   kind: StepKind;
+  // A media link in the step's list item; the link shows as its label in text.
+  media?: { kind: "image" | "video" | "chart"; href: string; alt: string; title?: string };
 }
 export interface SceneDoc {
   id: string;
@@ -46,7 +49,16 @@ export interface Ctx {
       opts?: { duration?: number; at?: number | string },
     ): void;
   };
+  // The deck's data/ files (raw text) and media/ files (URL), keyed like the Markdown link: "data/x.csv".
+  files: { data: Record<string, string>; media: Record<string, string> };
+  // Called on every move. span: this step's start and end time on this canvas's timeline,
+  // or null when the current step is on another canvas. play: the step plays (not a cut).
+  onStep(fn: (e: { play: boolean; span: [number, number] | null }) => void): void;
+  // Records a deck problem: shown on screen and fails the self-test.
+  problem(msg: string): void;
 }
+// A helper's named step: adds tweens to the canvas timeline.
+export type StepAdder = (tl: gsap.core.Timeline) => void;
 export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
 export interface SceneModule {
   place?(rects: Record<string, Rect>): Rect;
@@ -54,6 +66,10 @@ export interface SceneModule {
   steps?: (StepFn | null)[];
 }
 export interface SectionModule {
+  // How the deck enters this section's canvas on a forward step. Default: fade.
+  transition?: keyof typeof registry;
+  // For transition 'zoom': the ref on the old canvas the camera dives into.
+  zoomTarget?: string;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;
 }
 export interface Scene extends SceneDoc {
@@ -68,6 +84,7 @@ export interface Section extends SectionDoc {
 export interface Deck {
   meta: DeckMeta;
   sections: Section[];
+  files?: Ctx["files"];
 }
 export interface CanvasLayout {
   id: string;

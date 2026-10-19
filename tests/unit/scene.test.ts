@@ -60,3 +60,34 @@ describe("parseSection", () => {
     expect(parseSection("text", "10-x").problems).toContain("10-x/section.md: missing # title");
   });
 });
+
+describe("parseScene media", () => {
+  const media = (item: string) => parseScene(`## A\n\n- ${item}\n`, "10-a").scene.steps[0];
+  it("detects an image", () => {
+    expect(media("![A desk](media/desk.png)").media).toEqual({ kind: "image", href: "media/desk.png", alt: "A desk" });
+  });
+  it("keeps an image title", () => {
+    expect(media('![A desk](media/desk.png "An engineer at a desk")').media).toEqual({
+      kind: "image", href: "media/desk.png", alt: "A desk", title: "An engineer at a desk",
+    });
+  });
+  it("detects video links", () => {
+    for (const href of [
+      "https://www.youtube.com/watch?v=x", "https://youtu.be/x", "https://vimeo.com/1",
+      "media/clip.mp4", "https://example.com/a.webm?t=3",
+    ])
+      expect(media(`[Demo](${href})`).media, href).toEqual({ kind: "video", href, alt: "Demo" });
+  });
+  it("detects chart data links", () => {
+    expect(media("[Sales](data/sales.csv)").media).toEqual({ kind: "chart", href: "data/sales.csv", alt: "Sales" });
+    expect(media("[Sales](data/sales.json)").media?.kind).toBe("chart");
+  });
+  it("shows the link label as the step text", () => {
+    expect(media("See [Sales](data/sales.csv) here").text).toBe("See Sales here");
+  });
+  it("leaves a plain link as text", () => {
+    const s = media("[klappe](https://example.com/docs)");
+    expect(s.media).toBeUndefined();
+    expect(s.text).toBe("[klappe](https://example.com/docs)");
+  });
+});

@@ -1,13 +1,21 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
+import { chart, image, parseCsv, shout, video } from "../fx";
+import type { TransitionKind, TransitionOpts } from "../fx/transitions";
 import { motion } from "../theme";
-import type { CanvasLayout, Ctx, Deck, Rect, Scene } from "../types";
+import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
   el: HTMLElement;
   tl: gsap.core.Timeline;
   refs: Record<string, any>;
+  // How the deck enters each section on this canvas, by section id (from section.ts).
+  entries: Record<string, { kind: TransitionKind; opts: TransitionOpts }>;
+  // ctx.onStep listeners; the stepper calls them on every move.
+  stepListeners: Parameters<Ctx["onStep"]>[0][];
+  // ctx.problem messages; the self-test adds them to the deck's problems.
+  problems: string[];
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -28,21 +36,91 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
   return e;
 }
 
-// Default renderer: the title and one p[data-step=n] per visible step, all hidden.
-function renderDefault(scene: Scene, html: HTMLElement): HTMLElement {
-  const title = el("h2", "", scene.title);
-  html.append(title);
-  scene.steps.forEach((s, i) => {
-    if (s.kind === "shout-hold" || s.kind === "shout-fade") return;
-    const p = el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text);
-    p.dataset.step = String(i + 1);
-    html.append(p);
-  });
-  gsap.set(html.children, { autoAlpha: 0 });
-  return title;
+// A stub in src/fx throws this until its effect is built; the engine then falls back.
+const notBuilt = (e: unknown) => e instanceof Error && e.message.endsWith(": not built yet");
+const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+// The media effect for a step: image, video, or chart from data/ (null data: the file is missing).
+function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
+  if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
+  if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
+  const src = m.href.replace(/^\.\//, "");
+  const text = ctx.files.data[src];
+  const data = text === undefined ? null : src.endsWith(".json") ? JSON.parse(text) : parseCsv(text);
+  const c = chart(ctx, { src, data, rect, title: m.alt });
+  return (tl) => {
+    c.axes(tl);
+    c.grow(tl);
+    c.values(tl);
+  };
 }
 
-function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTMLElement) {
+// Default renderer: the title and one p[data-step=n] per visible step, all hidden.
+// Shout-outs use the shout effect. With media steps, the text takes the left column and the media the right.
+// Returns the title and the steps an effect plays, by step number.
+function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
+  const { html, rect } = ctx;
+  const fx = new Map<number, StepAdder>();
+  const shown: HTMLElement[] = [];
+  const add = (parent: HTMLElement, e: HTMLElement) => (parent.append(e), shown.push(e), e);
+  const hasMedia = scene.steps.some((s) => s.media);
+  const col = hasMedia ? html.appendChild(el("div", "")) : html;
+  if (hasMedia) col.style.width = "45%";
+  const slot: Rect = { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
+  const title = add(col, el("h2", "", scene.title));
+
+  scene.steps.forEach((s, i) => {
+    const n = i + 1;
+    if (fx.has(n)) return; // a later phase of a shout-out the effect plays
+    if (s.kind === "shout-enter") {
+      try {
+        const h = shout(ctx, { question: s.text, answer: scene.steps[i + 3]?.text ?? "", intensity: meta.intensity });
+        [h.enter, h.hold, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
+        return;
+      } catch (e) {
+        if (!notBuilt(e)) console.error(`${scene.source} step ${n}: shout: ${message(e)}`);
+      }
+    }
+    if (s.kind === "shout-hold" || s.kind === "shout-fade") return;
+    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
+    p.dataset.step = String(n);
+    if (!s.media) return;
+    try {
+      const show = mediaShow(ctx, s.media, slot);
+      fx.set(n, (tl) => {
+        tl.to(p, { autoAlpha: 1, duration: motion.step });
+        show(tl);
+      });
+    } catch (e) {
+      if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
+      ctx.problem(`${scene.source} step ${n}: EFFECT MISSING: ${s.media.kind} (${message(e)})`);
+      const box = add(html, el("div", "", `EFFECT MISSING: ${s.media.kind}`));
+      Object.assign(box.style, {
+        position: "absolute",
+        left: `${slot.x}px`,
+        top: `${slot.y}px`,
+        width: `${slot.w}px`,
+        height: `${slot.h}px`,
+        boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "4px dashed var(--k-accent)",
+        background: "var(--k-bg)", // covers the slot's earlier media
+        color: "var(--k-accent)",
+        fontSize: "48px",
+        fontWeight: "700",
+      });
+      fx.set(n, (tl) => tl.to([p, box], { autoAlpha: 1, duration: motion.step }));
+    }
+  });
+  gsap.set(shown, { autoAlpha: 0 });
+  return { title, fx };
+}
+
+function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTMLElement, fx?: Map<number, StepAdder>) {
+  const effect = fx?.get(n);
+  if (effect) return effect(tl);
   const at = (k: number) => html.querySelector<HTMLElement>(`[data-step="${k}"]`);
   const kind = scene.steps[n - 1].kind;
   // M1 shout-out: question appears, holds, fades, then the answer appears. M2 adds the full effect.
@@ -73,7 +151,8 @@ export function renderWorld(
   opts: { reducedMotion?: boolean } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
-  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement }>();
+  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder> }>();
+  const files = deck.files ?? { data: {}, media: {} };
   const runtimes = canvases.map((layout) => {
     const { w, h } = layout.size;
     const world = el("div", "k-world");
@@ -89,6 +168,8 @@ export function renderWorld(
 
     const tl = gsap.timeline({ paused: true });
     const refs: Record<string, any> = {};
+    const stepListeners: CanvasRuntime["stepListeners"] = [];
+    const problems: string[] = [];
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
     const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
     let cam = first;
@@ -109,7 +190,16 @@ export function renderWorld(
       d.setAttribute(attr, id);
       Object.assign(d.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` });
       html.append(d);
-      return { rect, svg: g, html: d, canvas: { refs, rects: layout.rects }, camera };
+      return {
+        rect,
+        svg: g,
+        html: d,
+        canvas: { refs, rects: layout.rects },
+        camera,
+        files,
+        onStep: (fn) => stepListeners.push(fn),
+        problem: (msg) => problems.push(msg),
+      };
     };
 
     for (const s of sections) {
@@ -123,11 +213,14 @@ export function renderWorld(
         const build = sc.module?.build;
         perScene.set(
           sc,
-          build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, title: renderDefault(sc, ctx.html) },
+          build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, ...renderDefault(sc, ctx, deck.meta) },
         );
       }
     gsap.set(world, { autoAlpha: 0, ...frame(first) });
-    return { layout, el: world, tl, refs };
+    const entries = Object.fromEntries(
+      sections.map((s) => [s.id, { kind: s.module?.transition ?? "fade", opts: { target: s.module?.zoomTarget } }]),
+    );
+    return { layout, el: world, tl, refs, entries, stepListeners, problems };
   });
 
   // Pass 2: timelines in step-list order (deck order), one label 'e:<global index>' after each step.
@@ -136,7 +229,7 @@ export function renderWorld(
     const rt = runtimes.find((r) => r.layout.sectionIds.includes(s.id));
     if (!rt) continue;
     for (const sc of s.scenes) {
-      const { ctx, refs, title } = perScene.get(sc)!;
+      const { ctx, refs, title, fx } = perScene.get(sc)!;
       sc.steps.forEach((_, i) =>
         appendStep(rt.tl, `e:${index++}`, (tl) => {
           if (i === 0) {
@@ -145,7 +238,7 @@ export function renderWorld(
           }
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
-          else defaultStep(tl, sc, i + 1, ctx.html);
+          else defaultStep(tl, sc, i + 1, ctx.html, fx);
         }),
       );
     }
