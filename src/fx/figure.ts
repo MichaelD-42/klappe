@@ -1,5 +1,8 @@
-import type { gsap } from "gsap";
+import { gsap } from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import type { Ctx, StepAdder } from "../types";
+
+gsap.registerPlugin(MotionPathPlugin);
 
 export interface FigureOpts {
   x: number;
@@ -9,10 +12,104 @@ export interface FigureOpts {
 }
 export interface FigureHandle {
   appear: StepAdder;
-  walk(tl: gsap.core.Timeline, path: SVGPathElement | string, opts: { duration: number }): void;
-  gather(tl: gsap.core.Timeline, x: number, y: number): void;
+  /**
+   * Walks the feet along the path. The path's coordinates must be in the same space as the
+   * figure's parent (ctx.svg, scene-local); a path under a transformed ancestor lands elsewhere.
+   * `at` is the position on the timeline, as in tl.to.
+   */
+  walk(
+    tl: gsap.core.Timeline,
+    path: SVGPathElement | string,
+    opts: { duration: number; at?: gsap.Position },
+  ): void;
+  // Walks to (x, y). `at` is the position on the timeline; duration defaults to 1.2 s.
+  gather(tl: gsap.core.Timeline, x: number, y: number, at?: gsap.Position, duration?: number): void;
 }
 
+// The limb angle in degrees during a walk: one full stride per step, straight at progress 0 and 1.
+export const limbAngle = (progress: number, steps: number, swing = 25) =>
+  swing * Math.sin(progress * steps * 2 * Math.PI);
+
+const SVG = "http://www.w3.org/2000/svg";
+const STRIDES_PER_SECOND = 1.6;
+const GATHER_SECONDS = 1.2;
+const KNEE = 48; // the lifted thigh's angle at the top of a stride, in degrees
+const ARM = 12; // the arm's outward swing at the top of a stride, in degrees
+const HIP_Y = -100; // thigh 50 + shin 50: a straight leg puts its foot on y = 0
+
+function shape(parent: SVGGElement, tag: string, attrs: Record<string, string | number>): SVGElement {
+  const e = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  parent.append(e);
+  return e;
+}
+
+// Two decimals and never "-0", so play and seek write the same text.
+const deg = (a: number) => Math.round(a * 100) / 100 || 0;
+
+// A front-facing figure about 230 units tall, feet at (x, y). Coordinates are scene-local.
 export function figure(ctx: Ctx, opts: FigureOpts): FigureHandle {
-  throw new Error("figure: not built yet");
+  const root = shape(ctx.svg, "g", { "data-k-figure": "" }) as SVGGElement;
+  Object.assign(root.style, { stroke: opts.color, fill: "none", strokeWidth: "4", strokeLinecap: "round", strokeLinejoin: "round" });
+
+  // A joint is a group at a pivot; the pose rewrites its transform attribute, so it is in the snapshot.
+  const joint = (parent: SVGGElement, px: number, py: number, d: string) => {
+    const g = shape(parent, "g", {}) as SVGGElement;
+    shape(g, "path", { d });
+    const turn = (a: number) => g.setAttribute("transform", `translate(${px} ${py}) rotate(${deg(a)})`);
+    return { g, turn };
+  };
+  // side -1 is the figure's right (screen left). Each leg stays on its side of the hips.
+  const leg = (side: number) => {
+    const thigh = joint(root, 12 * side, HIP_Y, "M0 0 L0 50");
+    const shin = joint(thigh.g, 0, 50, `M0 0 L0 50 M${-side} 50 L${9 * side} 50`); // shin and foot
+    // The thigh swings out, the shin back by twice as much: the knee bends and the foot lifts.
+    return (lift: number) => (thigh.turn(-side * KNEE * lift), shin.turn(2 * side * KNEE * lift));
+  };
+  const arm = (side: number) => {
+    const a = joint(root, 28 * side, -150, `M0 0 L${6 * side} 36 L${8 * side} 64 M${-6 * side} -10 Q${14 * side} -10 ${15 * side} 22 L${4 * side} 25`);
+    shape(a.g, "circle", { cx: 8 * side, cy: 70, r: 5 }); // hand
+    return (out: number) => a.turn(-side * ARM * out);
+  };
+  const legs = [leg(-1), leg(1)];
+  const arms = [arm(-1), arm(1)];
+  shape(root, "path", { d: "M-11 -164 Q-30 -160 -31 -140 L-25 -100 L25 -100 L31 -140 Q30 -160 11 -164" }); // shoulders, torso, belt
+  shape(root, "path", { d: "M-11 -164 L0 -151 L11 -164" }); // collar
+  shape(root, "path", { d: "M-6 -171 L-6 -165 M6 -171 L6 -165" }); // neck
+  shape(root, "circle", { cx: 0, cy: -197, r: 26 }); // head
+  shape(root, "path", { d: "M-26 -203 Q-32 -197 -26 -190 M26 -203 Q32 -197 26 -190" }); // ears
+  shape(root, "path", { d: "M-27 -201 Q-27 -231 0 -231 Q27 -231 27 -201" }); // hair
+  shape(root, "path", { d: "M-9 -202 L-9 -196 M9 -202 L9 -196 M-8 -185 Q0 -179 8 -185" }); // face
+
+  // s in [-1, 1]: s > 0 lifts the screen-left leg and swings the opposite arm out, s < 0 the other pair.
+  // The planted leg is straight, so the lowest foot stays on the path.
+  const pose = (s: number) => {
+    const l = Math.max(0, s);
+    const r = Math.max(0, -s);
+    legs[0](l);
+    legs[1](r);
+    arms[1](l);
+    arms[0](r);
+  };
+  pose(0);
+  // svgOrigin pins scale to the feet; GSAP otherwise scales SVG around the bbox corner.
+  gsap.set(root, { svgOrigin: "0 0", x: opts.x, y: opts.y, scale: opts.scale ?? 1, autoAlpha: 0 });
+
+  // The pose is written from the tween's own progress, so a seek lands on the same pose as play.
+  const stride = (duration: number) => {
+    const steps = Math.max(1, Math.round(duration * STRIDES_PER_SECOND));
+    return function (this: gsap.core.Tween) {
+      pose(limbAngle(this.progress(), steps, 1));
+    };
+  };
+
+  return {
+    appear: (tl) => void tl.to(root, { autoAlpha: 1, duration: 0.5 }),
+    walk(tl, path, { duration, at }) {
+      tl.to(root, { motionPath: { path }, duration, ease: "none", onUpdate: stride(duration) }, at);
+    },
+    gather(tl, x, y, at, duration = GATHER_SECONDS) {
+      tl.to(root, { x, y, duration, ease: "none", onUpdate: stride(duration) }, at);
+    },
+  };
 }
