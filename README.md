@@ -142,9 +142,64 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`.
-- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error.
+- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
+- Shout-out intensity: `intensity` in `deck.md` sets every shout-out. To set it for one shout-out, call `shout(ctx, { question, answer, intensity })` in that scene's `scene.ts` and play its 4 steps yourself (see the example below).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
 - `ctx.problem(msg)` reports a deck problem. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
+
+#### Examples
+
+Each example is a `scene.ts` default export: `build` returns the handle, `steps` play it. The rect and position values are scene-local.
+
+```ts
+// shatter: the target (an element you built, shown in an earlier step) cracks twice, then falls apart in shards.
+{ build(ctx) { const card = document.createElement("div"); ctx.html.append(card); gsap.set(card, { autoAlpha: 0 }); return { card, fx: shatter(ctx, { target: card }) } },
+  steps: [(tl, r) => tl.to(r.card, { autoAlpha: 1 }), (tl, r) => r.fx.crack(tl), (tl, r) => r.fx.crack2(tl), (tl, r) => r.fx.fall(tl)] }
+
+// crt: a retro terminal powers on, types its lines one step at a time, then shows the ready line.
+{ build: (ctx) => crt(ctx, { color: "amber", lines: ["DEMO-OS v1.0", { text: "MEMORY TEST: 640K OK", count: true }] }),
+  steps: [(tl, h) => h.powerOn(tl), (tl, h) => h.type(tl, 0), (tl, h) => h.type(tl, 1), (tl, h) => h.ready(tl)] }
+
+// lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements.
+import desk from "klappe/fx/art/engineer-desk.svg?raw";
+{ build: (ctx) => lineArt(ctx, { src: desk, x: 260, y: 120, w: 1400 }), steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")] }
+steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path you built in build()
+
+// icon and iconTile: a Lucide icon by name draws on, then lights up.
+{ build: (ctx) => iconTile(ctx, "lightbulb", { x: 960, y: 540, tone: "accent" }), steps: [(tl, i) => i.draw(tl), (tl, i) => i.light(tl)] }
+{ build: (ctx) => icon(ctx, "rocket", { x: 960, y: 540, size: 160, color: "var(--k-fg)" }), steps: [(tl, i) => i.draw(tl)] }
+
+// chart: bar, stacked, line, waterfall or timeline from data/. "Sample data" shows when sample is true
+// or the data's source says "sample".
+{ build: (ctx) => chart(ctx, { src: "data/units.csv", type: "bar", rect: { x: 160, y: 140, w: 1600, h: 800 }, title: "Units by quarter" }),
+  steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)] }
+
+// worldMap: draw the land, then sites and an arc between them.
+{ build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 60, w: 1800, h: 960 }, sites: [{ id: "s1", label: "[Site 1]", lon: 9, lat: 48 }, { id: "s2", label: "[Site 2]", lon: 121, lat: 31 }] }),
+  steps: [(tl, m) => m.draw(tl), (tl, m) => (m.site(tl, "s1"), m.site(tl, "s2")), (tl, m) => m.arc(tl, "s1", "s2")] }
+
+// figure: a stick figure appears, then walks along a path (scene-local SVG path data).
+{ build: (ctx) => figure(ctx, { x: 260, y: 960, color: "var(--k-fg)" }), steps: [(tl, f) => f.appear(tl), (tl, f) => f.walk(tl, "M 260 960 L 1600 960", { duration: 3 })] }
+
+// swarm: seeded dots stream from one rect to another.
+{ build: (ctx) => swarm(ctx, { rect: { x: 0, y: 0, w: 1920, h: 1080 }, from: { x: 100, y: 400, w: 300, h: 300 }, to: { x: 1500, y: 400, w: 300, h: 300 }, seed: 1 }),
+  steps: [(tl, s) => s.stream(tl, { duration: 2 })] }
+
+// morph, bubble, counter: one element turns into another; a speech bubble shows and hides; a number counts up.
+// doc and fact are elements you built first in build().
+{ build: (ctx) => ({ m: morph(ctx, { from: doc, to: fact }),
+                     b: bubble(ctx, { x: 400, y: 520, text: "A question for [Site 1]?", side: "right" }),
+                     n: counter(ctx, { x: 960, y: 540, from: 0, to: 120, label: "Sample units" }) }),
+  steps: [(tl, r) => r.m.play(tl), (tl, r) => r.b.show(tl), (tl, r) => (r.b.hide(tl), r.n.run(tl))] }
+
+// image and video: a file from media/ (or a YouTube or Vimeo link for video), with a placeholder when it is missing.
+{ build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
+{ build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
+
+// shout with its own intensity: the scene.md has the 4 steps of a shout-out (### Question? and an answer).
+{ build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
+  steps: [(tl, s) => s.enter(tl), (tl, s) => s.hold(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
+```
 
 ### Types in deck repos
 
