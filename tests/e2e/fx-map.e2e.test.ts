@@ -11,6 +11,6 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(9)
+    expect(r.steps).toBe(11)
     expect(r.ok).toBe(true)
   })
