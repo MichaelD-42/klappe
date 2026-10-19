@@ -151,8 +151,12 @@ const pts = (P: Pt[]) => P.map((v) => `${v.x.toFixed(1)},${v.y.toFixed(1)}`).joi
 
 // A copy for a shard: no ids or data-* (the engine and the self-test look elements up by them).
 // visible: also clear inline opacity and visibility, so the copy shows its end state.
+// Otherwise drop hidden subtrees (GSAP hides inline), so a copy of a whole world stays small.
 function copy(src: Element, visible: boolean): HTMLElement {
   const c = src.cloneNode(true) as HTMLElement;
+  if (!visible)
+    for (const e of c.querySelectorAll<HTMLElement>("[style]"))
+      if (e.style.visibility === "hidden" || e.style.display === "none" || e.style.opacity === "0") e.remove();
   for (const e of [c, ...c.querySelectorAll<HTMLElement>("*")]) {
     for (const a of [...e.attributes]) if (a.name === "id" || a.name.startsWith("data-")) e.removeAttribute(a.name);
     if (visible && e.style) {

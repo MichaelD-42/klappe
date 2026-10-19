@@ -20,10 +20,13 @@ describe("transition registry", () => {
   });
   it("falls back to fade and logs when a transition throws", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    const r = playTransition("shatter", canvas(), canvas(), {});
+    vi.spyOn(registry, "zoom").mockImplementation(() => {
+      throw new Error("zoom: boom");
+    });
+    const r = playTransition("zoom", canvas(), canvas(), {});
     expect(r.kind).toBe("fade");
     expect(r.tl.duration()).toBeCloseTo(0.4);
-    expect(err).toHaveBeenCalledWith(expect.stringContaining("transitionShatter: not built yet"));
+    expect(err).toHaveBeenCalledWith(expect.stringContaining("boom"));
   });
   it("falls back to fade on an unknown name", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
