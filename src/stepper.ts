@@ -104,7 +104,7 @@ export class Stepper {
     const span: [number, number] = [typeof prev === "number" ? prev : c.tl.labels[prev], c.tl.labels[label]];
     this.canvases.forEach((cv, k) => this.call("step", cv.stepListeners, { play, span: k === to.canvas ? span : null }));
     const anims: gsap.core.Animation[] = [];
-    let after = 0; // the step waits for a long transition; cut and fade keep M1 timing and overlap it
+    let after = 0; // the step waits for a long transition (or its "reveal" label); cut and fade keep M1 timing
     if (from?.canvas !== to.canvas) {
       const old = from ? this.canvases[from.canvas] : undefined;
       let kind: string = "cut";
@@ -114,7 +114,8 @@ export class Stepper {
         const tr = playTransition(entry.kind, old, c, entry.opts);
         kind = tr.kind; // after a fallback, the one that plays
         anims.push(tr.tl);
-        if (kind !== "cut" && kind !== "fade") after = tr.tl.duration();
+        // A "reveal" label on the transition starts the step early, overlapping the transition's end.
+        if (kind !== "cut" && kind !== "fade") after = tr.tl.labels.reveal ?? tr.tl.duration();
       } else {
         if (old) gsap.set(old.el, { autoAlpha: 0 });
         gsap.set(c.el, { autoAlpha: 1 });

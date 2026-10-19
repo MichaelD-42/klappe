@@ -37,3 +37,25 @@ test('the zoom keeps the old canvas pose and leaves it hidden', async () => {
   expect(after[1][1]).toBe('visible')
   await page.close()
 })
+
+// The zoom sets a "reveal" label: the target step starts there, so its content shows while the new canvas grows.
+test('the first step of the new canvas starts at the reveal label, during the grow', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-zoom`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const samples = await page.evaluate(async () => {
+    const world = document.querySelectorAll<HTMLElement>('.k-world')[1]
+    const title = world.querySelector<HTMLElement>('[data-scene] h2')!
+    const out: [number, number][] = []
+    let done = false
+    window.klappe.stepper.next().then(() => (done = true))
+    while (!done) {
+      out.push([Number(getComputedStyle(world).opacity), Number(getComputedStyle(title).opacity)])
+      await new Promise(requestAnimationFrame)
+    }
+    return out
+  })
+  // Some frame shows the canvas still growing (not fully opaque) with the title already partly visible.
+  expect(samples.some(([w, t]) => w > 0 && w < 1 && t > 0)).toBe(true)
+  await page.close()
+})
