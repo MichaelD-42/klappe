@@ -7,6 +7,7 @@ const STAGE = { w: 1920, h: 1080 };
 const DIVE = 8; // magnification at the end of the dive
 const DIVE_TIME = 0.9;
 const IN_TIME = 0.6;
+const OVERLAP = 0.15; // the new canvas starts growing this long before the dive ends
 const FROM_SCALE = 0.6;
 
 type Pose = { x: number; y: number; scale: number };
@@ -47,12 +48,16 @@ export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: Tra
   const k = FROM_SCALE;
   const small = { x: STAGE.w / 2 - (STAGE.w / 2 - b.x) * k, y: STAGE.h / 2 - (STAGE.h / 2 - b.y) * k, scale: b.scale * k };
   const back = from.el.parentElement;
+  const stageBg = getComputedStyle(back!.parentElement!).backgroundColor;
   return gsap
     .timeline()
     .set(back, { backgroundColor: "var(--k-blackout)" })
     .to(from.el, { ...dive, duration: DIVE_TIME, ease: "power2.in" }, 0)
-    .to(from.el, { autoAlpha: 0, duration: DIVE_TIME * 0.4, ease: "none" }, DIVE_TIME * 0.6)
-    .set(from.el, a)
-    .fromTo(to.el, { autoAlpha: 0, ...small }, { autoAlpha: 1, ...b, duration: IN_TIME, ease: "power2.out" })
+    .to(from.el, { autoAlpha: 0, duration: DIVE_TIME * 0.25, ease: "power2.in" }, DIVE_TIME * 0.75)
+    .set(from.el, a, DIVE_TIME)
+    // The dive point sits at the stage centre at the end of the dive, so the new canvas grows out of it, overlapping the dive.
+    .fromTo(to.el, { autoAlpha: 0, ...small }, { autoAlpha: 1, ...b, duration: IN_TIME, ease: "power2.out" }, DIVE_TIME - OVERLAP)
+    // The black fades to the stage colour while the new canvas grows, so it does not snap at the end.
+    .to(back, { backgroundColor: stageBg, duration: IN_TIME, ease: "none" }, DIVE_TIME - OVERLAP)
     .set(back, { clearProps: "backgroundColor" });
 }

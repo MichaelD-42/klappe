@@ -30,8 +30,7 @@ test('the zoom keeps the old canvas pose and leaves it hidden', async () => {
       [...document.querySelectorAll<HTMLElement>('.k-world')].map((w) => [w.style.transform, getComputedStyle(w).visibility]),
     )
   const before = await worlds()
-  await page.evaluate(() => window.klappe.stepper.next())
-  await page.waitForTimeout(3000)
+  await page.evaluate(() => window.klappe.stepper.next()) // resolves when the move, transition included, is done
   const after = await worlds()
   expect(after[0][1]).toBe('hidden')
   expect(after[0][0]).toBe(before[0][0])

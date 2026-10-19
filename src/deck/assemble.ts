@@ -10,7 +10,8 @@ const byOrder = (a: { order: number; folder: string }, b: { order: number; folde
 // strip exactly that prefix, so a "sections/" folder above the deck does not matter. Without it, cut at the leftmost match.
 export function toDeckRelative(key: string, root?: string): string {
   const k = key.replace(/^@deck\//, "/");
-  if (root !== undefined && k.startsWith(root)) return k.slice(root.length);
+  const r = root?.replace(/^@deck\//, "/");
+  if (r !== undefined && k.startsWith(r)) return k.slice(r.length);
   const m = /(?:^|\/)(deck\.md|sections\/.*)$/.exec(k);
   return m ? m[1] : key;
 }

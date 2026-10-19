@@ -95,7 +95,7 @@ describe("parseScene media", () => {
 describe("question followed by a note", () => {
   it("reports a problem when a blockquote sits between the question and its answer", () => {
     const { problems, scene } = parseScene("## T\n\n### Why?\n\n> a note\n\nThe answer.\n", "10-t");
-    expect(problems).toEqual([expect.stringContaining("a note sits between '### Why?'")]);
+    expect(problems).toEqual([expect.stringContaining("10-t/scene.md: a note sits between '### Why?'")]);
     expect(scene.steps.at(-1)?.text).toBe("");
   });
 });

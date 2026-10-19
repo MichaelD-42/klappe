@@ -16,10 +16,10 @@ function endState(c: CanvasRuntime): HTMLElement {
   c.tl.seek(c.tl.duration(), false);
   const copy = c.el.cloneNode(true) as HTMLElement;
   c.tl.seek(time, false);
-  // The clone must not repeat ids of the live DOM.
+  // The clone must not repeat ids of the live DOM. Shortcut: this breaks url(#id) refs inside the clone; rename them if an effect needs those.
   copy.removeAttribute("id");
   for (const e of copy.querySelectorAll("[id]")) e.removeAttribute("id");
-  Object.assign(copy.style,{ transform: "none", opacity: "1", visibility: "visible" });
+  Object.assign(copy.style, { transform: "none", opacity: "1", visibility: "visible" });
   copy.inert = true;
   copy.setAttribute("aria-hidden", "true");
   return copy;
