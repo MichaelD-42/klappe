@@ -25,7 +25,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(10)
+    expect(r.steps).toBe(13)
     expect(r.ok).toBe(true)
   })
 
@@ -37,27 +37,55 @@ test('a deep link to a typing step shows its line fully typed', async () => {
   await page.close()
 })
 
-// Review focus 4: forward plays the CRT transition; back cuts with nothing left over.
-test('back across a CRT transition cuts cleanly', async () => {
-  const page = await open('#/a/green/6')
-  const r = await page.evaluate(async () => {
-    const k = window.klappe
-    const kinds: string[] = []
-    k.stepper.on('transition', (e: { kind: string }) => kinds.push(e.kind))
-    await k.stepper.next()
-    const worlds = k.canvases[0].el.parentElement as HTMLElement
-    const stage = worlds.parentElement as HTMLElement
-    await k.stepper.goto(k.stepper.index - 1, 'cut')
+// Review focus 4: forward plays the CRT transition; back cuts with nothing left over,
+// both after the transition ends and when back interrupts it.
+for (const interrupted of [false, true])
+  test(`back across a CRT transition cuts cleanly${interrupted ? ' when it interrupts the transition' : ''}`, async () => {
+    const page = await open('#/a/green/6')
+    const r = await page.evaluate(async (interrupted) => {
+      const k = window.klappe
+      const kinds: string[] = []
+      k.stepper.on('transition', (e: { kind: string }) => kinds.push(e.kind))
+      const worlds = k.canvases[0].el.parentElement as HTMLElement
+      const stage = worlds.parentElement as HTMLElement
+      const forward = k.stepper.next()
+      if (!interrupted) await forward
+      await k.stepper.prev()
+      await forward
+      return {
+        kinds,
+        index: k.stepper.index,
+        shown: k.canvases.map((c: { el: HTMLElement }) => getComputedStyle(c.el).visibility),
+        worlds: worlds.getAttribute('style') ?? '',
+        stageBg: stage.style.backgroundColor,
+        stageImage: stage.style.backgroundImage,
+      }
+    }, interrupted)
+    expect(r.kinds).toEqual(['crt', 'cut'])
+    expect(r.index).toBe(5)
+    expect(r.shown).toEqual(['visible', 'hidden', 'hidden'])
+    expect(r.worlds).toBe('')
+    expect(r.stageBg).toBe('')
+    expect(r.stageImage).toBe('')
+    await page.close()
+  })
+
+// Sixteen lines do not fit at 46 px: the font shrinks, every line shows, and the text stays on the screen.
+test('long boot text shrinks to fit the screen', async () => {
+  const page = await open('#/b/long/3')
+  const r = await page.evaluate(() => {
+    const term = document.querySelector('[data-scene="long"] .k-crt-term') as HTMLElement
+    const screen = term.parentElement!.getBoundingClientRect()
+    const rows = [...term.children].map((e) => e.getBoundingClientRect())
     return {
-      kinds,
-      shown: k.canvases.map((c: { el: HTMLElement }) => getComputedStyle(c.el).visibility),
-      worlds: worlds.getAttribute('style') ?? '',
-      stageBg: stage.style.backgroundColor,
+      size: parseFloat(getComputedStyle(term).fontSize),
+      typed: [...term.querySelectorAll('[data-k-text]')].filter((e) => e.textContent!.endsWith('OK')).length,
+      inside: rows.every((b) => b.bottom <= screen.bottom && b.right <= screen.right),
     }
   })
-  expect(r.kinds).toEqual(['crt', 'cut'])
-  expect(r.shown).toEqual(['visible', 'hidden', 'hidden'])
-  expect(r.worlds).toBe('')
-  expect(r.stageBg).toBe('')
+  expect(r.size).toBeLessThan(46)
+  expect(r.size).toBeGreaterThanOrEqual(20)
+  expect(r.typed).toBe(16)
+  expect(r.inside).toBe(true)
   await page.close()
 })
