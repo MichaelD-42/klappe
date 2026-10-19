@@ -1,0 +1,79 @@
+import { chromium, type Page } from '@playwright/test'
+import { afterAll, beforeAll, expect, inject, test } from 'vitest'
+import { runSelftest } from './driver'
+
+let browser: Awaited<ReturnType<typeof chromium.launch>>
+let clip: Buffer
+beforeAll(async () => {
+  browser = await chromium.launch()
+  // A 2 s webm drawn and recorded in the browser: the test needs a playable file and ffmpeg is not required.
+  const p = await browser.newPage()
+  const b64 = await p.evaluate(async () => {
+    const c = document.createElement('canvas')
+    c.width = c.height = 64
+    const g = c.getContext('2d')!
+    const rec = new MediaRecorder(c.captureStream(30), { mimeType: 'video/webm' })
+    const parts: Blob[] = []
+    rec.ondataavailable = (e) => parts.push(e.data)
+    const done = new Promise((r) => (rec.onstop = r))
+    rec.start()
+    for (let i = 0; i < 60; i++) {
+      g.fillStyle = `hsl(${i * 6} 80% 50%)`
+      g.fillRect(0, 0, 64, 64)
+      await new Promise((r) => setTimeout(r, 33))
+    }
+    rec.stop()
+    await done
+    const buf = new Uint8Array(await new Blob(parts).arrayBuffer())
+    let s = ''
+    for (const x of buf) s += String.fromCharCode(x)
+    return btoa(s)
+  })
+  clip = Buffer.from(b64, 'base64')
+  await p.close()
+}, 60_000)
+afterAll(() => browser?.close())
+
+async function open(url: string): Promise<Page> {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.route('https://klappe.test/**', (r) => r.fulfill({ body: clip, contentType: 'video/webm' }))
+  await page.goto(`${inject('BASE_URL')}/${url}`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  return page
+}
+
+for (const vp of [
+  { w: 1920, h: 1080 },
+  { w: 1366, h: 768 },
+  { w: 1024, h: 768 },
+])
+  test(`media fixture walks clean at ${vp.w}x${vp.h}`, async () => {
+    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-media`, vp)
+    expect(r.problems).toEqual([])
+    expect(r.errors).toEqual([])
+    expect(r.checks.filter((c) => !c.ok)).toEqual([])
+    expect(r.ok).toBe(true)
+  }, 120_000)
+
+test('a missing image shows IMAGE MISSING with its alt text and records a problem', async () => {
+  const page = await open('?fixture=media-layout#/a/media/2')
+  const text = await page.evaluate(() => document.querySelector('div[data-k-media="2"]')?.textContent)
+  expect(text).toContain('IMAGE MISSING')
+  expect(text).toContain('An engineer at a desk')
+  const problems: string[] = await page.evaluate(() => window.klappe.problems)
+  expect(problems.some((p) => p.includes('IMAGE MISSING'))).toBe(true)
+  await page.close()
+})
+
+test('a video plays on its step, pauses on leave, and an online one carries a speaker note', async () => {
+  const page = await open('?fixture=fx-media#/a/online-video/1')
+  const state = () => page.evaluate(() => document.querySelector<HTMLVideoElement>('[data-scene$="online-video"] video')!.paused)
+  expect(await state()).toBe(true)
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="online-video"] [data-k-note]')?.getAttribute('data-k-note'))).toContain('needs internet')
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="online-video"] video')!.hasAttribute('data-k-ignore'))).toBe(true)
+  await page.evaluate(() => window.klappe.stepper.next())
+  await page.waitForFunction(() => !document.querySelector<HTMLVideoElement>('[data-scene$="online-video"] video')!.paused, undefined, { timeout: 10_000 })
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect(await state()).toBe(true)
+  await page.close()
+})
