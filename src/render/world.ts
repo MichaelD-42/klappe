@@ -1,10 +1,10 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { chart, image, shout, video } from "../fx";
+import { chart, image, shout, video, type ImageHandle } from "../fx";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { motion } from "../theme";
-import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
+import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
@@ -163,6 +163,22 @@ export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap
   tl.addLabel(label);
 }
 
+const KEN_BURNS = 6; // seconds: a background's push on its scene's first step
+
+// A scene's background: a cover image at the scene frame in the canvas's back layer. It shows from
+// load, so it crossfades in with its canvas; only the Ken Burns push is on the timeline.
+function background(ctx: Ctx, back: HTMLElement, bg: Background, source: string): ImageHandle | undefined {
+  const { x, y, w, h } = ctx.rect;
+  const d = back.appendChild(el("div", ""));
+  Object.assign(d.style, { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+  const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
+  const img = safe(`${source}: background`, () =>
+    image({ ...ctx, html: d, problem }, { href: bg.href, alt: "", fit: "cover", scrim: bg.scrim }),
+  );
+  gsap.set(d.children, { autoAlpha: 1 });
+  return bg.kenBurns ? img : undefined;
+}
+
 export function renderWorld(
   deck: Deck,
   canvases: CanvasLayout[],
@@ -170,7 +186,7 @@ export function renderWorld(
   opts: { reducedMotion?: boolean } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
-  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder> }>();
+  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: ImageHandle }>();
   const files = deck.files ?? { data: {}, media: {} };
   const runtimes = canvases.map((layout) => {
     const { w, h } = layout.size;
@@ -181,8 +197,9 @@ export function renderWorld(
     svg.setAttribute("height", String(h));
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     const html = el("div", "k-layer");
-    for (const e of [world, html]) Object.assign(e.style, { width: `${w}px`, height: `${h}px` });
-    world.append(svg, html);
+    const back = el("div", "k-layer"); // backgrounds, under the SVG and HTML layers
+    for (const e of [world, back, html]) Object.assign(e.style, { width: `${w}px`, height: `${h}px` });
+    world.append(back, svg, html);
     root.append(world);
 
     const tl = gsap.timeline({ paused: true });
@@ -229,11 +246,13 @@ export function renderWorld(
     for (const s of sections)
       for (const sc of s.scenes) {
         const ctx = ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene");
+        const bg = sc.module?.background ?? s.module?.background;
+        const handle = bg && background(ctx, back, bg, sc.source);
         const build = sc.module?.build;
-        perScene.set(
-          sc,
-          build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, ...renderDefault(sc, ctx, deck.meta) },
-        );
+        perScene.set(sc, {
+          ...(build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
+          bg: handle,
+        });
       }
     gsap.set(world, { autoAlpha: 0, ...frame(first) });
     const entries = Object.fromEntries(
@@ -251,9 +270,10 @@ export function renderWorld(
     const rt = runtimes.find((r) => r.layout.sectionIds.includes(s.id));
     if (!rt) continue;
     for (const sc of s.scenes) {
-      const { ctx, refs, title, fx } = perScene.get(sc)!;
+      const { ctx, refs, title, fx, bg } = perScene.get(sc)!;
       sc.steps.forEach((_, i) =>
         appendStep(rt.tl, `e:${index++}`, (tl) => {
+          const start = tl.duration();
           if (i === 0) {
             ctx.camera.to(tl, ctx.rect);
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step });
@@ -261,6 +281,8 @@ export function renderWorld(
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
           else defaultStep(tl, sc, i + 1, ctx.html, fx);
+          // Last, so the step's content does not wait for it: the push runs alongside from the step's start.
+          if (i === 0 && bg && !opts.reducedMotion) bg.move(tl, { duration: KEN_BURNS }, start);
         }),
       );
     }

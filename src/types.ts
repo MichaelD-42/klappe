@@ -59,7 +59,16 @@ export interface Ctx {
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
 export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
+// A full-frame picture from media/ behind a scene's frame. scrim: 0..1 dark layer for text on top.
+// kenBurns: a slow push on the scene's first step.
+export interface Background {
+  href: string;
+  scrim?: number;
+  kenBurns?: boolean;
+}
 export interface SceneModule {
+  // Behind this scene's frame; replaces the section's background for this scene.
+  background?: Background;
   place?(rects: Record<string, Rect>): Rect;
   build?(ctx: Ctx): any;
   steps?: (StepFn | null)[];
@@ -67,6 +76,8 @@ export interface SceneModule {
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
 export interface SectionModule {
+  // Behind every scene of this section: one copy per scene frame, so camera moves stay correct.
+  background?: Background;
   // How the deck enters this section's canvas on a forward step. Default: fade.
   transition?: TransitionKind;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
