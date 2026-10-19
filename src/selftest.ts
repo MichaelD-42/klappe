@@ -130,7 +130,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
 
 const AC_SPEED = 50;
 const AC_HOLD_MS = 50;
-const CHECK_MS = 8000; // 9 checks: worst case 72 s, under the driver's 90 s
+const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 90 s
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Polls, so it also covers state no engine event reports (the speaker iframe's text).
@@ -139,7 +139,8 @@ async function until(cond: () => boolean, ms = 2000): Promise<boolean> {
   return true;
 }
 
-// The milestone 1 acceptance criteria (spec §9) on the demo deck, as checks AC-1..AC-8 and History.
+// The acceptance criteria on the demo deck, as checks AC-1..AC-9, AC-12, AC-13 and History.
+// AC-10 and AC-11 need missing files, so they run on a fixture deck (tests/e2e/acceptance.e2e.test.ts).
 // Each check returns its failures; a throw or a timeout is a failure too, so every check reports.
 async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
   const { stepper, canvases, steps, stage } = ctx;
@@ -154,6 +155,9 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     deck.sections.find((s: any) => s.id === steps[i].section)?.scenes.find((s: any) => s.id === steps[i].scene);
   const stepText = (i: number): string => sceneOf(i)?.steps[steps[i].step - 1]?.text ?? "";
   const pose = (el: HTMLElement) => ["x", "y", "scaleX", "scaleY"].map((p) => gsap.getProperty(el, p)).join(",");
+  const stepOf = (section: string, scene: string, step: number) =>
+    steps.findIndex((a) => a.section === section && a.scene === scene && a.step === step);
+  const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
 
   // A timed-out check runs on in the background. Its helpers throw once it is dead, so it stops
   // at its next wait or move and cannot act during the checks after it. Each check shadows the
@@ -334,7 +338,8 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const hold = motion.autoHoldMs;
     motion.autoHoldMs = AC_HOLD_MS;
     try {
-      await stepper.goto(0, "cut");
+      // Three steps before the end: from step 0 the whole deck does not fit the check's time (ruling R18).
+      await stepper.goto(Math.max(0, steps.length - 4), "cut");
       const n = log.length;
       autoplay.start();
       const ended = await until(() => since(n, "end").length > 0, CHECK_MS - 3000);
@@ -354,6 +359,69 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     } finally {
       motion.autoHoldMs = hold;
     }
+  });
+
+  await check("AC-9", async ({ stepper }) => {
+    const crack = stepOf("opening", "old-way", 2);
+    if (crack < 0) return ["the demo deck has no #/opening/old-way/2"];
+    const root = canvases[steps[crack].canvas].el.querySelector(`div[data-scene="old-way"]`);
+    const slide = root?.querySelector(".k-oldway-slide"); // the original: the shard copies come after it
+    if (!root || !slide) return ["old-way has no .k-oldway-slide"];
+    const shards = () => [...root.querySelectorAll('[style*="clip-path"]')].filter((e) => shows(e.parentElement!)).length;
+    await stepper.goto(crack - 1, "cut");
+    await stepper.next();
+    const bad: (string | false)[] = [!shows(slide) && "crack step: the slide does not show"];
+    await stepper.next();
+    bad.push(stepper.index !== crack + 1 && `fall step: at ${at(stepper.index)}, want ${at(crack + 1)}`);
+    bad.push(shows(slide) && "fall step: the slide still shows");
+    await stepper.prev();
+    const left = shards();
+    return [
+      ...bad,
+      stepper.index !== crack && `back: at ${at(stepper.index)}, want ${at(crack)}`,
+      !shows(slide) && "back by cut: the intact slide does not show",
+      left > 0 && `back by cut: ${left} shards still show`,
+    ];
+  });
+
+  await check("AC-12", async ({ stepper }) => {
+    const zoom = stepOf("global-team", "coming-together", 3);
+    if (zoom < 0) return ["the demo deck has no #/global-team/coming-together/3"];
+    await stepper.goto(zoom - 1, "cut");
+    await stepper.next();
+    const c = canvases[steps[zoom].canvas];
+    const label = [...c.el.querySelectorAll("[data-k-map] text")].find((e) => e.textContent === "[Host site]" && shows(e));
+    const dot = label?.previousElementSibling;
+    if (!label || dot?.tagName !== "circle") return ["after zoomTo: no visible [Host site] label and marker on the map"];
+    // The check runs at any viewport; this is the size the label renders at 1366 (stage width 1366).
+    const px = parseFloat(getComputedStyle(label).fontSize) * Number(gsap.getProperty(c.el, "scaleX")) * (1366 / 1920);
+    const box = stage.getBoundingClientRect();
+    const inside = (e: Element) => {
+      const r = e.getBoundingClientRect();
+      return r.left >= box.left - 1 && r.top >= box.top - 1 && r.right <= box.right + 1 && r.bottom <= box.bottom + 1;
+    };
+    return [
+      stepper.index !== zoom && `next(): at ${at(stepper.index)}, want ${at(zoom)}`,
+      !inside(dot) && "the host site marker is outside the stage",
+      !inside(label) && "the host site label is outside the stage",
+      px < MIN_PX_1366 && `the host site label is ${px.toFixed(1)} px at 1366, want ≥ ${MIN_PX_1366} px`,
+    ];
+  });
+
+  await check("AC-13", async ({ stepper, reach }) => {
+    const ready = stepOf("opening", "boot", 4);
+    if (ready < 0) return ["the demo deck has no #/opening/boot/4"];
+    await stepper.goto(0, "cut");
+    location.hash = formatHash(steps[ready]);
+    const bad: (string | false)[] = [await reach(ready, "deep link")];
+    const root = canvases[steps[ready].canvas].el.querySelector(`div[data-scene="boot"]`);
+    const lines = [...(root?.querySelectorAll(".k-crt-term > [data-k-text]") ?? [])].map((e) => e.textContent ?? "");
+    const row = [...(root?.querySelectorAll(".k-crt-term > div") ?? [])].find((e) => e.textContent?.startsWith("READY."));
+    for (const want of ["MEMORY TEST: 640K OK", "Loading: new ways of working .. OK"])
+      bad.push(!lines.includes(want) && `boot line "${want}" not fully typed`);
+    bad.push(lines.some((l) => l.includes("█")) && "a boot line is still typing");
+    bad.push(!(row && shows(row)) && "READY. does not show");
+    return bad;
   });
 
   await check("History", async ({ stepper, reach }) => {
