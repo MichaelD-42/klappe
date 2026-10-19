@@ -124,6 +124,10 @@ const categories = (x: d3.AxisScale<string>, names: string[]) =>
   d3.axisBottom(x).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
 const decimals =(vs: number[]) => d3.max(vs, (v) => (String(v).split(".")[1] ?? "").length) ?? 0;
 
+// The "Sample data" label shows when the deck asks for it or the data says it is a sample.
+export const showsSample = (sample: boolean | undefined, source: string | undefined): boolean =>
+  !!sample || /sample/i.test(source ?? "");
+
 // A large visible box instead of the chart, and a deck problem.
 function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): ChartHandle {
   ctx.problem(`chart: ${label}: ${opts.src}${why ? ` (${why})` : ""}`);
@@ -221,7 +225,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   });
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
-  if (opts.sample) {
+  if (showsSample(opts.sample, loaded.source)) {
     const s = text(root, "Sample data", { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
     s.style.fill = "var(--k-phosphor-amber)";
     head.push(s);

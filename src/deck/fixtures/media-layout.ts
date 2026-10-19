@@ -1,7 +1,7 @@
 import { assembleDeck } from "../assemble";
 
 // A plain-Markdown scene with an image, a video, a chart and a broken data file: text left, media slot right.
-// The media files do not exist; each slot shows its effect or a visible placeholder.
+// The image and video files do not exist; each slot shows its effect or a visible placeholder.
 export default () => {
   const r = assembleDeck(
     {
@@ -13,13 +13,14 @@ export default () => {
         "- A plain step without media.",
         '- ![An engineer at a desk](media/desk.png "A line drawing of an engineer at a desk")',
         "- [A short clip](media/clip.mp4)",
-        "- [Sample data](data/sales.csv)",
+        "- [Sales by region](data/sales.json)",
         "- [Broken data](data/broken.json)",
         "",
       ].join("\n"),
     },
     {},
   );
-  r.deck.files = { data: { "data/broken.json": "{ not json" }, media: {} };
+  const sales = { source: "klappe demo sample", rows: [{ region: "North", units: 120 }, { region: "South", units: 90 }] };
+  r.deck.files = { data: { "data/sales.json": JSON.stringify(sales), "data/broken.json": "{ not json" }, media: {} };
   return r;
 };

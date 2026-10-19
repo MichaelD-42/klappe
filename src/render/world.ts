@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { chart, image, parseCsv, shout, video } from "../fx";
+import { chart, image, shout, video } from "../fx";
 import type { TransitionOpts } from "../fx/transitions";
 import { motion } from "../theme";
 import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
@@ -40,30 +40,12 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
 const notBuilt = (e: unknown) => e instanceof Error && e.message.endsWith(": not built yet");
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-// A data file that exists but does not parse.
-class DataError extends Error {
-  constructor(
-    readonly file: string,
-    cause: unknown,
-  ) {
-    super(`${file}: ${message(cause)}`);
-  }
-}
-
-// The media effect for a step: image, video, or chart from data/ (null data: the file is missing).
+// The media effect for a step: image, video, or chart from data/. The chart reads and checks the file
+// itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
-  const src = m.href.replace(/^\.\//, "");
-  const text = ctx.files.data[src];
-  let data = null;
-  if (text !== undefined)
-    try {
-      data = src.endsWith(".json") ? JSON.parse(text) : parseCsv(text);
-    } catch (e) {
-      throw notBuilt(e) ? e : new DataError(src, e);
-    }
-  const c = chart(ctx, { src, data, rect, title: m.alt });
+  const c = chart(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
     c.axes(tl);
     c.grow(tl);
@@ -119,9 +101,8 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     try {
       show = mediaShow({ ...ctx, html: wrap, svg: g }, s.media, slot);
     } catch (e) {
-      const bad = e instanceof DataError;
-      if (!bad && !notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
-      const label = bad ? `DATA ERROR: ${e.file}` : `EFFECT MISSING: ${s.media.kind}`;
+      if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
+      const label = `EFFECT MISSING: ${s.media.kind}`;
       ctx.problem(`${scene.source} step ${n}: ${label} (${message(e)})`);
       const box = add(wrap, el("div", "", label));
       Object.assign(box.style, {

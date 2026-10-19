@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, dataError, parseCsv, waterfallSteps } from "../../src/fx/chart";
+import { chartDomain, dataError, parseCsv, showsSample, waterfallSteps } from "../../src/fx/chart";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -115,5 +115,15 @@ describe("waterfallSteps", () => {
       [6, 12],
       [12, -3],
     ]);
+  });
+});
+
+describe("showsSample", () => {
+  test("shows the Sample data label when asked or when the data's source says sample", () => {
+    expect(showsSample(true, undefined)).toBe(true);
+    expect(showsSample(undefined, "klappe demo SAMPLE")).toBe(true);
+    expect(showsSample(false, "Sample survey 2025")).toBe(true);
+    expect(showsSample(undefined, "ERP export 2025-09")).toBe(false);
+    expect(showsSample(undefined, undefined)).toBe(false);
   });
 });

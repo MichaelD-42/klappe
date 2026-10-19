@@ -78,6 +78,19 @@ test('each media step has its own wrapper and hides the one before', async () =>
   await page.close()
 })
 
+test('a media slot chart reads JSON {source, rows}, shows Sample data and no title copied from the step', async () => {
+  const page = await open('?fixture=media-layout#/a/media/4')
+  const chart = await page.evaluate(() => {
+    const g = document.querySelector('g[data-k-media="4"] [data-k-chart]')
+    return { type: g?.getAttribute('data-k-chart'), text: g?.textContent ?? '', note: g?.getAttribute('data-k-note') }
+  })
+  expect(chart.type).toBe('bar')
+  expect(chart.text).toContain('Sample data')
+  expect(chart.text).not.toContain('Sales by region')
+  expect(chart.note).toBe('Source: data/sales.json — klappe demo sample')
+  await page.close()
+})
+
 test('a data file that does not parse shows DATA ERROR and records a problem', async () => {
   const page = await open('?fixture=media-layout#/a/media/5')
   const box = await page.evaluate(() => document.querySelector('div[data-k-media="5"]')?.textContent)
