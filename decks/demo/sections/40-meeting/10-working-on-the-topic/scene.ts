@@ -48,6 +48,8 @@ const scene: SceneModule = {
     );
     const note = { width: `${NOTE.w}px`, height: `${NOTE.h}px`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: "700", background: "var(--k-accent)", color: "var(--k-bg)", borderRadius: "4px" };
     // Each note starts above its figure's head and ends in its theme's group (ideas 1, 4, 7 in theme A...).
+    // One layer for the notes, under the shout-out: inside it, a moving note rises above the rest.
+    const layer = box(ctx.html, { left: "0", top: "0", width: "100%", height: "100%", zIndex: "1" });
     const notes = SEATS.map(([x, y], i) => {
       const home = { left: x - NOTE.w / 2, top: y - 207 - NOTE.h - 40 };
       const slot = Math.floor(i / 3);
@@ -55,7 +57,7 @@ const scene: SceneModule = {
         left: THEME_X[i % 3] + (slot % 2 ? NOTE.gap / 2 : -NOTE.w - NOTE.gap / 2),
         top: THEME_Y + 60 + Math.floor(slot / 2) * (NOTE.h + NOTE.gap),
       };
-      const el = box(ctx.html, { ...note, left: `${home.left}px`, top: `${home.top}px` }, `[Idea ${i + 1}]`);
+      const el = box(layer, { ...note, left: `${home.left}px`, top: `${home.top}px` }, `[Idea ${i + 1}]`);
       return { el, dx: group.left - home.left, dy: group.top - home.top };
     });
     const themes = THEMES.map((t, i) =>
@@ -84,17 +86,25 @@ const scene: SceneModule = {
       r.notes.forEach((n: { el: HTMLElement }, i: number) =>
         tl.fromTo(n.el, { autoAlpha: 0, y: 40, scale: 0.6, rotation: 0 }, { autoAlpha: 1, y: 0, scale: 1, rotation: TILT[i], duration: 0.5, ease: "back.out(1.6)" }, i ? "-=0.25" : undefined),
       ),
+    // Theme by theme: each theme's heading shows, its notes fly in. A note in flight goes on top of
+    // every note that has not moved yet and every note that already landed.
     (tl, r) => {
       tl.addLabel("cluster");
-      r.notes.forEach((n: { el: HTMLElement; dx: number; dy: number }, i: number) =>
-        tl.to(n.el, { x: n.dx, y: n.dy, rotation: TILT[i] / 2, duration: 1.2, ease: "power2.inOut" }, `cluster+=${(i % 3) * 0.1}`),
-      );
-      tl.fromTo(r.themes, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, stagger: 0.15 }, "cluster+=0.9");
+      let order = 0;
+      THEMES.forEach((_, g) => {
+        tl.fromTo(r.themes[g], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, `cluster+=${g * 0.7}`);
+        r.notes.forEach((n: { el: HTMLElement; dx: number; dy: number }, i: number) => {
+          if (i % 3 !== g) return;
+          const start = `cluster+=${g * 0.7 + Math.floor(i / 3) * 0.15}`;
+          tl.set(n.el, { zIndex: 10 + order++ }, start);
+          tl.to(n.el, { x: n.dx, y: n.dy, rotation: TILT[i] / 2, duration: 0.9, ease: "power2.inOut" }, start);
+        });
+      });
     },
-    // The board steps back so the question and its answer read clean over it.
+    // The board steps back, and stays back, so the question and its answer read clean over it.
     (tl, r) => {
       r.sh.enter(tl);
-      tl.to([...r.notes.map((n: { el: HTMLElement }) => n.el), ...r.themes], { autoAlpha: 0.12, duration: 0.6 }, "<");
+      tl.to([...r.notes.map((n: { el: HTMLElement }) => n.el), ...r.themes, r.topic], { autoAlpha: 0.06, duration: 0.6 }, "<");
     },
     (tl, r) => r.sh.hold(tl),
     (tl, r) => r.sh.fade(tl),
