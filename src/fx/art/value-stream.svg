@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 1520 780" stroke-width="5">
+  <!-- A value stream map: supplier, three processes with inventory between, customer, and the lead-time ladder.
+       Strokes draw in document order, left to right; the ladder is last (glow(tl, ".lead")). -->
+  <!-- supplier factory, saw-tooth roof -->
+  <path d="M60 240 V140 L110 110 V140 L160 110 V140 L210 110 V80 H260 V240 Z"/>
+  <path d="M100 240 V200 H140 V240"/>
+  <!-- production control, with orders in from the customer and out to the supplier -->
+  <rect x="650" y="70" width="300" height="110" rx="8"/>
+  <path d="M700 125 H900"/>
+  <path d="M1320 125 H950 M970 110 L950 125 L970 140"/>
+  <path d="M650 125 H280 M300 110 L280 125 L300 140"/>
+  <!-- customer factory -->
+  <path d="M1340 240 V140 L1390 110 V140 L1440 110 V140 L1490 110 V80 H1540 V240 Z"/>
+  <path d="M1420 240 V200 H1460 V240"/>
+  <!-- truck in from the supplier -->
+  <rect x="80" y="330" width="100" height="60" rx="4"/>
+  <path d="M180 390 V350 H210 L225 370 V390 Z"/>
+  <circle cx="110" cy="400" r="12"/>
+  <circle cx="195" cy="400" r="12"/>
+  <!-- stock in -->
+  <path d="M260 500 L290 445 L320 500 Z"/>
+  <path d="M290 465 V488"/>
+  <!-- schedule to each process -->
+  <path d="M720 180 L480 360 M486 340 L480 360 L500 358"/>
+  <path d="M800 180 V360 M788 344 L800 360 L812 344"/>
+  <path d="M880 180 L1120 360 M1100 358 L1120 360 L1114 340"/>
+  <!-- process 1 -->
+  <rect x="360" y="380" width="200" height="120" rx="6"/>
+  <path d="M360 420 H560"/>
+  <rect x="360" y="515" width="200" height="100" rx="4"/>
+  <path d="M380 550 H540 M380 580 H500"/>
+  <!-- push, stock -->
+  <path d="M575 330 H685 M670 318 L688 330 L670 342"/>
+  <path d="M600 500 L630 445 L660 500 Z"/>
+  <path d="M630 465 V488"/>
+  <!-- process 2 -->
+  <rect x="700" y="380" width="200" height="120" rx="6"/>
+  <path d="M700 420 H900"/>
+  <rect x="700" y="515" width="200" height="100" rx="4"/>
+  <path d="M720 550 H880 M720 580 H840"/>
+  <!-- push, stock -->
+  <path d="M915 330 H1025 M1010 318 L1028 330 L1010 342"/>
+  <path d="M940 500 L970 445 L1000 500 Z"/>
+  <path d="M970 465 V488"/>
+  <!-- process 3 -->
+  <rect x="1040" y="380" width="200" height="120" rx="6"/>
+  <path d="M1040 420 H1240"/>
+  <rect x="1040" y="515" width="200" height="100" rx="4"/>
+  <path d="M1060 550 H1220 M1060 580 H1180"/>
+  <!-- stock out -->
+  <path d="M1280 500 L1310 445 L1340 500 Z"/>
+  <path d="M1310 465 V488"/>
+  <!-- truck out to the customer -->
+  <rect x="1380" y="330" width="100" height="60" rx="4"/>
+  <path d="M1480 390 V350 H1510 L1525 370 V390 Z"/>
+  <circle cx="1410" cy="400" r="12"/>
+  <circle cx="1495" cy="400" r="12"/>
+  <!-- lead-time ladder: waiting up, working down, and the total -->
+  <g class="lead">
+    <path d="M220 780 V700 H360 V780 H560 V700 H700 V780 H900 V700 H1040 V780 H1240 V700 H1340"/>
+    <rect x="1380" y="690" width="160" height="100" rx="6"/>
+    <path d="M1400 740 H1520"/>
+  </g>
+</svg>
