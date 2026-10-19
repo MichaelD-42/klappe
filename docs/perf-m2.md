@@ -16,22 +16,23 @@ Measured 2026-10-19 on branch `feat/m2-effects`. These are headless Chromium num
 ## What was measured
 
 - **Frame time:** the gaps between `requestAnimationFrame` calls while `stepper.next()` plays one step at real speed. One frame at 60 fps is 16.7 ms.
+- **Long frames:** frames over 20 ms, as a count and as the time they take together (measured in the second round; the swarm GPU value for round 1 is derived from frame count and average).
 - **Draw cost:** the time of one `tl.seek()` plus the swarm redraw, over 120 seeks across the stream step.
-- Each demo row is the range over 3 runs.
+- Each demo row is the range over 6 runs (two rounds of 3). The numbers vary a lot from run to run.
 
 ## Demo deck
 
-| Effect                                      | Renderer | Frames     | Avg (ms)     | p95 (ms)     | Max (ms)     | Frames > 20 ms |
-| ------------------------------------------- | -------- | ---------- | ------------ | ------------ | ------------ | -------------- |
-| Shatter fall (old-way 2 to 3, 30 shards)    | GPU      | 103 to 132 | 20.1 to 27.5 | 16.7 to 16.8 | 233 to 667   | 1 to 5         |
-| Shatter fall                                | Software | 22 to 36   | 61 to 100    | 200 to 317   | 217 to 367   | 11 to 13       |
-| Swarm stream (analysis 1 to 2, 2000 points) | GPU      | 129 to 136 | 25.9 to 28.8 | 16.8         | 450 to 467   | 3 to 5         |
-| Swarm stream                                | Software | 207 to 211 | 16.7 to 17.0 | 16.7 to 16.8 | 16.8 to 49.9 | 0 to 3         |
+| Effect | Renderer | Frames | Avg (ms) | p95 (ms) | Max (ms) | Frames > 20 ms | Time in long frames |
+|---|---|---|---|---|---|---|---|
+| Shatter fall (old-way 2 to 3, 30 shards, step about 2.2 s) | GPU | 103 to 132 | 17.6 to 27.5 | 16.7 to 50 | 50 to 667 | 1 to 14 | 0.2 to 1.2 s |
+| Shatter fall | Software | 22 to 44 | 61 to 106 | 200 to 733 | 217 to 867 | 11 to 13 | 3.7 s of about 4.2 s |
+| Swarm stream (analysis 1 to 2, 2000 points, step about 3.5 s) | GPU | 129 to 211 | 16.7 to 28.8 | 16.8 | 16.8 to 467 | 0 to 5 | 0 to 0.07 s (round 2); about 1 s (round 1, derived) |
+| Swarm stream | Software | 200 to 211 | 16.7 to 17.5 | 16.7 to 33.3 | 16.8 to 49.9 | 0 to 10 | 0.27 to 0.33 s |
 
-| Swarm draw cost (analysis 2, 2000 points) | Median (ms) | p95 (ms)   |
-| ----------------------------------------- | ----------- | ---------- |
-| GPU                                       | 0.3 to 0.4  | 0.5 to 0.6 |
-| Software                                  | 0.2 to 0.4  | 0.5 to 0.6 |
+| Swarm draw cost (analysis 2, 2000 points) | Median (ms) | p95 (ms) |
+|---|---|---|
+| GPU | 0.3 to 0.4 | 0.5 to 0.6 |
+| Software | 0.2 to 0.4 | 0.5 to 0.6 |
 
 ## Fixture decks (the Task 1 and Task 8 report tests, software renderer)
 
@@ -43,8 +44,9 @@ Run them with `npx vitest run tests/e2e/fx-shatter.e2e.test.ts tests/e2e/fx-swar
 
 ## Reading
 
-- **Swarm:** cheap. One redraw costs under 1 ms. The stream holds 60 fps on both renderers once it runs.
-- **Shatter, software:** too slow (avg 61 to 100 ms). The fall moves 30 clones of the slide with 3D transforms and blur. A CPU renderer cannot keep up.
-- **Shatter and swarm, GPU:** p95 is one frame (16.8 ms). But each step starts with one long stall: 233 to 667 ms for the shatter, about 450 ms for the swarm. It is most likely the first raster of the new layers, but this was not proven. A stall that long would show on stage as a short freeze.
+- **Swarm draw cost:** cheap. One redraw costs under 1 ms.
+- **Swarm stream:** mostly 60 fps. In the first GPU round, each run lost about 1 s to 3 to 5 long frames, worst 467 ms. That is derived from 129 to 136 frames at avg 26 to 29 ms for a 3.5 s step, not measured directly. In the second GPU round, it held 60 fps. The cause of the first round's stall is not known.
+- **Shatter fall, GPU:** p95 is about one frame in most runs, but 1 to 14 frames run long, worst 667 ms. Up to 1.2 s of a 2.2 s step went to long frames in one run. That would show on stage as a stutter or a short freeze.
+- **Shatter fall, software:** too slow (about 10 fps). The fall moves 30 clones of the slide with 3D transforms and blur. A CPU renderer cannot keep up.
 - **Shard count:** `shatter(ctx, { shards })` lowers it if the laptop stutters. The demo uses the default 30.
 - **Not measured:** a real headed browser and a weaker laptop. The user's manual check covers both.

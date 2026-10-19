@@ -40,7 +40,7 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
   - `arc()` and `appear()` need an `at` position.
 - `ctx.problem` calls at step time are not surfaced (Task 0).
 - Lucide bundle size: decide in M3 (IconNode input option).
-- Perf (docs/perf-m2.md): with a GPU, the shatter fall and the swarm stream each start with one stall of about 0.2 to 0.7 s. The cause is not proven (likely the first raster of new layers). Check it in the user's manual 60 fps run.
+- Perf (docs/perf-m2.md): with a GPU, the shatter fall lost 0.2 to 1.2 s of a 2.2 s step to long frames (worst frame 667 ms), and the swarm stream lost about 1 s to 3 to 5 long frames in some runs (worst 467 ms). The cause is not proven. Check it in the user's manual 60 fps run.
 - The `ac` self-test now has 12 checks of up to 8 s each. If most of them time out, the run takes up to 96 s, over the driver's 90 s wait.
 
 ## Effects
