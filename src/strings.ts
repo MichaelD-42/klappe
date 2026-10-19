@@ -32,5 +32,6 @@ export const strings = {
 export type StringKey = keyof (typeof strings)["en"];
 
 export function t(key: StringKey, lang: string): string {
-  return (strings[lang as keyof typeof strings] ?? strings.en)[key];
+  // An unknown language, or a key it lacks, falls back to en.
+  return (strings[lang as keyof typeof strings] as Partial<(typeof strings)["en"]> | undefined)?.[key] ?? strings.en[key];
 }
