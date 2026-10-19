@@ -25,9 +25,46 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-chart`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['chart: DATA MISSING: data/missing.csv'])
-    expect(r.steps).toBe(20)
+    expect(r.problems).toEqual([
+      'chart: DATA MISSING: data/missing.csv',
+      'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
+    ])
+    expect(r.steps).toBe(23)
   })
+
+test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
+  const page = await open('/a/bar/1')
+  const notes = await page.evaluate(() =>
+    Object.fromEntries(
+      [...document.querySelectorAll<SVGElement>('[data-k-chart]')].map((g) => [g.closest('[data-scene]')!.getAttribute('data-scene'), g.dataset.kNote]),
+    ),
+  )
+  expect(notes.bar).toBe('Source: data/quarters.csv — klappe demo sample')
+  expect(notes.stacked).toBe('Source: data/mix.json — klappe demo sample')
+  expect(notes.line).toBe('Source: data/trend.csv — origin not stated')
+  expect(notes.timeline).toBe('Source: data/plan.csv — origin not stated')
+  await page.close()
+})
+
+test('a waterfall starts plain, signs its changes and closes with a total', async () => {
+  const page = await open('/a/waterfall/3')
+  await page.waitForFunction(() => window.klappe.stepper.index === 11)
+  const values = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-k-chart="waterfall"] [data-k-text]')].map((e) => e.textContent),
+  )
+  expect(values).toEqual(['100', '−25', '+15', '−30', '+20', '80'])
+  await page.close()
+})
+
+test('a bad cell shows DATA ERROR and draws nothing', async () => {
+  const page = await open('/a/bad/1')
+  await page.waitForFunction(() => window.klappe.stepper.index === 20)
+  const box = page.locator('div[data-k-src="data/bad.csv"]')
+  expect(await box.textContent()).toBe('DATA ERROR: data/bad.csv')
+  expect(await box.isVisible()).toBe(true)
+  expect(await page.evaluate(() => document.querySelectorAll('[data-k-src="data/bad.csv"][data-k-chart]').length)).toBe(0)
+  await page.close()
+})
 
 test('values count up to the data and the source is in the DOM', async () => {
   const page = await open('/a/bar/3')
@@ -60,9 +97,13 @@ test('a missing dataset shows DATA MISSING with the file name', async () => {
 test('a Markdown chart link draws a bar chart in the media slot', async () => {
   const page = await open('/a/slot/2')
   await page.waitForFunction(() => window.klappe.stepper.index === 19)
-  const n = await page.evaluate(
-    () => document.querySelectorAll('g[data-k-media="2"] [data-k-chart="bar"] rect').length,
-  )
-  expect(n).toBe(4)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('g[data-k-media="2"] [data-k-chart="bar"]')!
+    const fit = document.querySelector('.k-stage')!.getBoundingClientRect().width / 1920
+    const sizes = [...g.querySelectorAll('text')].map((t) => parseFloat(getComputedStyle(t).fontSize) * fit)
+    return { bars: g.querySelectorAll('rect').length, smallest: Math.min(...sizes) }
+  })
+  expect(r.bars).toBe(4)
+  expect(r.smallest).toBeGreaterThanOrEqual(14) // at 1366 inside the media slot
   await page.close()
 })

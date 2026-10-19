@@ -2,8 +2,8 @@ import { assembleDeck } from "../assemble";
 import { chart, type ChartOpts } from "../../fx/chart";
 import type { SceneModule } from "../../types";
 
-// One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING,
-// the fixture's only problem); one plain-Markdown chart link in the default media slot.
+// One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING) and
+// one bad cell (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default media slot.
 // All numbers are made-up sample data.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -24,6 +24,7 @@ export default () => {
       "sections/10-a/50-timeline/scene.md": md("Timeline"),
       "sections/10-a/60-missing/scene.md": md("Missing"),
       "sections/10-a/70-slot/scene.md": "## Slot\n\n- Text beside the chart.\n- [Units by quarter](data/quarters.csv)\n",
+      "sections/10-a/80-bad/scene.md": md("Bad cell"),
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -41,17 +42,22 @@ export default () => {
         ],
       }),
       "sections/10-a/60-missing/scene.ts": scene({ src: "data/missing.csv", title: "Never drawn" }),
+      "sections/10-a/80-bad/scene.ts": scene({ src: "data/bad.csv", title: "Never drawn" }),
     },
   );
   r.deck.files = {
     data: {
       "data/quarters.csv": "# source: klappe demo sample\nquarter,units\nQ1,120\nQ2,185\nQ3,-40\nQ4,240\n",
-      "data/mix.json": JSON.stringify([
-        { quarter: "Q1", alpha: 40, beta: 25, gamma: 10 },
-        { quarter: "Q2", alpha: 55, beta: 30, gamma: 20 },
-        { quarter: "Q3", alpha: 35, beta: -15, gamma: 30 },
-        { quarter: "Q4", alpha: 70, beta: 45, gamma: 25 },
-      ]),
+      "data/bad.csv": "quarter,units\nQ1,5\nQ2,n/a\nQ3,7\n",
+      "data/mix.json": JSON.stringify({
+        source: "klappe demo sample",
+        rows: [
+          { quarter: "Q1", alpha: 40, beta: 25, gamma: 10 },
+          { quarter: "Q2", alpha: 55, beta: 30, gamma: 20 },
+          { quarter: "Q3", alpha: 35, beta: -15, gamma: 30 },
+          { quarter: "Q4", alpha: 70, beta: 45, gamma: 25 },
+        ],
+      }),
       "data/trend.csv": "month,north,south\nJan,4.5,2.0\nFeb,5.2,-1.5\nMar,6.8,1.0\nApr,6.1,3.5\nMay,7.4,4.2\n",
       "data/bridge.csv": "step,delta\nStart,100\nMaterial,-25\nLabour,15\nScrap,-30\nPrice,20\n",
     },

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, parseCsv, waterfallSteps } from "../../src/fx/chart";
+import { chartDomain, dataError, parseCsv, waterfallSteps } from "../../src/fx/chart";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -10,10 +10,16 @@ describe("parseCsv", () => {
   });
 
   test("skips blank lines and # comment lines, accepts CRLF", () => {
-    expect(parseCsv("# source: klappe demo sample\r\nq,v\r\n\r\nQ1,1\r\n# note\r\nQ2,2\r\n")).toEqual([
+    const rows = parseCsv("# source: klappe demo sample\r\nq,v\r\n\r\nQ1,1\r\n# source: not this\r\nQ2,2\r\n");
+    expect([...rows]).toEqual([
       { q: "Q1", v: 1 },
       { q: "Q2", v: 2 },
     ]);
+    expect(rows.source).toBe("klappe demo sample");
+  });
+
+  test("no source line: no source", () => {
+    expect(parseCsv("# a note\nq,v\nQ1,1\n").source).toBeUndefined();
   });
 
   test("an empty cell stays an empty string, a missing cell too", () => {
@@ -61,6 +67,36 @@ describe("chartDomain", () => {
       { task: "Build", start: 2020, end: 2024 },
     ];
     expect(chartDomain(t, "timeline")).toEqual([2019, 2024]);
+  });
+});
+
+describe("dataError", () => {
+  test("good rows: no error", () => {
+    expect(dataError(rows, "bar")).toBe("");
+    expect(dataError(rows, "stacked")).toBe("");
+  });
+
+  test("a bad cell in a number column is an error, not a dropped column", () => {
+    const bad = parseCsv("q,units,cost\nQ1,5,3\nQ2,n/a,4\nQ3,7,5\n");
+    expect(dataError(bad, "bar")).toBe("row 2, column units not a number");
+    expect(dataError(parseCsv("q,units\nQ1,5\nQ2,\n"), "bar")).toBe("row 2, column units not a number");
+  });
+
+  test("a text column is not a series", () => {
+    expect(dataError(parseCsv("q,note,units\nQ1,ok,5\nQ2,late,6\n"), "bar")).toBe("");
+    expect(dataError(parseCsv("q,note\nQ1,ok\n"), "bar")).toBe("no number column");
+  });
+
+  test("null, arrays and numbers are not rows", () => {
+    expect(dataError([{ q: "a", v: 1 }, null], "bar")).toBe("row 2 is not an object");
+    expect(dataError([[1, 2]], "bar")).toBe("row 1 is not an object");
+    expect(dataError([3], "line")).toBe("row 1 is not an object");
+  });
+
+  test("timeline: needs two number columns and an end not before its start", () => {
+    expect(dataError([{ t: "a", start: 1 }], "timeline")).toBe("needs a start and an end column");
+    expect(dataError([{ t: "a", start: 2020, end: 2019 }], "timeline")).toBe("row 1, end before start");
+    expect(dataError([{ t: "a", start: 2019, end: 2019 }], "timeline")).toBe("");
   });
 });
 

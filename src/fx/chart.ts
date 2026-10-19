@@ -3,9 +3,9 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
-// The first column labels the rows; every later column that is a number in all rows is a series.
-// bar and waterfall use the first series; stacked and line use all of them;
-// timeline reads two series per row: start, then end (for example years).
+// The first column labels the rows; every later column that is a number in at least half the rows
+// is a series, and then must be a number in every row. bar and waterfall use the first series;
+// stacked and line use all of them; timeline reads two series per row: start, then end (for example years).
 export type Row = Record<string, string | number>;
 export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline";
 export interface ChartOpts {
@@ -23,12 +23,22 @@ export interface ChartHandle {
 }
 
 // shortcut: no quoted commas, upgrade to d3-dsv if decks need it
-// Lines starting with # are comments, so a data file can say "# source: klappe demo sample".
-export function parseCsv(text: string): Row[] {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() && !l.trimStart().startsWith("#"));
-  if (!lines.length) return [];
-  const head = lines[0].split(",").map((h) => h.trim());
-  return lines.slice(1).map((l) => {
+// Lines starting with # are comments. A "# source: <origin>" line before the header says where the
+// data comes from; it rides on the returned array as .source.
+export function parseCsv(text: string): Row[] & { source?: string } {
+  let source: string | undefined;
+  const lines: string[] = [];
+  for (const l of text.split(/\r?\n/)) {
+    const t = l.trim();
+    if (!t) continue;
+    if (t.startsWith("#")) {
+      if (!lines.length) source ??= /^#\s*source:\s*(.*)$/i.exec(t)?.[1].trim();
+      continue;
+    }
+    lines.push(l);
+  }
+  const head = (lines[0] ?? "").split(",").map((h) => h.trim());
+  const rows: Row[] = lines.slice(1).map((l) => {
     const cells = l.split(",").map((c) => c.trim());
     return Object.fromEntries(
       head.map((h, i) => {
@@ -37,13 +47,33 @@ export function parseCsv(text: string): Row[] {
       }),
     );
   });
+  return source ? Object.assign(rows, { source }) : rows;
 }
 
 function columns(rows: Row[]) {
   const [label, ...rest] = Object.keys(rows[0] ?? {});
-  return { label, series: rest.filter((k) => rows.every((r) => typeof r[k] === "number")) };
+  const numeric = (k: string) => rows.filter((r) => typeof r[k] === "number").length * 2 >= rows.length;
+  return { label, series: rest.filter(numeric) };
 }
 const num = (r: Row, k: string) => r[k] as number;
+
+// Why rows cannot be drawn as this type, or "". Never plot around a bad cell: that would invent numbers.
+export function dataError(rows: unknown[], type: ChartType): string {
+  const bad = rows.findIndex((r) => !r || typeof r !== "object" || Array.isArray(r));
+  if (bad >= 0) return `row ${bad + 1} is not an object`;
+  const data = rows as Row[];
+  const { series } = columns(data);
+  if (type === "timeline" && series.length < 2) return "needs a start and an end column";
+  if (!series.length) return "no number column";
+  for (const [i, r] of data.entries())
+    for (const k of series) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
+  if (type === "timeline") {
+    const [a, b] = series;
+    const i = data.findIndex((r) => num(r, b) < num(r, a));
+    if (i >= 0) return `row ${i + 1}, ${b} before ${a}`;
+  }
+  return "";
+}
 
 // Each delta's bar runs from the running total before it to the one after it.
 export function waterfallSteps(deltas: number[]): [number, number][] {
@@ -69,7 +99,10 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 }
 
 const PALETTE = ["var(--k-accent)", "var(--k-phosphor)", "var(--k-phosphor-amber)", "var(--k-fg)"];
-const FONT = 22; // ≥ 14 px on screen at 1366 (scale 0.71)
+const UP = "var(--k-phosphor)";
+const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
+// Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
+const FONT = 22;
 const SVG = "http://www.w3.org/2000/svg";
 const ease = gsap.parseEase("power2.out");
 let clips = 0;
@@ -86,7 +119,9 @@ function text(parent: Element, s: string, attrs: Record<string, string | number>
   t.textContent = s;
   return t;
 }
-const decimals = (vs: number[]) => d3.max(vs, (v) => (String(v).split(".")[1] ?? "").length) ?? 0;
+// The zero line is the only horizontal baseline; the category axis keeps just its labels.
+const categories = (x: d3.AxisScale<string>) => d3.axisBottom(x).tickSize(0).tickPadding(12);
+const decimals =(vs: number[]) => d3.max(vs, (v) => (String(v).split(".")[1] ?? "").length) ?? 0;
 
 // A large visible box instead of the chart, and a deck problem.
 function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): ChartHandle {
@@ -108,9 +143,9 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
     justifyContent: "center",
     textAlign: "center",
     overflowWrap: "anywhere",
-    border: "4px dashed var(--k-accent)",
+    border: "4px dashed var(--k-phosphor-amber)",
     background: "var(--k-bg)",
-    color: "var(--k-accent)",
+    color: "var(--k-phosphor-amber)",
     fontSize: "48px",
     fontWeight: "700",
   });
@@ -121,42 +156,66 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   return { axes: show, grow: show, values: show };
 }
 
-function load(ctx: Ctx, opts: ChartOpts): Row[] | null | string {
-  if (opts.data !== undefined) return opts.data;
-  const raw = ctx.files.data[opts.src];
-  if (raw === undefined) return null;
-  try {
-    const rows = opts.src.endsWith(".json") ? JSON.parse(raw) : parseCsv(raw);
-    return Array.isArray(rows) ? rows : "not an array of rows";
-  } catch (e) {
-    return e instanceof Error ? e.message : String(e);
+// Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
+// null: the file is missing; a string: why the data cannot be read.
+function load(ctx: Ctx, opts: ChartOpts): { rows: unknown[]; source?: string } | null | string {
+  let x: unknown = opts.data;
+  if (x === undefined) {
+    const raw = ctx.files.data[opts.src];
+    if (raw === undefined) return null;
+    try {
+      x = opts.src.endsWith(".json") ? JSON.parse(raw) : parseCsv(raw);
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
   }
+  if (x === null) return null;
+  const o = x as { rows?: unknown; source?: unknown };
+  const rows = Array.isArray(x) ? x : o && typeof o === "object" && Array.isArray(o.rows) ? o.rows : undefined;
+  if (!rows) return "not an array of rows";
+  return { rows, source: typeof o.source === "string" ? o.source : undefined };
 }
 
 export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const type = opts.type ?? "bar";
-  const data = load(ctx, opts);
-  if (data === null) return placeholder(ctx, opts, "DATA MISSING", "");
-  if (typeof data === "string") return placeholder(ctx, opts, "DATA ERROR", data);
-  if (!data.length) return placeholder(ctx, opts, "DATA MISSING", "no rows");
+  const loaded = load(ctx, opts);
+  if (loaded === null) return placeholder(ctx, opts, "DATA MISSING", "");
+  if (typeof loaded === "string") return placeholder(ctx, opts, "DATA ERROR", loaded);
+  if (!loaded.rows.length) return placeholder(ctx, opts, "DATA MISSING", "no rows");
+  const why = dataError(loaded.rows, type);
+  if (why) return placeholder(ctx, opts, "DATA ERROR", why);
+  const data = loaded.rows as Row[];
   const { label, series } = columns(data);
-  if (series.length < (type === "timeline" ? 2 : 1))
-    return placeholder(ctx, opts, "DATA ERROR", type === "timeline" ? "needs a start and an end column" : "no number column");
   const keys = type === "stacked" || type === "line" ? series : [series[0]];
   const names = data.map((r) => String(r[label]));
+  if (type === "waterfall") names.push("Total");
+  const color = (i: number) => PALETTE[i % PALETTE.length];
+  const legend =
+    type === "waterfall"
+      ? [
+          { name: "Increase", fill: UP },
+          { name: "Decrease", fill: DOWN },
+        ]
+      : keys.length > 1
+        ? keys.map((k, i) => ({ name: k, fill: color(i) }))
+        : [];
 
   const R = opts.rect;
-  const legend = keys.length > 1;
   const longest = d3.max(names, (n) => n.length) ?? 0;
   const m = {
-    top: 56 + (legend ? 40 : 0) + 40,
+    top: 56 + (legend.length ? 40 : 0) + 40,
     left: type === "timeline" ? Math.min(R.w * 0.3, 24 + longest * 13) : 90,
     right: type === "timeline" ? 130 : 30,
     bottom: 56,
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
 
-  const root = svg(ctx.svg, "g", { "data-k-src": opts.src, "data-k-chart": type });
+  // The source goes to the DOM and, through data-k-note, to the speaker view's notes.
+  const root = svg(ctx.svg, "g", {
+    "data-k-src": opts.src,
+    "data-k-chart": type,
+    "data-k-note": `Source: ${opts.src} — ${loaded.source || "origin not stated"}`,
+  });
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (opts.sample) {
@@ -164,14 +223,14 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     s.style.fill = "var(--k-phosphor-amber)";
     head.push(s);
   }
-  if (legend) {
+  if (legend.length) {
     const g = svg(root, "g", {});
     let lx = R.x;
-    keys.forEach((k, i) => {
-      svg(g, "rect", { x: lx, y: R.y + 62, width: 18, height: 18 }).style.fill = PALETTE[i % PALETTE.length];
-      text(g, k, { x: lx + 26, y: R.y + 79 });
-      lx += 26 + k.length * 12 + 32; // about 12 px per character at 22 px
-    });
+    for (const { name, fill } of legend) {
+      svg(g, "rect", { x: lx, y: R.y + 62, width: 18, height: 18 }).style.fill = fill;
+      text(g, name, { x: lx + 26, y: R.y + 79 });
+      lx += 26 + name.length * 12 + 32; // about 12 px per character at 22 px
+    }
     head.push(g);
   }
 
@@ -181,9 +240,11 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string }[] = [];
   const dec = decimals(data.flatMap((r) => keys.map((k) => num(r, k))));
   const fmt = d3.format(`,.${dec}f`);
-  const color = (i: number) => PALETTE[i % PALETTE.length];
-  const valueAt = (s: string, attrs: Record<string, string | number>, from: number, to: number, show: (n: number) => string) => {
-    values.push({ el: text(root, s, attrs), from, to, show });
+  const valueAt = (attrs: Record<string, string | number>, from: number, to: number, show: (n: number) => string) => {
+    const el = text(root, "", attrs);
+    // A dark halo keeps the number readable where it crosses a line or a bar.
+    Object.assign(el.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+    values.push({ el, from, to, show });
   };
   const bar = (x: number, w: number, lo: number, hi: number, fill: string, up: boolean) => {
     const [y0, y1] = [v(lo), v(hi)];
@@ -205,7 +266,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       rect.style.fill = color(i);
       grown.push({ el: rect, origin: "0% 50%", scale: "scaleX" });
       const yc = y(names[i])! + y.bandwidth() / 2 + FONT * 0.35;
-      valueAt("", { x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
+      valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
     });
     xAxis = d3.axisBottom(x).ticks(6).tickFormat(d3.format("d"));
     yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12);
@@ -227,41 +288,50 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         });
         path.style.stroke = color(i);
         data.forEach((r, j) => {
-          const c = svg(root, "circle", { cx: x(names[j])!, cy: v(num(r, k)), r: 8 });
+          const n = num(r, k);
+          const c = svg(root, "circle", { cx: x(names[j])!, cy: v(n), r: 8 });
           c.style.fill = color(i);
           grown.push({ el: c, origin: "50% 50%", scale: "scale" });
-          valueAt("", { x: x(names[j])!, y: v(num(r, k)) - 16, "text-anchor": "middle" }, 0, num(r, k), fmt);
+          valueAt({ x: x(names[j])!, y: n < 0 ? v(n) + FONT + 14 : v(n) - 16, "text-anchor": "middle" }, 0, n, fmt);
         });
       });
-      xAxis = d3.axisBottom(x).tickSizeOuter(0);
+      xAxis = categories(x);
     } else {
       const x = d3.scaleBand().domain(names).range([P.x, P.x + P.w]).padding(0.3);
-      const top = (lo: number, hi: number, i: number, to: number, show: (n: number) => string) => {
-        const down = hi < lo;
-        valueAt("", { x: x(names[i])! + x.bandwidth() / 2, y: down ? v(hi) + FONT + 8 : v(hi) - 10, "text-anchor": "middle" }, 0, to, show);
+      // A value label above the bar's end, or below it when the bar runs down.
+      const barValue = (lo: number, hi: number, i: number, to: number, show: (n: number) => string) => {
+        const at = { x: x(names[i])! + x.bandwidth() / 2, y: hi < lo ? v(hi) + FONT + 8 : v(hi) - 10, "text-anchor": "middle" };
+        valueAt(at, 0, to, show);
       };
       if (type === "stacked") {
         const layers = d3.stack<Row>().keys(keys).value((r, k) => num(r, k)).offset(d3.stackOffsetDiverging)(data);
         layers.forEach((layer, li) =>
           layer.forEach(([lo, hi], i) => bar(x(names[i])!, x.bandwidth(), lo, hi, color(li), hi >= lo && lo >= 0)),
         );
+        // With a part below zero the stack's height is not its sum: say "net".
         data.forEach((r, i) => {
+          const net = keys.some((k) => num(r, k) < 0);
           const pos = d3.sum(keys, (k) => Math.max(0, num(r, k)));
-          top(0, pos, i, d3.sum(keys, (k) => num(r, k)), fmt);
+          barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `net ${fmt(n)}` : fmt);
         });
       } else if (type === "waterfall") {
         const signed = d3.format(`+,.${dec}f`);
-        waterfallSteps(data.map((r) => num(r, keys[0]))).forEach(([lo, hi], i) => {
-          bar(x(names[i])!, x.bandwidth(), lo, hi, hi >= lo ? color(0) : color(2), hi >= lo);
-          top(lo, hi, i, hi - lo, signed);
+        const steps = waterfallSteps(data.map((r) => num(r, keys[0])));
+        steps.forEach(([lo, hi], i) => {
+          // The first row is the starting value, not a change.
+          bar(x(names[i])!, x.bandwidth(), lo, hi, i === 0 ? color(0) : hi >= lo ? UP : DOWN, hi >= lo);
+          barValue(lo, hi, i, hi - lo, i === 0 ? fmt : signed);
         });
+        const total = steps[steps.length - 1][1];
+        bar(x("Total")!, x.bandwidth(), 0, total, color(0), total >= 0);
+        barValue(0, total,names.length - 1, total, fmt);
       } else
         data.forEach((r, i) => {
           const n = num(r, keys[0]);
           bar(x(names[i])!, x.bandwidth(), 0, n, color(0), n >= 0);
-          top(0, n, i, n, fmt);
+          barValue(0, n, i, n, fmt);
         });
-      xAxis = d3.axisBottom(x).tickSizeOuter(0);
+      xAxis = categories(x);
     }
     yAxis = d3.axisLeft(v).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
   }
@@ -273,10 +343,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     root.insertBefore(g, marks);
     return g;
   };
-  const axesEls = [axisAt(xAxis, 0, P.y + P.h), axisAt(yAxis, P.x, 0)];
-  // A zero line when the value axis crosses zero inside the plot.
-  const [lo] = v.domain();
-  if (type !== "timeline" && lo < 0) {
+  const axesEls: SVGElement[] = [axisAt(xAxis, 0, P.y + P.h), axisAt(yAxis, P.x, 0)];
+  if (type !== "timeline") {
+    axesEls[0].querySelector(".domain")?.remove();
     const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
     z.style.stroke = "var(--k-fg)";
     axesEls.push(z);
