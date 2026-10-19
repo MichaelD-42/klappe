@@ -3,10 +3,26 @@ import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
+// A Ken Burns pose: scale, and a drift in scene px.
+export interface KenBurnsPose {
+  scale: number;
+  x: number;
+  y: number;
+}
 export interface ImageOpts {
   href: string; // as in the Markdown link: "media/x.png"
-  alt: string;
-  rect: Rect;
+  alt: string; // "" for a decorative picture (a background)
+  rect?: Rect; // default: the full scene frame
+  fit?: "contain" | "cover"; // cover fills the rect and crops; default contain
+  // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses.
+  kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
+  scrim?: number; // 0..1: a dark layer over the picture, for text on top
+}
+export interface ImageHandle {
+  show(tl: gsap.core.Timeline, at?: number | string): void;
+  hide(tl: gsap.core.Timeline, at?: number | string): void;
+  // The Ken Burns push over `duration` seconds; show() already plays it when kenBurns is set.
+  move(tl: gsap.core.Timeline, opts: { duration: number }, at?: number | string): void;
 }
 export interface VideoOpts {
   href: string; // a local "media/x.mp4", a direct link, or a YouTube or Vimeo link
@@ -46,9 +62,9 @@ function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
 const LANG = "en";
 
-// The visible stand-in for a file that is not in the deck's media/ folder.
-function missing(ctx: Ctx, rect: Rect, label: string, text: string): HTMLElement {
-  const b = box(ctx, fit(rect));
+// The visible stand-in, at rect, for a file that is not in the deck's media/ folder.
+function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: string): HTMLElement {
+  const b = box(ctx, rect);
   Object.assign(b.style, {
     flexDirection: "column",
     gap: "24px",
@@ -63,26 +79,68 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string): HTMLElement
   s.textContent = text;
   s.style.fontSize = "32px";
   b.append(t, s);
+  if (prompt) {
+    const p = document.createElement("div");
+    p.textContent = prompt;
+    Object.assign(p.style, { fontSize: "28px", fontWeight: "400", maxWidth: "80%" });
+    b.append(p);
+  }
   ctx.problem(`${label}: ${text}`);
   return b;
 }
 
 const CAPTION = 48; // the row under a video box for its caption
 
-const fade = (b: HTMLElement): { show: StepAdder } => ({ show: (tl) => void tl.to(b, { autoAlpha: 1, duration: motion.step }) });
+const fade = (b: HTMLElement) => ({
+  show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration: motion.step }, at),
+  hide: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 0, duration: motion.step }, at),
+});
 const key = (href: string) => href.replace(/^\.\//, "");
 
-export function image(ctx: Ctx, opts: ImageOpts): { show: StepAdder } {
-  const { href, alt, rect } = opts;
+const KEN_BURNS = 6; // seconds: show() with kenBurns makes its step this long
+const STILL: KenBurnsPose = { scale: 1, x: 0, y: 0 };
+const PUSH: KenBurnsPose = { scale: 1.08, x: -24, y: -12 }; // 4 % overscan per side covers the drift
+
+export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
+  const { href, alt, scrim, kenBurns } = opts;
+  const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
+  const cover = opts.fit === "cover";
   const url = ctx.files.media[key(href)];
-  if (url === undefined) return fade(missing(ctx, rect, t("imageMissing", LANG), `${key(href)} — ${alt}`));
+  const text = [key(href), alt].filter(Boolean).join(" — ");
+  if (url === undefined) {
+    // The line to paste into an image generator, as media/TODO.md writes it for an untitled image.
+    const prompt = cover && alt ? `${alt}, 16:9, 1920x1080, no text, no logos` : undefined;
+    const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", LANG), text, prompt);
+    return { ...fade(b), move: () => {} };
+  }
   const b = box(ctx, rect);
   const img = document.createElement("img");
   img.src = url;
   img.alt = alt;
-  Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" });
+  Object.assign(img.style, { width: "100%", height: "100%", objectFit: cover ? "cover" : "contain" });
   b.append(img);
-  return fade(b);
+  if (scrim) {
+    const s = document.createElement("div");
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(scrim) });
+    b.append(s);
+  }
+  const kb = kenBurns === true ? {} : kenBurns;
+  const move: ImageHandle["move"] = (tl, { duration }, at) =>
+    void tl.fromTo(
+      img,
+      { ...STILL, ...kb?.from },
+      { ...PUSH, ...kb?.to, duration, ease: "sine.inOut", immediateRender: false },
+      at,
+    );
+  const f = fade(b);
+  return {
+    show(tl, at) {
+      f.show(tl, at);
+      if (kb) move(tl, { duration: KEN_BURNS }, "<");
+    },
+    hide: f.hide,
+    move,
+  };
 }
 
 // The iframe address of a YouTube or Vimeo link; null for anything else.
@@ -107,7 +165,7 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const { href, title, rect } = opts;
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
-  if (src === undefined) return fade(missing(ctx, rect, t("videoMissing", LANG), `${key(href)} — ${title}`));
+  if (src === undefined) return fade(missing(ctx, fit(rect), t("videoMissing", LANG), `${key(href)} — ${title}`));
   // A border and a caption, so the box reads as a video even when it cannot load (offline).
   const area = { ...rect, h: rect.h - CAPTION };
   const b = box(ctx, fit(area), "#000"); // black letterbox bars
