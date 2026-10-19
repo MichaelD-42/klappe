@@ -127,9 +127,10 @@ const categories = (x: d3.AxisScale<string>, names: string[]) =>
   d3.axisBottom(x).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
 const decimals =(vs: number[]) => d3.max(vs, (v) => (String(v).split(".")[1] ?? "").length) ?? 0;
 
-// The "Sample data" label shows when the deck asks for it or the data says it is a sample.
+// The "Sample data" label shows when the deck asks for it or the data carries the demo marker
+// "source: klappe demo sample". Only that marker: a real source may contain the word "sample".
 export const showsSample = (sample: boolean | undefined, source: string | undefined): boolean =>
-  !!sample || /sample/i.test(source ?? "");
+  !!sample || /klappe demo sample/i.test(source ?? "");
 
 // A large visible box instead of the chart, and a deck problem.
 function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): ChartHandle {
