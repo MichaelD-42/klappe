@@ -25,3 +25,38 @@ Deferred findings from the M0+M1 reviews, triaged by the final review (2026-10-1
 - Task 15: minor (deferred): clarification box ~20% from left not centred; pull-back still sparse thin band, labels near 14px bar; Example A Boot + Example C Coming together/Working on the topic deferred to M2 (state it in README); old-way step 1 reads as slide description (spec text, placeholder); deck-repo tsconfig needs "klappe/types": ["./klappe/src/types"] (Task 17 README + klappe init)
 - Task 16: minor (deferred): ac failure path may exceed driver 90s timeout (CHECK_MS 15s ×9) and timed-out fn keeps running; lint misses named mono fonts (Consolas/Menlo/"… Mono"), font: italic shorthand/oblique, pill on non-btn class or var()/em radius, protocol-relative //cdn; real-input test getByRole 'Next' not exact
 - Final: deferred triage recorded per reviewer table (M2: overview clone dup ids, shout answer drop problem, negative-offset rule in README, legibility for section text, toDeckRelative; M3: look polish, lint gaps, prod bundle gating of selftest/fixtures, index.html lang/title, types consolidation, panel.ts)
+
+# After M2
+
+Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build ledger and grouped. Pick up when planning M3.
+
+## Engine follow-ups
+
+- Scenes should read parsed scene text (title, shout question and answer) and deck meta (intensity, lang) through `ctx`. Every demo section copied its text into `scene.ts`, so text can drift from `scene.md`.
+- Engine API gaps:
+  - The `worldMap` handle should expose site positions and arc paths. Decks use the internal `fitProjection` and `arcPath` today.
+  - `figure` needs a stroke-width option.
+  - `Ctx` should carry deck meta (intensity, lang). Effect UI words in `media.ts` are English until then.
+  - `arc()` and `appear()` need an `at` position.
+- `ctx.problem` calls at step time are not surfaced (Task 0).
+- Lucide bundle size: decide in M3 (IconNode input option).
+- Perf (docs/perf-m2.md): with a GPU, the shatter fall and the swarm stream each start with one stall of about 0.2 to 0.7 s. The cause is not proven (likely the first raster of new layers). Check it in the user's manual 60 fps run.
+- The `ac` self-test now has 12 checks of up to 8 s each. If most of them time out, the run takes up to 96 s, over the driver's 90 s wait.
+
+## Effects
+
+- Shatter (Task 1): black backdrop strip visible at top mid-fall; the box is measured at the crack but the copy is taken at the fall (adjacent steps).
+- CRT (Task 2): bloom edges slightly olive-grey; amber READY cursor not captured in a shot (blink phase); long-text floor at about 14 px; no test for the bad count line problem.
+- Art and icons (Task 3): the `javascript:` filter misses entity and tab tricks and leaves set/animate/use/image (author art, low risk: document it); icon draw start computation is fragile (`drawOn` could return the start); the 0.5 cutoff is undocumented; normalisation sets `fill: none` inside defs/clipPath/mask.
+- Chart (Task 4): "Total" label is English; timeline columns are positional.
+- Shout (Task 5): a DOM query on `[data-k-shout=answer]` instead of the WeakMap would remove module state; the `back.out` overshoot is not checked visually.
+- Figure (Task 7): clearer arm swing (10 to 15 degrees), the seated figure needs a chair and arms, standing figures closer and the group larger at 1366; the pose mapping has no unit test.
+- Swarm and motion (Task 8): dots cross the Inbox label mid-flight; the landed pile is a uniform grey; morph text has low contrast mid-frame; no test of morph play-time start values; the swarm canvas is not re-rasterised on a deeper zoom.
+- Media (Task 9): a `youtu.be` link with an empty id gives `/embed/undefined`; `youtube-nocookie` and `music.youtube` are not matched; the `EMBED_OK` allowlist lacks a negative test. Task 0: the media HTML wrapper has no opaque backdrop (the SVG one has).
+
+## Demo deck
+
+- Opening (Task 11): the black hold is its own click (matches its spec bullet, kept); the power-on flash is a flat mint card; no cursor at power-on (spec bullet 1); the placeholder logo is not in a TODO.
+- Value stream (Task 12): the overview band is still modest with a left-aligned caption; the carried stack overlaps the right hand; analysis step 1 frame is mostly empty; the clarification-2 label sits about 10 px from the bottom edge.
+- Global team and meeting (Task 13): the shout "Decide." step dims differently from the question steps; coastlines cut site-name digits; arcs cross arriving figures in the zoomed host shot; meeting figures are dimmed by reaching into the figure DOM; map labels are turned off via empty text.
+- Numbers (Task 14): chart notes repeat the bullets; video playback is unverified offline (user manual check).
