@@ -125,10 +125,12 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     b.append(s);
   }
   const kb = kenBurns === true ? {} : kenBurns;
+  const from = { ...STILL, ...kb?.from };
+  gsap.set(img, from); // the start pose from load, so a seek back before the push matches a fresh load
   const move: ImageHandle["move"] = (tl, { duration }, at) =>
     void tl.fromTo(
       img,
-      { ...STILL, ...kb?.from },
+      from,
       { ...PUSH, ...kb?.to, duration, ease: "sine.inOut", immediateRender: false },
       at,
     );
