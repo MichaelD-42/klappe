@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
 import { syncClaude } from './sync-claude.mjs'
@@ -70,7 +70,7 @@ if (cmd === 'init') {
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
   const tsconfig = path.join(process.cwd(), 'tsconfig.json')
   if (!fs.existsSync(tsconfig)) {
-    const ts = { compilerOptions: { strict: true, noEmit: true, paths:{ 'klappe/types': ['./klappe/src/types'] } }, include: ['decks'] }
+    const ts = { compilerOptions: { strict: true, noEmit: true, paths: { 'klappe/types': ['./klappe/src/types'], 'klappe/fx': ['./klappe/src/fx'] } }, include: ['decks'] }
     fs.writeFileSync(tsconfig, JSON.stringify(ts, null, 2) + '\n')
   }
   const ignore = path.join(process.cwd(), '.gitignore')
@@ -96,6 +96,13 @@ if (!fs.existsSync(deckDir)) {
 }
 
 process.env.KLAPPE_DECK_DIR = deckDir
+
+// Lists missing media and data files in the deck. bin/todo.mjs may be absent; then this does nothing.
+async function writeTodos() {
+  const file = path.join(klappeDir, 'bin', 'todo.mjs')
+  if (fs.existsSync(file)) await (await import(pathToFileURL(file).href)).writeTodos(deckDir)
+}
+if (cmd === 'build' || cmd === 'test') await writeTodos()
 
 if (cmd === 'test') {
   const { startVitest } = await import('vitest/node')

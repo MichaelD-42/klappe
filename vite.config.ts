@@ -8,7 +8,7 @@ const deckDir = process.env.KLAPPE_DECK_DIR ?? path.join(cwd, 'decks', 'demo')
 
 export default defineConfig({
   root: klappeDir,
-  resolve: { alias: { '@deck': deckDir } },
+  resolve: { alias: { '@deck': deckDir, 'klappe/fx': path.join(klappeDir, 'src', 'fx', 'index.ts') } },
   server: { fs: { allow: [klappeDir, cwd, deckDir] } },
   build: { outDir: path.join(cwd, 'dist', path.basename(deckDir)), emptyOutDir: true },
 })
