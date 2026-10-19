@@ -10,11 +10,13 @@ export const FRAME: Rect = { x: 7680, y: 0, w: 1920, h: 1080 };
 const MAP: Rect = { x: FRAME.x + 20, y: 240, w: 1800, h: 800 };
 // Placeholder sites at plausible land coordinates; not real locations of anyone.
 // lift: how far each flight arc bows up (a share of its length; below 0 bows down), so the four read as spokes.
+// Every arc leaves its site upward or sideways, above the figures; the site's name sits under them.
 const SITES: (Site & { lift: number })[] = [
   { id: "s1", label: "[Site 1]", lon: -100, lat: 40, lift: 0.14 },
   { id: "s2", label: "[Site 2]", lon: -50, lat: -10, lift: 0.06 },
-  { id: "s3", label: "[Site 3]", lon: 78, lat: 22, lift: -0.05 },
-  { id: "s4", label: "[Site 4]", lon: 135, lat: -25, lift: -0.16 }, // well under Site 3, not through it
+  { id: "s3", label: "[Site 3]", lon: 78, lat: 22, lift: 0.04 },
+  // Bows well down: it passes south of Site 3 and leaves the host steeper than Site 3's arc.
+  { id: "s4", label: "[Site 4]", lon: 135, lat: -25, lift: -0.28 },
 ];
 const HOST: Site = { id: "host", label: "[Host site]", lon: 12, lat: 48 };
 const PER_SITE = 2;
@@ -71,7 +73,8 @@ function build(ctx: Ctx) {
   // The map in its own group, so the table step can dim land, dots and arcs together.
   const mapLayer = g.appendChild(document.createElementNS(SVG, "g"));
   gsap.set(mapLayer, { opacity: 1 }); // written at load, as a seek back to the start leaves it
-  const map = worldMap({ ...ctx, svg: mapLayer }, { rect: MAP, sites: [...SITES, HOST] });
+  // No map labels: the map puts them right of the dot, where the east arcs leave. Ours sit clear of the arcs.
+  const map = worldMap({ ...ctx, svg: mapLayer }, { rect: MAP, sites: [...SITES, HOST].map((s) => ({ ...s, label: "" })) });
   const host: [number, number] = [HX, HY];
   let n = 0;
   const sites = SITES.map((s) => {
@@ -87,13 +90,19 @@ function build(ctx: Ctx) {
       const fig = figure(ctx, { x: home[0], y: home[1], scale: FIG.scale, color: "var(--k-fg)" });
       const body = g.lastElementChild as SVGGElement; // the figure's root group
       body.style.strokeWidth = String(FIG.stroke);
-      const role = svgText(g, sx + 34 * side, sy + 44, "[Role]", LABEL.role, side < 0 ? "end" : "start");
+      // The role on a faint backing, so coastlines stay behind it.
+      const role = g.appendChild(document.createElementNS(SVG, "g"));
+      const back = role.appendChild(document.createElementNS(SVG, "rect"));
+      const rx = sx + 34 * side;
+      for (const [k, v] of Object.entries({ x: side < 0 ? rx - 70 : rx - 6, y: sy + 22, width: 76, height: 30, rx: 4 })) back.setAttribute(k, String(v));
+      Object.assign(back.style, { fill: "var(--k-bg)", opacity: "0.85" });
+      svgText(role, rx, sy + 44, "[Role]", LABEL.role, side < 0 ? "end" : "start");
       // A short step onto the site, the site's arc to the host, then a step to a free spot by the host.
       const arrive = ARRIVALS[n];
       const route = `M ${home[0]} ${home[1]} L ${sx} ${sy} ${curve([sx, sy], host, s.lift)} L ${arrive[0]} ${arrive[1]}`;
       return { fig, body, role, route, seat: SEATS[n++] };
     });
-    const label = svgText(g, sx, sy - 16, s.label, LABEL.site, "middle", 700);
+    const label = svgText(g, sx, sy + 92, s.label, LABEL.site, "middle", 700); // under the figures, away from the arc
     return { id: s.id, arc, label, members };
   });
 
@@ -112,7 +121,10 @@ function build(ctx: Ctx) {
 
   // Above-right of the dot: the east arcs bow down and the west ones come in from the left, so none crosses it.
   const hostLabel = svgText(g, HX + 12, HY - 14, HOST.label, LABEL.site, "start", 700);
-  gsap.set([table, hostLabel, ...sites.flatMap((s) => [s.label, ...s.members.map((m) => m.role)])], { autoAlpha: 0 });
+  // The same label at the 4x zoom: 8 units renders at 23 px at 1366x768.
+  const zoomLabel = svgText(g, HX + 7, HY - 7, HOST.label, 8, "start");
+  zoomLabel.style.strokeWidth = "2";
+  gsap.set([table, hostLabel, zoomLabel,...sites.flatMap((s) => [s.label, ...s.members.map((m) => m.role)])], { autoAlpha: 0 });
   return {
     map,
     mapLayer,
@@ -121,6 +133,7 @@ function build(ctx: Ctx) {
     members: sites.flatMap((s) => s.members),
     host: HOST.id,
     hostLabel,
+    zoomLabel,
     table,
   };
 }

@@ -27,12 +27,13 @@ const scene: SceneModule = {
       tl.to([...r.members.map((m) => m.role), ...r.sites.map((s) => s.label)], { autoAlpha: 0, duration: 0.4 }, "travel");
       r.members.forEach((m, i) => m.fig.walk(tl, m.route, { duration: TRAVEL, at: `travel+=${i * LAG}` }));
     },
-    // The title and our big host label would fill the zoomed frame; the map shows the host's own label there.
+    // The title and the big host label would fill the zoomed frame; a small host label replaces it.
     // Figures and arcs thin out with the zoom, so they keep about the same rendered weight.
     (tl, r: GlobalTeam) => {
       tl.to([r.titles[1], r.hostLabel], { autoAlpha: 0, duration: 0.4 });
       tl.addLabel("zoom");
       r.map.zoomTo(tl, r.host);
+      tl.to(r.zoomLabel, { autoAlpha: 1, duration: 0.6 });
       tl.to(r.members.map((m) => m.body), { strokeWidth: FIG.zoomed, duration: 1.6 }, "zoom");
       tl.to(r.sites.map((s) => s.arc), { strokeWidth: ARC.zoomed, duration: 1.6 }, "zoom");
     },

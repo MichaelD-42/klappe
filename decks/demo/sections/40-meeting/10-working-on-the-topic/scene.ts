@@ -15,6 +15,24 @@ const THEMES = ["[Theme A]", "[Theme B]", "[Theme C]"];
 const THEME_X = [560, 960, 1360];
 const THEME_Y = 320; // the theme heading; its notes sit in two columns below it
 const TILT = [-4, 3, -2, 4, -3, 2, -4, 3];
+// Where each note lands (left, top), by note index (idea number - 1). Each theme takes notes that sit
+// next to each other on the table: A = ideas 7, 1, 2; B = 3, 4; C = 5, 6, 8. Left-to-right order stays,
+// and the notes fly one after another, so no note crosses another.
+const ROW = [THEME_Y + 60, THEME_Y + 60 + NOTE.h + NOTE.gap];
+const COL = THEME_X.flatMap((x) => [x - NOTE.w - NOTE.gap / 2, x + NOTE.gap / 2]);
+const LAND: [number, number][] = [
+  [COL[0], ROW[1]],
+  [COL[1], ROW[0]],
+  [COL[2], ROW[0]],
+  [COL[3], ROW[0]],
+  [COL[4], ROW[0]],
+  [COL[5], ROW[0]],
+  [COL[0], ROW[0]],
+  [COL[5], ROW[1]],
+];
+const FLIGHT = [6, 0, 1, 2, 3, 4, 5, 7]; // the order the notes fly, by note index
+const THEME_OF = [0, 0, 1, 1, 2, 2, 0, 2];
+const FLY = { duration: 0.7, every: 0.45 };
 
 const box = (parent: HTMLElement, css: Partial<CSSStyleDeclaration>, text = "") => {
   const e = parent.appendChild(document.createElement("div"));
@@ -27,7 +45,12 @@ const scene: SceneModule = {
   build(ctx) {
     const title = ctx.html.appendChild(document.createElement("h2"));
     title.textContent = "Working on the topic";
-    const figures = SEATS.map(([x, y]) => figure(ctx, { x, y, scale: SCALE, color: "var(--k-fg)" }));
+    const bodies: Element[] = [];
+    const figures = SEATS.map(([x, y]) => {
+      const f = figure(ctx, { x, y, scale: SCALE, color: "var(--k-fg)" });
+      bodies.push(ctx.svg.lastElementChild!); // the figure's root group, dimmed for the shout-out
+      return f;
+    });
 
     // The table, drawn after the figures so it hides the legs of those behind it.
     const table = document.createElementNS(SVG, "g");
@@ -40,6 +63,7 @@ const scene: SceneModule = {
       Object.assign(r.style, { fill: "var(--k-bg)", stroke: "var(--k-accent)", strokeWidth: "4", strokeLinejoin: "round" });
     }
     ctx.svg.append(table);
+    gsap.set(table, { strokeOpacity: 1 }); // written at load, as a seek back to the start leaves it
 
     const topic = box(
       ctx.html,
@@ -47,18 +71,14 @@ const scene: SceneModule = {
       "[Topic]",
     );
     const note = { width: `${NOTE.w}px`, height: `${NOTE.h}px`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: "700", background: "var(--k-accent)", color: "var(--k-bg)", borderRadius: "4px" };
-    // Each note starts above its figure's head and ends in its theme's group (ideas 1, 4, 7 in theme A...).
+    // Each note starts above its figure's head and lands in its theme's group (LAND).
     // One layer for the notes, under the shout-out: inside it, a moving note rises above the rest.
     const layer = box(ctx.html, { left: "0", top: "0", width: "100%", height: "100%", zIndex: "1" });
     const notes = SEATS.map(([x, y], i) => {
       const home = { left: x - NOTE.w / 2, top: y - 207 - NOTE.h - 40 };
-      const slot = Math.floor(i / 3);
-      const group = {
-        left: THEME_X[i % 3] + (slot % 2 ? NOTE.gap / 2 : -NOTE.w - NOTE.gap / 2),
-        top: THEME_Y + 60 + Math.floor(slot / 2) * (NOTE.h + NOTE.gap),
-      };
+      const [left, top] = LAND[i];
       const el = box(layer, { ...note, left: `${home.left}px`, top: `${home.top}px` }, `[Idea ${i + 1}]`);
-      return { el, dx: group.left - home.left, dy: group.top - home.top };
+      return { el, dx: left - home.left, dy: top - home.top };
     });
     const themes = THEMES.map((t, i) =>
       box(ctx.html, { left: `${THEME_X[i] - 200}px`, top: `${THEME_Y}px`, width: "400px", textAlign: "center", fontSize: "44px", fontWeight: "700" }, t),
@@ -67,7 +87,7 @@ const scene: SceneModule = {
 
     // deck.md sets intensity calm; a scene-built shout cannot read it, so it is set here too.
     const sh = shout(ctx, { question: "What can we only do together?", answer: "Decide.", intensity: "calm" });
-    return { title, figures, table, topic, notes, themes, sh };
+    return { title, figures, bodies, table, topic, notes, themes, sh };
   },
   steps: [
     // The room shows as the zoom lands; then the topic.
@@ -86,25 +106,27 @@ const scene: SceneModule = {
       r.notes.forEach((n: { el: HTMLElement }, i: number) =>
         tl.fromTo(n.el, { autoAlpha: 0, y: 40, scale: 0.6, rotation: 0 }, { autoAlpha: 1, y: 0, scale: 1, rotation: TILT[i], duration: 0.5, ease: "back.out(1.6)" }, i ? "-=0.25" : undefined),
       ),
-    // Theme by theme: each theme's heading shows, its notes fly in. A note in flight goes on top of
-    // every note that has not moved yet and every note that already landed.
+    // One note after another flies to its theme; a theme's heading shows with its first note.
     (tl, r) => {
       tl.addLabel("cluster");
-      let order = 0;
-      THEMES.forEach((_, g) => {
-        tl.fromTo(r.themes[g], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, `cluster+=${g * 0.7}`);
-        r.notes.forEach((n: { el: HTMLElement; dx: number; dy: number }, i: number) => {
-          if (i % 3 !== g) return;
-          const start = `cluster+=${g * 0.7 + Math.floor(i / 3) * 0.15}`;
-          tl.set(n.el, { zIndex: 10 + order++ }, start);
-          tl.to(n.el, { x: n.dx, y: n.dy, rotation: TILT[i] / 2, duration: 0.9, ease: "power2.inOut" }, start);
-        });
+      const shown = new Set<number>();
+      FLIGHT.forEach((i, k) => {
+        const n = r.notes[i];
+        const at = `cluster+=${k * FLY.every}`;
+        if (!shown.has(THEME_OF[i])) {
+          shown.add(THEME_OF[i]);
+          tl.fromTo(r.themes[THEME_OF[i]], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, at);
+        }
+        tl.to(n.el, { x: n.dx, y: n.dy, rotation: TILT[i] / 2, duration: FLY.duration, ease: "power2.inOut" }, at);
       });
     },
-    // The board steps back, and stays back, so the question and its answer read clean over it.
+    // The board goes for the whole shout-out: notes, themes and topic hide, figures and table dim.
     (tl, r) => {
       r.sh.enter(tl);
-      tl.to([...r.notes.map((n: { el: HTMLElement }) => n.el), ...r.themes, r.topic], { autoAlpha: 0.06, duration: 0.6 }, "<");
+      tl.to([...r.notes.map((n: { el: HTMLElement }) => n.el), ...r.themes, r.topic], { autoAlpha: 0, duration: 0.6 }, "<");
+      tl.to(r.bodies, { opacity: 0.3, duration: 0.6 }, "<");
+      // Only the table's outline dims: its fill stays solid and keeps hiding the legs behind it.
+      tl.to(r.table, { strokeOpacity: 0.3, duration: 0.6 }, "<");
     },
     (tl, r) => r.sh.hold(tl),
     (tl, r) => r.sh.fade(tl),
