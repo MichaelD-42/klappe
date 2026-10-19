@@ -100,7 +100,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     before = wrapper;
     let show: StepAdder;
     try {
-      show = mediaShow({ ...ctx, html: wrap, svg: g }, s.media, slot);
+      // The effect's problems say where the slot is.
+      const problem = (msg: string) => ctx.problem(`${scene.source} step ${n}: ${msg}`);
+      show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot);
     } catch (e) {
       if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
       const label = `${t("effectMissing", meta.lang)}: ${s.media.kind}`;

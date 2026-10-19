@@ -112,6 +112,7 @@ test('the problems panel leaves the media placeholders and the scene text visibl
       return { open: p.open, h: r.height / document.querySelector('.k-stage')!.getBoundingClientRect().height, text: p.textContent }
     })
   expect((await panel()).text).toContain('IMAGE MISSING')
+  expect(await page.evaluate(() => [document.querySelector('.k-problems')!.getAttribute('aria-live'), document.querySelector('.k-problems')!.getAttribute('role')])).toEqual(['assertive', null])
   expect(await uncovered(2)).toBe(0)
   await page.click('.k-problems summary')
   const opened = await panel()
@@ -129,7 +130,7 @@ test('a data file that does not parse shows DATA ERROR and records a problem', a
   const box = await page.evaluate(() => document.querySelector('div[data-k-media="5"]')?.textContent)
   expect(box).toBe('DATA ERROR: data/broken.json')
   const problems: string[] = await page.evaluate(() => window.klappe.problems)
-  expect(problems.some((p) => p.includes('DATA ERROR: data/broken.json'))).toBe(true)
+  expect(problems.some((p) => p.includes('scene.md step 5: chart: DATA ERROR: data/broken.json'))).toBe(true)
   await page.close()
 })
 
