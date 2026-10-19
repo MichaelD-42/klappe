@@ -37,28 +37,34 @@ function aim(from: CanvasRuntime, p: Pose, target?: string): { x: number; y: num
 }
 
 // The camera dives into the ref opts.target on the old canvas (or its frame centre), then the new canvas scales in.
-// Both canvases keep the pose the seek gave them: it is read first and set again at the end.
+// The grow scales the layer that holds all canvases, not `to`: the target step starts at "reveal" and may fly
+// `to`'s camera at the same time. The old canvas keeps the pose the seek gave it: it is read first and set again.
 export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: TransitionOpts): gsap.core.Timeline {
   const a = pose(from.el);
-  const b = pose(to.el);
   const p = aim(from, a, opts.target);
   const s = a.scale * DIVE;
   const dive = { x: STAGE.w / 2 - p.x * s, y: STAGE.h / 2 - p.y * s, scale: s };
-  // `to` starts smaller around the stage centre; that point stays fixed on screen.
-  const k = FROM_SCALE;
-  const small = { x: STAGE.w / 2 - (STAGE.w / 2 - b.x) * k, y: STAGE.h / 2 - (STAGE.h / 2 - b.y) * k, scale: b.scale * k };
-  const back = from.el.parentElement;
-  const stageBg = getComputedStyle(back!.parentElement!).backgroundColor;
+  const worlds = from.el.parentElement!;
+  const stage = worlds.parentElement!;
+  const stageBg = getComputedStyle(stage).backgroundColor;
+  // The stage turns black behind the scaled layer, then fades back to its colour while the new canvas grows.
   return gsap
     .timeline()
-    .set(back, { backgroundColor: "var(--k-blackout)" })
+    .set(stage, { backgroundColor: "var(--k-blackout)" })
+    .set(to.el, { autoAlpha: 0 })
     .to(from.el, { ...dive, duration: DIVE_TIME, ease: "power2.in" }, 0)
     .to(from.el, { autoAlpha: 0, duration: DIVE_TIME * 0.25, ease: "power2.in" }, DIVE_TIME * 0.75)
     .addLabel("reveal", DIVE_TIME - OVERLAP) // the stepper starts the target step here
     .set(from.el, a, DIVE_TIME)
-    // The dive point sits at the stage centre at the end of the dive, so the new canvas grows out of it, overlapping the dive.
-    .fromTo(to.el, { autoAlpha: 0, ...small }, { autoAlpha: 1, ...b, duration: IN_TIME, ease: "power2.out" }, DIVE_TIME - OVERLAP)
-    // The black fades to the stage colour while the new canvas grows, so it does not snap at the end.
-    .to(back, { backgroundColor: stageBg, duration: IN_TIME, ease: "none" }, DIVE_TIME - OVERLAP)
-    .set(back, { clearProps: "backgroundColor" });
+    // The dive point sits at the stage centre at the end of the dive; the new canvas grows out of that point.
+    .fromTo(
+      worlds,
+      { scale: FROM_SCALE, transformOrigin: `${STAGE.w / 2}px ${STAGE.h / 2}px` },
+      { scale: 1, duration: IN_TIME, ease: "power2.out", immediateRender: false },
+      "reveal",
+    )
+    .fromTo(to.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: IN_TIME, ease: "power2.out" }, "reveal")
+    .to(stage, { backgroundColor: stageBg, duration: IN_TIME, ease: "none" }, "reveal")
+    .set(worlds, { clearProps: "transform,transformOrigin" })
+    .set(stage, { clearProps: "backgroundColor" });
 }

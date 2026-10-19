@@ -35,6 +35,8 @@ test('the zoom keeps the old canvas pose and leaves it hidden', async () => {
   expect(after[0][1]).toBe('hidden')
   expect(after[0][0]).toBe(before[0][0])
   expect(after[1][1]).toBe('visible')
+  // The grow scales the layer of all canvases and clears it at the end.
+  expect(await page.evaluate(() => document.querySelector<HTMLElement>('.k-worlds')!.style.transform)).toBe('')
   await page.close()
 })
 
@@ -43,19 +45,42 @@ test('the first step of the new canvas starts at the reveal label, during the gr
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-zoom`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  const samples = await page.evaluate(async () => {
+  const r = await page.evaluate(async () => {
     const world = document.querySelectorAll<HTMLElement>('.k-world')[1]
     const title = world.querySelector<HTMLElement>('[data-scene] h2')!
-    const out: [number, number][] = []
+    const stepper = window.klappe.stepper as any
+    const samples: [number, number][] = []
+    let timing: { reveal: number; delay: number; length: number } | undefined
     let done = false
-    window.klappe.stepper.next().then(() => (done = true))
+    stepper.next().then(() => (done = true))
     while (!done) {
-      out.push([Number(getComputedStyle(world).opacity), Number(getComputedStyle(title).opacity)])
+      // The move runs: [the transition, the target step]. The step's delay is where it starts in the transition.
+      const [tr, step] = stepper.running
+      if (!timing && step) timing = { reveal: tr.labels.reveal, delay: step.delay(), length: tr.duration() }
+      samples.push([Number(getComputedStyle(world).opacity), Number(getComputedStyle(title).opacity)])
       await new Promise(requestAnimationFrame)
     }
-    return out
+    return { samples, timing }
   })
-  // Some frame shows the canvas still growing (not fully opaque) with the title already partly visible.
-  expect(samples.some(([w, t]) => w > 0 && w < 1 && t > 0)).toBe(true)
+  // The step starts exactly at the label, which lies before the transition ends.
+  expect(r.timing!.delay).toBeCloseTo(r.timing!.reveal, 5)
+  expect(r.timing!.reveal).toBeLessThan(r.timing!.length - 0.1)
+  // And on screen: some frame shows the canvas still growing (not fully opaque) with the title already partly visible.
+  expect(r.samples.some(([w, t]) => w > 0 && w < 1 && t > 0)).toBe(true)
   await page.close()
 })
+
+// A zoom into a shared canvas whose first step also flies the camera: the zoom must not fight the camera.
+for (const reduced of [false, true])
+  for (const vp of [
+    { w: 1920, h: 1080 },
+    { w: 1366, h: 768 },
+    { w: 1024, h: 768 },
+  ])
+    test(`walk passes on a zoom into a shared canvas at ${vp.w}x${vp.h}${reduced ? ', reduced motion' : ''}`, async () => {
+      const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=zoom-shared${reduced ? '&reducedmotion=1' : ''}`, vp)
+      expect(r.errors).toEqual([])
+      expect(r.problems).toEqual([])
+      expect(r.checks.filter((c) => !c.ok)).toEqual([])
+      expect(r.ok).toBe(true)
+    })
