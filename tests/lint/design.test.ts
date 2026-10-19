@@ -55,7 +55,9 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
 
   for (const line of text.split('\n')) if (CREAM_BG.test(line)) hit('cream-background', line)
 
-  if (file.startsWith('src/'))
+  // Deck-authored video embeds loaded by the viewer, not runtime CDN code.
+  const EMBED_OK = file === 'src/fx/media.ts' || file.startsWith('src/deck/fixtures/')
+  if (file.startsWith('src/') && !EMBED_OK)
     for (const [url] of text.matchAll(/https?:\/\/[^\s"'`)]*/g)) if (!XMLNS.has(url)) hit('runtime-url', url)
   return hits
 }

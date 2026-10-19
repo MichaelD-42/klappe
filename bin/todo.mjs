@@ -1,7 +1,9 @@
 // Lists the media/ and data/ files that scene.md files link to but the deck lacks.
 // Writes media/TODO.md and data/TODO.md; removes a TODO file when nothing is missing.
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
+
+const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
 
 function scenes(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
@@ -18,7 +20,7 @@ export function writeTodos(deckDir) {
   const root = join(deckDir, 'sections');
   for (const file of existsSync(root) ? scenes(root) : []) {
     const text = readFileSync(file, 'utf8');
-    const rel = file.slice(deckDir.length + 1).replaceAll('\\', '/');
+    const rel = relative(deckDir, file).replaceAll('\\', '/');
     const heading = /^#{1,6}\s+(.+?)\s*$/m.exec(text)?.[1] ?? rel.split('/').at(-2);
     // [label](href "title") or ![alt](href "title"), with href inside media/ or data/
     for (const m of text.matchAll(/\[([^\]]*)\]\(\s*(?:\.\/)?((media|data)\/[^\s)]+)(?:\s+"([^"]*)")?\s*\)/g)) {
@@ -26,7 +28,7 @@ export function writeTodos(deckDir) {
       if (seen.has(href) || existsSync(join(deckDir, href))) continue;
       seen.add(href);
       lines[kind].push(
-        kind === 'media'
+        kind === 'media' && IMAGE.test(href)
           ? `- [ ] ${href} — prompt: ${title || label} for a presentation scene about ${heading}`
           : `- [ ] ${href} — needed by ${rel}`,
       );

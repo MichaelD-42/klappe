@@ -8,7 +8,7 @@ const PNG =
     '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#1d3557"/><circle cx="400" cy="300" r="180" fill="#e63946"/></svg>',
   );
 
-const H = "https:" + "//"; // split: the lint forbids runtime URLs in src
+const H = "https://";
 const scene = (n: number, title: string, link: string) => [`sections/10-a/${n}0-${title.toLowerCase().replace(/\W+/g, "-")}/scene.md`, `## ${title}\n\n- Before.\n- ${link}\n- After.\n`] as const;
 
 export default () => {

@@ -13,6 +13,13 @@ export interface VideoOpts {
   rect: Rect;
 }
 
+// The largest box of aspect ratio ar (w/h) centred in rect.
+function fit(rect: Rect, ar = 16 / 9): Rect {
+  const w = Math.min(rect.w, rect.h * ar);
+  const h = w / ar;
+  return { x: rect.x + (rect.w - w) / 2, y: rect.y + (rect.h - h) / 2, w, h };
+}
+
 // An opaque box at rect inside the helper's wrapper: the wrapper has no backdrop of its own.
 function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
   const b = document.createElement("div");
@@ -37,7 +44,7 @@ function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
 
 // The visible stand-in for a file that is not in the deck's media/ folder.
 function missing(ctx: Ctx, rect: Rect, label: string, text: string): HTMLElement {
-  const b = box(ctx, rect);
+  const b = box(ctx, fit(rect));
   Object.assign(b.style, {
     flexDirection: "column",
     gap: "24px",
@@ -72,14 +79,22 @@ export function image(ctx: Ctx, opts: ImageOpts): { show: StepAdder } {
   return fade(b);
 }
 
-// Not a fetch by klappe code: the address of an iframe the viewer loads. Split so the no-runtime-URL lint sees none.
-const HTTPS = "https:" + "//";
 // The iframe address of a YouTube or Vimeo link; null for anything else.
 function embed(href: string): string | null {
-  const yt = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/.exec(href);
-  if (yt) return `${HTTPS}www.youtube.com/embed/${yt[1]}`;
-  const vi = /vimeo\.com\/(?:video\/)?(\d+)/.exec(href);
-  return vi ? `${HTTPS}player.vimeo.com/video/${vi[1]}` : null;
+  let u: URL;
+  try {
+    u = new URL(href);
+  } catch {
+    return null;
+  }
+  const host = u.hostname.replace(/^(www|m)\./, "");
+  if (host === "youtu.be") return `https://www.youtube.com/embed/${u.pathname.split("/")[1]}`;
+  if (host === "youtube.com") {
+    const id = u.searchParams.get("v") ?? /^\/(?:embed|shorts)\/([\w-]+)/.exec(u.pathname)?.[1];
+    return id ? `https://www.youtube.com/embed/${id}` : null;
+  }
+  const vi = host === "vimeo.com" ? /(\d+)\/?$/.exec(u.pathname) : null;
+  return vi ? `https://player.vimeo.com/video/${vi[1]}` : null;
 }
 
 export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
@@ -87,12 +102,13 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
   if (src === undefined) return fade(missing(ctx, rect, "VIDEO MISSING", `${key(href)} — ${title}`));
-  const b = box(ctx, rect, "#000"); // black letterbox bars
+  const b = box(ctx, fit(rect), "#000"); // black letterbox bars
   if (online) b.dataset.kNote = `Video "${title}" needs internet`;
   const frame = embed(href);
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;
+  el.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
   el.setAttribute("data-k-ignore", ""); // playback is decoration outside the timeline
   if (el instanceof HTMLIFrameElement) {
     el.src = frame!;
@@ -104,6 +120,12 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     el.playsInline = true;
     el.style.objectFit = "contain";
     el.setAttribute("data-k-video", "file");
+    // Once the size is known, the box takes the clip's own aspect ratio.
+    el.addEventListener("loadedmetadata", () => {
+      if (!el.videoWidth) return;
+      const r = fit(rect, el.videoWidth / el.videoHeight);
+      Object.assign(b.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+    });
   }
   b.append(el);
 
@@ -121,9 +143,9 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
         stop();
         el.pause();
         if (!play || !span || !(span[0] <= start && start < span[1])) return;
-        // A long transition holds the step at its start; play only once the timeline moves.
+        // The box starts to show at `start`; a long transition holds the timeline before that.
         wait = () => {
-          if (tl.time() <= span[0]) return;
+          if (tl.time() <= start) return;
           stop();
           el.play().catch(() => {}); // blocked or broken file: the box stays on the poster frame
         };

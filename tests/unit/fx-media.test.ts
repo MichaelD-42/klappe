@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { expect, test } from 'vitest';
 // @ts-expect-error plain .mjs, no types
 import { writeTodos } from '../../bin/todo.mjs';
@@ -38,6 +38,21 @@ test('writeTodos lists missing media and data files with exact lines', () => {
   );
   expect(readFileSync(join(d, 'data/TODO.md'), 'utf8')).toBe(
     '- [ ] data/sales.csv — needed by sections/10-a/10-one/scene.md\n',
+  );
+});
+
+test('writeTodos takes a relative deck dir with a trailing slash; a video gets no prompt', () => {
+  const d = deck();
+  writeFileSync(join(d, 'sections/10-a/10-one/scene.md'), '## T\n\n- [A clip](media/clip.webm)\n');
+  const cwd = process.cwd();
+  process.chdir(tmpdir());
+  try {
+    writeTodos(basename(d) + '/');
+  } finally {
+    process.chdir(cwd);
+  }
+  expect(readFileSync(join(d, 'media/TODO.md'), 'utf8')).toBe(
+    '- [ ] media/clip.webm — needed by sections/10-a/10-one/scene.md\n',
   );
 });
 

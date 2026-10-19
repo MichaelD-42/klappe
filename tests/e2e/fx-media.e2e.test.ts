@@ -75,5 +75,26 @@ test('a video plays on its step, pauses on leave, and an online one carries a sp
   await page.waitForFunction(() => !document.querySelector<HTMLVideoElement>('[data-scene$="online-video"] video')!.paused, undefined, { timeout: 10_000 })
   await page.evaluate(() => window.klappe.stepper.next())
   expect(await state()).toBe(true)
+  // Back onto the video's step is a cut: it stays paused.
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index - 1, 'cut'))
+  await page.waitForTimeout(800)
+  expect(await state()).toBe(true)
+  await page.close()
+})
+
+test('a deep link to a video step does not play it', async () => {
+  const page = await open('?fixture=fx-media#/a/online-video/2')
+  await page.waitForTimeout(1500)
+  expect(await page.evaluate(() => document.querySelector<HTMLVideoElement>('[data-scene$="online-video"] video')!.paused)).toBe(true)
+  await page.close()
+})
+
+test('video boxes are 16:9 inside the slot', async () => {
+  const page = await open('?fixture=fx-media#/a/youtube/2')
+  const r = await page.evaluate(() => {
+    const b = document.querySelector<HTMLElement>('[data-scene$="youtube"] [data-k-video]')!.parentElement!
+    return b.offsetWidth / b.offsetHeight
+  })
+  expect(r).toBeCloseTo(16 / 9, 2)
   await page.close()
 })
