@@ -37,11 +37,11 @@ const LABEL_SIZE = 8;
 // Stroke widths in map units at world zoom (scale 1) and at zoom (scale 4): about 1.75 and 3.4 px at 1920.
 const STROKE = { world: { land: 1.75, arc: 1.5 }, zoom: { land: 0.85, arc: 0.75 } };
 
-// Internal: exported only for the unit test. The whole globe (the sphere) fitted into rect.
+// Public helper: decks use it for site positions until the worldMap handle exposes them. The whole globe (the sphere) fitted into rect.
 export const fitProjection = (r: Rect) =>
   geoNaturalEarth1().fitExtent([[r.x, r.y], [r.x + r.w, r.y + r.h]], { type: "Sphere" });
 
-// Internal: exported only for the unit test. A quadratic curve from a to b that bows upward by a quarter of its length.
+// Public helper: decks use it for arcs until the worldMap handle exposes them. A quadratic curve from a to b that bows upward by a quarter of its length.
 export function arcPath([ax, ay]: [number, number], [bx, by]: [number, number]): string {
   const lift = Math.hypot(bx - ax, by - ay) / 4;
   return `M ${ax} ${ay} Q ${(ax + bx) / 2} ${(ay + by) / 2 - lift} ${bx} ${by}`;

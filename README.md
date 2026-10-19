@@ -122,7 +122,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
-- Do not use negative or `<` offsets (such as `"<"` or `"-=0.5"`) for a tween position in a step. A step starts at its own label, and an offset before it can pull the tween into the previous step. Use `at` values of 0 or more, or labels.
+- `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Keep one master timeline per canvas. The engine owns it.
 
@@ -162,6 +162,7 @@ Each example is a `scene.ts` default export: `build` returns the handle, `steps`
   steps: [(tl, h) => h.powerOn(tl), (tl, h) => h.type(tl, 0), (tl, h) => h.type(tl, 1), (tl, h) => h.ready(tl)] }
 
 // lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements.
+// Not a sanitizer: lineArt is for trusted, author-supplied SVG only.
 import desk from "klappe/fx/art/engineer-desk.svg?raw";
 { build: (ctx) => lineArt(ctx, { src: desk, x: 260, y: 120, w: 1400 }), steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")] }
 steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path you built in build()
@@ -199,6 +200,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // image and video: a file from media/ (or a YouTube or Vimeo link for video), with a placeholder when it is missing.
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
+// A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 

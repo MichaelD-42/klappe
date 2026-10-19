@@ -38,9 +38,14 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
   - `figure` needs a stroke-width option.
   - `Ctx` should carry deck meta (intensity, lang). Effect UI words in `media.ts` are English until then.
   - `arc()` and `appear()` need an `at` position.
-- `ctx.problem` calls at step time are not surfaced (Task 0).
+- `ctx.problem` has no play-time caller; load-time problems are surfaced (Task 0).
 - Lucide bundle size: decide in M3 (IconNode input option).
 - Perf (docs/perf-m2.md): with a GPU, the shatter fall lost 0.2 to 1.2 s of a 2.2 s step to long frames (worst frame 667 ms), and the swarm stream lost about 1 s to 3 to 5 long frames in some runs (worst 467 ms). The cause is not proven. Check it in the user's manual 60 fps run.
+- Shatter step adders seek the canvas timeline at load (R12). An engine hook may replace that later.
+- Reduced motion still plays the zoom dive, the CRT flash and the shatter. Consider a fade fallback.
+- A deep link onto a video step shows the poster, paused. This is by design.
+- The bundle holds all effects for every deck (Lucide, world-atlas, d3). Decide in M3.
+- The self-test legibility check ignores SVG group scale. It undercounts text size, so it errs on the safe side.
 - The `ac` self-test now has 12 checks of up to 8 s each. If most of them time out, the run takes up to 96 s, over the driver's 90 s wait.
 
 ## Effects

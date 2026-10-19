@@ -73,7 +73,6 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **The default renderer falls back quietly to M1 text when the `shout` stub is not built yet.** A media step whose effect is missing shows "EFFECT MISSING: <kind>" and records a problem.
   - Why: the demo walk must stay green during Wave 1; missing media must be visible.
 - **Helpers record deck problems through `ctx.problem(msg)`.** They are kept on the canvas runtime, and the self-test adds them to its problems.
-  - Open: `main.ts` does not pass them to the on-screen problems panel yet (one line, outside Task 0's files).
 - **`SectionModule.transition` is the literal union `TransitionKind` in `types.ts`; the registry must satisfy `Record<TransitionKind, Transition>`.**
   - Why: the same type as `keyof typeof registry`, but `klappe/types` stays free of imports, so a deck repo's tsc does not pull in the renderer.
 - **Section text gets the size check only, and only where it overlaps the stage.** Scene text keeps both the size and the inside-the-frame check.
@@ -89,6 +88,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: a line that counts because a regex matched it is hidden magic. A count line that does not match the pattern is a deck problem, not a silent plain line.
 - **A shatter step may seek its canvas timeline to the current end at load, copy and measure the target there, and seek back.** Transitions may create overlay DOM at play time. (Ruling R12.)
   - Why: the shards must show the target as the deck shows it at that step, including text written from `onUpdate`. Step adders run at load, so "all DOM exists at load" still holds. Transition timelines are standalone and never seeked; a back move is a cut.
+  - AC-9 tests the in-scene shatter. The back cut across the shatter transition is covered by `tests/e2e/fx-shatter.e2e.test.ts`.
 - **The `zoom` transition scales the layer that holds all canvases, never the target canvas's own transform.** (Ruling R13.)
   - Why: the camera stays the only owner of a canvas pose, so the target step can fly the camera while the canvas grows in.
 - **"Sample data" shows only for the explicit marker: `source: klappe demo sample` in the data, or `sample: true`.** (Ruling R14.)
