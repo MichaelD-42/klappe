@@ -1,7 +1,6 @@
 # source: klappe demo sample
 step,delta
 Start,100
-Material,-25
-Labour,15
-Scrap,-30
-Price,20
+Step A,-25
+Step B,15
+Step C,-30
