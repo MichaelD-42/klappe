@@ -107,3 +107,15 @@ test('video boxes are 16:9 inside the slot, framed, with the title as a caption'
   expect(r).toMatchObject({ caption: 'A YouTube talk', shown: true, ignored: false })
   await page.close()
 })
+
+test('a click into an embedded player leaves the arrow keys working', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.route('https://www.youtube.com/**', (r) => r.fulfill({ body: '<body style="background:#333">player</body>', contentType: 'text/html' }))
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-media#/a/youtube/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.click('[data-scene$="youtube"] iframe')
+  const before: number = await page.evaluate(() => window.klappe.stepper.index)
+  await page.keyboard.press('ArrowRight')
+  await page.waitForFunction((i) => window.klappe.stepper.index === i + 1, before, { timeout: 5_000 })
+  await page.close()
+})

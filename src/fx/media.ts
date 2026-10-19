@@ -136,6 +136,7 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   if (el instanceof HTMLIFrameElement) {
     el.src = frame!;
     el.allow = "fullscreen; picture-in-picture";
+    el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
   } else {
     el.src = src;

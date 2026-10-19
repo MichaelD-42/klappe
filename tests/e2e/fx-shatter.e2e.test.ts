@@ -116,6 +116,9 @@ test('back across the shatter transition leaves no shard visible', async () => {
     return seen
   })
   expect(kinds).toEqual(['shatter'])
+  // The old frame holds a video; the shards show a still box, not one player each.
+  expect(await page.evaluate(() => document.querySelectorAll('[data-scene$="last"] video').length)).toBe(1)
+  expect(await page.evaluate(() => document.querySelectorAll('[data-k-shatter] :is(video, iframe)').length)).toBe(0)
   expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
   expect(await visibleShards(page)).toBe(0)
   expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(17)

@@ -152,8 +152,20 @@ const pts = (P: Pt[]) => P.map((v) => `${v.x.toFixed(1)},${v.y.toFixed(1)}`).joi
 // The frame the shards show: a copy of src as it is now, taken once and cloned per shard.
 // Hidden subtrees go (GSAP hides inline), so a copy of a whole world stays small. Ids and data-* go too,
 // as the engine and the self-test look elements up by them; so url(#…) references inside the copy break.
+// Players and canvases become still boxes of the same size: 30 shards must not start 30 players.
 function copy(src: Element): HTMLElement {
   const c = src.cloneNode(true) as HTMLElement;
+  const live = src.querySelectorAll<HTMLElement>("video, iframe, canvas");
+  c.querySelectorAll<HTMLElement>("video, iframe, canvas").forEach((e, i) => {
+    let still: HTMLElement = document.createElement("div");
+    if (e instanceof HTMLCanvasElement)
+      try {
+        still = Object.assign(document.createElement("img"), { src: (live[i] as HTMLCanvasElement).toDataURL() });
+      } catch {} // a tainted canvas stays an empty box
+    still.style.cssText = e.style.cssText;
+    Object.assign(still.style, { width: `${live[i].offsetWidth}px`, height: `${live[i].offsetHeight}px` });
+    e.replaceWith(still);
+  });
   for (const e of c.querySelectorAll<HTMLElement>("[style]"))
     if (e.style.visibility === "hidden" || e.style.display === "none" || e.style.opacity === "0") e.remove();
   for (const e of [c, ...c.querySelectorAll("*")])

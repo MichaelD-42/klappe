@@ -65,6 +65,10 @@ export function bindInput(
     e.preventDefault();
     run(a);
   });
+  // A click into an embedded player moves focus into its iframe, and its keys never reach us: take focus back.
+  addEventListener("blur", () => {
+    if (document.activeElement instanceof HTMLIFrameElement && stage.contains(document.activeElement)) setTimeout(() => window.focus(), 0);
+  });
   stage.addEventListener("click", (e) => {
     if (e.target instanceof Element && e.target.closest("[data-no-advance]")) return;
     run("next");

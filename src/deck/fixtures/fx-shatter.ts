@@ -72,9 +72,9 @@ const live: SceneModule = {
   ],
 };
 
-// Section A: one scene per option set. Section B enters through the shatter transition.
-export default () =>
-  assembleDeck(
+// Section A: one scene per option set. Section B enters through the shatter transition, from a frame that holds a video.
+export default () => {
+  const r = assembleDeck(
     {
       "deck.md": "---\ntitle: Fixture\n---\n",
       "sections/10-a/section.md": "# A\n",
@@ -82,7 +82,7 @@ export default () =>
       "sections/10-a/20-options/scene.md": `## Options\n\n${steps}`,
       "sections/10-a/30-slow/scene.md": `## Slow\n\n${steps}`,
       "sections/10-a/35-live/scene.md": "## Live\n\n- Show and count.\n- Fade a line out.\n- Crack.\n- Shatter.\n",
-      "sections/10-a/40-last/scene.md": "## Last\n\n- This frame shatters into section B.\n",
+      "sections/10-a/40-last/scene.md": "## Last\n\n- [This frame shatters into section B](media/clip.webm)\n",
       "sections/20-b/section.md": "# B\n",
       "sections/20-b/10-after/scene.md": "## After\n\n- After the shatter transition.\n",
     },
@@ -100,3 +100,6 @@ export default () =>
       "sections/20-b/section.ts": { transition: "shatter", transitionOptions: { shards: 20, seed: 3 } },
     },
   );
+  r.deck.files = { data: {}, media: { "media/clip.webm": "data:video/webm;base64," } }; // a player in the frame the transition copies
+  return r;
+};
