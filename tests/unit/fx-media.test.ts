@@ -32,7 +32,7 @@ test('writeTodos lists missing media and data files with exact lines', () => {
   expect(readFileSync(join(d, 'media/TODO.md'), 'utf8')).toBe(
     [
       '- [ ] media/engine.png — prompt: A cutaway of an engine for a presentation scene about The engine',
-      '- [ ] media/plain.png — prompt: No title for a presentation scene about The engine',
+      '- [ ] media/plain.png — prompt: No title for a presentation scene about The engine, 16:9, 1920x1080, no text, no logos',
       '',
     ].join('\n'),
   );

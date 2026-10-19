@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { join, relative } from 'node:path';
 
 const IMAGE = /\.(png|jpe?g|gif|webp|svg)$/i;
+// Added to a prompt made from alt text, so a generated picture fits a full slide. An explicit title stays as written.
+const SHAPE = ', 16:9, 1920x1080, no text, no logos';
 
 function scenes(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
@@ -29,7 +31,7 @@ export function writeTodos(deckDir) {
       seen.add(href);
       lines[kind].push(
         kind === 'media' && IMAGE.test(href)
-          ? `- [ ] ${href} — prompt: ${title || label} for a presentation scene about ${heading}`
+          ? `- [ ] ${href} — prompt: ${title || label} for a presentation scene about ${heading}${title ? '' : SHAPE}`
           : `- [ ] ${href} — needed by ${rel}`,
       );
     }
