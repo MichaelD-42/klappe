@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { chart, image, shout, video, type ImageHandle } from "../fx";
+import { KEN_BURNS, chart, image, shout, video, type ImageHandle } from "../fx";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { motion } from "../theme";
@@ -162,8 +162,6 @@ export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap
   tl.to({}, { duration: PAD });
   tl.addLabel(label);
 }
-
-const KEN_BURNS = 6; // seconds: a background's push on its scene's first step
 
 // A scene's background: a cover image at the scene frame in the canvas's back layer. It shows from
 // load, so it crossfades in with its canvas; only the Ken Burns push is on the timeline.

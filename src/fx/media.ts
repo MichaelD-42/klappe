@@ -97,7 +97,7 @@ const fade = (b: HTMLElement) => ({
 });
 const key = (href: string) => href.replace(/^\.\//, "");
 
-const KEN_BURNS = 6; // seconds: show() with kenBurns makes its step this long
+export const KEN_BURNS = 6; // seconds: the default push; show() with kenBurns makes its step this long
 const STILL: KenBurnsPose = { scale: 1, x: 0, y: 0 };
 const PUSH: KenBurnsPose = { scale: 1.08, x: -24, y: -12 }; // 4 % overscan per side covers the drift
 
