@@ -149,29 +149,26 @@ export function shatterGeometry(w: number, h: number, impact: Pt, shards = 30, s
 const SVG = "http://www.w3.org/2000/svg";
 const pts = (P: Pt[]) => P.map((v) => `${v.x.toFixed(1)},${v.y.toFixed(1)}`).join(" ");
 
-// A copy for a shard: no ids or data-* (the engine and the self-test look elements up by them).
-// visible: also clear inline opacity and visibility, so the copy shows its end state.
-// Otherwise drop hidden subtrees (GSAP hides inline), so a copy of a whole world stays small.
-function copy(src: Element, visible: boolean): HTMLElement {
+// The frame the shards show: a copy of src as it is now, taken once and cloned per shard.
+// Hidden subtrees go (GSAP hides inline), so a copy of a whole world stays small. Ids and data-* go too,
+// as the engine and the self-test look elements up by them; so url(#…) references inside the copy break.
+function copy(src: Element): HTMLElement {
   const c = src.cloneNode(true) as HTMLElement;
-  if (!visible)
-    for (const e of c.querySelectorAll<HTMLElement>("[style]"))
-      if (e.style.visibility === "hidden" || e.style.display === "none" || e.style.opacity === "0") e.remove();
-  for (const e of [c, ...c.querySelectorAll<HTMLElement>("*")]) {
+  for (const e of c.querySelectorAll<HTMLElement>("[style]"))
+    if (e.style.visibility === "hidden" || e.style.display === "none" || e.style.opacity === "0") e.remove();
+  for (const e of [c, ...c.querySelectorAll("*")])
     for (const a of [...e.attributes]) if (a.name === "id" || a.name.startsWith("data-")) e.removeAttribute(a.name);
-    if (visible && e.style) {
-      e.style.removeProperty("opacity");
-      e.style.removeProperty("visibility");
-    }
-  }
   return c;
 }
 
 type Core = Required<Omit<ShatterOpts, "target" | "impact">> & { impact: Pt };
 
-// Builds the overlay in host at box (cracks, flash, hidden shards with a clone each) and returns the step adders.
-// hide: the originals the shards replace; they shake with the cracks. fill: a background under each shard's copy.
-function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTMLElement[], o: Core, fill = ""): ShatterHandle {
+type Built = Omit<ShatterHandle, "fall"> & { fall(tl: gsap.core.Timeline, frame: HTMLElement): void };
+
+// Builds the overlay in host at box (cracks, flash, gap backdrop) and returns the step adders; fall cuts
+// the shards from `frame` when it runs. hide: the originals the shards replace; they shake with the cracks.
+// fill: a background under each shard's copy.
+function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill = ""): Built {
   const { w, h } = box;
   const geo = shatterGeometry(w, h, o.impact, o.shards, o.seed);
   const k = geo.reach / SPIKE_REACH; // spike distances scale with the box
@@ -203,14 +200,28 @@ function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTM
     background: `radial-gradient(circle at ${o.impact.x}px ${o.impact.y}px, var(--k-fg) 0, color-mix(in srgb, var(--k-fg) 85%, transparent) 6%, color-mix(in srgb, var(--k-accent) 25%, transparent) 22%, transparent 45%)`,
   });
 
+  // Near-black gaps between the shards, as in the spike.
+  const gaps = document.createElement("div");
+  abs(gaps, { background: "var(--k-blackout)" });
   const field = document.createElement("div");
-  abs(field, { perspective: "1400px" });
-  const shards = geo.cells.map((P) => {
+  abs(field, { perspective: "1000px" });
+  layer.append(svg, flash, gaps, field);
+  gsap.set(gaps, { autoAlpha: 0 });
+  gsap.set(svg, { autoAlpha: 1 }); // the fall hides it; a seek back restores this inline value
+
+  // Shake moves the CSS translate property, so a target's own GSAP transform stays untouched.
+  // Reading x first makes GSAP cache the transform, so play and seek parse it the same way.
+  for (const e of [...hide, svg as unknown as HTMLElement, field]) {
+    gsap.getProperty(e, "x");
+    e.style.translate = "0px 0px";
+  }
+
+  const cut = (frame: HTMLElement) => geo.cells.map((P) => {
     const wrap = document.createElement("div");
     abs(wrap);
     const inner = document.createElement("div");
     abs(inner, { background: fill, clipPath: `polygon(${P.map((v) => `${v.x.toFixed(1)}px ${v.y.toFixed(1)}px`).join(",")})` });
-    inner.append(clone());
+    inner.append(frame.cloneNode(true));
     const edge = document.createElementNS(SVG, "svg");
     edge.setAttribute("viewBox", `0 0 ${w} ${h}`);
     abs(edge as unknown as HTMLElement, { overflow: "visible" });
@@ -225,11 +236,6 @@ function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTM
     gsap.set(wrap, { autoAlpha: 0, transformOrigin: `${cx}px ${cy}px` });
     return { el: wrap, cx, cy, d: Math.hypot(cx - o.impact.x, cy - o.impact.y) };
   });
-  layer.append(svg, flash, field);
-  gsap.set(svg, { autoAlpha: 1 }); // the fall hides it; a seek back restores this inline value
-
-  // Shake moves the CSS translate property, so a target's own GSAP transform stays untouched.
-  for (const e of [...hide, svg as unknown as HTMLElement, field]) e.style.translate = "0px 0px";
 
   // A short decaying jitter, baked from the seed so play and seek agree.
   const shake = (amp: number, n = 8) => ({
@@ -251,12 +257,13 @@ function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTM
     }
   };
 
-  // The share toViewer of the shards, nearest the impact, tumbles toward the viewer.
-  const near = new Set([...shards].sort((a, b) => a.d - b.d).slice(0, Math.round(o.toViewer * shards.length)));
-  const fall: StepAdder = (tl) => {
+  const fall: Built["fall"] = (tl, frame) => {
+    const shards = cut(frame);
+    // The share toViewer of the shards, nearest the impact, tumbles toward the viewer.
+    const near = new Set([...shards].sort((a, b) => a.d - b.d).slice(0, Math.round(o.toViewer * shards.length)));
     const t0 = tl.duration() + 0.02;
     tl.set([...hide, svg], { autoAlpha: 0 }, t0);
-    tl.fromTo(shards.map((s) => s.el), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0, immediateRender: false }, t0);
+    tl.fromTo([gaps, ...shards.map((s) => s.el)], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0, immediateRender: false }, t0);
     tl.fromTo(flash, { opacity: 0.9 }, { opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, t0);
     tl.to(field, shake(16, 6), t0);
     for (const s of shards) {
@@ -270,8 +277,8 @@ function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTM
           y: `+=${R(250, 650)}`,
           scale: R(1.9, 2.8),
           rotation: R(-40, 40),
-          rotationX: R(-60, 60),
-          rotationY: R(-60, 60),
+          rotationX: R(-80, 80),
+          rotationY: R(-80, 80),
           filter: "blur(9px)",
           autoAlpha: 0,
           duration: R(1.0, 1.35) * o.fall,
@@ -282,20 +289,22 @@ function build(host: HTMLElement, box: Rect, clone: () => HTMLElement, hide: HTM
           x: `+=${ux * R(60, 260)}`,
           y: `+=${R(1300, 1700)}`,
           rotation: R(-55, 55),
-          rotationX: R(-35, 35),
-          rotationY: R(-35, 35),
+          rotationX: R(-60, 60),
+          rotationY: R(-60, 60),
           duration: R(1.35, 1.9) * o.fall,
           ease: "power2.in",
         }, at);
     }
-    tl.set(shards.map((s) => s.el), { autoAlpha: 0 }, tl.duration()); // after the slowest shard
+    const end = tl.duration(); // the slowest shard is gone
+    tl.to(gaps, { autoAlpha: 0, duration: 0.4 }, end - 0.4);
+    tl.set(shards.map((s) => s.el), { autoAlpha: 0 }, end);
   };
   return { crack: (tl) => pulse(tl, 1, 22, true), crack2: (tl) => pulse(tl, 0.7, 12, false), fall };
 }
 
 // The spike's impact point (1240, 430 on 1920 x 1080), as a share of the box.
 const impactIn = (w: number, h: number) => ({ x: w * 0.646, y: h * 0.398 });
-const core = (o: Partial<ShatterOpts>, impact: Pt): Core => ({
+const core = (o: Partial<Omit<Core, "impact">>, impact: Pt): Core => ({
   shards: o.shards ?? 30,
   fall: o.fall ?? 1,
   toViewer: o.toViewer ?? 0.25,
@@ -307,25 +316,47 @@ export function shatter(ctx: Ctx, opts: ShatterOpts): ShatterHandle {
   const { target } = opts;
   if (!(target instanceof HTMLElement) || target === ctx.html || !ctx.html.contains(target))
     throw new Error("shatter: target must be an HTML element inside the scene, not the scene itself");
-  // The box in scene units: both rects sit under the same stage and camera transform.
-  const hr = ctx.html.getBoundingClientRect();
-  const tr = target.getBoundingClientRect();
-  const s = hr.width / ctx.rect.w || 1;
-  const box = { x: (tr.left - hr.left) / s, y: (tr.top - hr.top) / s, w: tr.width / s || ctx.rect.w, h: tr.height / s || ctx.rect.h };
-  const impact = opts.impact ? { x: opts.impact.x - box.x, y: opts.impact.y - box.y } : impactIn(box.w, box.h);
-  const clone = () => {
-    const c = copy(target, true);
-    Object.assign(c.style, { position: "absolute", left: "0", top: "0", width: `${box.w}px`, height: `${box.h}px`, margin: "0", boxSizing: "border-box", transform: "none" });
-    return c;
+  // Step adders run while the timeline is built, at load. To see the target as the deck shows it at this
+  // step (text written from onUpdate, children faded out), seek to the timeline's current end, look, seek back.
+  const atEnd = <T>(tl: gsap.core.Timeline, look: () => T): T => {
+    const t = tl.time();
+    tl.time(tl.duration(), false);
+    try {
+      return look();
+    } finally {
+      tl.time(t, false);
+    }
   };
-  return build(ctx.html, box, clone, [target], core(opts, impact));
+  // The box in scene units: both rects sit under the same stage and camera transform.
+  const measure = (): Rect => {
+    const hr = ctx.html.getBoundingClientRect();
+    const tr = target.getBoundingClientRect();
+    const s = hr.width / ctx.rect.w || 1;
+    return { x: (tr.left - hr.left) / s, y: (tr.top - hr.top) / s, w: tr.width / s || ctx.rect.w, h: tr.height / s || ctx.rect.h };
+  };
+  // Built by the first step that runs, with the box as it is then.
+  let built: { b: Built; box: Rect } | undefined;
+  const get = (box: Rect) => {
+    const impact = opts.impact ? { x: opts.impact.x - box.x, y: opts.impact.y - box.y } : impactIn(box.w, box.h);
+    return (built ??= { b: build(ctx.html, box, [target], core(opts, impact)), box });
+  };
+  return {
+    crack: (tl) => get(atEnd(tl, measure)).b.crack(tl),
+    crack2: (tl) => get(atEnd(tl, measure)).b.crack2(tl),
+    fall: (tl) => {
+      const [box, frame] = atEnd(tl, () => [measure(), copy(target)] as const);
+      const { b, box: at } = get(box);
+      Object.assign(frame.style, { position: "absolute", left: "0", top: "0", width: `${at.w}px`, height: `${at.h}px`, margin: "0", boxSizing: "border-box", transform: "none", translate: "none" });
+      b.fall(tl, frame);
+    },
+  };
 }
 
 // Crack and fall on a copy of the old world's visible frame, over black, then a cut to the new one.
 export function transitionShatter(
   from: CanvasRuntime,
   to: CanvasRuntime,
-  opts: TransitionOpts & { shards?: number; seed?: number },
+  opts: TransitionOpts & { shards?: number; seed?: number; fall?: number; toViewer?: number },
 ): gsap.core.Timeline {
   const worlds = from.el.parentElement!;
   let host = worlds.querySelector<HTMLElement>(":scope > [data-k-shatter]");
@@ -333,18 +364,17 @@ export function transitionShatter(
     host = document.createElement("div");
     host.dataset.kShatter = "";
     Object.assign(host.style, { position: "absolute", left: "0", top: "0", width: "1920px", height: "1080px" });
+    gsap.set(host, { autoAlpha: 0 });
     worlds.append(host);
   }
   host.replaceChildren(); // one overlay, reused: the previous shatter's shards go
-  gsap.set(host, { autoAlpha: 1 });
-  const h = build(host, { x: 0, y: 0, w: 1920, h: 1080 }, () => copy(from.el, false), [from.el], core(opts as Partial<ShatterOpts>, impactIn(1920, 1080)), "var(--k-bg)"); // the stage colour behind the old world
+  const h = build(host, { x: 0, y: 0, w: 1920, h: 1080 }, [from.el], core(opts, impactIn(1920, 1080)), "var(--k-bg)"); // the stage colour behind the old world
   const tl = gsap.timeline();
   h.crack(tl);
-  tl.set(worlds, { backgroundColor: "var(--k-blackout)" });
-  h.fall(tl);
+  h.fall(tl, copy(from.el));
+  gsap.set(host, { autoAlpha: 1 }); // only once the build worked: a throw falls back to fade with no overlay
   return tl
     .set(from.el, { autoAlpha: 0, translate: "0px 0px" })
     .set(to.el, { autoAlpha: 1 })
-    .set(host, { autoAlpha: 0 })
-    .set(worlds, { clearProps: "backgroundColor" });
+    .set(host, { autoAlpha: 0 });
 }

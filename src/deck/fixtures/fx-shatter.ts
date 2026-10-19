@@ -37,6 +37,41 @@ const card = (title: string, opts: Omit<ShatterOpts, "target"> = {}): SceneModul
 
 const steps = "- Show the card.\n- Crack.\n- Crack to the edges.\n- Shatter.\n";
 
+// The shards must show the live frame: a count written from onUpdate, and a line faded out by an earlier step.
+const live: SceneModule = {
+  build(ctx) {
+    const el = document.createElement("div");
+    el.className = "fx-live";
+    Object.assign(el.style, { position: "absolute", inset: "60px", padding: "120px", background: "var(--k-bg)", border: "4px solid var(--k-accent)" });
+    const h = document.createElement("h2");
+    h.textContent = "Live frame";
+    const count = document.createElement("p");
+    count.dataset.kText = "";
+    count.textContent = "Count 0";
+    const gone = document.createElement("p");
+    gone.textContent = "This line fades out before the shatter";
+    el.append(h, count, gone);
+    ctx.html.append(el);
+    const fx = shatter(ctx, { target: el, seed: 11 });
+    gsap.set(el, { autoAlpha: 0 });
+    return { el, count, gone, fx };
+  },
+  steps: [
+    (tl, { el, count }) => {
+      tl.to(el, { autoAlpha: 1, duration: 0.6 });
+      tl.to({}, {
+        duration: 0.6,
+        onUpdate() {
+          count.textContent = `Count ${Math.round(this.progress() * 42)}`;
+        },
+      });
+    },
+    (tl, { gone }) => void tl.to(gone, { autoAlpha: 0, duration: 0.6 }),
+    (tl, { fx }) => fx.crack(tl),
+    (tl, { fx }) => fx.fall(tl),
+  ],
+};
+
 // Section A: one scene per option set. Section B enters through the shatter transition.
 export default () =>
   assembleDeck(
@@ -46,6 +81,7 @@ export default () =>
       "sections/10-a/10-default/scene.md": `## Default\n\n${steps}`,
       "sections/10-a/20-options/scene.md": `## Options\n\n${steps}`,
       "sections/10-a/30-slow/scene.md": `## Slow\n\n${steps}`,
+      "sections/10-a/35-live/scene.md": "## Live\n\n- Show and count.\n- Fade a line out.\n- Crack.\n- Shatter.\n",
       "sections/10-a/40-last/scene.md": "## Last\n\n- This frame shatters into section B.\n",
       "sections/20-b/section.md": "# B\n",
       "sections/20-b/10-after/scene.md": "## After\n\n- After the shatter transition.\n",
@@ -60,6 +96,7 @@ export default () =>
         seed: 7,
       }),
       "sections/10-a/30-slow/scene.ts": card("Slow, fifty shards", { shards: 50, fall: 2, toViewer: 0 }),
+      "sections/10-a/35-live/scene.ts": live,
       "sections/20-b/section.ts": { transition: "shatter", transitionOptions: { shards: 20, seed: 3 } },
     },
   );

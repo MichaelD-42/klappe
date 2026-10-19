@@ -76,11 +76,49 @@ test('back across the shatter step leaves no shard visible', async () => {
   await page.close()
 })
 
+// The swap from the original to its shards must not jump: the shards show the live frame,
+// with the count written from onUpdate and without the line faded out a step before.
+test('the shards show the target exactly as it was right before the swap', async () => {
+  const page = await open('#/a/live/3')
+  const r = await page.evaluate(() => {
+    const c = window.klappe.canvases[0]
+    const t = c.tl.labels['e:14'] // end of the crack step; the fall starts 0.021 s later
+    const look = (e: HTMLElement) => {
+      const b = e.getBoundingClientRect()
+      return { text: e.innerText, box: [b.left, b.top, b.width, b.height].map(Math.round), shown: e.checkVisibility({ opacityProperty: true, visibilityProperty: true }) }
+    }
+    c.tl.seek(t, false)
+    const [original] = document.querySelectorAll<HTMLElement>('.fx-live')
+    const before = look(original)
+    c.tl.seek(t + 0.025, false)
+    const copies = [...document.querySelectorAll<HTMLElement>('.fx-live')].slice(1)
+    return { before, original: look(original), copies: copies.map(look) }
+  })
+  expect(r.before.shown).toBe(true)
+  expect(r.before.text).toContain('Count 42')
+  expect(r.before.text).not.toContain('fades out')
+  expect(r.original.shown).toBe(false)
+  expect(r.copies.length).toBeGreaterThan(20)
+  for (const c of r.copies) {
+    expect(c.shown).toBe(true)
+    expect(c.text).toBe(r.before.text)
+    c.box.forEach((v, k) => expect(Math.abs(v - r.before.box[k])).toBeLessThanOrEqual(3))
+  }
+  await page.close()
+})
+
 test('back across the shatter transition leaves no shard visible', async () => {
   const page = await open('#/a/last/1')
-  await page.evaluate(() => window.klappe.stepper.next())
+  const kinds: string[] = await page.evaluate(async () => {
+    const seen: string[] = []
+    window.klappe.stepper.on('transition', (e: { kind: string }) => seen.push(e.kind))
+    await window.klappe.stepper.next()
+    return seen
+  })
+  expect(kinds).toEqual(['shatter'])
+  expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
   expect(await visibleShards(page)).toBe(0)
-  expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(13)
+  expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(17)
   await page.evaluate(() => window.klappe.stepper.prev())
   expect(await visibleShards(page)).toBe(0)
   await page.close()
