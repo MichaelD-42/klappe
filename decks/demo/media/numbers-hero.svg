@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" fill="none" stroke="#e8eef7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="1200" height="800" fill="#0f1a2e" stroke="none"/>
+  <!-- whiteboard on two legs -->
+  <rect x="340" y="120" width="620" height="380"/>
+  <path d="M400 500 L380 700 M900 500 L920 700"/>
+  <!-- value stream sketch: five boxes on a line -->
+  <path d="M390 310 H910"/>
+  <rect x="390" y="270" width="60" height="80"/>
+  <rect x="475" y="270" width="60" height="80"/>
+  <rect x="570" y="270" width="60" height="80"/>
+  <rect x="665" y="270" width="60" height="80"/>
+  <rect x="760" y="270" width="60" height="80"/>
+  <path d="M880 290 L910 310 L880 330"/>
+  <path d="M390 190 H620 M390 225 H520"/>
+  <!-- left figure, pointing at the board -->
+  <circle cx="190" cy="330" r="42"/>
+  <path d="M190 372 V560 M190 440 L280 395 L330 350 M190 440 L120 500 M190 560 L140 720 M190 560 L240 720"/>
+  <!-- right figure, drawing -->
+  <circle cx="1040" cy="360" r="42"/>
+  <path d="M1040 402 V570 M1040 460 L1005 465 L962 415 M1040 460 L1100 520 M1040 570 L990 720 M1040 570 L1090 720"/>
+  <!-- floor -->
+  <path d="M60 720 H1140"/>
+</svg>
