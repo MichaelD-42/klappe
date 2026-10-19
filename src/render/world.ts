@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
 import { chart, image, shout, video } from "../fx";
 import type { TransitionOpts } from "../fx/transitions";
+import { t } from "../strings";
 import { motion } from "../theme";
 import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
@@ -102,7 +103,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       show = mediaShow({ ...ctx, html: wrap, svg: g }, s.media, slot);
     } catch (e) {
       if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
-      const label = `EFFECT MISSING: ${s.media.kind}`;
+      const label = `${t("effectMissing", meta.lang)}: ${s.media.kind}`;
       ctx.problem(`${scene.source} step ${n}: ${label} (${message(e)})`);
       const box = add(wrap, el("div", "", label));
       Object.assign(box.style, {

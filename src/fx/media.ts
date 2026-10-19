@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -42,6 +43,9 @@ function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
   return b;
 }
 
+// shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
+const LANG = "en";
+
 // The visible stand-in for a file that is not in the deck's media/ folder.
 function missing(ctx: Ctx, rect: Rect, label: string, text: string): HTMLElement {
   const b = box(ctx, fit(rect));
@@ -69,7 +73,7 @@ const key = (href: string) => href.replace(/^\.\//, "");
 export function image(ctx: Ctx, opts: ImageOpts): { show: StepAdder } {
   const { href, alt, rect } = opts;
   const url = ctx.files.media[key(href)];
-  if (url === undefined) return fade(missing(ctx, rect, "IMAGE MISSING", `${key(href)} — ${alt}`));
+  if (url === undefined) return fade(missing(ctx, rect, t("imageMissing", LANG), `${key(href)} — ${alt}`));
   const b = box(ctx, rect);
   const img = document.createElement("img");
   img.src = url;
@@ -101,9 +105,9 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const { href, title, rect } = opts;
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
-  if (src === undefined) return fade(missing(ctx, rect, "VIDEO MISSING", `${key(href)} — ${title}`));
+  if (src === undefined) return fade(missing(ctx, rect, t("videoMissing", LANG), `${key(href)} — ${title}`));
   const b = box(ctx, fit(rect), "#000"); // black letterbox bars
-  if (online) b.dataset.kNote = `Video "${title}" needs internet`;
+  if (online) b.dataset.kNote = `${t("video", LANG)} "${title}" ${t("needsInternet", LANG)}`;
   const frame = embed(href);
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });

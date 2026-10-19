@@ -11,8 +11,21 @@ export const strings = {
     notes: "Notes",
     elapsed: "Elapsed",
     problems: "Deck problems",
+    // Effect UI words (src/fx and the default media slot).
     dataMissing: "DATA MISSING",
+    dataError: "DATA ERROR",
     imageMissing: "IMAGE MISSING",
+    videoMissing: "VIDEO MISSING",
+    effectMissing: "EFFECT MISSING",
+    video: "Video",
+    needsInternet: "needs internet",
+    sampleData: "Sample data",
+    source: "Source",
+    originNotStated: "origin not stated",
+    net: "net",
+    total: "Total",
+    increase: "Increase",
+    decrease: "Decrease",
   },
 };
 
