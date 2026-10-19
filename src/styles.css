@@ -3,6 +3,9 @@
   --k-fg: #e8edf5;
   --k-accent: #4da3ff;
   --k-font: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --k-phosphor: #7dffa0; /* CRT text, green */
+  --k-phosphor-amber: #ffb547; /* CRT text, amber */
+  --k-blackout: #000; /* the blackout transition */
 }
 
 html,

@@ -36,6 +36,7 @@ function startDeck() {
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
   const reducedMotion = query.get("reducedmotion") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
+  problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
   const autoplay = new Autoplay(stepper, () => motion.autoHoldMs);

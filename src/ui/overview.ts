@@ -10,11 +10,12 @@ const CAPTION = 48;
 
 // A copy of the world at its end state, with no camera transform, so the whole canvas shows.
 // The live timeline is seeked to its end and back in the same tick: nothing on stage changes.
+// Events on, so text that effects write from onUpdate (data-k-text) shows its end state and comes back.
 function endState(c: CanvasRuntime): HTMLElement {
   const time = c.tl.time();
-  c.tl.seek(c.tl.duration());
+  c.tl.seek(c.tl.duration(), false);
   const copy = c.el.cloneNode(true) as HTMLElement;
-  c.tl.seek(time);
+  c.tl.seek(time, false);
   Object.assign(copy.style, { transform: "none", opacity: "1", visibility: "visible" });
   copy.inert = true;
   copy.setAttribute("aria-hidden", "true");

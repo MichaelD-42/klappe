@@ -130,12 +130,15 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 
 - `transition` sets how the deck enters this section when it moves forward by one step onto a new canvas. Default `fade`. A back move, a jump and `?instant=1` always cut.
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
+- `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 
 ### Effects
 
 Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } from "klappe/fx"`.
 
 - A helper is `name(ctx, opts)`. Call it in `build()`. It builds its DOM, hidden, in `ctx.svg` or `ctx.html`.
+- A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in 1920x1080 units.
+- Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`.
 - Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error.
@@ -147,7 +150,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 Import types from `"klappe/types"` and effects from `"klappe/fx"`. `klappe init` writes a `tsconfig.json` with these mappings if none exists:
 
 ```json
-{ "compilerOptions": { "strict": true, "noEmit": true, "paths": { "klappe/types": ["./klappe/src/types"], "klappe/fx": ["./klappe/src/fx"] } }, "include": ["decks"] }
+{ "compilerOptions": { "strict": true, "noEmit": true, "types": ["vite/client"], "paths": { "klappe/types": ["./klappe/src/types"], "klappe/fx": ["./klappe/src/fx"], "klappe/fx/*": ["./klappe/src/fx/*"] } }, "include": ["decks"] }
 ```
 
 If you have your own `tsconfig.json`, add the `paths` entries yourself.

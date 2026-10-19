@@ -11,8 +11,11 @@ describe("fixture discovery", () => {
   });
   it("loads a fixture by file name and nothing else", () => {
     expect(loadFixture("two-scenes")?.deck.sections[0].scenes.map((s) => s.id)).toEqual(["first", "second"]);
-    expect(loadFixture("no-such-deck")).toBeUndefined();
-    expect(loadFixture("toString")).toBeUndefined();
+    for (const name of ["no-such-deck", "toString"]) {
+      const r = loadFixture(name);
+      expect(r?.problems).toEqual([`unknown fixture '${name}'`]);
+      expect(r?.deck.meta.title).toBe("Unknown fixture");
+    }
     expect(loadFixture(null)).toBeUndefined();
   });
 });

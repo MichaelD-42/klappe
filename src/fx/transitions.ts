@@ -5,9 +5,10 @@ import { transitionCrt } from "./crt";
 import { transitionShatter } from "./shatter";
 import { transitionZoom } from "./zoom";
 
-// What a section gives its entry transition (from section.ts).
+// What a section gives its entry transition: its transitionOptions plus target from zoomTarget.
 export interface TransitionOpts {
   target?: string; // zoomTarget: a ref on the old canvas
+  [key: string]: unknown;
 }
 // A standalone timeline the stepper awaits. It ends with `from` hidden and `to` shown.
 export type Transition = (from: CanvasRuntime, to: CanvasRuntime, opts: TransitionOpts) => gsap.core.Timeline;
@@ -32,7 +33,7 @@ const blackout: Transition = (from, to) => {
   const back = from.el.parentElement;
   return gsap
     .timeline()
-    .set(back, { backgroundColor: "#000" })
+    .set(back, { backgroundColor: "var(--k-blackout)" })
     .to(from.el, { autoAlpha: 0, duration: FADE })
     .fromTo(to.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: FADE }, `+=${BLACK_HOLD}`)
     .set(back, { clearProps: "backgroundColor" });

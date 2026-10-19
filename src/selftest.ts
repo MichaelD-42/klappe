@@ -384,13 +384,12 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
     ctx.errors.push(`selftest: ${e instanceof Error ? e.message : e}`);
   }
   // Always write a result, so a failure reads as a failure and not as a driver timeout.
-  const problems = [...ctx.problems, ...ctx.canvases.flatMap((c) => c.problems)];
   const result: SelftestResult = {
     mode,
-    ok: checks.every((c) => c.ok) && !problems.length && !ctx.errors.length,
+    ok: checks.every((c) => c.ok) && !ctx.problems.length && !ctx.errors.length,
     steps: ctx.steps.length,
     checks,
-    problems,
+    problems: [...ctx.problems],
     errors: [...ctx.errors],
   };
   const out = document.createElement("script");

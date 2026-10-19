@@ -71,6 +71,8 @@ export interface SectionModule {
   transition?: TransitionKind;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
   zoomTarget?: string;
+  // Extra options for the transition, for example { shards: 20 } for shatter.
+  transitionOptions?: Record<string, unknown>;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;
 }
 export interface Scene extends SceneDoc {

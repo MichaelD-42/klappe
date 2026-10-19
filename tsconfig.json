@@ -3,7 +3,7 @@
     "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler",
     "strict": true, "noEmit": true, "skipLibCheck": true, "lib": ["ES2022", "DOM"],
     "types": ["vite/client", "node"],
-    "paths": { "@deck/*": ["./decks/demo/*"], "klappe/types": ["./src/types"], "klappe/fx": ["./src/fx"] }
+    "paths": { "@deck/*": ["./decks/demo/*"], "klappe/types": ["./src/types"], "klappe/fx": ["./src/fx"], "klappe/fx/*": ["./src/fx/*"] }
   },
   "include": ["src", "tests", "decks", "vite.config.ts", "vitest.config.ts"]
 }

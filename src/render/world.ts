@@ -40,13 +40,29 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
 const notBuilt = (e: unknown) => e instanceof Error && e.message.endsWith(": not built yet");
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+// A data file that exists but does not parse.
+class DataError extends Error {
+  constructor(
+    readonly file: string,
+    cause: unknown,
+  ) {
+    super(`${file}: ${message(cause)}`);
+  }
+}
+
 // The media effect for a step: image, video, or chart from data/ (null data: the file is missing).
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
   const src = m.href.replace(/^\.\//, "");
   const text = ctx.files.data[src];
-  const data = text === undefined ? null : src.endsWith(".json") ? JSON.parse(text) : parseCsv(text);
+  let data = null;
+  if (text !== undefined)
+    try {
+      data = src.endsWith(".json") ? JSON.parse(text) : parseCsv(text);
+    } catch (e) {
+      throw notBuilt(e) ? e : new DataError(src, e);
+    }
   const c = chart(ctx, { src, data, rect, title: m.alt });
   return (tl) => {
     c.axes(tl);
@@ -61,13 +77,14 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
 function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
   const { html, rect } = ctx;
   const fx = new Map<number, StepAdder>();
-  const shown: HTMLElement[] = [];
-  const add = (parent: HTMLElement, e: HTMLElement) => (parent.append(e), shown.push(e), e);
+  const shown: Element[] = [];
+  const add = <E extends Element>(parent: Element, e: E) => (parent.append(e), shown.push(e), e);
   const hasMedia = scene.steps.some((s) => s.media);
   const col = hasMedia ? html.appendChild(el("div", "")) : html;
   if (hasMedia) col.style.width = "45%";
   const slot: Rect = { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
   const title = add(col, el("h2", "", scene.title));
+  let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
   scene.steps.forEach((s, i) => {
     const n = i + 1;
@@ -85,16 +102,28 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
     p.dataset.step = String(n);
     if (!s.media) return;
+    // Each media step builds in its own wrapper: a full-scene div and an SVG group with an opaque
+    // backdrop under the slot. Coordinates stay scene-local.
+    const wrap = add(html, el("div", ""));
+    Object.assign(wrap.style, { position: "absolute", left: "0", top: "0", width: "100%", height: "100%" });
+    const g = add(ctx.svg, document.createElementNS(SVG, "g"));
+    const back = document.createElementNS(SVG, "rect");
+    for (const [k, v] of Object.entries({ x: slot.x, y: slot.y, width: slot.w, height: slot.h })) back.setAttribute(k, String(v));
+    back.style.fill = "var(--k-bg)";
+    g.append(back);
+    for (const e of [wrap, g]) e.setAttribute("data-k-media", String(n));
+    const wrapper = [wrap, g];
+    const previous = before;
+    before = wrapper;
+    let show: StepAdder;
     try {
-      const show = mediaShow(ctx, s.media, slot);
-      fx.set(n, (tl) => {
-        tl.to(p, { autoAlpha: 1, duration: motion.step });
-        show(tl);
-      });
+      show = mediaShow({ ...ctx, html: wrap, svg: g }, s.media, slot);
     } catch (e) {
-      if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
-      ctx.problem(`${scene.source} step ${n}: EFFECT MISSING: ${s.media.kind} (${message(e)})`);
-      const box = add(html, el("div", "", `EFFECT MISSING: ${s.media.kind}`));
+      const bad = e instanceof DataError;
+      if (!bad && !notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
+      const label = bad ? `DATA ERROR: ${e.file}` : `EFFECT MISSING: ${s.media.kind}`;
+      ctx.problem(`${scene.source} step ${n}: ${label} (${message(e)})`);
+      const box = add(wrap, el("div", "", label));
       Object.assign(box.style, {
         position: "absolute",
         left: `${slot.x}px`,
@@ -106,13 +135,19 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
         alignItems: "center",
         justifyContent: "center",
         border: "4px dashed var(--k-accent)",
-        background: "var(--k-bg)", // covers the slot's earlier media
+        background: "var(--k-bg)",
         color: "var(--k-accent)",
         fontSize: "48px",
         fontWeight: "700",
       });
-      fx.set(n, (tl) => tl.to([p, box], { autoAlpha: 1, duration: motion.step }));
+      show = (tl) => tl.to(box, { autoAlpha: 1, duration: motion.step });
     }
+    fx.set(n, (tl) => {
+      tl.to(p, { autoAlpha: 1, duration: motion.step });
+      tl.to(wrapper, { autoAlpha: 1, duration: motion.step }, "<");
+      if (previous.length) tl.to(previous, { autoAlpha: 0, duration: motion.step }, "<");
+      show(tl);
+    });
   });
   gsap.set(shown, { autoAlpha: 0 });
   return { title, fx };
@@ -218,7 +253,10 @@ export function renderWorld(
       }
     gsap.set(world, { autoAlpha: 0, ...frame(first) });
     const entries = Object.fromEntries(
-      sections.map((s) => [s.id, { kind: s.module?.transition ?? "fade", opts: { target: s.module?.zoomTarget } }]),
+      sections.map((s) => {
+        const m = s.module;
+        return [s.id, { kind: m?.transition ?? "fade", opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
+      }),
     );
     return { layout, el: world, tl, refs, entries, stepListeners, problems };
   });

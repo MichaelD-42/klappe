@@ -18,6 +18,19 @@ const clock = (ms: number) => {
   return s >= 3600 ? `${Math.floor(s / 3600)}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
+// Notes that effects put on the stage as data-k-note (for example "needs internet" on an online video).
+// The stage lives in the main window: the opener of this popup, or the parent of an embedded view.
+function effectNotes(scene: string): string[] {
+  try {
+    const main: Window | null = opener ?? (parent !== window ? parent : null);
+    const sel = `[data-scene="${CSS.escape(scene)}"]`;
+    const els = main?.document.querySelectorAll<HTMLElement>(`${sel}[data-k-note], ${sel} [data-k-note]`) ?? [];
+    return [...els].map((e) => e.dataset.kNote || e.textContent || "").filter(Boolean);
+  } catch {
+    return []; // the main window is gone or on another origin
+  }
+}
+
 // The presenter's window. It only shows state and sends commands; the main window decides.
 export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], channel: Channel): { readonly index: number } {
   const lang = deck.meta.lang;
@@ -49,7 +62,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     const step = sc?.steps[a.step - 1];
     scene.textContent = sc?.title ?? "";
     text.textContent = step?.text ?? "";
-    notes.textContent = [step?.notes, sc?.notes].filter(Boolean).join("\n\n");
+    notes.textContent = [step?.notes, sc?.notes, ...effectNotes(a.scene)].filter(Boolean).join("\n\n");
     const b = steps[index + 1];
     const nextScene = b && deck.sections.find((s) => s.id === b.section)?.scenes.find((s) => s.id === b.scene);
     next.textContent = b ? (nextScene?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);

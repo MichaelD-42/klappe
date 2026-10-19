@@ -70,7 +70,15 @@ if (cmd === 'init') {
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
   const tsconfig = path.join(process.cwd(), 'tsconfig.json')
   if (!fs.existsSync(tsconfig)) {
-    const ts = { compilerOptions: { strict: true, noEmit: true, paths: { 'klappe/types': ['./klappe/src/types'], 'klappe/fx': ['./klappe/src/fx'] } }, include: ['decks'] }
+    const ts = {
+      compilerOptions: {
+        strict: true,
+        noEmit: true,
+        types: ['vite/client'],
+        paths: { 'klappe/types': ['./klappe/src/types'], 'klappe/fx': ['./klappe/src/fx'], 'klappe/fx/*': ['./klappe/src/fx/*'] },
+      },
+      include: ['decks'],
+    }
     fs.writeFileSync(tsconfig, JSON.stringify(ts, null, 2) + '\n')
   }
   const ignore = path.join(process.cwd(), '.gitignore')
