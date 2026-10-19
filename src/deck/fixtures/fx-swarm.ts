@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { swarm } from "../../fx/swarm";
+import { swarm } from "klappe/fx";
 import type { Ctx, Rect, SceneModule } from "../../types";
 import { assembleDeck } from "../assemble";
 

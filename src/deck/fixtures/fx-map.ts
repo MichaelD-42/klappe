@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { worldMap, type WorldMapHandle } from "../../fx/map";
+import { worldMap, type WorldMapHandle } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
 // Placeholder sites at plausible land coordinates; not real locations of anyone.

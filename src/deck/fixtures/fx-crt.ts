@@ -1,6 +1,6 @@
 import type { gsap } from "gsap";
 import { assembleDeck } from "../assemble";
-import { crt, type CrtHandle, type CrtLine } from "../../fx/crt";
+import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
 const BOOT: CrtLine[] = ["DEMO-OS v1.0  (c) 1986", "", { text: "MEMORY TEST: 640K OK", count: true }, "DRIVES A: B: C: ... OK"];

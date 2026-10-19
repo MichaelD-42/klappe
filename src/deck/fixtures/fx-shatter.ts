@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { assembleDeck } from "../assemble";
-import { shatter, type ShatterOpts } from "../../fx/shatter";
+import { shatter, type ShatterOpts } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
 // A title card, shown in step 1, then cracked, cracked to the edges and shattered.

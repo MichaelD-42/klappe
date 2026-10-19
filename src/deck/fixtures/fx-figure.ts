@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { figure } from "../../fx/figure";
+import { figure } from "klappe/fx";
 import type { Ctx, SceneModule } from "../../types";
 
 const SVG = "http://www.w3.org/2000/svg";

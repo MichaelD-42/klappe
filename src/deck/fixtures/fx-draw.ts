@@ -1,7 +1,7 @@
 import { assembleDeck } from "../assemble";
-import { drawOn, lineArt } from "../../fx";
-import desk from "../../fx/art/engineer-desk.svg?raw";
-import stream from "../../fx/art/value-stream.svg?raw";
+import { drawOn, lineArt } from "klappe/fx";
+import desk from "klappe/fx/art/engineer-desk.svg?raw";
+import stream from "klappe/fx/art/value-stream.svg?raw";
 import type { SceneModule } from "../../types";
 
 const SVG = "http://www.w3.org/2000/svg";

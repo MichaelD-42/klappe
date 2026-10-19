@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { chart, type ChartOpts } from "../../fx/chart";
+import { chart, type ChartOpts } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
 // One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING), one bad

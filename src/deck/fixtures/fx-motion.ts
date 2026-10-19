@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { bubble, counter, morph } from "../../fx/motion";
+import { bubble, counter, morph } from "klappe/fx";
 import type { Ctx, SceneModule } from "../../types";
 import { assembleDeck } from "../assemble";
 
