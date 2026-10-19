@@ -89,12 +89,21 @@ test('a deep link to a video step does not play it', async () => {
   await page.close()
 })
 
-test('video boxes are 16:9 inside the slot', async () => {
+test('video boxes are 16:9 inside the slot, framed, with the title as a caption', async () => {
   const page = await open('?fixture=fx-media#/a/youtube/2')
   const r = await page.evaluate(() => {
     const b = document.querySelector<HTMLElement>('[data-scene$="youtube"] [data-k-video]')!.parentElement!
-    return b.offsetWidth / b.offsetHeight
+    const cap = b.lastElementChild as HTMLElement
+    return {
+      ratio: b.offsetWidth / b.offsetHeight,
+      border: getComputedStyle(b).borderTopWidth,
+      caption: cap.textContent,
+      shown: cap.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+      ignored: !!cap.closest('[data-k-ignore]'),
+    }
   })
-  expect(r).toBeCloseTo(16 / 9, 2)
+  expect(r.ratio).toBeCloseTo(16 / 9, 2)
+  expect(r.border).not.toBe('0px')
+  expect(r).toMatchObject({ caption: 'A YouTube talk', shown: true, ignored: false })
   await page.close()
 })

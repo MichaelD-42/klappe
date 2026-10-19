@@ -67,6 +67,8 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string): HTMLElement
   return b;
 }
 
+const CAPTION = 48; // the row under a video box for its caption
+
 const fade = (b: HTMLElement): { show: StepAdder } => ({ show: (tl) => void tl.to(b, { autoAlpha: 1, duration: motion.step }) });
 const key = (href: string) => href.replace(/^\.\//, "");
 
@@ -106,7 +108,24 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
   if (src === undefined) return fade(missing(ctx, rect, t("videoMissing", LANG), `${key(href)} — ${title}`));
-  const b = box(ctx, fit(rect), "#000"); // black letterbox bars
+  // A border and a caption, so the box reads as a video even when it cannot load (offline).
+  const area = { ...rect, h: rect.h - CAPTION };
+  const b = box(ctx, fit(area), "#000"); // black letterbox bars
+  Object.assign(b.style, { border: "2px solid color-mix(in srgb, var(--k-fg) 40%, transparent)", overflow: "visible" });
+  const caption = document.createElement("div");
+  caption.textContent = title;
+  Object.assign(caption.style, {
+    position: "absolute",
+    left: "0",
+    right: "0",
+    top: "100%",
+    marginTop: "8px",
+    fontSize: "24px",
+    color: "var(--k-fg)",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  });
   if (online) b.dataset.kNote = `${t("video", LANG)} "${title}" ${t("needsInternet", LANG)}`;
   const frame = embed(href);
   const el = document.createElement(frame ? "iframe" : "video");
@@ -127,11 +146,11 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     // Once the size is known, the box takes the clip's own aspect ratio.
     el.addEventListener("loadedmetadata", () => {
       if (!el.videoWidth) return;
-      const r = fit(rect, el.videoWidth / el.videoHeight);
+      const r = fit(area, el.videoWidth / el.videoHeight);
       Object.assign(b.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     });
   }
-  b.append(el);
+  b.append(el, caption);
 
   return {
     show(tl) {
