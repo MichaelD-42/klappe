@@ -56,3 +56,42 @@ test('icons draw on with the v2 treatment and tiles fade in, play or cut', async
   expect(tiles.wellOpacity).toBe('1')
   await page.close()
 })
+
+test('a zero-length dot stroke stays hidden until its step', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-icons`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const dots = (i: number) =>
+    page.evaluate(async (i) => {
+      await window.klappe.stepper.goto(i, 'cut')
+      return [...document.querySelectorAll<SVGPathElement>('g[data-scene="tiles"] .k-icon path')]
+        .filter((s) => s.getTotalLength() < 0.5)
+        .map((s) => getComputedStyle(s).strokeOpacity)
+    }, i)
+  expect(await dots(1)).toEqual(['0']) // info's dot, before the tiles' step
+  expect(await dots(2)).toEqual(['1'])
+  expect(await dots(1)).toEqual(['0'])
+  await page.close()
+})
+
+test('a row given "<" draws and lights together', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-icons`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const starts = await page.evaluate(() => {
+    const tl = window.klappe.canvases[0].tl
+    // The first tween of each icon's first stroke (draw), and of each icon root (light).
+    const first = (sel: string) =>
+      [...document.querySelectorAll(sel)].map((e) => Math.min(...tl.getTweensOf(e).map((t: any) => t.startTime())))
+    return {
+      icons: first('g[data-scene="icons"] .k-icon > g > :first-child'),
+      lights: first('g[data-scene="icons"] .k-icon'),
+      wells: first('g[data-scene="tiles"] .k-tile > rect[fill^="url"]'),
+    }
+  })
+  for (const s of Object.values(starts)) {
+    expect(s.length).toBeGreaterThan(3)
+    expect(new Set(s.map((t) => t.toFixed(3))).size).toBe(1)
+  }
+  await page.close()
+})

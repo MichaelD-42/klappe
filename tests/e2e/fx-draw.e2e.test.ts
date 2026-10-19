@@ -81,6 +81,58 @@ test('the glow turns the bulb warm', async () => {
   await page.close()
 })
 
+// Runs in the page: unit tests have no DOM, and lineArt needs DOMParser and computed styles.
+test('lineArt keeps drawing content only and normalises inline-styled exports', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-draw`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/draw.ts').then((m) => { window.__lineArt = m.lineArt })")
+  const r = await page.evaluate(async () => {
+    const lineArt = (window as any).__lineArt
+    const nasty = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" onload="window.__pwned=1">
+      <script>window.__pwned=2</script>
+      <style>path { stroke: red }</style>
+      <foreignObject width="10" height="10"><div xmlns="http://www.w3.org/1999/xhtml">x</div></foreignObject>
+      <path d="M0 0 H100" style="stroke:#ff0000;fill:#0000ff;stroke-width:3;stroke-linecap:butt" onclick="window.__pwned=3"/>
+      <a href="javascript:window.__pwned=4"><path d="M0 50 H100" fill="blue" stroke="red"/></a>
+    </svg>`
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    svg.append(g)
+    document.body.append(svg)
+    const problems: string[] = []
+    lineArt({ svg: g, problem: (m: string) => problems.push(m) } as any, { src: nasty, x: 0, y: 0, w: 100 })
+    g.querySelector('path')!.dispatchEvent(new MouseEvent('click'))
+    const paths = [...g.querySelectorAll('path')].map((p) => {
+      const s = getComputedStyle(p)
+      return [s.stroke, s.fill, s.strokeLinecap, s.strokeWidth]
+    })
+    const out = {
+      problems,
+      banned: g.querySelectorAll('script, style, foreignObject').length,
+      handlers: [...g.querySelectorAll('*')].flatMap((e) => [...e.attributes].map((a) => a.name)).filter((n) => /^on/i.test(n)),
+      hrefs: [...g.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+      paths,
+      fg: getComputedStyle(g.firstElementChild!).color,
+      pwned: (window as any).__pwned,
+    }
+    svg.remove()
+    return out
+  })
+  expect(r.problems).toEqual([])
+  expect(r.banned).toBe(0)
+  expect(r.handlers).toEqual([])
+  expect(r.hrefs).toEqual([null])
+  expect(r.pwned).toBeUndefined()
+  // Inline fill and stroke lose to the normalised look; the author's stroke-width stays.
+  expect(r.paths).toEqual([
+    [r.fg, 'none', 'round', '3px'],
+    [r.fg, 'none', 'round', '4px'],
+  ])
+  await page.close()
+})
+
 // Deck code imports the shipped art through the klappe/fx alias of the real Vite config.
 test('klappe/fx/art/*.svg?raw resolves through the Vite config', async () => {
   const server = await createServer({

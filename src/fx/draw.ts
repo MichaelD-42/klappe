@@ -4,12 +4,13 @@ import type { Ctx, StepAdder } from "../types";
 export interface DrawOnOpts {
   duration?: number; // default 0.9
   each?: number; // default 0.06
+  at?: gsap.Position; // where the draw starts on the timeline; default: the end
 }
 export interface LineArtOpts {
   src: string; // SVG file content, imported with ?raw
-  x: number;
+  x: number; // top-left corner of the drawing, scene-local
   y: number;
-  w: number;
+  w: number; // the viewBox maps to this width; the height follows the viewBox
 }
 export interface LineArtHandle {
   draw: StepAdder;
@@ -30,7 +31,7 @@ function shapes(els: Element | ArrayLike<Element>): SVGGeometryElement[] {
 
 // Draws each shape from start to end, one after the other, and ends on a plain stroke.
 export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {}): StepAdder {
-  const { duration = 0.9, each = 0.06 } = opts;
+  const { duration = 0.9, each = 0.06, at } = opts;
   const list = shapes(els);
   return (tl) => {
     if (!list.length) return;
@@ -38,7 +39,8 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
     // host units, so 1 is not the whole path: scale the dash by the shape's CTM scale k.
     // Dash 1.01k, gap 2k, offset 1.3k -> 0: hidden at the start, whole at the end. The advisor's 1.03k
     // let round caps of short strokes peek out as dots; 1.3k keeps the hidden dash 0.29 path lengths away.
-    // k is sampled here, at load; a camera move only scales the whole world, so it does not change k.
+    // k is sampled here, at load. The camera is a CSS transform and does not change k; k goes stale
+    // only if a step tweens the transform of an SVG ancestor inside the scene before the draw.
     const ks = list.map((s) => {
       s.setAttribute("pathLength", "1");
       if (s.getAttribute("vector-effect") !== "non-scaling-stroke") return 1;
@@ -46,7 +48,6 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
       return (m && Math.hypot(m.a, m.b)) || 1;
     });
     const dash = (i: number) => `${1.01 * ks[i]} ${2 * ks[i]}`;
-    const at = tl.duration();
     // autoRound off: GSAP rounds px to whole pixels, and the dash is in units of the path length.
     tl.fromTo(
       list,
@@ -54,7 +55,14 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
       { strokeDasharray: dash, strokeDashoffset: 0, duration, ease: "power1.inOut", stagger: each, autoRound: false },
       at,
     );
-    tl.set(list, { strokeDasharray: "none" }, at + (list.length - 1) * each + duration);
+    const start = (tl.recent() as gsap.core.Tween).startTime();
+    // A zero-length stroke (Lucide's "h.01" dots) is all round cap, which no dash offset hides:
+    // it fades in at its slot instead.
+    list.forEach((s, i) => {
+      if (s.getTotalLength() < 0.5)
+        tl.fromTo(s, { strokeOpacity: 0 }, { strokeOpacity: 1, duration: duration / 4 }, start + i * each);
+    });
+    tl.set(list, { strokeDasharray: "none" }, start + (list.length - 1) * each + duration);
   };
 }
 
@@ -75,12 +83,17 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
     const k = opts.w / vb[2];
     g.setAttribute("transform", `translate(${opts.x - vb[0] * k} ${opts.y - vb[1] * k}) scale(${k})`);
     g.setAttribute("stroke-width", svg.getAttribute("stroke-width") ?? "4");
+    // Exported SVGs can carry scripts, page-wide styles and handlers: keep drawing content only.
+    for (const e of svg.querySelectorAll("script, style, foreignObject")) e.remove();
+    for (const e of [svg, ...svg.querySelectorAll("*")])
+      for (const a of [...e.attributes])
+        if (/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) e.removeAttribute(a.name);
     g.append(...[...svg.childNodes].map((n) => document.importNode(n, true)));
   }
   Object.assign(g.style, { color: "var(--k-fg)" });
-  for (const s of g.querySelectorAll(SHAPES))
-    for (const [k, v] of Object.entries({ fill: "none", stroke: "currentColor", "stroke-linecap": "round", "stroke-linejoin": "round" }))
-      s.setAttribute(k, v);
+  // Inline style, so an exporter's inline fill or stroke cannot win; its stroke-width stays.
+  for (const s of g.querySelectorAll<SVGElement>(SHAPES))
+    Object.assign(s.style, { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" });
   return {
     draw: drawOn(g),
     glow(tl, selector) {
