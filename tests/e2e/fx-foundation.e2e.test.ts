@@ -32,10 +32,11 @@ for (const vp of [
     expect(r.steps).toBe(4)
   })
 
-test('walk passes across a blackout transition', async () => {
+test('walk passes across a blackout and a cut transition', async () => {
   const r = await walk('blackout')
   expect(r.errors).toEqual([])
   expect(r.problems).toEqual([])
   expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.steps).toBe(3)
   expect(r.ok).toBe(true)
 })

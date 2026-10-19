@@ -2,7 +2,9 @@ import { gsap } from "gsap";
 import { assembleDeck } from "../assemble";
 import type { SceneModule } from "../../types";
 
-// Broken on purpose: onUpdate writes wall-clock time, so play and seek differ and the walk must fail.
+// Broken on purpose: onUpdate writes wall-clock time and a call count, neither a function of progress,
+// so play and seek differ and the walk must fail. The count keeps them apart when both land in the same millisecond.
+let calls = 0;
 const scene: SceneModule = {
   build(ctx) {
     const p = document.createElement("p");
@@ -15,7 +17,7 @@ const scene: SceneModule = {
   steps: [
     (tl, { p }) => {
       tl.to(p, { autoAlpha: 1, duration: 0.2 });
-      tl.to({}, { duration: 0.6, onUpdate: () => void (p.textContent = String(Math.round(performance.now()))) });
+      tl.to({}, { duration: 0.6, onUpdate: () => void (p.textContent = `${Math.round(performance.now())} #${++calls}`) });
     },
   ],
 };

@@ -1,5 +1,4 @@
 import type { gsap } from "gsap";
-import type { registry } from "./fx/transitions";
 
 export interface Rect {
   x: number;
@@ -65,9 +64,11 @@ export interface SceneModule {
   build?(ctx: Ctx): any;
   steps?: (StepFn | null)[];
 }
+// The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
+export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
 export interface SectionModule {
   // How the deck enters this section's canvas on a forward step. Default: fade.
-  transition?: keyof typeof registry;
+  transition?: TransitionKind;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
   zoomTarget?: string;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;

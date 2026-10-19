@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
+import type { TransitionKind } from "../types";
 import { transitionCrt } from "./crt";
 import { transitionShatter } from "./shatter";
 import { transitionZoom } from "./zoom";
@@ -44,8 +45,7 @@ export const registry = {
   zoom: transitionZoom,
   shatter: transitionShatter,
   crt: transitionCrt,
-} satisfies Record<string, Transition>;
-export type TransitionKind = keyof typeof registry;
+} satisfies Record<TransitionKind, Transition>;
 
 // A transition that throws (an effect not built yet, or a bug) falls back to fade, so the move still lands.
 export function playTransition(

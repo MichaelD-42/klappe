@@ -74,3 +74,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: the demo walk must stay green during Wave 1; missing media must be visible.
 - **Helpers record deck problems through `ctx.problem(msg)`.** They are kept on the canvas runtime, and the self-test adds them to its problems.
   - Open: `main.ts` does not pass them to the on-screen problems panel yet (one line, outside Task 0's files).
+- **`SectionModule.transition` is the literal union `TransitionKind` in `types.ts`; the registry must satisfy `Record<TransitionKind, Transition>`.**
+  - Why: the same type as `keyof typeof registry`, but `klappe/types` stays free of imports, so a deck repo's tsc does not pull in the renderer.
+- **Section text gets the size check only, and only where it overlaps the stage.** Scene text keeps both the size and the inside-the-frame check.
+  - Why: a canvas-wide backdrop (stream labels, map markers) always reaches past the camera frame.

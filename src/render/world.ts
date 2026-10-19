@@ -1,9 +1,9 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
 import { chart, image, parseCsv, shout, video } from "../fx";
-import type { TransitionKind, TransitionOpts } from "../fx/transitions";
+import type { TransitionOpts } from "../fx/transitions";
 import { motion } from "../theme";
-import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc } from "../types";
+import type { CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
