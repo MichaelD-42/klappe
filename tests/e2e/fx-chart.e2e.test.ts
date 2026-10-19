@@ -28,8 +28,9 @@ for (const vp of [
     expect(r.problems).toEqual([
       'chart: DATA MISSING: data/missing.csv',
       'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
+      'chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(23)
+    expect(r.steps).toBe(26)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -99,11 +100,15 @@ test('a Markdown chart link draws a bar chart in the media slot', async () => {
   await page.waitForFunction(() => window.klappe.stepper.index === 19)
   const r = await page.evaluate(() => {
     const g = document.querySelector('g[data-k-media="2"] [data-k-chart="bar"]')!
-    const fit = document.querySelector('.k-stage')!.getBoundingClientRect().width / 1920
-    const sizes = [...g.querySelectorAll('text')].map((t) => parseFloat(getComputedStyle(t).fontSize) * fit)
+    // Rendered size: computed font size times the full screen transform (stage fit, camera, wrappers).
+    const sizes = [...g.querySelectorAll('text')].map((t) => {
+      const m = t.getScreenCTM()!
+      return parseFloat(getComputedStyle(t).fontSize) * Math.hypot(m.a, m.b)
+    })
     return { bars: g.querySelectorAll('rect').length, smallest: Math.min(...sizes) }
   })
+  console.log(`slot chart: smallest text ${r.smallest.toFixed(1)} px at 1366`)
   expect(r.bars).toBe(4)
-  expect(r.smallest).toBeGreaterThanOrEqual(14) // at 1366 inside the media slot
+  expect(r.smallest).toBeGreaterThanOrEqual(14)
   await page.close()
 })

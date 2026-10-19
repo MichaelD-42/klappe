@@ -2,8 +2,8 @@ import { assembleDeck } from "../assemble";
 import { chart, type ChartOpts } from "../../fx/chart";
 import type { SceneModule } from "../../types";
 
-// One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING) and
-// one bad cell (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default media slot.
+// One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING), one bad
+// cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default media slot.
 // All numbers are made-up sample data.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -25,6 +25,7 @@ export default () => {
       "sections/10-a/60-missing/scene.md": md("Missing"),
       "sections/10-a/70-slot/scene.md": "## Slot\n\n- Text beside the chart.\n- [Units by quarter](data/quarters.csv)\n",
       "sections/10-a/80-bad/scene.md": md("Bad cell"),
+      "sections/10-a/90-null/scene.md": md("Null JSON"),
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -43,12 +44,14 @@ export default () => {
       }),
       "sections/10-a/60-missing/scene.ts": scene({ src: "data/missing.csv", title: "Never drawn" }),
       "sections/10-a/80-bad/scene.ts": scene({ src: "data/bad.csv", title: "Never drawn" }),
+      "sections/10-a/90-null/scene.ts": scene({ src: "data/null.json", title: "Never drawn" }),
     },
   );
   r.deck.files = {
     data: {
       "data/quarters.csv": "# source: klappe demo sample\nquarter,units\nQ1,120\nQ2,185\nQ3,-40\nQ4,240\n",
       "data/bad.csv": "quarter,units\nQ1,5\nQ2,n/a\nQ3,7\n",
+      "data/null.json": "null",
       "data/mix.json": JSON.stringify({
         source: "klappe demo sample",
         rows: [

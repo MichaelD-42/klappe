@@ -3,8 +3,8 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
-// The first column labels the rows; every later column that is a number in at least half the rows
-// is a series, and then must be a number in every row. bar and waterfall use the first series;
+// The first column labels the rows; every later column with a number in any row is a series, and then
+// must be a number in every row (only all-text columns are text). bar and waterfall use the first series;
 // stacked and line use all of them; timeline reads two series per row: start, then end (for example years).
 export type Row = Record<string, string | number>;
 export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline";
@@ -52,8 +52,7 @@ export function parseCsv(text: string): Row[] & { source?: string } {
 
 function columns(rows: Row[]) {
   const [label, ...rest] = Object.keys(rows[0] ?? {});
-  const numeric = (k: string) => rows.filter((r) => typeof r[k] === "number").length * 2 >= rows.length;
-  return { label, series: rest.filter(numeric) };
+  return { label, series: rest.filter((k) => rows.some((r) => typeof r[k] === "number")) };
 }
 const num = (r: Row, k: string) => r[k] as number;
 
@@ -120,7 +119,9 @@ function text(parent: Element, s: string, attrs: Record<string, string | number>
   return t;
 }
 // The zero line is the only horizontal baseline; the category axis keeps just its labels.
-const categories = (x: d3.AxisScale<string>) => d3.axisBottom(x).tickSize(0).tickPadding(12);
+// Its keys are row indices; the ticks show the row names.
+const categories = (x: d3.AxisScale<string>, names: string[]) =>
+  d3.axisBottom(x).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
 const decimals =(vs: number[]) => d3.max(vs, (v) => (String(v).split(".")[1] ?? "").length) ?? 0;
 
 // A large visible box instead of the chart, and a deck problem.
@@ -159,6 +160,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
 // null: the file is missing; a string: why the data cannot be read.
 function load(ctx: Ctx, opts: ChartOpts): { rows: unknown[]; source?: string } | null | string {
+  if (opts.data === null) return null;
   let x: unknown = opts.data;
   if (x === undefined) {
     const raw = ctx.files.data[opts.src];
@@ -169,7 +171,6 @@ function load(ctx: Ctx, opts: ChartOpts): { rows: unknown[]; source?: string } |
       return e instanceof Error ? e.message : String(e);
     }
   }
-  if (x === null) return null;
   const o = x as { rows?: unknown; source?: unknown };
   const rows = Array.isArray(x) ? x : o && typeof o === "object" && Array.isArray(o.rows) ? o.rows : undefined;
   if (!rows) return "not an array of rows";
@@ -189,6 +190,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const keys = type === "stacked" || type === "line" ? series : [series[0]];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push("Total");
+  // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
+  const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
   const legend =
     type === "waterfall"
@@ -258,55 +261,59 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (type === "timeline") {
     const [a, b] = series;
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
-    const y = d3.scaleBand().domain(names).range([P.y, P.y + P.h]).padding(0.35);
+    const y = d3.scaleBand().domain(band).range([P.y, P.y + P.h]).padding(0.35);
     const tdec = decimals(data.flatMap((r) => [num(r, a), num(r, b)]));
     data.forEach((r, i) => {
       const [s, e] = [num(r, a), num(r, b)];
-      const rect = svg(marks, "rect", { x: x(s), y: y(names[i])!, width: x(e) - x(s), height: y.bandwidth() });
+      const top = y(band[i])!;
+      const rect = svg(marks, "rect", { x: x(s), y: top, width: x(e) - x(s), height: y.bandwidth() });
       rect.style.fill = color(i);
       grown.push({ el: rect, origin: "0% 50%", scale: "scaleX" });
-      const yc = y(names[i])! + y.bandwidth() / 2 + FONT * 0.35;
+      const yc = top + y.bandwidth() / 2 + FONT * 0.35;
       valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
     });
     xAxis = d3.axisBottom(x).ticks(6).tickFormat(d3.format("d"));
-    yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12);
+    yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
   } else {
     // Below zero, value labels sit under their bars: keep them clear of the category labels.
     v.range([P.y + P.h - (v.domain()[0] < 0 ? FONT + 16 : 0), P.y]);
     if (type === "line") {
-      const x = d3.scalePoint().domain(names).range([P.x, P.x + P.w]).padding(0.5);
+      const x = d3.scalePoint().domain(band).range([P.x, P.x + P.w]).padding(0.5);
       const id = `k-chart-clip-${++clips}`;
       const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
       grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the line draws left to right
       marks.setAttribute("clip-path", `url(#${id})`);
       keys.forEach((k, i) => {
         const path = svg(marks, "path", {
-          d: d3.line<Row>((r) => x(String(r[label]))!, (r) => v(num(r, k)))(data) ?? "",
+          d: d3.line<Row>((_, j) => x(band[j])!, (r) => v(num(r, k)))(data) ?? "",
           fill: "none",
           "stroke-width": 5,
           "stroke-linejoin": "round",
         });
         path.style.stroke = color(i);
         data.forEach((r, j) => {
-          const n = num(r, k);
-          const c = svg(root, "circle", { cx: x(names[j])!, cy: v(n), r: 8 });
+          const [n, cx] = [num(r, k), x(band[j])!];
+          const c = svg(root, "circle", { cx, cy: v(n), r: 8 });
           c.style.fill = color(i);
           grown.push({ el: c, origin: "50% 50%", scale: "scale" });
-          valueAt({ x: x(names[j])!, y: n < 0 ? v(n) + FONT + 14 : v(n) - 16, "text-anchor": "middle" }, 0, n, fmt);
+          // Below the marker for a negative value, above it otherwise.
+          const y = n < 0 ? v(n) + FONT + 14 : v(n) - 16;
+          valueAt({ x: cx, y, "text-anchor": "middle" }, 0, n, fmt);
         });
       });
-      xAxis = categories(x);
+      xAxis = categories(x, names);
     } else {
-      const x = d3.scaleBand().domain(names).range([P.x, P.x + P.w]).padding(0.3);
+      const x = d3.scaleBand().domain(band).range([P.x, P.x + P.w]).padding(0.3);
+      const left = (i: number) => x(band[i])!;
       // A value label above the bar's end, or below it when the bar runs down.
       const barValue = (lo: number, hi: number, i: number, to: number, show: (n: number) => string) => {
-        const at = { x: x(names[i])! + x.bandwidth() / 2, y: hi < lo ? v(hi) + FONT + 8 : v(hi) - 10, "text-anchor": "middle" };
-        valueAt(at, 0, to, show);
+        const y = hi < lo ? v(hi) + FONT + 8 : v(hi) - 10;
+        valueAt({ x: left(i) + x.bandwidth() / 2, y, "text-anchor": "middle" }, 0, to, show);
       };
       if (type === "stacked") {
         const layers = d3.stack<Row>().keys(keys).value((r, k) => num(r, k)).offset(d3.stackOffsetDiverging)(data);
         layers.forEach((layer, li) =>
-          layer.forEach(([lo, hi], i) => bar(x(names[i])!, x.bandwidth(), lo, hi, color(li), hi >= lo && lo >= 0)),
+          layer.forEach(([lo, hi], i) => bar(left(i), x.bandwidth(), lo, hi, color(li), hi >= lo && lo >= 0)),
         );
         // With a part below zero the stack's height is not its sum: say "net".
         data.forEach((r, i) => {
@@ -319,19 +326,19 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         const steps = waterfallSteps(data.map((r) => num(r, keys[0])));
         steps.forEach(([lo, hi], i) => {
           // The first row is the starting value, not a change.
-          bar(x(names[i])!, x.bandwidth(), lo, hi, i === 0 ? color(0) : hi >= lo ? UP : DOWN, hi >= lo);
+          bar(left(i), x.bandwidth(), lo, hi, i === 0 ? color(0) : hi >= lo ? UP : DOWN, hi >= lo);
           barValue(lo, hi, i, hi - lo, i === 0 ? fmt : signed);
         });
         const total = steps[steps.length - 1][1];
-        bar(x("Total")!, x.bandwidth(), 0, total, color(0), total >= 0);
-        barValue(0, total,names.length - 1, total, fmt);
+        bar(left(names.length - 1), x.bandwidth(), 0, total, color(0), total >= 0);
+        barValue(0, total, names.length - 1, total, fmt);
       } else
         data.forEach((r, i) => {
           const n = num(r, keys[0]);
-          bar(x(names[i])!, x.bandwidth(), 0, n, color(0), n >= 0);
+          bar(left(i), x.bandwidth(), 0, n, color(0), n >= 0);
           barValue(0, n, i, n, fmt);
         });
-      xAxis = categories(x);
+      xAxis = categories(x, names);
     }
     yAxis = d3.axisLeft(v).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
   }
@@ -369,13 +376,14 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     values(tl) {
       tl.to(values.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 });
       // Count up as a pure function of this tween's progress, so play equals seek.
-      tl.to({}, {
+      const count = {
         duration: motion.step * 2,
         onUpdate(this: gsap.core.Tween) {
           const p = ease(this.progress());
           for (const { el, from, to, show } of values) el.textContent = show(from + (to - from) * p);
         },
-      }, "<");
+      };
+      tl.to({}, count, "<");
     },
   };
 }

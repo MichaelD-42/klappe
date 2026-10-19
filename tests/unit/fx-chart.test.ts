@@ -82,6 +82,13 @@ describe("dataError", () => {
     expect(dataError(parseCsv("q,units\nQ1,5\nQ2,\n"), "bar")).toBe("row 2, column units not a number");
   });
 
+  test("a column with one number in three rows is a bad series, not text", () => {
+    const bad = parseCsv("q,units,cost\nQ1,5,3\nQ2,n/a,4\nQ3,oops,5\n");
+    expect(dataError(bad, "bar")).toBe("row 2, column units not a number");
+    expect(dataError(bad, "stacked")).toBe("row 2, column units not a number");
+    expect(dataError(parseCsv("q,units\nQ1,n/a\nQ2,n/a\nQ3,7\n"), "line")).toBe("row 1, column units not a number");
+  });
+
   test("a text column is not a series", () => {
     expect(dataError(parseCsv("q,note,units\nQ1,ok,5\nQ2,late,6\n"), "bar")).toBe("");
     expect(dataError(parseCsv("q,note\nQ1,ok\n"), "bar")).toBe("no number column");
