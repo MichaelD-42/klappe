@@ -121,6 +121,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
+- Do not use negative or `<` offsets (such as `"<"` or `"-=0.5"`) for a tween position in a step. A step starts at its own label, and an offset before it can pull the tween into the previous step. Use `at` values of 0 or more, or labels.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Keep one master timeline per canvas. The engine owns it.
 

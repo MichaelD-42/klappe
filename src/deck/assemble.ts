@@ -6,9 +6,12 @@ import { parseSection } from "../parse/section";
 const byOrder = (a: { order: number; folder: string }, b: { order: number; folder: string }) =>
   (a.order === b.order ? 0 : a.order < b.order ? -1 : 1) || (a.folder < b.folder ? -1 : a.folder > b.folder ? 1 : 0);
 
-// Vite glob keys carry a path prefix before the deck root; cut down to the deck-relative path.
-export function toDeckRelative(key: string): string {
-  const m = /(?:^|\/)(deck\.md|sections\/.*)$/.exec(key.replace(/^@deck\//, "/"));
+// Vite glob keys carry a path prefix before the deck root. With the known root (the deck.md key minus "deck.md"),
+// strip exactly that prefix, so a "sections/" folder above the deck does not matter. Without it, cut at the leftmost match.
+export function toDeckRelative(key: string, root?: string): string {
+  const k = key.replace(/^@deck\//, "/");
+  if (root !== undefined && k.startsWith(root)) return k.slice(root.length);
+  const m = /(?:^|\/)(deck\.md|sections\/.*)$/.exec(k);
   return m ? m[1] : key;
 }
 

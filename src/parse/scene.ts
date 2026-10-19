@@ -31,7 +31,8 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
     if (b.type === "h2" && !title) title = b.text;
     else if (b.type === "item") steps.push(withMedia(b.text));
     else if (b.type === "h3" && b.text.endsWith("?")) {
-      const answer = bs[i + 1]?.type === "paragraph" ? bs[++i].text : "";
+      if (bs[i + 1]?.type === "quote") problems.push(`${folder}/scene.md: a note sits between '### ${b.text}' and its answer; the answer is dropped`);
+      const answer =bs[i + 1]?.type === "paragraph" ? bs[++i].text : "";
       const q = (kind: StepDoc["kind"], text: string): StepDoc => ({ text, notes: "", kind });
       steps.push(q("shout-enter", b.text), q("shout-hold", b.text), q("shout-fade", b.text), q("shout-answer", answer));
     } else if (b.type === "quote") {

@@ -65,4 +65,10 @@ describe("toDeckRelative", () => {
     expect(toDeckRelative("/@fs/C:/x/decks/demo/sections/10-a/section.md")).toBe("sections/10-a/section.md");
     expect(toDeckRelative("@deck/sections/10-a/10-b/scene.ts")).toBe("sections/10-a/10-b/scene.ts");
   });
+  it("strips the known deck root, even when the path above it has a sections folder", () => {
+    const root = "/C:/work/sections/x/deck/";
+    expect(toDeckRelative(root + "deck.md", root)).toBe("deck.md");
+    expect(toDeckRelative(root + "sections/10-a/section.md", root)).toBe("sections/10-a/section.md");
+    expect(toDeckRelative(root + "sections/10-a/section.md")).toBe("sections/x/deck/sections/10-a/section.md"); // no root: leftmost cut
+  });
 });
