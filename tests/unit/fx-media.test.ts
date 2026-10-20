@@ -66,3 +66,15 @@ test('writeTodos removes a TODO file when nothing is missing', () => {
   expect(existsSync(join(d, 'media/TODO.md'))).toBe(false);
   expect(existsSync(join(d, 'data/TODO.md'))).toBe(false);
 });
+
+test('clampPose keeps a Ken Burns drift inside the overscan', async () => {
+  const { clampPose } = await import('../../src/fx/media');
+  const rect = { x: 0, y: 0, w: 1920, h: 1080 };
+  const pose = (scale: number, x: number, y: number) => {
+    const p = clampPose({ scale, x, y }, rect);
+    return [p.scale, p.x, p.y].map((v) => Math.round(v * 100) / 100 + 0); // + 0 turns -0 into 0
+  };
+  expect(pose(1, -24, -12)).toEqual([1, 0, 0]);
+  expect(pose(1.08, -24, -12)).toEqual([1.08, -24, -12]);
+  expect(pose(1.02, 100, -100)).toEqual([1.02, 19.2, -10.8]);
+});

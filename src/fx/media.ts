@@ -14,11 +14,12 @@ export interface ImageOpts {
   alt: string; // "" for a decorative picture (a background)
   rect?: Rect; // default: the full scene frame
   fit?: "contain" | "cover"; // cover fills the rect and crops; default contain
-  // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses.
+  // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses. Reduced motion leaves it out.
   kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
   scrim?: number; // 0..1: a dark layer over the picture, for text on top
 }
 export interface ImageHandle {
+  // A full-frame picture (fit cover, no rect) shows from its step's start, so it is there while the camera flies in.
   show(tl: gsap.core.Timeline, at?: number | string): void;
   hide(tl: gsap.core.Timeline, at?: number | string): void;
   // The Ken Burns push over `duration` seconds; show() already plays it when kenBurns is set.
@@ -97,21 +98,36 @@ const fade = (b: HTMLElement) => ({
 });
 const key = (href: string) => href.replace(/^\.\//, "");
 
+// world.ts moves this timeline label to the start of each step while it builds the step.
+export const STEP_LABEL = "step";
+// Ends a prompt made from alt text for a full-frame picture. bin/todo.mjs keeps a copy (it cannot import TS);
+// tests/unit/fx-media.test.ts checks the two match.
+export const FULL_FRAME_PROMPT = ", 16:9, 1920x1080, no text, no logos";
+
 export const KEN_BURNS = 6; // seconds: the default push; show() with kenBurns makes its step this long
 const STILL: KenBurnsPose = { scale: 1, x: 0, y: 0 };
 const PUSH: KenBurnsPose = { scale: 1.08, x: -24, y: -12 }; // 4 % overscan per side covers the drift
+
+// Keeps the drift inside the overscan, so the picture never leaves an edge gap. It scales about its centre.
+export function clampPose(p: KenBurnsPose, rect: Rect): KenBurnsPose {
+  const c = (v: number, max: number) => Math.max(-max, Math.min(max, v));
+  return { scale: p.scale, x: c(p.x, (rect.w * (p.scale - 1)) / 2), y: c(p.y, (rect.h * (p.scale - 1)) / 2) };
+}
 
 export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   const { href, alt, scrim, kenBurns } = opts;
   const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
   const cover = opts.fit === "cover";
+  const fullFrame = cover && !opts.rect;
+  const at0 = (tl: gsap.core.Timeline, at?: number | string) => at ?? (fullFrame ? tl.labels[STEP_LABEL] : undefined);
   const url = ctx.files.media[key(href)];
   const text = [key(href), alt].filter(Boolean).join(" — ");
   if (url === undefined) {
-    // The line to paste into an image generator, as media/TODO.md writes it for an untitled image.
-    const prompt = cover && alt ? `${alt}, 16:9, 1920x1080, no text, no logos` : undefined;
+    // A prompt for an image generator, for a cover picture with alt text.
+    const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", LANG), text, prompt);
-    return { ...fade(b), move: () => {} };
+    const f = fade(b);
+    return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
   const b = box(ctx, rect);
   const img = document.createElement("img");
@@ -125,19 +141,17 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     b.append(s);
   }
   const kb = kenBurns === true ? {} : kenBurns;
-  const from = { ...STILL, ...kb?.from };
+  const from = clampPose({ ...STILL, ...kb?.from }, rect);
+  const to = clampPose({ ...PUSH, ...kb?.to }, rect);
   gsap.set(img, from); // the start pose from load, so a seek back before the push matches a fresh load
-  const move: ImageHandle["move"] = (tl, { duration }, at) =>
-    void tl.fromTo(
-      img,
-      from,
-      { ...PUSH, ...kb?.to, duration, ease: "sine.inOut", immediateRender: false },
-      at,
-    );
+  const move: ImageHandle["move"] = (tl, { duration }, at) => {
+    if (ctx.reducedMotion) return;
+    tl.fromTo(img, from, { ...to, duration, ease: "sine.inOut", immediateRender: false }, at);
+  };
   const f = fade(b);
   return {
     show(tl, at) {
-      f.show(tl, at);
+      f.show(tl, at0(tl, at));
       if (kb) move(tl, { duration: KEN_BURNS }, "<");
     },
     hide: f.hide,

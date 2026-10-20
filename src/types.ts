@@ -55,6 +55,8 @@ export interface Ctx {
   onStep(fn: (e: { play: boolean; span: [number, number] | null }) => void): void;
   // Records a deck problem: shown on screen and fails the self-test.
   problem(msg: string): void;
+  // The viewer asked for reduced motion: effects leave out decorative motion (Ken Burns).
+  reducedMotion?: boolean;
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
@@ -63,6 +65,8 @@ export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
 // kenBurns: a slow push on the scene's first step.
 export interface Background {
   href: string;
+  alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
+
   scrim?: number;
   kenBurns?: boolean;
 }

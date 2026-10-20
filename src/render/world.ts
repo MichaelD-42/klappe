@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { KEN_BURNS, chart, image, shout, video, type ImageHandle } from "../fx";
+import { KEN_BURNS, STEP_LABEL, chart, image, shout, video, type ImageHandle } from "../fx";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { motion } from "../theme";
@@ -158,6 +158,9 @@ function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTML
 const PAD = 0.001;
 export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): void {
   tl.to({}, { duration: PAD });
+  // shortcut: one label, moved every step, tells a helper where the current step starts (image() uses it);
+  // read it only while the step is built. Upgrade to a step-start argument if more helpers need it.
+  tl.addLabel(STEP_LABEL);
   add(tl);
   tl.to({}, { duration: PAD });
   tl.addLabel(label);
@@ -171,7 +174,7 @@ function background(ctx: Ctx, back: HTMLElement, bg: Background, source: string)
   Object.assign(d.style, { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
   const img = safe(`${source}: background`, () =>
-    image({ ...ctx, html: d, problem }, { href: bg.href, alt: "", fit: "cover", scrim: bg.scrim }),
+    image({ ...ctx, html: d, problem }, { href: bg.href, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }),
   );
   gsap.set(d.children, { autoAlpha: 1 });
   return bg.kenBurns ? img : undefined;
@@ -233,6 +236,7 @@ export function renderWorld(
         files,
         onStep: (fn) => stepListeners.push(fn),
         problem: (msg) => problems.push(msg),
+        reducedMotion: opts.reducedMotion,
       };
     };
 
@@ -280,7 +284,7 @@ export function renderWorld(
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
           else defaultStep(tl, sc, i + 1, ctx.html, fx);
           // Last, so the step's content does not wait for it: the push runs alongside from the step's start.
-          if (i === 0 && bg && !opts.reducedMotion) bg.move(tl, { duration: KEN_BURNS }, start);
+          if (i === 0 && bg) bg.move(tl, { duration: KEN_BURNS }, start);
         }),
       );
     }

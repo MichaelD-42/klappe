@@ -9,10 +9,11 @@ beforeAll(async () => {
 afterAll(() => browser?.close())
 
 const MISSING = 'IMAGE MISSING: media/sunrise.png — A sunrise over a mountain ridge'
+const MISSING_BG = 'sections/20-b/30-no-sky/scene.md: background: IMAGE MISSING: media/harbour.png — A harbour at night'
 
-async function open(hash: string, vp = { width: 1366, height: 768 }): Promise<Page> {
+async function open(hash: string, vp = { width: 1366, height: 768 }, flags = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: vp })
-  await page.goto(`${inject('BASE_URL')}/?fixture=fx-fullscreen${hash}`)
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-fullscreen${flags}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   return page
 }
@@ -22,11 +23,11 @@ for (const vp of [
   { w: 1366, h: 768 },
   { w: 1024, h: 768 },
 ])
-  test(`full-screen fixture walks clean at ${vp.w}x${vp.h}, but for the one missing cover`, async () => {
+  test(`full-screen fixture walks clean at ${vp.w}x${vp.h}, but for the missing cover and background`, async () => {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-fullscreen`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual([MISSING]) // so r.ok is false by design
+    expect(r.problems).toEqual([MISSING, MISSING_BG]) // so r.ok is false by design
   }, 120_000)
 
 const scale = (page: Page) =>
@@ -51,12 +52,44 @@ test('Ken Burns pushes in while the step plays and lands where a seek lands', as
   await page.close()
 }, 30_000)
 
+test('reduced motion leaves the Ken Burns push out', async () => {
+  const page = await open('#/a/ken-burns/1', undefined, '&reducedmotion=1')
+  expect((await scale(page)).scale).toBe(1)
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index - 1, 'cut'))
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect((await scale(page)).scale).toBe(1)
+  await page.close()
+}, 30_000)
+
+test('a full-frame cover shows while the camera flies into its scene, not after', async () => {
+  const page = await open('#/a/cover/1')
+  const state = () =>
+    page.evaluate(() => {
+      const box = document.querySelector('[data-scene$="ken-burns"] img')!.parentElement!
+      return { opacity: Number(getComputedStyle(box).opacity), camera: getComputedStyle(box.closest('.k-world')!).transform }
+    })
+  const before = (await state()).camera
+  const move = page.evaluate(() => window.klappe.stepper.next())
+  await page.waitForTimeout(500)
+  const mid = await state()
+  expect(mid.opacity).toBeGreaterThan(0)
+  expect(mid.camera).not.toBe(before)
+  await move
+  const end = await state()
+  expect(end.camera).not.toBe(mid.camera) // the camera was still on its way at the mid check
+  await page.close()
+}, 30_000)
+
 // WCAG contrast of two relative luminances.
 const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 
-test('text over the scrim is at least 14 px at 1366 and keeps 4.5:1 against the brightest pixel behind it', async () => {
-  const page = await open('#/a/scrim/1')
-  const sel = '[data-scene$="scrim"] h2, [data-scene$="scrim"] p'
+// The pictures behind both have white dots under the text: the worst case for a flat scrim.
+for (const [hash, sel] of [
+  ['#/a/scrim/1', '[data-scene$="scrim"] h2, [data-scene$="scrim"] p'],
+  ['#/b/first/1', '[data-scene$="first"] h2, [data-scene$="first"] p[data-step="1"]'],
+])
+test(`text over the scrim at ${hash} is at least 14 px at 1366 and keeps 4.5:1 against the brightest pixel behind it`, async () => {
+  const page = await open(hash)
   const boxes = await page.$$eval(sel, (es) =>
     es.map((e) => {
       const r = e.getBoundingClientRect()
@@ -90,7 +123,7 @@ test('text over the scrim is at least 14 px at 1366 and keeps 4.5:1 against the 
     expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5)
   }
   await page.close()
-})
+}, 30_000)
 
 test('a missing cover fills the frame with IMAGE MISSING, its alt text and a prompt, and records a problem', async () => {
   const page = await open('#/a/missing/1')
@@ -137,5 +170,45 @@ test('a section background stays behind the text through the canvas transition a
     await window.klappe.stepper.next() // the camera flies to the second scene
   })
   expect(await check('second')).toMatchObject({ onTop: true, bgShown: true, covers: true, canvas: 1 })
+  await page.close()
+}, 30_000)
+
+// The background at a scene frame, by scene id suffix: the back layer holds one copy per scene, in scene order.
+const background = (page: Page, scene: string) =>
+  page.evaluate((scene) => {
+    const el = document.querySelector(`.k-scene[data-scene$="${scene}"]`)!
+    const world = el.closest<HTMLElement>('.k-world')!
+    const bg = world.firstElementChild!.children[[...world.querySelectorAll('.k-scene')].indexOf(el)] as HTMLElement
+    const img = bg.querySelector('img')
+    const s = document.querySelector('.k-stage')!.getBoundingClientRect()
+    const b = bg.getBoundingClientRect()
+    return {
+      src: img?.src ?? null,
+      shown: !!img && img.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+      scale: img ? new DOMMatrix(getComputedStyle(img).transform).a : null,
+      covers: b.left <= s.left + 1 && b.top <= s.top + 1 && b.right >= s.right - 1 && b.bottom >= s.bottom - 1,
+      text: bg.textContent,
+    }
+  }, scene)
+
+test('a cold deep link into section B shows the scene background pushed in, and it replaces the section one', async () => {
+  const page = await open('#/b/second/1')
+  const second = await background(page, 'second')
+  expect(second).toMatchObject({ shown: true, covers: true })
+  expect(second.scale).toBeCloseTo(1.08, 3)
+  // Data URLs hold no file name: the section's picture is the busy one with the dot layer, the scene's is not.
+  const dots = encodeURIComponent('fill="url(#d)"')
+  expect((await background(page, 'first')).src).toContain(dots)
+  expect(second.src).not.toContain(dots)
+  await page.close()
+}, 30_000)
+
+test('a missing background with alt text shows IMAGE MISSING and a prompt', async () => {
+  const page = await open('#/b/no-sky/1')
+  const r = await background(page, 'no-sky')
+  expect(r.covers).toBe(true)
+  expect(r.text).toContain('IMAGE MISSING')
+  expect(r.text).toContain('A harbour at night, 16:9, 1920x1080, no text, no logos')
+  expect(await page.evaluate(() => window.klappe.problems)).toContain(MISSING_BG)
   await page.close()
 }, 30_000)
