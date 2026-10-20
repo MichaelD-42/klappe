@@ -149,7 +149,7 @@ describe('design lint over the repo', () => {
     ...scan(klappeDir, 'src', ['.css', '.ts']),
     ...scan(process.cwd(), 'decks', ['.ts', '.md']),
     ...scan(process.cwd(), 'themes', ['.css']),
-    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/')),
+    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/') || f.file.endsWith('/deck.css')),
   ]
 
   test('finds the files to check', () => {
