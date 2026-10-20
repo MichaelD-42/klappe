@@ -92,7 +92,7 @@ Each element is one file in `src/fx/`, exported from `klappe/fx`, following the 
 ### Code walkthrough (`code`)
 
 - **Markdown:** a fenced block with a language in `scene.md`. The info string may carry highlight groups in the reveal.js and Slidev convention: ` ```ts {1-2|4-6|8} `. Each group is one step that highlights those lines and dims the others. The list items after the block are the steps' text, matched in order.
-- **scene.ts:** `code(ctx, { src, lang, x, y, w, steps: [[1,2],[4,6]], callouts? })`, plus `.diff(newSrc)`, a step that morphs old code into new: removed lines fade and collapse, added lines grow in, and unchanged lines slide to their new place.
+- **scene.ts:** `code(ctx, { src, lang, x, y, w })` returns `{ show, focus(lines), diff(newSrc), line(n) }`. `focus` is one step's highlight. `diff` morphs old code into new: removed lines fade and collapse, added lines grow in, and unchanged lines slide to their new place. `line(n)` is the target for a callout.
 - **Highlighting:** Shiki, with the JavaScript regex engine, a fine-grained bundle and the `css-variables` theme, so colours come from `--k-code-*`. Bundled languages: ts, js, python, bash, json, yaml, sql, html, css. Highlighting runs at build time in the browser on load, synchronously after Shiki's one-time async init, which the loader awaits.
 - Font: `--k-font-code`. The panel is `.k-code`, and the lint allows monospace under `.k-code` and `.k-term`, because code is not a label.
 
@@ -112,18 +112,18 @@ Each element is one file in `src/fx/`, exported from `klappe/fx`, following the 
 
 - **scene.ts only:** `sequence(ctx, { actors: [{ id, label }], messages: [{ from, to, text, reply? }], x, y, w, h })`.
 - Lifelines come in on the first step. Each message is one step: the arrow draws from sender to receiver and its label fades in. Replies are dashed. Actors take `--k-series-n` colours.
-- `steps` defaults to one per message, and `group: [[0,1],[2]]` can merge messages into one step.
+- The handle has `actors` (lifelines in) and `message(i)`. A step function that calls `message` twice merges two messages into one step.
 
 ### Swimlanes (`swimlanes`)
 
 - **scene.ts only:** `swimlanes(ctx, { lanes: [{ id, label }], tasks: [{ id, lane, col, label }], links: [{ from, to }] })`.
 - Lanes are horizontal bands with their label on the left. Tasks are boxes, and links are arrows, including links across lanes.
-- `walk(taskIds)` is a token that moves through the tasks, one task per step. The active lane brightens and the others dim.
+- `walk(taskId)` moves a token to that task, one call per step. The active lane brightens and the others dim.
 
 ### Decision tree (`decisionTree`)
 
 - **scene.ts only:** `decisionTree(ctx, { root: { label, children: [{ edge: "yes", node: {…} }] }, x, y, w, h })`, laid out with `d3.tree` from the installed d3.
-- The whole tree draws on as one step, or level by level with `{ build: "levels" }`. `path(["yes","no"])` lights one route, one edge per step, and dims the rest.
+- The whole tree draws on as one step, or level by level with `{ build: "levels" }`. `path(["yes","no"])` lights the route up to its last edge and dims the rest; a step that passes a longer route extends it by one edge.
 
 ### Checklist (`checklist`)
 
@@ -152,7 +152,7 @@ Each element is one file in `src/fx/`, exported from `klappe/fx`, following the 
 ### Callouts (`callout`)
 
 - **scene.ts:** `callout(ctx, { target: Element | {x,y}, text, side: "left"|"right"|"top"|"bottom", offset? })`. A leader line draws from the target point to a label box, then the text fades in.
-- It works on top of any element: code lines, diagram nodes, chart bars and line art. `code` and `flow` accept `callouts` in their options as a short form.
+- It works on top of any element: code lines (`code.line(n)`), diagram nodes (`flow.node(id)`), chart bars and line art.
 
 ### Tweens (resize, rotate, move with easing)
 
@@ -178,8 +178,8 @@ docs/reference/
   markdown.md       every Markdown trigger in one table, with a minimal example each
   effects.md        M2 effects: shatter, crt, drawOn/lineArt, icons, chart, worldMap, figure,
                     swarm, morph, bubble, counter, media, transitions, zoom
-  elements.md       M3 elements: code, terminal, flow, sequence, swimlanes, decisionTree,
-                    checklist, agenda, timer, callout
+  elements/<name>.md  one file per M3 element (code, terminal, flow, sequence, swimlanes,
+                    decisionTree, checklist, agenda, timer, callout), so parallel builders never share a file
   motion.md         the timeline rule (seek equals play), step functions, GSAP tweens and eases
 ```
 
@@ -192,7 +192,7 @@ Each entry follows one shape: what it is for (one sentence), the smallest workin
 
 ### Keeping it true
 
-- A lint test: every name exported from `src/fx/index.ts` appears as a heading in `effects.md` or `elements.md`.
+- A lint test: every name exported from `src/fx/index.ts` appears as a heading in a file under `docs/reference/`.
 - A lint test: every `--k-*` token used in `src/` appears in `themes.md`.
 - Code examples in the reference are copied from gallery scenes, which the self-test runs, rather than written separately.
 
