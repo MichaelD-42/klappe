@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { drawOn } from "./draw";
 import { iconGlyph } from "./icons";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
@@ -24,35 +25,98 @@ const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
 const MAX_FONT = 32;
 const MAX_LINES = 3;
 const LINE_H = 1.2;
-const GAP = 0.25; // seconds between packets
+const GAP = 0.45; // seconds between packets: longer than the dwell, so one box never holds two
+const DOT = 30;
+const INSET = 24; // a packet rests this far inside the box edge, clear of the label
+const ARROW = 20; // arrowhead length
 const WAIT = 0.3; // seconds a packet rests at a node
-let markers = 0;
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
+type Pt = { x: number; y: number };
+// Offsets along the faces: out on a's exit face, in on b's entry face (from the face middle), mid shifts the middle run.
+interface Ports { out?: number; in?: number; mid?: number }
+
 // The corner points of the orthogonal route from box a to box b: horizontal out, vertical, horizontal in;
-// a straight line when the centres share a row or a column. Points sit on the box edges (zero-size boxes: centres).
-function edgePoints(a: Rect, b: Rect): { x: number; y: number }[] {
+// a straight line when the exit and entry rows coincide. Boxes in one column connect vertically instead.
+// Points sit on the box edges (zero-size boxes: centres).
+function edgePoints(a: Rect, b: Rect, o: Ports = {}): Pt[] {
   const [ax, ay, bx, by] = [a.x + a.w / 2, a.y + a.h / 2, b.x + b.w / 2, b.y + b.h / 2];
-  if (ay === by) {
-    const s = bx >= ax ? 1 : -1;
-    return [{ x: ax + (s * a.w) / 2, y: ay }, { x: bx - (s * b.w) / 2, y: by }];
-  }
+  const [po, pi, pm] = [o.out ?? 0, o.in ?? 0, o.mid ?? 0];
   if (ax === bx) {
     const s = by >= ay ? 1 : -1;
-    return [{ x: ax, y: ay + (s * a.h) / 2 }, { x: bx, y: by - (s * b.h) / 2 }];
+    const [y0, y1, x0, x1] = [ay + (s * a.h) / 2, by - (s * b.h) / 2, ax + po, bx + pi];
+    if (x0 === x1) return [{ x: x0, y: y0 }, { x: x1, y: y1 }];
+    const my = (y0 + y1) / 2 + pm;
+    return [{ x: x0, y: y0 }, { x: x0, y: my }, { x: x1, y: my }, { x: x1, y: y1 }];
   }
   const s = bx > ax ? 1 : -1;
-  const mx = (ax + s * a.w / 2 + bx - s * b.w / 2) / 2;
-  return [{ x: ax + (s * a.w) / 2, y: ay }, { x: mx, y: ay }, { x: mx, y: by }, { x: bx - (s * b.w) / 2, y: by }];
+  const [x0, x1, y0, y1] = [ax + (s * a.w) / 2, bx - (s * b.w) / 2, ay + po, by + pi];
+  if (y0 === y1) return [{ x: x0, y: y0 }, { x: x1, y: y1 }];
+  const mx = (x0 + x1) / 2 + pm;
+  return [{ x: x0, y: y0 }, { x: mx, y: y0 }, { x: mx, y: y1 }, { x: x1, y: y1 }];
 }
 
-// The SVG path data of that route: "M x y L x y …".
-export function edgePath(a: Rect, b: Rect): string {
-  return edgePoints(a, b).map((p, i) => `${i ? "L" : "M"} ${r2(p.x)} ${r2(p.y)}`).join(" ");
+const fmt = (pts: Pt[]) => pts.map((p, i) => `${i ? "L" : "M"} ${r2(p.x)} ${r2(p.y)}`).join(" ");
+
+// The SVG path data of that route: "M x y L x y …". o: optional port offsets, see Ports.
+export function edgePath(a: Rect, b: Rect, o?: Ports): string {
+  return fmt(edgePoints(a, b, o));
 }
 
-const centre = (r: Rect): Rect => ({ x: r.x + r.w / 2, y: r.y + r.h / 2, w: 0, h: 0 });
+const SPREAD = 36; // widest gap between ports on one face
+const LANE = 28; // gap between parallel middle runs
+
+// Every edge's route with its own port on each face and its own middle run, so no two edges share a
+// segment or an end point. Faces with several edges spread them along the face, ordered by where the other end is.
+export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: Pt[] }[] {
+  const { grid } = opts;
+  const [cw, ch] = [grid.w / grid.cols, grid.h / grid.rows];
+  const boxes = new Map<string, Rect>();
+  for (const n of opts.nodes) {
+    const [w, h] = [cw * FILL, ch * FILL];
+    boxes.set(n.id, { x: grid.x + (n.col + 0.5) * cw - w / 2, y: grid.y + (n.row + 0.5) * ch - h / 2, w, h });
+  }
+  const box = (id: string) => {
+    const b = boxes.get(id);
+    if (!b) throw new Error(`flow: unknown node "${id}"`);
+    return b;
+  };
+  const mid = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
+  const ports = opts.edges.map(() => ({ out: 0, in: 0, mid: 0 }));
+  // face users: node id + face -> [edge index, role, position of the other end]
+  const faces = new Map<string, { i: number; role: "out" | "in"; at: number; extent: number }[]>();
+  opts.edges.forEach((e, i) => {
+    const [a, b] = [box(e.from), box(e.to)];
+    const vertical = mid(a).x === mid(b).x;
+    const [pa, pb] = [mid(a), mid(b)];
+    const dir = vertical ? (pb.y >= pa.y ? "d" : "u") : pb.x > pa.x ? "r" : "l";
+    const opp = { d: "u", u: "d", r: "l", l: "r" }[dir]!;
+    const add = (id: string, face: string, role: "out" | "in", at: number, extent: number) => {
+      const k = `${id}|${face}`;
+      faces.set(k, [...(faces.get(k) ?? []), { i, role, at, extent }]);
+    };
+    add(e.from, dir, "out", vertical ? pb.x : pb.y, vertical ? a.w : a.h);
+    add(e.to, opp, "in", vertical ? pa.x : pa.y, vertical ? b.w : b.h);
+  });
+  for (const users of faces.values()) {
+    users.sort((u, v) => u.at - v.at || u.i - v.i);
+    const step = Math.min(SPREAD, (users[0].extent * 0.6) / users.length);
+    users.forEach((u, k) => (ports[u.i][u.role] = (k - (users.length - 1) / 2) * step));
+  }
+  const route = () => opts.edges.map((e, i) => edgePoints(box(e.from), box(e.to), ports[i]));
+  // Bent routes in the same lane (same middle line) get side-by-side lanes.
+  const lanes = new Map<string, number[]>();
+  route().forEach((pts, i) => {
+    if (pts.length === 4) {
+      const k = pts[1].x === pts[2].x ? `v${pts[1].x}` : `h${pts[1].y}`;
+      lanes.set(k, [...(lanes.get(k) ?? []), i]);
+    }
+  });
+  for (const ids of lanes.values()) ids.forEach((i, k) => (ports[i].mid = (k - (ids.length - 1) / 2) * LANE));
+  return route().map((points, i) => ({ from: opts.edges[i].from, to: opts.edges[i].to, points }));
+}
+
 
 // Boxes on a grid joined by orthogonal arrows. Packets sent along a path are timeline tweens, so they seek.
 export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
@@ -69,11 +133,6 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
 
   const known = new Set(opts.nodes.map((n) => n.id));
   for (const e of opts.edges) for (const id of [e.from, e.to]) if (!known.has(id)) throw new Error(`flow: unknown node "${id}"`);
-
-  const markerId = `k-flow-arrow-${++markers}`;
-  const defs = document.createElementNS(SVG, "defs");
-  defs.innerHTML = `<marker id="${markerId}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto" markerUnits="strokeWidth"><path d="M0 0L10 5L0 10z" style="fill:var(--k-line)"/></marker>`;
-  ctx.svg.append(defs);
 
   for (const n of opts.nodes) {
     const [w, h] = [cw * FILL, ch * FILL];
@@ -107,20 +166,28 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     labels.set(n.id, text);
   }
 
-  const edges = opts.edges.map((e) => {
-    const [a, b] = [boxes.get(need(e.from))!, boxes.get(need(e.to))!];
+  const routes = flowRoutes(opts);
+  const edges = routes.map((r, k) => {
+    const pts = r.points;
+    const [p, q] = [pts[pts.length - 2], pts[pts.length - 1]];
+    const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+    const d = { x: (q.x - p.x) / len, y: (q.y - p.y) / len };
+    const base = { x: q.x - d.x * ARROW, y: q.y - d.y * ARROW };
+    // The line stops at the arrowhead's base; the head is its own triangle that appears when the line arrives.
     const path = document.createElementNS(SVG, "path");
-    path.setAttribute("d", edgePath(a, b));
-    path.setAttribute("marker-end", `url(#${markerId})`);
+    path.setAttribute("d", fmt([...pts.slice(0, -1), base]));
     Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
-    ctx.svg.append(path);
-    gsap.set(path, { autoAlpha: 0 });
+    const head = document.createElementNS(SVG, "path");
+    head.setAttribute("d", fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z");
+    Object.assign(head.style, { fill: "var(--k-line)" });
+    ctx.svg.append(path, head);
+    gsap.set([path, head], { autoAlpha: 0 });
     let tag: HTMLElement | undefined;
-    if (e.label) {
-      const pts = edgePoints(a, b);
+    const label = opts.edges[k].label;
+    if (label) {
       const i = Math.floor((pts.length - 1) / 2);
       tag = document.createElement("div");
-      tag.textContent = e.label;
+      tag.textContent = label;
       Object.assign(tag.style, {
         position: "absolute", left: `${(pts[i].x + pts[i + 1].x) / 2}px`, top: `${(pts[i].y + pts[i + 1].y) / 2}px`,
         translate: "-50% -50%", padding: "2px 10px", borderRadius: "8px", background: "var(--k-bg)", color: "var(--k-fg)",
@@ -129,7 +196,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       ctx.html.append(tag);
       gsap.set(tag, { autoAlpha: 0 });
     }
-    return { from: e.from, to: e.to, path, tag, shown: false };
+    return { from: r.from, to: r.to, pts, path, head, tag, shown: false };
   });
 
   // Labels are fitted on first use: the layout exists by then (like callout's measuring), not while building.
@@ -164,7 +231,14 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
         fit();
         const at = tl.duration();
         tl.to(want.map((id) => els.get(id)!), { autoAlpha: 1, duration: 0.4 }, at);
-        tl.to(ready.flatMap((e) => [e.path, ...(e.tag ? [e.tag] : [])]), { autoAlpha: 1, duration: 0.4 }, at + 0.2);
+        // Each arrow draws on after the boxes; its head and label arrive when the line does.
+        const [draw, each, start] = [0.5, 0.15, at + 0.3];
+        ready.forEach((e, i) => {
+          const t = start + i * each;
+          tl.set(e.path, { autoAlpha: 1 }, t);
+          drawOn(e.path, { duration: draw, each: 0, at: t })(tl);
+          tl.to([e.head, ...(e.tag ? [e.tag] : [])], { autoAlpha: 1, duration: 0.15 }, t + draw - 0.1);
+        });
         if (!want.length && !ready.length) tl.set({}, {}, at + 0.4);
       };
     },
@@ -184,46 +258,62 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     },
     send({ path, count = 1, label }) {
       path.forEach(need);
-      const legs = path.slice(1).map((id, i) => edgePath(centre(boxes.get(path[i])!), centre(boxes.get(id)!)));
+      if (path.length < 2) ctx.problem("flow: send needs a path of at least 2 nodes");
+      // Each hop follows its edge's route; a hop without an edge in that direction is reported and goes box to box.
+      const legs = path.slice(1).map((to, i) => {
+        const from = path[i];
+        const e = edges.find((x) => x.from === from && x.to === to);
+        if (e) return e.pts;
+        const back = edges.some((x) => x.from === to && x.to === from);
+        ctx.problem(back ? `flow: edge between "${from}" and "${to}" runs from "${to}" to "${from}"` : `flow: no edge from "${from}" to "${to}"`);
+        return edgePoints(boxes.get(from)!, boxes.get(to)!);
+      }).map((pts) => {
+        // From just inside the box the edge leaves to just inside the box it enters, clear of the labels.
+        const [p0, p1, q0, q1] = [pts[0], pts[1], pts[pts.length - 2], pts[pts.length - 1]];
+        const u = (a: Pt, b: Pt) => { const l = Math.hypot(b.x - a.x, b.y - a.y) || 1; return { x: (b.x - a.x) / l, y: (b.y - a.y) / l }; };
+        const [d0, d1] = [u(p0, p1), u(q0, q1)];
+        return [{ x: p0.x - d0.x * INSET, y: p0.y - d0.y * INSET }, ...pts, { x: q1.x + d1.x * INSET, y: q1.y + d1.y * INSET }];
+      });
       return (tl) => {
         fit();
         const at = tl.duration();
         const hop = motion.step;
-        const from = boxes.get(path[0])!;
         const pulse = (id: string, t: number) => {
           const ring = rings.get(id)!;
           const base = lit.has(id) ? 1 : 0;
           tl.fromTo(ring, { autoAlpha: 1 }, { autoAlpha: base, duration: 0.5, immediateRender: false }, t);
           tl.fromTo(els.get(id)!, { scale: 1 }, { scale: 1.06, duration: 0.15, repeat: 1, yoyo: true, ease: "power1.inOut", immediateRender: false }, t);
         };
-        for (let k = 0; k < count; k++) {
+        if (!legs.length) tl.set({}, {}, at + 0.1);
+        for (let k = 0; legs.length && k < count; k++) {
           const dot = document.createElement("div");
           dot.setAttribute("data-k-packet", "");
           Object.assign(dot.style, {
             position: "absolute", left: "0", top: "0", width: "0", height: "0", zIndex: "4", pointerEvents: "none",
           });
-          dot.innerHTML = `<div style="position:absolute;left:-12px;top:-12px;width:24px;height:24px;border-radius:50%;background:var(--k-accent);border:3px solid var(--k-bg);box-sizing:border-box"></div>`;
-          if (label) {
+          const r = DOT / 2;
+          dot.innerHTML = `<div style="position:absolute;left:-${r}px;top:-${r}px;width:${DOT}px;height:${DOT}px;border-radius:50%;background:var(--k-accent);border:3px solid var(--k-bg);box-sizing:border-box"></div>`;
+          if (label && k === 0) {
             const t = dot.appendChild(document.createElement("div"));
             t.textContent = label;
             Object.assign(t.style, {
-              position: "absolute", left: "0", top: "-52px", translate: "-50% 0", whiteSpace: "nowrap", color: "var(--k-fg)", background: "var(--k-bg)",
+              position: "absolute", left: "0", top: `${-r - 40}px`, translate: "-50% 0", whiteSpace: "nowrap", color: "var(--k-fg)", background: "var(--k-bg)",
               padding: "0 8px", borderRadius: "6px", font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`,
             });
           }
           ctx.html.append(dot);
           // At the first leg's start, where a rewound motionPath tween leaves it: play and seek then agree.
-          gsap.set(dot, { autoAlpha: 0, x: from.x + from.w / 2, y: from.y + from.h / 2 });
+          gsap.set(dot, { autoAlpha: 0, x: legs[0][0].x, y: legs[0][0].y });
           let t = at + k * GAP;
-          tl.set(dot, { autoAlpha: 1 }, t);
           pulse(path[0], t);
-          legs.forEach((d, i) => {
-            tl.to(dot, { motionPath: { path: d }, duration: hop, ease: "none" }, t);
+          legs.forEach((pts, i) => {
+            tl.set(dot, { autoAlpha: 1 }, t);
+            tl.to(dot, { motionPath: { path: fmt(pts) }, duration: hop, ease: "none" }, t);
             t += hop;
             pulse(path[i + 1], t);
             t += WAIT;
+            tl.set(dot, { autoAlpha: 0 }, t); // the packet passes through the box unseen and leaves by the next edge
           });
-          tl.set(dot, { autoAlpha: 0 }, t);
         }
       };
     },
