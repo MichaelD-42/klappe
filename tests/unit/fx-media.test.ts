@@ -95,6 +95,7 @@ test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 promp
       '  background: { scrim: 0.6, href: "media/bare.png" },',
       '  build: (ctx) => ({ i: image(ctx, { alt: "A dawn sky", href: "media/hero.png", fit: "cover" }),',
       '    v: video(ctx, { href: "media/clip.mp4", title: "A clip", rect }), h: image(ctx, { href: "media/here.png", alt: "x" }) }),',
+      '  more: image(ctx, { href: "media/desk.png", alt: "A desk", rect: { x: 0, y: 0, w: 1, h: 1 } }),',
       '};',
     ].join('\n'),
   );
@@ -103,6 +104,7 @@ test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 promp
     '- [ ] media/bare.png — needed by sections/10-a/10-one/scene.ts',
     '- [ ] media/hero.png — prompt: A dawn sky for a presentation scene about The engine, 16:9, 1920x1080, no text, no logos',
     '- [ ] media/clip.mp4 — needed by sections/10-a/10-one/scene.ts',
+    '- [ ] media/desk.png — prompt: A desk for a presentation scene about The engine, 16:9, 1920x1080, no text, no logos',
     '- [ ] media/sky.png — prompt: A sky, at dusk for a presentation scene about The plant, 16:9, 1920x1080, no text, no logos',
     '',
   ]);
