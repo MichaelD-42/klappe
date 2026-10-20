@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/klappe-icon.png" width="160" alt="klappe icon: a film clapperboard"></p>
+
 # klappe
 
 klappe is a framework for presentations. It uses Vite, TypeScript and GSAP.
