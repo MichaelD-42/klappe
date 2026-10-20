@@ -4,4 +4,4 @@
 
 - A YouTube or Vimeo link in scene.md — a video player in place; this one needs a network connection
 - [A sample YouTube video](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-- This section enters with section.ts { transition: "blackout" }
+- This section enters with a blackout transition (section.ts)
