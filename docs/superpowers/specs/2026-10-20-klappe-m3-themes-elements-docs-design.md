@@ -75,7 +75,7 @@ A theme may set any subset. Missing tokens fall back to the built-in `calm` valu
 
 An unknown name records a deck problem and falls back to `calm`. `DeckMeta.theme` becomes `string`. `intensity` keeps its own setting. Its default stays `bold` when the theme is `bold` and is `calm` otherwise.
 
-Loading: Vite globs the three folders with `?inline`, and the runtime injects the matching CSS as a `<style>` element after `styles.css`. A new `@themes` alias points at `<deck repo>/themes`.
+Loading: Vite globs the three folders with `?raw`, and the runtime injects the matching CSS as a `<style>` element after `styles.css`. A new `@themes` alias points at `<deck repo>/themes`.
 
 ### Checks
 
