@@ -4,6 +4,7 @@ export * from "./callout";
 export * from "./chart";
 export * from "./checklist";
 export * from "./code";
+export { countdown, type CountdownHandle, type CountdownOpts } from "./countdown"; // not remaining: math for its unit test
 export * from "./crt";
 export * from "./draw";
 export * from "./figure";

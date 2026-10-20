@@ -165,3 +165,9 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Reduced motion does not stop it: the advance is flow, not decoration.
 - **Autoplay owns the advance while it runs. It holds a step for its `auto` time when the step has one, else for `autoHoldMs`, and clears the stepper's timer each round.**
   - Why: two timers would advance twice.
+
+## 2026-10-20 (countdown)
+
+- **`countdown` runs on `gsap.ticker` like `mesh3d`: root `data-k-ignore`, no update while hidden, `destroy()`. A `minutes` count starts on the first visible frame.**
+  - Why: the time left depends on the wall clock, not on the timeline, so play and seek cannot agree on it. There is no step-enter hook, so the first visible frame stands in for "the step showed it". A hidden countdown does not start.
+  - `remaining(nowMs, target)` is a pure function for the unit test. It rounds a part second up, so `0:00` shows only when the time is over, then holds there.
