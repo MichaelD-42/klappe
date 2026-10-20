@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "dev": "node bin/klappe.mjs dev",
-    "build": "node bin/klappe.mjs build",
+    "dev": "node bin/klappe.mjs dev --deck demo",
+    "build": "node bin/klappe.mjs build --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e"
   },
