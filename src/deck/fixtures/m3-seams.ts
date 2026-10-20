@@ -1,7 +1,7 @@
 import { assembleDeck } from "../assemble";
 
 // The four Markdown parts of M3 in plain scene.md files. While an element is a stub, its scene shows
-// EFFECT MISSING and a problem; the cobol fence also reports that its language is not bundled.
+// EFFECT MISSING and a problem; the cobol fence shows plain and reports that its language is not bundled.
 const f = "```";
 export default () =>
   assembleDeck(
