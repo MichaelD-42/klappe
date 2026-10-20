@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { createCssVariablesTheme, createHighlighterCore, type HighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 
@@ -94,7 +95,10 @@ const CHAR_W = 0.6; // monospace advance in em, a little wide for safety
 const PAD_X = 36;
 const PAD_Y = 24;
 const BAR = 8; // the focus bar's width
-const DIM = 0.35;
+// A dimmed line: its tokens blend fully to --k-muted (at least 4.5:1 on --k-surface by the theme rules)
+// at 0.7 opacity, which keeps it above 3:1 on a projector.
+const DIM = 0.7;
+const LANG = "en"; // shortcut: the deck language is not on ctx; pass meta.lang once ctx has it.
 
 // Monospace is allowed under .k-code: code is not a label.
 const CSS = `
@@ -103,6 +107,8 @@ const CSS = `
 .k-code > div { position: absolute; left: 0; right: 0; top: ${PAD_Y}px; }
 .k-code [data-line] { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; white-space: pre; padding-left: ${PAD_X}px; }
 .k-code .k-code-bar { position: absolute; left: 0; top: 0; bottom: 0; width: ${BAR}px; background: var(--k-accent); }
+.k-code [data-line] span { color: color-mix(in srgb, var(--tok, var(--k-code-foreground)) calc(100% - var(--dim) * 100%), var(--k-muted)); }
+.k-code .k-code-more { position: absolute; left: 0; right: 0; top: 0; padding-left: ${PAD_X}px; color: var(--k-muted); font-family: var(--k-font); }
 `;
 
 function addStyle() {
@@ -124,7 +130,15 @@ function runs(ns: number[]): string {
   return rs.map(([a, b]) => (a === b ? `${a}` : `${a}-${b}`)).join(", ");
 }
 
-const splitLines = (src: string) => src.replace(/\n$/, "").split("\n");
+// One trailing newline is dropped before both paths, so Shiki and plain text count the same lines.
+const trim = (src: string) => src.replace(/\n$/, "");
+const splitLines = (src: string) => trim(src).split("\n");
+
+// The code's lines as tokens: Shiki's for a bundled language once loadHighlighter ran, else one plain token per line.
+export const codeLines = (src: string, lang: string): { content: string; color?: string }[][] =>
+  hl && LANGS.includes(lang)
+    ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe" })
+    : splitLines(src).map((content) => [{ content }]);
 
 export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   addStyle();
@@ -146,10 +160,16 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   const pre = ctx.html.appendChild(Object.assign(document.createElement("pre"), { className: "k-code" }));
   Object.assign(pre.style, { left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, fontSize: `${size}px`, lineHeight: `${lh}px` });
   const body = pre.appendChild(document.createElement("div"));
-  const highlight = (src: string) =>
-    hl && LANGS.includes(opts.lang)
-      ? hl.codeToTokensBase(src, { lang: opts.lang, theme: "klappe" })
-      : splitLines(src).map((content) => [{ content, color: undefined }]);
+  const highlight = (src: string) => codeLines(src, opts.lang);
+  // Clipped code gives its last row to a muted "+N more lines" marker; vis is how many lines show.
+  const vis = (n: number) => (n > rows ? rows - 1 : n);
+  const more = (n: number) => {
+    if (n <= rows) return null;
+    const e = body.appendChild(Object.assign(document.createElement("div"), { className: "k-code-more" }));
+    e.textContent = `+${n - vis(n)} ${t("moreLines", LANG)}`;
+    gsap.set(e, { y: (rows - 1) * lh, autoAlpha: 1 });
+    return e;
+  };
 
   const bars = new Map<HTMLElement, HTMLElement>();
   // One line at index i, n its data-line number: a bar and one span per token. Lines past the last row hide.
@@ -160,14 +180,15 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
     for (const t of tokens) {
       const s = e.appendChild(document.createElement("span"));
       s.textContent = t.content;
-      if (t.color) s.style.color = t.color;
+      if (t.color) s.style.setProperty("--tok", t.color);
     }
     bars.set(e, bar);
-    gsap.set(e, { y: i * lh, height: lh, opacity: 1, visibility: i < rows ? "inherit" : "hidden" });
+    gsap.set(e, { y: i * lh, height: lh, opacity: 1, "--dim": 0, visibility: i < vis(texts.length) ? "inherit" : "hidden" });
     gsap.set(bar, { opacity: 0 });
     return e;
   };
   let lines = highlight(opts.src).map((tokens, i) => makeLine(tokens, i, i + 1));
+  let marker = more(lines.length);
   gsap.set(pre, { height: panelH(lines.length), autoAlpha: 0 });
 
   // All tweens of one step start together at the step's end so far.
@@ -176,8 +197,8 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   };
   const focusAll = (tl: gsap.core.Timeline, on: HTMLElement[], at: number) => {
     const off = lines.filter((e) => !on.includes(e));
-    fade(tl, at, on, { opacity: 1 });
-    fade(tl, at, off, { opacity: on.length ? DIM : 1 });
+    fade(tl, at, on, { opacity: 1, "--dim": 0 });
+    fade(tl, at, off, on.length ? { opacity: DIM, "--dim": 1 } : { opacity: 1, "--dim": 0 });
     fade(tl, at, on.map((e) => bars.get(e)!), { opacity: 1 });
     fade(tl, at, off.map((e) => bars.get(e)!), { opacity: 0 });
   };
@@ -198,26 +219,33 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
       fits(next.length);
       const tokens = highlight(src);
       const ops = lineDiff(texts, next);
+      const oldMarker = marker;
+      texts = next;
       const added = new Map(ops.flatMap((o) => (o.op === "add" ? [[o.to, makeLine(tokens[o.to], o.to, o.to + 1)] as const] : [])));
       for (const e of added.values()) gsap.set(e, { height: 0, opacity: 0 });
+      marker = more(next.length);
+      const newMarker = marker;
+      if (newMarker) gsap.set(newMarker, { autoAlpha: 0 });
       const before = lines;
       lines = next.map((_, j) => added.get(j)!);
       for (const o of ops) if (o.op === "keep") lines[o.to] = before[o.from];
-      texts = next;
       return (tl) => {
         const at = tl.duration();
-        const shown = (j: number) => (j < rows ? "inherit" : "hidden");
+        const shown = (j: number) => (j < vis(next.length) ? "inherit" : "hidden");
         for (const o of ops) {
-          if (o.op === "del") fade(tl, at, [before[o.from]], { height: 0, opacity: 0 });
+          // autoAlpha: a collapsed line ends hidden and leaves no trace.
+          if (o.op === "del") fade(tl, at, [before[o.from]], { height: 0, autoAlpha: 0 });
           else if (o.op === "keep") {
             tl.set(before[o.from], { visibility: shown(o.to) }, at);
-            fade(tl, at, [before[o.from]], { y: o.to * lh, opacity: 1 });
+            fade(tl, at, [before[o.from]], { y: o.to * lh, opacity: 1, "--dim": 0 });
           } else {
             tl.set(added.get(o.to)!, { visibility: shown(o.to) }, at);
             tl.fromTo(added.get(o.to)!, { height: 0, opacity: 0 }, { height: lh, opacity: 1, duration: motion.step, immediateRender: false }, at);
           }
         }
         fade(tl, at, [pre], { height: panelH(next.length) });
+        if (oldMarker) fade(tl, at, [oldMarker], { autoAlpha: 0 });
+        if (newMarker) fade(tl, at, [newMarker], { autoAlpha: 1 });
         // The new code shows unfocused: no bars.
         fade(tl, at, [...bars.values()], { opacity: 0 });
       };

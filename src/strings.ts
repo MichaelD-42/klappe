@@ -29,6 +29,7 @@ export const strings = {
     decrease: "Decrease",
     timesUp: "Time's up",
     pressT: "Press T to start",
+    moreLines: "more lines", // "+12 more lines" under clipped code
   },
 };
 

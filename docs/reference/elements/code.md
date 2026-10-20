@@ -61,7 +61,7 @@ export default captioned("code() — show, focus(lines) and diff(newSrc) on one 
 | Handle | Step |
 | --- | --- |
 | `show` | the panel fades in, all lines unfocused |
-| `focus(lines)` | the 1-based `lines` go to full opacity with an accent bar on the left; the others dim to 0.35. `focus([])` unfocuses everything |
+| `focus(lines)` | the 1-based `lines` go to full opacity with an accent bar on the left; the others dim: their colours blend to `--k-muted` at 0.7 opacity, which keeps them at least 3:1 on the panel. `focus([])` unfocuses everything |
 | `diff(newSrc)` | morphs to `newSrc` by a line diff: removed lines fade and collapse, added lines grow in, kept lines slide to their new place. The result shows unfocused; later `focus` calls number the new lines |
 | `line(n)` | not a step: the element of line `n` (1-based, current version), as a callout target |
 
@@ -69,7 +69,7 @@ Colours come from the theme: the panel is `--k-surface`, text `--k-code-foregrou
 
 ### Limits
 
-- The font starts at 30 px and shrinks to fit the lines into `h` and the longest line into `w`, down to 20 px (14 px at 1366×768). Past that the panel clips and the deck shows a problem: `code: N lines do not fit; max M`, or `code: lines longer than C characters are clipped`.
+- The font starts at 30 px and shrinks to fit the lines into `h` and the longest line into `w`, down to 20 px (14 px at 1366×768). Past that the panel clips, its last row reads "+N more lines" in `--k-muted`, and the deck shows a problem: `code: N lines do not fit; max M`, or `code: lines longer than C characters are clipped`.
 - A focus line outside the code reports `code: line 0 out of range (1-20)`; a reversed range such as `{4-2}` reports `code: lines 4, 3, 2 out of order; write ranges low to high` and still focuses lines 2 to 4.
 - One code or console block per scene in Markdown. In `scene.ts`, any number of panels.
 
@@ -84,6 +84,10 @@ Shiki's one-time async init (JavaScript regex engine, the bundled languages, a `
 ## `parseGroups`
 
 `parseGroups("1-2|4")` gives `[[1, 2], [4]]`: the highlight groups of a fence info string, one per step. Ranges expand only up to `MAX_LINES`; an end beyond it and a line 0 stay in the group, and a reversed range lists high to low, so `code()` can report them.
+
+## `codeLines`
+
+`codeLines(src, lang)` gives the code's lines as tokens (`{ content, color? }`): Shiki's for a bundled language once `loadHighlighter` ran, else one plain token per line. One trailing newline is dropped first, so both paths count the same lines.
 
 ## `MAX_LINES`
 

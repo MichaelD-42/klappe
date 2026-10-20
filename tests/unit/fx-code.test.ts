@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { lineDiff, MAX_LINES, parseGroups } from '../../src/fx/code'
+import { codeLines, lineDiff, loadHighlighter, MAX_LINES, parseGroups } from '../../src/fx/code'
 
 describe('lineDiff', () => {
   test('an LCS over lines: keep, delete, keep, add', () => {
@@ -50,5 +50,16 @@ describe('parseGroups bounds', () => {
 
   test('a reversed huge range is clamped too', () => {
     expect(parseGroups('99999999-998')).toEqual([[99999999, 999, 998]])
+  })
+})
+
+describe('codeLines', () => {
+  // Plain first (the highlighter is not loaded yet), then Shiki: one trailing newline never adds a line.
+  test('a trailing newline gives the same line count on the plain and the highlighted path', async () => {
+    const counts = () => [codeLines('a;\nb;', 'ts').length, codeLines('a;\nb;\n', 'ts').length]
+    expect(counts()).toEqual([2, 2])
+    await loadHighlighter()
+    expect(codeLines('a;', 'ts')[0][0].color).toMatch(/^var\(--k-code-/)
+    expect(counts()).toEqual([2, 2])
   })
 })
