@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MOODS, project, rng, rotate } from "../../src/fx/mesh3d";
+import { MOODS, project, rng, rotate, shade } from "../../src/fx/mesh3d";
 
 describe("project", () => {
   it("divides by depth: x' = x·f/(f+z)", () => {
@@ -45,5 +45,15 @@ describe("MOODS", () => {
       insight: { color: "#AB9759", turn: 20 },
       celebrating: { color: "#69DB7C", turn: 8 },
     });
+  });
+});
+
+describe("shade", () => {
+  it("fades a dot with depth from full opacity (near) to minAlpha (far)", () => {
+    expect(shade(1, 1)).toBe(1);
+    expect(shade(1, 0)).toBeCloseTo(0.35);
+    expect(shade(1, 0, 0.8)).toBeCloseTo(0.8);
+    expect(shade(0.5, 0, 0.8)).toBeCloseTo(0.4);
+    expect(shade(1, 0.5, 1)).toBe(1);
   });
 });

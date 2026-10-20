@@ -20,6 +20,8 @@ export interface Mesh3dOpts {
   density?: number; // dots, default 60
   seed?: number; // default 1
   start?: "mesh" | "dot"; // "dot": one pulsing dot, visible from load; show() grows the mesh out of it
+  dot?: number; // dot size factor, default 1; larger dots read better on white
+  minAlpha?: number; // opacity of the farthest dot, 0..1, default 0.35; near dots stay at full opacity
 }
 type At = number | string;
 export interface Mesh3dHandle {
@@ -70,6 +72,8 @@ function life(t: number, period: number, phase: number): number {
 }
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
+// A dot's opacity: its life alpha, faded with depth from 1 (near) down to minAlpha (far).
+export const shade = (al: number, depth: number, minAlpha = 0.35) => al * (minAlpha + (1 - minAlpha) * depth);
 
 export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
   const { x, y, size } = opts;
@@ -119,7 +123,8 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
 
   const R = size * 0.45; // a dot on the unit sphere projects at most 1.06 R from the centre (F = 3 R), inside size / 2
   const F = 3 * R;
-  const dotR = size / 70;
+  const dotR = (size / 70) * (opts.dot ?? 1);
+  const minAlpha = clamp(opts.minAlpha ?? 0.35);
   let t = 0;
   let a = 0.6; // a tilted start pose, also the frozen pose under reduced motion
   let b = 0.4;
@@ -151,7 +156,7 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
         py *= 1 - c;
         al = dotStart ? 1 : st.form;
       } else al = st.form * life(t, p.period, p.phase) * (1 - clamp((c - p.fade) / 0.2));
-      return { x: px, y: py, s: q.s, depth, al: al * (0.35 + 0.65 * depth) };
+      return { x: px, y: py, s: q.s, depth, al: shade(al, depth, minAlpha) };
     });
     c2d.lineWidth = size / 400;
     for (const l of links) {

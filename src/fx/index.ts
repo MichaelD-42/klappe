@@ -13,7 +13,7 @@ export * from "./icons";
 export * from "./map";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
 export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
-// Not rng, rotate or project: math for its unit test.
+// Not rng, rotate, project or shade: math for its unit test.
 export { MOODS, mesh3d, type Mesh3dHandle, type Mesh3dOpts, type Mood } from "./mesh3d";
 export * from "./motion";
 export * from "./sequence";
