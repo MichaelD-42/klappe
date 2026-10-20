@@ -31,6 +31,7 @@ body {
 
 .k-worlds,
 .k-ui,
+.k-canvas,
 .k-world,
 .k-layer {
   position: absolute;
@@ -48,6 +49,7 @@ body {
   pointer-events: none;
 }
 
+.k-canvas,
 .k-world {
   transform-origin: 0 0;
 }

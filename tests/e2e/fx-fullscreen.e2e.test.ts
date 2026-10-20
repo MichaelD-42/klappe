@@ -149,67 +149,88 @@ test('a missing cover fills the frame with IMAGE MISSING, its alt text and a pro
   await page.close()
 })
 
+// A pinned background by id (scene id for a scene's own, section id for the section's), or every shown one.
+const backgrounds = (page: Page, id?: string) =>
+  page.evaluate((id) => {
+    const s = document.querySelector('.k-stage')!.getBoundingClientRect()
+    return [...document.querySelectorAll<HTMLElement>('[data-k-background]')]
+      .filter((bg) => (id ? bg.dataset.kBackground === id : bg.checkVisibility({ opacityProperty: true, visibilityProperty: true })))
+      .map((bg) => {
+        const img = bg.querySelector('img')
+        const b = bg.getBoundingClientRect()
+        return {
+          id: bg.dataset.kBackground,
+          src: img?.src ?? null,
+          shown: bg.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
+          opacity: Number(getComputedStyle(bg).opacity),
+          transform: img ? getComputedStyle(img).transform : null,
+          scale: img ? new DOMMatrix(getComputedStyle(img).transform).a : null,
+          covers: b.left <= s.left + 1 && b.top <= s.top + 1 && b.right >= s.right - 1 && b.bottom >= s.bottom - 1,
+          inWorld: !!bg.closest('.k-world'),
+          text: bg.textContent,
+        }
+      })
+  }, id)
+const background = async (page: Page, id: string) => (await backgrounds(page, id))[0]
+const camera = (page: Page) => page.evaluate(() => getComputedStyle(document.querySelectorAll('.k-world')[1]).transform)
+
 test('a section background stays behind the text through the canvas transition and the camera move', async () => {
   const page = await open('#/a/missing/1')
-  // The text on top at its centre, and the background under it visible and covering the stage.
-  const check = (scene: string) =>
+  // The text on top at its centre.
+  const onTop = (scene: string) =>
     page.evaluate((scene) => {
       const h2 = document.querySelector<HTMLElement>(`[data-scene$="${scene}"] h2`)!
-      const world = h2.closest<HTMLElement>('.k-world')!
-      const scenes = [...world.querySelectorAll('.k-scene')]
-      const bg = world.firstElementChild!.children[scenes.indexOf(h2.closest('.k-scene')!)] as HTMLElement
       const r = h2.getBoundingClientRect()
-      const s = document.querySelector('.k-stage')!.getBoundingClientRect()
-      const b = bg.getBoundingClientRect()
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-      return {
-        onTop: !!top && h2.contains(top),
-        bgShown: bg.querySelector('img')!.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
-        covers: b.left <= s.left + 1 && b.top <= s.top + 1 && b.right >= s.right - 1 && b.bottom >= s.bottom - 1,
-        canvas: Number(world.style.opacity),
-      }
+      return !!top && h2.contains(top)
     }, scene)
   const move = page.evaluate(() => window.klappe.stepper.next()) // fade into section B's canvas
   await page.waitForTimeout(250)
-  const mid = await check('first')
-  expect(mid.canvas).toBeGreaterThan(0)
-  expect(mid.bgShown).toBe(true)
+  const canvas = await page.evaluate(() => Number(getComputedStyle(document.querySelectorAll('.k-canvas')[1]).opacity))
+  expect(canvas).toBeGreaterThan(0)
+  expect(canvas).toBeLessThan(1)
+  expect(await background(page, 'b')).toMatchObject({ shown: true, opacity: 1 }) // it fades with its canvas
   await move
-  expect(await check('first')).toMatchObject({ onTop: true, bgShown: true, covers: true, canvas: 1 })
+  expect(await onTop('first')).toBe(true)
+  expect(await background(page, 'b')).toMatchObject({ shown: true, covers: true, inWorld: false })
   await page.evaluate(async () => {
     await window.klappe.stepper.next()
-    await window.klappe.stepper.next() // the camera flies to the second scene
+    await window.klappe.stepper.next() // the camera flies to the next scene, over the same picture
   })
-  expect(await check('second')).toMatchObject({ onTop: true, bgShown: true, covers: true, canvas: 1 })
+  expect(await onTop('still')).toBe(true)
+  expect(await background(page, 'b')).toMatchObject({ shown: true, covers: true })
   await page.close()
 }, 30_000)
 
-// The background at a scene frame, by scene id suffix: the back layer holds one copy per scene, in scene order.
-const background = (page: Page, scene: string) =>
-  page.evaluate((scene) => {
-    const el = document.querySelector(`.k-scene[data-scene$="${scene}"]`)!
-    const world = el.closest<HTMLElement>('.k-world')!
-    const bg = world.firstElementChild!.children[[...world.querySelectorAll('.k-scene')].indexOf(el)] as HTMLElement
-    const img = bg.querySelector('img')
-    const s = document.querySelector('.k-stage')!.getBoundingClientRect()
-    const b = bg.getBoundingClientRect()
-    return {
-      src: img?.src ?? null,
-      shown: !!img && img.checkVisibility({ opacityProperty: true, visibilityProperty: true }),
-      scale: img ? new DOMMatrix(getComputedStyle(img).transform).a : null,
-      covers: b.left <= s.left + 1 && b.top <= s.top + 1 && b.right >= s.right - 1 && b.bottom >= s.bottom - 1,
-      text: bg.textContent,
-    }
-  }, scene)
+test('mid-flight between two scenes with one background, one still picture covers the stage: no seam', async () => {
+  const page = await open('#/b/first/2')
+  const before = await backgrounds(page)
+  expect(before).toHaveLength(1)
+  const cam = await camera(page)
+  const move = page.evaluate(() => window.klappe.stepper.next())
+  for (const wait of [300, 500]) {
+    await page.waitForTimeout(wait)
+    const mid = await backgrounds(page)
+    expect(mid).toHaveLength(1)
+    expect(mid[0]).toMatchObject({ id: 'b', covers: true, opacity: 1, transform: before[0].transform })
+    expect(await camera(page)).not.toBe(cam) // the camera is on its way
+  }
+  await move
+  expect(await camera(page)).not.toBe(cam)
+  await page.close()
+}, 30_000)
 
 test('a cold deep link into section B shows the scene background pushed in, and it replaces the section one', async () => {
   const page = await open('#/b/second/1')
   const second = await background(page, 'second')
   expect(second).toMatchObject({ shown: true, covers: true })
   expect(second.scale).toBeCloseTo(1.08, 3)
+  expect((await backgrounds(page)).map((b) => b.id)).toEqual(['second'])
   // Data URLs hold no file name: the section's picture is the busy one with the dot layer, the scene's is not.
   const dots = encodeURIComponent('fill="url(#d)"')
-  expect((await background(page, 'first')).src).toContain(dots)
+  const section = await background(page, 'b')
+  expect(section).toMatchObject({ shown: false })
+  expect(section.src).toContain(dots)
   expect(second.src).not.toContain(dots)
   await page.close()
 }, 30_000)

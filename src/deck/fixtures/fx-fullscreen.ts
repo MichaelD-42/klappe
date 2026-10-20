@@ -3,9 +3,9 @@ import { image } from "../../fx/media";
 import { assembleDeck } from "../assemble";
 
 // Full-frame pictures. Section A: cover, cover with Ken Burns, cover with a scrim and text on top,
-// a missing cover. Section B (its own canvas): a background with a scrim behind its scenes, so the
-// camera flies over it and the deck crosses a canvas transition into it. The second scene has its own
-// background; the third has a missing one with alt text.
+// a missing cover. Section B (its own canvas): a background with a scrim, pinned to the screen behind its
+// scenes; the deck crosses a canvas transition into it, and the camera flies from the first scene to the
+// next over the same still picture. "second" has its own background; "no-sky" has a missing one with alt text.
 // The pictures are inline SVG data URLs with an intrinsic 1920x1080 size, so tests need no photos.
 // busy: white dots over the whole picture, the worst case for text on a scrim.
 const picture = (sky: string, glow: string, ridge: string, near: string, busy = false) =>
@@ -54,6 +54,10 @@ export default () => {
       "sections/10-a/40-missing/scene.md": `## Missing\n\n${steps(1)}\n`,
       "sections/20-b/section.md": "# B\n",
       "sections/20-b/10-first/scene.md": `## Over the ridge\n\n- The background shows behind this text.\n- A second line.\n`,
+      "sections/20-b/15-still/scene.md": `## Same sky
+
+- The camera flew here over the same picture.
+`,
       "sections/20-b/20-second/scene.md": `## Its own sky\n\n- This scene's background replaces the section's.\n`,
       "sections/20-b/30-no-sky/scene.md": `## No sky yet\n\n- The background file is missing.\n`,
     },

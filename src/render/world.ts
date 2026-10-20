@@ -9,7 +9,10 @@ import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAd
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
+  // The canvas as transitions show, hide and move it: the pinned backgrounds and the world.
   el: HTMLElement;
+  // The camera moves this; it holds the SVG and HTML layers.
+  world: HTMLElement;
   tl: gsap.core.Timeline;
   refs: Record<string, any>;
   // How the deck enters each section on this canvas, by section id (from section.ts).
@@ -167,18 +170,23 @@ export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap
   tl.addLabel(label);
 }
 
-// A scene's background: a cover image at the scene frame in the canvas's back layer. It shows from
-// load, so it crossfades in with its canvas; only the Ken Burns push is on the timeline.
-function background(ctx: Ctx, back: HTMLElement, bg: Background, source: string): ImageHandle | undefined {
-  const { x, y, w, h } = ctx.rect;
-  const d = back.appendChild(el("div", ""));
-  Object.assign(d.style, { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+// A background pinned to the screen: one cover image in the canvas's pinned layer, under the world, so the
+// camera moves the content over a still picture. The timeline fades it in and out as scenes take turns.
+interface Pinned {
+  el: HTMLElement;
+  push?: ImageHandle; // set while its Ken Burns push has not been put on the timeline yet
+}
+function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string): Pinned {
+  const d = pinned.appendChild(el("div", "k-layer"));
+  d.dataset.kBackground = id;
+  Object.assign(d.style, { width: "1920px", height: "1080px" });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
   const img = safe(`${source}: background`, () =>
-    image({ ...ctx, html: d, problem }, { href: bg.href, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }),
+    image({ ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem }, { href: bg.href, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }),
   );
   gsap.set(d.children, { autoAlpha: 1 });
-  return bg.kenBurns ? img : undefined;
+  gsap.set(d, { autoAlpha: 0 });
+  return { el: d, push: bg.kenBurns ? img : undefined };
 }
 
 export function renderWorld(
@@ -188,7 +196,8 @@ export function renderWorld(
   opts: { reducedMotion?: boolean } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
-  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: ImageHandle }>();
+  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
+  const onScreen = new Map<CanvasLayout, Pinned | undefined>(); // the background each canvas shows, while pass 2 builds
   const files = deck.files ?? { data: {}, media: {} };
   const runtimes = canvases.map((layout) => {
     const { w, h } = layout.size;
@@ -199,10 +208,14 @@ export function renderWorld(
     svg.setAttribute("height", String(h));
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     const html = el("div", "k-layer");
-    const back = el("div", "k-layer"); // backgrounds, under the SVG and HTML layers
-    for (const e of [world, back, html]) Object.assign(e.style, { width: `${w}px`, height: `${h}px` });
-    world.append(back, svg, html);
-    root.append(world);
+    for (const e of [world, html]) Object.assign(e.style, { width: `${w}px`, height: `${h}px` });
+    world.append(svg, html);
+    // The canvas: backgrounds pinned to the screen, under the world the camera moves.
+    const canvas = el("div", "k-canvas");
+    const pinned = el("div", "k-layer");
+    for (const e of [canvas, pinned]) Object.assign(e.style, { width: "1920px", height: "1080px" });
+    canvas.append(pinned, world);
+    root.append(canvas);
 
     const tl = gsap.timeline({ paused: true });
     const refs: Record<string, any> = {};
@@ -246,25 +259,37 @@ export function renderWorld(
       if (build)
         Object.assign(refs, safe(`section ${s.id}`, () => build(ctxAt({ x: 0, y: 0, w, h }, "data-section", s.id, "k-layer"))));
     }
+    // One pinned element per background: the section's is shared by every scene that does not set its own.
+    const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
         const ctx = ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene");
-        const bg = sc.module?.background ?? s.module?.background;
-        const handle = bg && background(ctx, back, bg, sc.source);
+        const own = sc.module?.background;
+        const bg = own ?? s.module?.background;
+        let pin = bg && pins.get(bg);
+        if (bg && !pin) {
+          const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
+          pins.set(bg, (pin = background(ctx, pinned, bg, source, own ? sc.id : s.id)));
+        }
         const build = sc.module?.build;
         perScene.set(sc, {
           ...(build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
-          bg: handle,
+          bg: pin,
         });
       }
-    gsap.set(world, { autoAlpha: 0, ...frame(first) });
+    // The first scene's background shows from load, so it fades in with its canvas.
+    const bg0 = perScene.get(sections.flatMap((s) => s.scenes)[0])?.bg;
+    if (bg0) gsap.set(bg0.el, { autoAlpha: 1 });
+    onScreen.set(layout, bg0);
+    gsap.set(world, frame(first));
+    gsap.set(canvas, { autoAlpha: 0 });
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
         return [s.id, { kind: m?.transition ?? "fade", opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
-    return { layout, el: world, tl, refs, entries, stepListeners, problems };
+    return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems };
   });
 
   // Pass 2: timelines in step-list order (deck order), one label 'e:<global index>' after each step.
@@ -284,8 +309,19 @@ export function renderWorld(
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
           else defaultStep(tl, sc, i + 1, ctx.html, fx);
-          // Last, so the step's content does not wait for it: the push runs alongside from the step's start.
-          if (i === 0 && bg) bg.move(tl, { duration: KEN_BURNS }, start);
+          // Last, so the step's content does not wait for them: they run alongside from the step's start.
+          if (i === 0) {
+            // The camera arrives at a scene with another background: the two cross-fade during the flight.
+            const was = onScreen.get(rt.layout);
+            if (bg !== was) {
+              if (bg) tl.to(bg.el, { autoAlpha: 1, duration: motion.camera }, start);
+              if (was) tl.to(was.el, { autoAlpha: 0, duration: motion.camera }, start);
+              onScreen.set(rt.layout, bg);
+            }
+            // Ken Burns once per background, from the first scene that shows it.
+            bg?.push?.move(tl, { duration: KEN_BURNS }, start);
+            if (bg) bg.push = undefined;
+          }
         }),
       );
     }

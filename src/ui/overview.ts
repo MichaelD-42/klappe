@@ -9,12 +9,13 @@ const GAP = 40;
 const CAPTION = 48;
 
 // A copy of the world at its end state, with no camera transform, so the whole canvas shows.
+// shortcut: backgrounds are pinned to the screen, outside the world, so the copy has none; add them if the overview needs them.
 // The live timeline is seeked to its end and back in the same tick: nothing on stage changes.
 // Events on, so text that effects write from onUpdate (data-k-text) shows its end state and comes back.
 function endState(c: CanvasRuntime): HTMLElement {
   const time = c.tl.time();
   c.tl.seek(c.tl.duration(), false);
-  const copy = c.el.cloneNode(true) as HTMLElement;
+  const copy = c.world.cloneNode(true) as HTMLElement;
   c.tl.seek(time, false);
   // The clone must not repeat ids of the live DOM. Shortcut: this breaks url(#id) refs inside the clone; rename them if an effect needs those.
   copy.removeAttribute("id");

@@ -34,7 +34,7 @@ function path(e: Element, root: Element): string {
 // computed: GSAP rewinds an unset inline filter to "none", which renders the same as unset.
 // Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
-  const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.el, p)}`).join(" ");
+  const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.world, p)}`).join(" ");
   const lines = [`world|${round(pose)}`];
   for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
     if (e.closest("[data-k-ignore]")) continue;
@@ -64,7 +64,7 @@ function firstDiff(a: string, b: string): string {
 // Section text (a backdrop for the whole canvas) is checked for size where it shows on stage.
 function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string[] {
   const fit = stage.getBoundingClientRect().width / 1920;
-  const cam = Number(gsap.getProperty(c.el, "scaleX"));
+  const cam = Number(gsap.getProperty(c.world, "scaleX"));
   const box = stage.getBoundingClientRect();
   const bad: string[] = [];
   const seen = new Set<Element>();
@@ -305,7 +305,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     if (to?.section !== "global-team" || to.canvas !== steps[last].canvas)
       return ["the step after value-stream is not global-team on the same canvas"];
     await stepper.goto(last, "cut");
-    const el = canvases[to.canvas].el;
+    const el = canvases[to.canvas].world;
     const before = pose(el);
     const n = log.length;
     await stepper.next();
@@ -401,7 +401,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const dot = [...c.el.querySelectorAll("[data-k-map] circle")].filter(shows).sort((a, b) => gap(a) - gap(b))[0];
     if (!dot || gap(dot) > 3 * lr.height) return ["after zoomTo: no visible host site marker next to the [Host site] label"];
     // The check runs at any viewport; this is the size the label renders at 1366 (stage width 1366).
-    const px = parseFloat(getComputedStyle(label).fontSize) * Number(gsap.getProperty(c.el, "scaleX")) * (1366 / 1920);
+    const px = parseFloat(getComputedStyle(label).fontSize) * Number(gsap.getProperty(c.world, "scaleX")) * (1366 / 1920);
     const box = stage.getBoundingClientRect();
     const inside = (e: Element) => {
       const r = e.getBoundingClientRect();

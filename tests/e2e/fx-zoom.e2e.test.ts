@@ -46,7 +46,7 @@ test('the first step of the new canvas starts at the reveal label, during the gr
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-zoom`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const r = await page.evaluate(async () => {
-    const world = document.querySelectorAll<HTMLElement>('.k-world')[1]
+    const world = document.querySelectorAll<HTMLElement>('.k-canvas')[1] // the canvas carries the fade
     const title = world.querySelector<HTMLElement>('[data-scene] h2')!
     const stepper = window.klappe.stepper as any
     const samples: [number, number][] = []

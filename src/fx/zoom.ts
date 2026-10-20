@@ -23,7 +23,7 @@ function aim(from: CanvasRuntime, p: Pose, target?: string): { x: number; y: num
   if (target && ref == null) console.error(`zoom: no ref '${target}' on the old canvas; diving into the frame centre`);
   if (ref instanceof Element) {
     const r = ref.getBoundingClientRect();
-    const w = from.el.getBoundingClientRect();
+    const w = from.world.getBoundingClientRect();
     if (w.width > 0)
       return {
         x: ((r.left + r.width / 2 - w.left) / w.width) * from.layout.size.w,
@@ -36,14 +36,16 @@ function aim(from: CanvasRuntime, p: Pose, target?: string): { x: number; y: num
   return { x: (STAGE.w / 2 - p.x) / p.scale, y: (STAGE.h / 2 - p.y) / p.scale };
 }
 
-// The camera dives into the ref opts.target on the old canvas (or its frame centre), then the new canvas scales in.
+// The old canvas dives into the ref opts.target (or its frame centre), then the new canvas scales in.
+// The dive scales the whole old canvas, pinned background included, so the camera keeps the pose the seek gave it.
 // The grow scales the layer that holds all canvases, not `to`: the target step starts at "reveal" and may fly
-// `to`'s camera at the same time. The old canvas keeps the pose the seek gave it: it is read first and set again.
+// `to`'s camera at the same time.
 export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: TransitionOpts): gsap.core.Timeline {
-  const a = pose(from.el);
+  const a = pose(from.world);
   const p = aim(from, a, opts.target);
-  const s = a.scale * DIVE;
-  const dive = { x: STAGE.w / 2 - p.x * s, y: STAGE.h / 2 - p.y * s, scale: s };
+  // The dive point on the stage, under the camera.
+  const q = { x: a.x + p.x * a.scale, y: a.y + p.y * a.scale };
+  const dive = { x: STAGE.w / 2 - q.x * DIVE, y: STAGE.h / 2 - q.y * DIVE, scale: DIVE };
   const worlds = from.el.parentElement!;
   const stage = worlds.parentElement!;
   const stageBg = getComputedStyle(stage).backgroundColor;
@@ -55,7 +57,7 @@ export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: Tra
     .to(from.el, { ...dive, duration: DIVE_TIME, ease: "power2.in" }, 0)
     .to(from.el, { autoAlpha: 0, duration: DIVE_TIME * 0.25, ease: "power2.in" }, DIVE_TIME * 0.75)
     .addLabel("reveal", DIVE_TIME - OVERLAP) // the stepper starts the target step here
-    .set(from.el, a, DIVE_TIME)
+    .set(from.el, { clearProps: "transform" }, DIVE_TIME)
     // The dive point sits at the stage centre at the end of the dive; the new canvas grows out of that point.
     .fromTo(
       worlds,
