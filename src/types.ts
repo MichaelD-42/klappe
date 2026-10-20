@@ -9,7 +9,7 @@ export interface Rect {
 export interface DeckMeta {
   title: string;
   lang: string;
-  theme: "calm" | "bold";
+  theme: string;
   intensity: "calm" | "bold";
   confidential: boolean;
   sharedCanvas: string[][];
@@ -102,6 +102,8 @@ export interface Deck {
   meta: DeckMeta;
   sections: Section[];
   files?: Ctx["files"];
+  // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
+  themes?: Record<string, string>;
 }
 export interface CanvasLayout {
   id: string;

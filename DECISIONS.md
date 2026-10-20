@@ -106,3 +106,11 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: a cover that fades in after the camera lands leaves a bare frame for the whole flight. A rect'd image and the default renderer's media keep their old placement. The label is read at build time only, so play still equals seek. The long ease-in fade keeps the picture faint while it slides in with the world (the default ease-out had it near 80 % mid-flight); at full opacity its hard edge wiped across a pinned background behind it. A camera-length hide made plain hides with no flight 2.7x slower.
 - **Text on a picture needs a scrim of 0.6 or more.**
   - Why: theme text (`--k-fg`) over pure white under a black scrim of 0.55 measures about 4.0:1; 0.6 reaches 4.5:1. The e2e test checks it over a picture with white dots under the text.
+
+## 2026-10-20 (M3)
+
+- **Themes are CSS token files; Shiki approved 2026-10-20.**
+  - A theme sets `--k-*` on `:root`; `calm.css` always loads first, so partial themes fall back to calm. Lookup: deck, repo, built-in.
+  - Why: decks and repos can restyle everything without code, and the contrast check turns a bad palette into a deck problem.
+  - Shiki (css-variables theme) maps syntax colours onto `--k-code-*` tokens.
+  - Theme CSS is imported with `?raw`, not `?inline`: vitest blanks `?inline` CSS, and plain theme files need no CSS processing. `vitest.config.ts` lets the unit project read `src/themes/*.css`.

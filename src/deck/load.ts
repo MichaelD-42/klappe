@@ -7,9 +7,23 @@ const rekey = <T>(o: Record<string, T>, root?: string) =>
 const byLink = (o: Record<string, string>) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [/(?:data|media)\/[^/]+$/.exec(k)?.[0] ?? k, v]));
 
+// Keyed deck:<name> | repo:<name> | builtin:<name>; a fixture's own themes win over the built-ins.
+function themesOf() {
+  const named = (scope: string, o: Record<string, string>) =>
+    Object.entries(o).map(([k, v]) => [`${scope}:${/([^/]+)\.css$/.exec(k)![1]}`, v]);
+  return Object.fromEntries([
+    ...named("builtin", import.meta.glob<string>("../themes/*.css", { query: "?raw", import: "default", eager: true })),
+    ...named("repo", import.meta.glob<string>("@themes/*.css", { query: "?raw", import: "default", eager: true })),
+    ...named("deck", import.meta.glob<string>("@deck/themes/*.css", { query: "?raw", import: "default", eager: true })),
+  ]);
+}
+
 export function loadDeck() {
   const fixture = loadFixture(new URLSearchParams(location.search).get("fixture"));
-  if (fixture) return fixture;
+  if (fixture) {
+    fixture.deck.themes = { ...themesOf(), ...fixture.deck.themes };
+    return fixture;
+  }
   const files = import.meta.glob("@deck/**/*.md", { query: "?raw", import: "default", eager: true });
   const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });
   const data = import.meta.glob<string>("@deck/data/*", { query: "?raw", import: "default", eager: true });
@@ -20,6 +34,7 @@ export function loadDeck() {
     .sort((a, b) => a.length - b.length)[0];
   const root = deckMd?.slice(0, -"deck.md".length);
   const r = assembleDeck(rekey(files as Record<string, string>, root), rekey(modules, root));
+  r.deck.themes = themesOf();
   r.deck.files = { data: byLink(data), media: byLink(media) };
   return r;
 }

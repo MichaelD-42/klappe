@@ -8,7 +8,7 @@ import { renderWorld } from "./render/world";
 import { runSelftestIfAsked } from "./selftest";
 import { Router } from "./router";
 import { Stepper } from "./stepper";
-import { motion } from "./theme";
+import { applyTheme, motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
@@ -27,6 +27,7 @@ const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
 
 if (query.get("speaker") === "1") {
+  applyTheme(deck, query.get("theme")); // tokens only; the speaker page shows no problems
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
 } else startDeck();
@@ -35,6 +36,7 @@ function startDeck() {
   const { stage, ui, worlds } = mountStage(document.body);
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
   const reducedMotion = query.get("reducedmotion") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  problems.push(...applyTheme(deck, query.get("theme")));
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });

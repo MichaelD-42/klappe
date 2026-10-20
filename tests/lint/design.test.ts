@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 // Design rules from the org brief: no italics in headings, no monospace outside .k-retro, no pill
 // buttons, no "01/02" labels, no cream or off-white backgrounds, no runtime URLs in src.
-type Rule = 'italic' | 'monospace' | 'pill-button' | 'numbered-label' | 'cream-background' | 'runtime-url'
+type Rule = 'italic' | 'monospace' | 'pill-button' | 'numbered-label' | 'cream-background' | 'runtime-url' | 'colour-literal'
 
 const CREAM = String.raw`(?:#fff8e7|#faf3e0|#fdf6e3|#f5f5dc|\bivory\b|\bbeige\b|\blinen\b|\boldlace\b)`
 const CREAM_BG = new RegExp(String.raw`(?:background(?:-color)?|backgroundColor|--[\w-]*bg[\w-]*)["']?\s*[:=]\s*[^;\n]*?` + CREAM, 'i')
@@ -39,13 +39,14 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
 
   if (ext === '.css') {
     for (const { sel, body } of cssRules(text)) {
-      if (/monospace/i.test(body) && !sel.includes('.k-retro')) hit('monospace', sel)
+      // --k-font-code is the code font token; it is only applied under .k-code and .k-term.
+      if (/monospace/i.test(body.replace(/--k-font-code\s*:[^;]*;?/g, '')) && !/\.k-(?:retro|code|term)\b/.test(sel)) hit('monospace', sel)
       const radius = body.match(/border-radius\s*:\s*([^;]+)/i)
       if (radius && /button|btn/i.test(sel) && isPill(radius[1])) hit('pill-button', `${sel} { ${radius[0]} }`)
     }
   } else
     for (const line of text.split('\n')) {
-      if (/monospace/i.test(line) && !line.includes('k-retro')) hit('monospace', line)
+      if (/monospace/i.test(line) && !/k-(?:retro|code|term)\b/.test(line)) hit('monospace', line)
       const radius = line.match(/border-?radius["']?\s*:\s*([^,;}\n]+)/i)
       if (radius && /button|btn/i.test(line) && isPill(radius[1])) hit('pill-button', line)
     }
@@ -59,6 +60,9 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   const EMBED_OK = file === 'src/fx/media.ts' || file.startsWith('src/deck/fixtures/')
   if (file.startsWith('src/') && !EMBED_OK)
     for (const [url] of text.matchAll(/https?:\/\/[^\s"'`)]*/g)) if (!XMLNS.has(url)) hit('runtime-url', url)
+  // Effects take every colour from a --k-* token; crt.ts (light layers) and media.ts (letterbox) are the exceptions.
+  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media)\.ts$/.test(file))
+    for (const m of text.matchAll(/#[\da-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi)) hit('colour-literal', m[0])
   return hits
 }
 
@@ -83,6 +87,10 @@ describe('design lint catches each rule', () => {
     ['cream-background', 'src/styles.css', ':root { --k-bg: #FDF6E3; }'],
     ['cream-background', 'src/styles.css', '.k-stage { background: oldlace; }'],
     ['cream-background', 'decks/d/scene.ts', 'Object.assign(html.style, { backgroundColor: "ivory" })'],
+    ['monospace', 'src/themes/x.css', '.k-scene { font-family: monospace; }'],
+    ['colour-literal', 'src/fx/chart.ts', 'el.setAttribute("fill", "#ff0000")'],
+    ['colour-literal', 'src/fx/x.ts', 'el.style.color = `rgb(${r}, 0, 0)`'],
+    ['cream-background', 'decks/d/themes/x.css', ':root { --k-bg: #faf3e0; }'],
     ['runtime-url', 'src/main.ts', 'import("https://cdn.example.com/lib.js")'],
     ['runtime-url', 'src/render/x.ts', 'const s = "http://example.com/a.svg" // fetched at run time'],
   ])('%s in %s', (rule, file, text) => {
@@ -97,6 +105,10 @@ describe('design lint catches each rule', () => {
       ['decks/d/deck.md', '---\ntitle: Report\ndate: 2026-01-05\n---\n'],
       ['decks/d/scene.md', '## The **bold** way\n\n- Released on 2026-01-05 as v1.01.\n- A linen shirt on a beige wall.\n'],
       ['decks/d/scene.ts', 'import x from "./01-intro"; const id = "step01"; const re = /0[1-9]/;'],
+      ['src/themes/x.css', ':root { --k-font-code: ui-monospace, monospace; }\n.k-code, .k-term { font-family: var(--k-font-code), monospace; }'],
+      ['src/fx/chart.ts', 'el.setAttribute("fill", "var(--k-accent)"); const id = "a#b"; // #fff'],
+      ['src/fx/crt.ts', 'const glow = "rgba(0,0,0,0.4)"'],
+      ['src/fx/media.ts', 'const bar = "#000"'],
       ['tests/unit/x.test.ts', 'expect(hash).toBe("#/a/b/01")'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
@@ -113,7 +125,12 @@ describe('design lint over the repo', () => {
       .filter((f) => exts.includes(path.extname(f)))
       .map((f) => ({ file: `${dir}/${f.replaceAll('\\', '/')}`, abs: path.join(abs, f) }))
   }
-  const files = [...scan(klappeDir, 'src', ['.css', '.ts']), ...scan(process.cwd(), 'decks', ['.ts', '.md'])]
+  const files = [
+    ...scan(klappeDir, 'src', ['.css', '.ts']),
+    ...scan(process.cwd(), 'decks', ['.ts', '.md']),
+    ...scan(process.cwd(), 'themes', ['.css']),
+    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/')),
+  ]
 
   test('finds the files to check', () => {
     expect(files.some((f) => f.file === 'src/styles.css')).toBe(true)

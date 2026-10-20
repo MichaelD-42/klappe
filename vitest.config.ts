@@ -11,6 +11,7 @@ export default defineConfig({
         resolve: { alias: { 'klappe/fx': src('fx'), 'klappe/types': src('types') } },
         test: {
           name: 'unit',
+          css: { include: /src\/themes\/.*\.css/ }, // theme tests read the real token files
           include: ['tests/unit/**/*.test.ts', 'tests/lint/**/*.test.ts'],
         },
       },
