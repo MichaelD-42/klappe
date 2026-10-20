@@ -6,6 +6,8 @@ import { assembleDeck } from "../assemble";
 // a missing cover. Section B (its own canvas): a background with a scrim, pinned to the screen behind its
 // scenes; the deck crosses a canvas transition into it, and the camera flies from the first scene to the
 // next over the same still picture. "second" has its own background; "no-sky" has a missing one with alt text.
+// Section C zooms out of B's canvas, pinned background and all, and has a background of its own;
+// section D shatters out of C, so the shards carry C's background.
 // The pictures are inline SVG data URLs with an intrinsic 1920x1080 size, so tests need no photos.
 // busy: white dots over the whole picture, the worst case for text on a scrim.
 const picture = (sky: string, glow: string, ridge: string, near: string, busy = false) =>
@@ -60,6 +62,10 @@ export default () => {
 `,
       "sections/20-b/20-second/scene.md": `## Its own sky\n\n- This scene's background replaces the section's.\n`,
       "sections/20-b/30-no-sky/scene.md": `## No sky yet\n\n- The background file is missing.\n`,
+      "sections/30-c/section.md": "# C\n",
+      "sections/30-c/10-dive/scene.md": `## Zoomed in\n\n- The zoom dove into the last canvas, background and all.\n`,
+      "sections/40-d/section.md": "# D\n",
+      "sections/40-d/10-after/scene.md": `## After the break\n\n- The shatter broke the last canvas, background and all.\n`,
     },
     {
       "sections/10-a/10-cover/scene.ts": {
@@ -90,6 +96,8 @@ export default () => {
       "sections/20-b/section.ts": { background: { href: "media/dusk-busy.svg", scrim: SCRIM, kenBurns: true } },
       "sections/20-b/20-second/scene.ts": { background: { href: "media/dawn.svg", scrim: SCRIM, kenBurns: true } },
       "sections/20-b/30-no-sky/scene.ts": { background: { href: "media/harbour.png", alt: "A harbour at night" } },
+      "sections/30-c/section.ts": { transition: "zoom", background: { href: "media/dawn.svg", scrim: SCRIM } },
+      "sections/40-d/section.ts": { transition: "shatter" },
     },
   );
   r.deck.files = { data: {}, media: { "media/dawn.svg": DAWN, "media/dawn-busy.svg": DAWN_BUSY, "media/dusk-busy.svg": DUSK_BUSY } };

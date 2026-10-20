@@ -249,3 +249,36 @@ test('a missing background with alt text shows IMAGE MISSING and a prompt', asyn
   expect(await page.evaluate(() => window.klappe.problems)).toContain(MISSING_BG)
   await page.close()
 }, 30_000)
+
+// Polls each frame, so the checks hold on a busy machine too.
+test('the zoom dives into a canvas with its pinned background, and the shatter breaks one', async () => {
+  const page = await open('#/b/no-sky/1')
+  const errors: string[] = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  // Zoom out of B into C: B's canvas scales up with its shown background inside it.
+  const zoom = page.evaluate(() => window.klappe.stepper.next())
+  await page.waitForFunction(() => {
+    const c = document.querySelectorAll<HTMLElement>('.k-canvas')[1]
+    const bg = c.querySelector<HTMLElement>('[data-k-background="no-sky"]')!
+    return new DOMMatrix(getComputedStyle(c).transform).a > 1.5 && bg.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+  }, undefined, { polling: 'raf', timeout: 10_000 })
+  await zoom
+  expect(await background(page, 'c')).toMatchObject({ shown: true, covers: true, inWorld: false })
+  // Shatter out of C into D: a visible shard shows C's background picture.
+  const src = (await background(page, 'c')).src!
+  const shatter = page.evaluate(() => window.klappe.stepper.next())
+  await page.waitForFunction(
+    (src) =>
+      [...document.querySelectorAll<HTMLElement>('[data-k-shatter] [style*="clip-path"]')].some(
+        (s) => s.parentElement!.checkVisibility({ opacityProperty: true, visibilityProperty: true }) && [...s.querySelectorAll('img')].some((i) => i.src === src),
+      ),
+    src,
+    { polling: 'raf', timeout: 10_000 },
+  )
+  await shatter
+  expect((await backgrounds(page)).map((b) => b.id)).toEqual([]) // D has no background; C's is gone with its canvas
+  expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(await page.evaluate(() => window.klappe.steps.length - 1))
+  expect(errors).toEqual([])
+  expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
+  await page.close()
+}, 30_000)
