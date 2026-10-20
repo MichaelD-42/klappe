@@ -23,6 +23,7 @@ export default defineConfig({
           hookTimeout: 120_000,
           // Each file drives its own browser; more at once timed out tests on a busy machine.
           maxWorkers: 6,
+          sequence: { groupOrder: 1 }, // vitest needs its own group for a different maxWorkers; unit runs first
         },
       },
     ],
