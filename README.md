@@ -211,8 +211,8 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // Pass { from, to } poses ({ scale, x, y }) for your own; a drift stays inside the push's overscan.
 // move(tl, { duration }) plays the push on its own. hide(tl) fades the picture out. Reduced motion leaves the push out.
 // For a sharp push at 1920 wide, use a source of at least about 2080x1170 px (1.08 times the frame).
-// scrim (0 to 1) darkens the picture; use 0.6 or more for text on top. Build your text after the image and
-// position it, so it paints on top.
+// scrim (0 to 1) darkens the picture; use 0.6 or more for text on top. Text (h1 to h3, p, lists) built
+// after the image paints on top.
 // A missing file shows IMAGE MISSING over the picture's area; a cover image with alt text also shows a prompt.
 { build: (ctx) => image(ctx, { href: "media/hero.png", alt: "A dawn sky over a factory", fit: "cover", kenBurns: true }),
   steps: [(tl, i) => i.show(tl), (tl, i) => i.hide(tl)] }

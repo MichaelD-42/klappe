@@ -58,6 +58,12 @@ body {
   padding: 140px 160px;
 }
 
+/* Text paints in DOM order with positioned boxes, so text built after a cover image() shows on top.
+   :where keeps this at zero specificity: a deck's own position still wins. */
+.k-scene :where(h1, h2, h3, p, ul, ol) {
+  position: relative;
+}
+
 .k-scene h2 {
   margin: 0 0 64px;
   font-size: 88px;

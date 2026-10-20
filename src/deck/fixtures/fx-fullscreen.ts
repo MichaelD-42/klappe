@@ -59,8 +59,14 @@ export default () => {
     },
     {
       "sections/10-a/10-cover/scene.ts": {
-        build: (ctx: any) => image(ctx, { href: "media/dawn.svg", alt: "A dawn sky over two ridges", fit: "cover" }),
-        steps: [(tl: gsap.core.Timeline, i: any) => i.show(tl)],
+        // A plain h2 built after the picture, with no position of its own: it must paint on top.
+        build: (ctx: any) => {
+          const img = image(ctx, { href: "media/dawn.svg", alt: "A dawn sky over two ridges", fit: "cover" });
+          const title = ctx.html.appendChild(Object.assign(document.createElement("h2"), { textContent: "Dawn" }));
+          gsap.set(title, { autoAlpha: 0 });
+          return { img, title };
+        },
+        steps: [(tl: gsap.core.Timeline, r: any) => (r.img.show(tl), fadeIn(tl, r.title))],
       },
       "sections/10-a/20-ken-burns/scene.ts": {
         build: (ctx: any) => image(ctx, { href: "media/dawn.svg", alt: "A dawn sky over two ridges", fit: "cover", kenBurns: true }),

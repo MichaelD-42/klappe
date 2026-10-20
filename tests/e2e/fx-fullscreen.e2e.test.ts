@@ -125,6 +125,17 @@ test(`text over the scrim at ${hash} is at least 14 px at 1366 and keeps 4.5:1 a
   await page.close()
 }, 30_000)
 
+test('a plain heading built after a cover picture paints on top of it', async () => {
+  const page = await open('#/a/cover/1')
+  const onTop = await page.evaluate(() => {
+    const h2 = document.querySelector<HTMLElement>('[data-scene$="cover"] h2')!
+    const r = h2.getBoundingClientRect()
+    return h2.contains(document.elementFromPoint(r.x + 20, r.y + r.height / 2))
+  })
+  expect(onTop).toBe(true)
+  await page.close()
+}, 30_000)
+
 test('a missing cover fills the frame with IMAGE MISSING, its alt text and a prompt, and records a problem', async () => {
   const page = await open('#/a/missing/1')
   const r = await page.evaluate(() => {
