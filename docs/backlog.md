@@ -59,6 +59,12 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
 - Swarm and motion (Task 8): dots cross the Inbox label mid-flight; the landed pile is a uniform grey; morph text has low contrast mid-frame; no test of morph play-time start values; the swarm canvas is not re-rasterised on a deeper zoom.
 - Full-frame pictures: a flat scrim of 0.6 darkens the whole picture; a gradient scrim (dark only under the text) would keep more of it. `show()` finds its step's start through a `step` label that `appendStep` moves; pass the step start to step functions if more helpers need it. The TODO scan of `.ts` files is a regex: an `href` built at run time is not listed.
 - Media (Task 9): a `youtu.be` link with an empty id gives `/embed/undefined`; `youtube-nocookie` and `music.youtube` are not matched; the `EMBED_OK` allowlist lacks a negative test. Task 0: the media HTML wrapper has no opaque backdrop (the SVG one has).
+- Look findings from the full-screen review, round 2 (2026-10-20), older than that work, not fixed yet:
+  - Shatter: the black gaps layer (`src/fx/shatter.ts:217`) holds a black rectangle until a 0.4 s fade at the end.
+  - CRT transition: the bright phase is a flat `#dadada`; `brightness(3)` washes out the phosphor tint, so it reads as an off-white flash in calm decks.
+  - Morph scales the text with the box, so "Key fact" overflows the card.
+  - Overview thumbnails show no backgrounds. Fix: clone `c.el` (the whole canvas) and clear the world transform.
+  - The demo overview tour has long empty stretches between stages.
 
 ## Demo deck
 
