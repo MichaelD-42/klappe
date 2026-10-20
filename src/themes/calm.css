@@ -9,10 +9,10 @@
   --k-ok: #5fd38d;
   --k-warn: #ffb547;
   --k-bad: #ff6b6b;
-  --k-series-1: #4da3ff;
-  --k-series-2: #ffb547;
-  --k-series-3: #5fd38d;
-  --k-series-4: #c792ea;
+  --k-series-1: #4da3ff; /* series 1-4: the chart colours before themes (accent, phosphor, amber, fg) */
+  --k-series-2: #7dffa0;
+  --k-series-3: #ffb547;
+  --k-series-4: #e8edf5;
   --k-series-5: #ff7a8a;
   --k-series-6: #4dd0e1;
   --k-font: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

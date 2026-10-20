@@ -58,3 +58,27 @@ test('?theme=bold switches a deck to the bold palette', async () => {
   expect(await token(calm, '--k-bg')).toBe('#0f1b2d')
   await calm.close()
 })
+
+test('an oklch colour loads without errors and reports a measure or a problem', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=theme-oklch`)
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.problems.every((p) => /^theme: --k-[\w-]+ (?:on --k-\w+ contrast [\d.]+ < [\d.]+|not a readable colour \(.+\))$/.test(p))).toBe(true)
+})
+
+test('the problems overlay stays readable under a low-contrast theme', async () => {
+  const page = await open('fixture=theme-lowcontrast')
+  const ratio = await page.evaluate(() => {
+    const el = document.querySelector('.k-problems') as HTMLElement
+    const n = (c: string) => c.match(/[\d.]+/g)!.slice(0, 3).map(Number)
+    const L = (c: string) => {
+      const [r, g, b] = n(c).map((v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const s = getComputedStyle(el)
+    const [a, b] = [L(s.color), L(s.backgroundColor)].sort((x, y) => y - x)
+    return (a + 0.05) / (b + 0.05)
+  })
+  expect(ratio).toBeGreaterThanOrEqual(4.5)
+  await page.close()
+})

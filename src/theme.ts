@@ -70,7 +70,15 @@ export function applyTheme(deck: Deck, override?: string | null): string[] {
     return getComputedStyle(probe)[prop];
   };
   for (const [fg, bg, min] of CHECKS) {
-    const c = contrast(read(fg, "color"), read(bg, "backgroundColor"));
+    const [a, b] = [read(fg, "color"), read(bg, "backgroundColor")];
+    let c: number;
+    try {
+      c = contrast(a, b);
+    } catch {
+      // oklch(), color-mix() and color() are serialised in their own space; not measured.
+      problems.push(`theme: ${/^rgb/.test(a) ? bg : fg} not a readable colour (${/^rgb/.test(a) ? b : a})`);
+      continue;
+    }
     if (c < min) problems.push(`theme: ${fg} on ${bg} contrast ${c.toFixed(1)} < ${min}`);
   }
   probe.remove();

@@ -85,7 +85,9 @@ body {
   overflow: auto;
   box-sizing: border-box;
   padding: 8px 20px;
-  background: color-mix(in srgb, var(--k-bad) 20%, var(--k-bg));
+  /* Theme-independent text and a dark box, so a bad theme cannot hide its own problem. */
+  color: #fff;
+  background: color-mix(in srgb, var(--k-bad) 25%, #000);
   border: 2px solid var(--k-bad);
   border-radius: 8px;
   font-size: 22px;
