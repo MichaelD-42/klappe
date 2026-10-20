@@ -114,6 +114,8 @@ test('a click into an embedded player leaves the arrow keys working', async () =
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-media#/a/youtube/2`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   await page.click('[data-scene$="youtube"] iframe')
+  // Focus comes back one tick after the blur; a key pressed before that still goes to the iframe.
+  await page.waitForFunction(() => !(document.activeElement instanceof HTMLIFrameElement), undefined, { timeout: 5_000 })
   const before: number = await page.evaluate(() => window.klappe.stepper.index)
   await page.keyboard.press('ArrowRight')
   await page.waitForFunction((i) => window.klappe.stepper.index === i + 1, before, { timeout: 5_000 })
