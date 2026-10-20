@@ -1,4 +1,4 @@
-import type { gsap } from "gsap";
+import { gsap } from "gsap";
 import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
 import type { SceneModule } from "klappe/types";
 
@@ -15,6 +15,12 @@ const BOOT: [CrtLine, number][] = [
   ["", 0],
 ];
 const FIRST_LOADING = 5;
+const DIM = 0.3; // seconds for the stage to dim before power-on
+
+interface Refs {
+  dim: HTMLElement;
+  h: CrtHandle;
+}
 
 const typeLines = (tl: gsap.core.Timeline, h: CrtHandle, from: number, to: number) => {
   for (let i = from; i < to; i++) {
@@ -26,12 +32,21 @@ const typeLines = (tl: gsap.core.Timeline, h: CrtHandle, from: number, to: numbe
 // Same frame as the old way: the screen powers on where the slide fell away, with no camera move.
 const scene: SceneModule = {
   place: (rects) => rects["old-way"],
-  build: (ctx) => crt(ctx, { lines: BOOT.map(([line]) => line) }),
+  build(ctx): Refs {
+    // The lit stage dims to the CRT's own surround first (the .k-retro colour in src/fx/crt.ts), so power-on does not cut to near black.
+    const dim = ctx.html.appendChild(document.createElement("div"));
+    Object.assign(dim.style, { position: "absolute", inset: "0", background: "color-mix(in srgb, var(--k-bg) 40%, var(--k-blackout))" });
+    gsap.set(dim, { autoAlpha: 0 });
+    return { dim, h: crt(ctx, { lines: BOOT.map(([line]) => line) }) };
+  },
   steps: [
-    (tl, h: CrtHandle) => h.powerOn(tl),
-    (tl, h: CrtHandle) => typeLines(tl, h, 0, FIRST_LOADING),
-    (tl, h: CrtHandle) => typeLines(tl, h, FIRST_LOADING, BOOT.length),
-    (tl, h: CrtHandle) => h.ready(tl),
+    (tl, { dim, h }: Refs) => {
+      tl.to(dim, { autoAlpha: 1, duration: DIM });
+      h.powerOn(tl);
+    },
+    (tl, { h }: Refs) => typeLines(tl, h, 0, FIRST_LOADING),
+    (tl, { h }: Refs) => typeLines(tl, h, FIRST_LOADING, BOOT.length),
+    (tl, { h }: Refs) => h.ready(tl),
   ],
 };
 export default scene;

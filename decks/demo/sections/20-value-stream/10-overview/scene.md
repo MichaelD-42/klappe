@@ -1,6 +1,9 @@
 ## Overview
 
-- Full-screen photo: a hand sketches a process flow on a whiteboard.
+- Full-frame picture: a hand sketches a process flow on a whiteboard.
+
+> Before we map it: this is how most of us sketch our process today.
+
 - The value stream draws itself from left to right: Requirements, Analysis, Clarification, Design, Verification.
 - The camera pulls back to show the whole stream.
 
