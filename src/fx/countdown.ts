@@ -54,7 +54,9 @@ export function countdown(ctx: Ctx, opts: CountdownOpts): CountdownHandle {
 
   let end: string | number | undefined = until; // minutes: set on the first visible frame
   let last = "";
-  let checked = 0;
+  // As mesh3d: shown (from show/hide tween progress, so a seek lands right) and on the active canvas; no style reads.
+  let visible = false;
+  const root = box.closest(".k-canvas");
   const draw = () => {
     const now = Date.now();
     const r = end === undefined ? remaining(now, now + minutes! * 60_000) : remaining(now, end);
@@ -65,11 +67,8 @@ export function countdown(ctx: Ctx, opts: CountdownOpts): CountdownHandle {
   };
   draw();
   const tick = () => {
-    if (Date.now() - checked < 200) return; // the text changes once a second: 5 checks a second keep an idle countdown cheap
-    checked = Date.now();
-    // Hidden (own autoAlpha or a hidden layer above): one style read, no update; a minutes count does not start.
-    const cs = getComputedStyle(box);
-    if (cs.visibility === "hidden" || cs.opacity === "0") return;
+    // Hidden or on another canvas: no update, and a minutes count does not start.
+    if (!visible || (root && !root.hasAttribute("data-k-active"))) return;
     if (end === undefined) end = Date.now() + minutes! * 60_000;
     draw();
   };
@@ -77,10 +76,20 @@ export function countdown(ctx: Ctx, opts: CountdownOpts): CountdownHandle {
 
   return {
     show(tl, at) {
-      tl.fromTo(box, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false }, at);
+      tl.fromTo(box, { autoAlpha: 0 }, {
+        autoAlpha: 1, duration: motion.step, immediateRender: false,
+        onUpdate(this: gsap.core.Tween) {
+          visible = this.progress() > 0;
+        },
+      }, at);
     },
     hide(tl, at) {
-      tl.fromTo(box, { autoAlpha: 1 }, { autoAlpha: 0, duration: motion.step, immediateRender: false }, at);
+      tl.fromTo(box, { autoAlpha: 1 }, {
+        autoAlpha: 0, duration: motion.step, immediateRender: false,
+        onUpdate(this: gsap.core.Tween) {
+          visible = this.progress() < 1;
+        },
+      }, at);
     },
     destroy() {
       gsap.ticker.remove(tick);

@@ -125,12 +125,12 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
   let b = 0.4;
   let last = "";
   // Set from show/hide tween progress only (a seek lands right); no style read per frame.
-  // shortcut: a mesh on a canvas the stepper hid keeps drawing; hide() it on scene exit if that costs.
   let visible = dotStart;
+  const root = canvas.closest(".k-canvas"); // the stepper marks the active canvas root data-k-active
 
   const draw = () => {
     if (!c2d) return;
-    if (!visible || (!dotStart && st.form === 0)) return;
+    if (!visible || (!dotStart && st.form === 0) || (root && !root.hasAttribute("data-k-active"))) return;
     const sig = `${st.form}|${st.collapse}|${st.r}|${st.g}|${st.b}`;
     if (reduced && sig === last) return;
     last = sig;

@@ -86,6 +86,33 @@ test('a shown mesh3d does not read computed style per frame', async () => {
   await page.close()
 })
 
+test('a shown mesh3d stops drawing when another canvas is active', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect
+    ;(window as any).draws = 0
+    CanvasRenderingContext2D.prototype.clearRect = function (...a: [number, number, number, number]) {
+      ;(window as any).draws++
+      return clear.apply(this, a)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const draws = () => page.evaluate(() => (window as any).draws as number)
+  const d0 = await draws()
+  await page.waitForTimeout(300)
+  expect(await draws()).toBeGreaterThan(d0) // drawing on its own canvas
+  await page.evaluate(() => {
+    const k = window.klappe
+    return k.stepper.goto(k.steps.findIndex((s: { section: string }) => s.section === 'b'), 'cut')
+  })
+  await page.waitForTimeout(100)
+  const d1 = await draws()
+  await page.waitForTimeout(500)
+  expect(await draws()).toBe(d1)
+  await page.close()
+})
+
 test('morph keeps a transform the author set', async () => {
   const page = await open('?fixture=fx-motion#/a/shapes/1')
   const placed = () => page.evaluate(() => document.querySelector('rect')!.getBoundingClientRect().toJSON())

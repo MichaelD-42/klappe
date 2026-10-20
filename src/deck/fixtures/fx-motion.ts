@@ -135,6 +135,8 @@ export default () =>
       "sections/10-a/30-talk/scene.md": md("Talk", ["Show the speakers.", "Question.", "Answer.", "Both hide."]),
       "sections/10-a/40-counts/scene.md": md("Counts", ["Questions shrink to zero.", "Documents count up."]),
       "sections/10-a/50-wrap/scene.md": md("Wrap", ["Show the mesh.", "A bubble beside it.", "A bubble below it."]),
+      "sections/20-b/section.md": "# B\n", // another canvas: the mesh on a stops drawing there
+      "sections/20-b/10-other/scene.md": md("Other", ["Another canvas."]),
     },
     {
       "sections/10-a/10-chain/scene.ts": chain,

@@ -58,3 +58,21 @@ test('opening the overview during the wait cancels the auto advance', async () =
   expect(await page.evaluate(() => window.klappe.overview.isOpen)).toBe(true)
   await page.close()
 })
+
+test('opening the overview while the step still plays cancels the wait after it', async () => {
+  const page = await open('#/b/two/1', 2)
+  const playing = await page.evaluate(async () => {
+    const s = window.klappe.stepper
+    const done = s.next() // plays two/2, then would wait 1.5 s
+    await new Promise((r) => setTimeout(r, 50))
+    const busy = s.running.length > 0
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'o' }))
+    await done
+    return busy
+  })
+  expect(playing).toBe(true)
+  await page.waitForTimeout(2500)
+  expect(await index(page)).toBe(3)
+  expect(await page.evaluate(() => window.klappe.overview.isOpen)).toBe(true)
+  await page.close()
+})

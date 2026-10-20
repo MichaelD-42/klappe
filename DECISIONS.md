@@ -177,6 +177,8 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **`bubble` takes `maxWidth` and the vertical sides `top` and `bottom`. `left` and `right` keep their old meaning (where the bubble sits). `top` and `bottom` name the edge with the tail, so `top` puts the bubble below the point.**
   - Why: the deck plan asks for "side top: the tail on the top edge", and old callers must keep working. The mixed meaning is the cost; `bubbleLayout` holds the table.
 - **`mesh3d` reads no computed style per frame. A `visible` flag, set from the progress of the `show` and `hide` tweens, and `form` gate the draw.**
-  - Why: a style read each frame on every mesh cost layout work while idle. The flag follows seeks, because it comes from tween progress. Limit: it does not see a hidden canvas, so a shown mesh on another canvas keeps drawing.
+  - Why: a style read each frame on every mesh cost layout work while idle. The flag follows seeks, because it comes from tween progress.
 - **Opening the overview or the section list cancels a pending `auto` advance.**
-  - Why: the deck must not move under an open panel. Limit: a panel opened while the step still plays does not stop the wait that starts after the play.
+  - Why: the deck must not move under an open panel. The stepper sets the timer after the play ends, so `cancelAuto` bumps a counter; a move that was queued or playing at a cancel sets no timer.
+- **The stepper marks the active canvas root (`.k-canvas`) with `data-k-active`. Self-running helpers (`mesh3d`, `countdown`) find that root once at build and draw only while it has the attribute.**
+  - Why: Day 1 has about 15 mesh scenes, and a shown mesh on another canvas kept drawing. One attribute read per frame is cheaper than a computed-style read and covers every hidden canvas. The new canvas gets the mark when the move starts (it draws during its transition in); the old one loses it when the move ends. The countdown dropped its 200 ms computed-style throttle for the same mark plus a show/hide flag.
