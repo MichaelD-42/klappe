@@ -92,9 +92,9 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: str
 
 const CAPTION = 48; // the row under a video box for its caption
 
-const fade = (b: HTMLElement) => ({
-  show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration: motion.step }, at),
-  hide: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 0, duration: motion.step }, at),
+const fade = (b: HTMLElement, duration = motion.step) => ({
+  show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration }, at),
+  hide: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 0, duration }, at),
 });
 const key = (href: string) => href.replace(/^\.\//, "");
 
@@ -121,13 +121,15 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   const cover = opts.fit === "cover";
   const fullFrame = cover && !opts.rect;
   const at0 = (tl: gsap.core.Timeline, at?: number | string) => at ?? (fullFrame ? tl.labels[STEP_LABEL] : undefined);
+  // A full frame fades over a camera flight: it slides in with the world, so its edge never crosses the frame opaque.
+  const fadeTime = fullFrame ? motion.camera : motion.step;
   const url = ctx.files.media[key(href)];
   const text = [key(href), alt].filter(Boolean).join(" — ");
   if (url === undefined) {
     // A prompt for an image generator, for a cover picture with alt text.
     const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", LANG), text, prompt);
-    const f = fade(b);
+    const f = fade(b, fadeTime);
     return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
   const b = box(ctx, rect);
@@ -149,7 +151,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     if (ctx.reducedMotion) return;
     tl.fromTo(img, from, { ...to, duration, ease: "sine.inOut", immediateRender: false }, at);
   };
-  const f = fade(b);
+  const f = fade(b, fadeTime);
   return {
     show(tl, at) {
       f.show(tl, at0(tl, at));

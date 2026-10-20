@@ -61,7 +61,8 @@ test('reduced motion leaves the Ken Burns push out', async () => {
   await page.close()
 }, 30_000)
 
-test('a full-frame cover shows while the camera flies into its scene, not after', async () => {
+// It fades in over the flight, so its hard edge never slides across the frame at full opacity.
+test('a full-frame cover fades in while the camera flies into its scene, not after', async () => {
   const page = await open('#/a/cover/1')
   const state = () =>
     page.evaluate(() => {
@@ -73,9 +74,13 @@ test('a full-frame cover shows while the camera flies into its scene, not after'
   await page.waitForTimeout(500)
   const mid = await state()
   expect(mid.opacity).toBeGreaterThan(0)
+  expect(mid.opacity).toBeLessThan(1)
   expect(mid.camera).not.toBe(before)
+  await page.waitForTimeout(300)
+  expect((await state()).opacity).toBeGreaterThan(mid.opacity) // still rising
   await move
   const end = await state()
+  expect(end.opacity).toBe(1)
   expect(end.camera).not.toBe(mid.camera) // the camera was still on its way at the mid check
   await page.close()
 }, 30_000)

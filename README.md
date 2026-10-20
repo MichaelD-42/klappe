@@ -206,7 +206,8 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 
 // A full-frame picture: fit "cover" with no rect fills the whole scene frame and crops to keep the aspect.
-// Its show() starts with the step, so the picture is there while the camera flies into the scene.
+// Its show() starts with the step and fades in over the camera flight (1.6 s), so the picture is there while the
+// camera flies in, but no hard photo edge crosses the frame at full opacity. hide() fades out over the same time.
 // kenBurns: true adds a slow push (1.0 to 1.08 with a slight drift) to show(), and the step then lasts 6 s.
 // Pass { from, to } poses ({ scale, x, y }) for your own; a drift stays inside the push's overscan.
 // move(tl, { duration }) plays the push on its own. hide(tl) fades the picture out. Reduced motion leaves the push out.
