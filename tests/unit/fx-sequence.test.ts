@@ -16,3 +16,17 @@ test('an unknown actor id in messages throws', () => {
   const ctx: any = {}
   expect(() => sequence(ctx, { ...rect, actors: [{ id: 'a', label: 'A' }], messages: [{ from: 'a', to: 'zz', text: 'x' }] })).toThrow('sequence: unknown actor "zz"')
 })
+
+test('too many messages for the height are reported', () => {
+  const problems: string[] = []
+  const el = () => ({ append() {}, setAttribute() {}, style: {}, appendChild: (c: unknown) => c })
+  ;(globalThis as any).document = { createElement: el, createElementNS: el }
+  const ctx: any = { svg: el(), html: el(), problem: (m: string) => problems.push(m) }
+  const messages = Array.from({ length: 30 }, () => ({ from: 'a', to: 'b', text: 'x' }))
+  try {
+    sequence(ctx, { ...rect, actors: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }], messages })
+  } finally {
+    delete (globalThis as any).document
+  }
+  expect(problems).toEqual(['sequence: 30 messages do not fit the height'])
+})

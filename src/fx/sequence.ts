@@ -18,6 +18,7 @@ const MAX_FONT = 24;
 const LINE_H = 1.2;
 const ARROW = 20; // arrowhead length
 const LOOP = 70; // how far a self-message loop reaches out
+const PAD = 28; // gap under the heads: the first label sits clear of them
 const MIN_PITCH = 36; // least row spacing that holds a label above its arrow
 const DRAW = 0.5; // seconds an arrow takes to draw on
 let masks = 0;
@@ -27,7 +28,7 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // The y of message i's arrow among n rows below the actor heads, evenly spaced and inside rect.
 export function rowY(i: number, n: number, rect: Rect): number {
-  const top = rect.y + HEAD_H + 12; // clear of the heads for the first label
+  const top = rect.y + HEAD_H + PAD;
   return top + ((i + 0.5) * (rect.y + rect.h - top)) / Math.max(n, 1);
 }
 
@@ -42,7 +43,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     return x;
   };
   for (const m of messages) [m.from, m.to].forEach(at);
-  const pitch = (opts.h - HEAD_H - 12) / Math.max(messages.length, 1);
+  const pitch = (opts.h - HEAD_H - PAD) / Math.max(messages.length, 1);
   if (pitch < MIN_PITCH) ctx.problem(`sequence: ${messages.length} messages do not fit the height`);
 
   const bottom = opts.y + opts.h;
@@ -64,7 +65,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     ctx.html.append(el);
     const line = document.createElementNS(SVG, "path");
     line.setAttribute("d", `M ${r2(x)} ${opts.y + HEAD_H} L ${r2(x)} ${bottom}`);
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "3", strokeDasharray: "12 10" });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "2", strokeDasharray: "6 10", strokeOpacity: "0.5" });
     ctx.svg.append(line);
     hide(el, line);
     heads.push(el);
@@ -150,6 +151,15 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     });
   };
 
+  type Row = (typeof rows)[number];
+  const paint = (tl: gsap.core.Timeline, r: Row, on: boolean, t: number) => {
+    const c = on ? "var(--k-accent)" : "var(--k-line)";
+    tl.set(r.line, { stroke: c, immediateRender: false }, t);
+    tl.set(r.head, { fill: c, immediateRender: false }, t);
+    tl.set(r.tag, { color: on ? "var(--k-accent)" : "var(--k-fg)", immediateRender: false }, t);
+  };
+  let current: Row | undefined;
+
   return {
     actors(tl) {
       fit();
@@ -163,9 +173,13 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       return (tl) => {
         fit();
         const t = tl.duration();
+        // The message being drawn is accent; the one before settles as this one starts (a set, so it seeks).
+        if (current && current !== r) paint(tl, current, false, t);
+        paint(tl, r, true, t);
+        current = r;
         tl.set(r.line, { autoAlpha: 1 }, t);
         drawOn(r.drawn, { duration: DRAW, each: 0, at: t })(tl);
-        tl.to(r.head, { autoAlpha: 1, duration: 0.15 }, t + DRAW - 0.1);
+        tl.to(r.head, { autoAlpha: 1, duration: 0.12 }, t + DRAW);
         tl.to(r.tag, { autoAlpha: 1, duration: 0.25 }, t + DRAW);
       };
     },

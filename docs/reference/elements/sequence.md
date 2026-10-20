@@ -51,4 +51,4 @@ Each method returns a step adder (`actors` is one itself): call it with the time
 
 ## `rowY`
 
-`rowY(i, n, rect)` gives the y of message `i` of `n`: rows are evenly spaced between 12 px below the actor heads (which are 64 px tall from `rect.y`) and the bottom of `rect`, each at the middle of its band.
+`rowY(i, n, rect)` gives the y of message `i` of `n`: rows are evenly spaced between 28 px below the actor heads (which are 64 px tall from `rect.y`) and the bottom of `rect`, each at the middle of its band.
