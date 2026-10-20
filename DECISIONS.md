@@ -102,3 +102,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: offline, a bare black box reads as a hole in the slide. The caption sits outside `data-k-ignore`, so the self-test checks its size.
 - **A background is one cover image per scene frame, in a layer under the SVG and HTML layers, visible from load; only its Ken Burns push is on the timeline.**
   - Why: one image over a wide canvas would show each scene a crop of it; a per-frame copy keeps camera moves correct. Visible from load, it crossfades in with its canvas instead of popping in after the transition.
+- **A full-frame picture's `show()` starts at its step's start, not after the camera move.** `appendStep` moves a `step` label to each step's start while it builds the step; `image()` reads it when it has no `at` and fills the scene frame (fit cover, no rect).
+  - Why: a cover that fades in after the camera lands leaves a bare frame for the whole flight. A rect'd image and the default renderer's media keep their old placement. The label is read at build time only, so play still equals seek.
+- **Text on a picture needs a scrim of 0.6 or more.**
+  - Why: theme text (`--k-fg`) over pure white under a black scrim of 0.55 measures about 4.0:1; 0.6 reaches 4.5:1. The e2e test checks it over a picture with white dots under the text.

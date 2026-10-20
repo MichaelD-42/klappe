@@ -57,6 +57,7 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
 - Shout (Task 5): a DOM query on `[data-k-shout=answer]` instead of the WeakMap would remove module state; the `back.out` overshoot is not checked visually.
 - Figure (Task 7): clearer arm swing (10 to 15 degrees), the seated figure needs a chair and arms, standing figures closer and the group larger at 1366; the pose mapping has no unit test.
 - Swarm and motion (Task 8): dots cross the Inbox label mid-flight; the landed pile is a uniform grey; morph text has low contrast mid-frame; no test of morph play-time start values; the swarm canvas is not re-rasterised on a deeper zoom.
+- Full-frame pictures: a flat scrim of 0.6 darkens the whole picture; a gradient scrim (dark only under the text) would keep more of it. `show()` finds its step's start through a `step` label that `appendStep` moves; pass the step start to step functions if more helpers need it. The TODO scan of `.ts` files is a regex: an `href` built at run time is not listed.
 - Media (Task 9): a `youtu.be` link with an empty id gives `/embed/undefined`; `youtube-nocookie` and `music.youtube` are not matched; the `EMBED_OK` allowlist lacks a negative test. Task 0: the media HTML wrapper has no opaque backdrop (the SVG one has).
 
 ## Demo deck
