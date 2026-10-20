@@ -6,7 +6,7 @@ import type { TransitionOpts } from "./transitions";
 // A boot line. { text: "MEMORY TEST: 640K OK", count: true } types its label, then counts up to the number.
 export type CrtLine = string | { text: string; count?: true };
 export interface CrtOpts {
-  color?: "green" | "amber" | "teal" | (string & {}); // default green; any other string is a CSS colour
+  color?: CrtColor; // default green; any other string is a CSS colour
   lines: CrtLine[];
   // Lines typed after READY., on the cursor row, one prompt() step each. Declared here so their DOM exists at build.
   prompts?: string[];
@@ -24,7 +24,10 @@ export interface CrtHandle {
   cursorAt(): { x: number; y: number };
 }
 
-const COLORS: Record<string, string> = { amber: "var(--k-phosphor-amber)", teal: "#009A9B" };
+const COLORS: Record<string, string> = { green: "var(--k-phosphor)", amber: "var(--k-phosphor-amber)", teal: "#009A9B" };
+export type CrtColor = "green" | "amber" | "teal" | (string & {});
+// The CSS colour for a crt colour option: a named one, else the string itself, else green.
+export const crtColor = (color?: CrtColor): string => (color ? (COLORS[color] ?? color) : COLORS.green);
 const CPS = 34; // typing speed, characters per second (the spike's value)
 const HUMAN_CPS = 8;
 const COUNT = 1.4; // seconds a count line counts up
@@ -110,7 +113,7 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
     if (l.count && !COUNTED.test(l.text))
       ctx.problem(`crt: count line "${l.text}" needs a label and a number with K, like "MEMORY TEST: 640K OK"`);
   const root = div(ctx.html, "k-retro");
-  if (opts.color && opts.color !== "green") root.style.setProperty("--k-crt", COLORS[opts.color] ?? opts.color);
+  if (opts.color && opts.color !== "green") root.style.setProperty("--k-crt", crtColor(opts.color));
   const screen = div(root, "k-crt-screen");
   const term = div(screen, "k-crt-term");
   // Rows: the lines, READY., the prompts and the cursor row. Columns: the longest line plus the typing cursor.
@@ -219,13 +222,15 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
 export function transitionCrt(
   from: CanvasRuntime,
   to: CanvasRuntime,
-  opts: TransitionOpts & { color?: "green" | "amber" },
+  opts: TransitionOpts & { color?: CrtColor },
 ): gsap.core.Timeline {
   const worlds = from.el.parentElement!;
   const stage = worlds.parentElement!;
-  const token = opts.color === "amber" ? "--k-phosphor-amber" : "--k-phosphor";
-  // GSAP tweens rgba, not var() or color-mix(), so the token is read and mixed here.
-  const [r, g, b] = gsap.utils.splitColor(getComputedStyle(stage).getPropertyValue(token).trim() || "#fff") as number[];
+  // GSAP tweens rgba, not var() or color-mix(), so the browser resolves the colour (a token, a name, hex) to rgb on a probe.
+  const probe = stage.appendChild(document.createElement("div"));
+  probe.style.color = crtColor(opts.color);
+  const [r, g, b] = gsap.utils.splitColor(getComputedStyle(probe).color || "#fff") as number[];
+  probe.remove();
   const mix = (c: number) => Math.round(c + (255 - c) * 0.7);
   const line = `${mix(r)}, ${mix(g)}, ${mix(b)}`; // the phosphor colour 70 % toward white
   const band = (w: number, a: number) =>
