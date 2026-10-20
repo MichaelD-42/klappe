@@ -4,4 +4,5 @@
 
 - The mesh forms out of a point.
 - The mood changes from calm to curious.
-- The mesh collapses to one pulsing dot.
+- A bubble appears beside the mesh and one below it.
+- The bubbles hide and the mesh collapses to one pulsing dot.

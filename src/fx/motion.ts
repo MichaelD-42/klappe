@@ -10,7 +10,8 @@ export interface BubbleOpts {
   x: number;
   y: number;
   text: string;
-  side: "left" | "right";
+  side?: "left" | "right" | "top" | "bottom"; // default right
+  maxWidth?: number; // px, default 640; the text wraps
 }
 export interface CounterOpts {
   x: number;
@@ -66,22 +67,34 @@ export function morph(ctx: Ctx, opts: MorphOpts): { play: StepAdder } {
   };
 }
 
-// A speech bubble whose tail points at (x, y), scene-local. side: where the bubble sits from that point.
+type Side = "left" | "right" | "top" | "bottom";
+// Where the bubble sits from its point (dx, dy, anchor percents) and which edge carries the tail.
+// left/right name where the bubble sits (as before); top/bottom name the tail's edge, so "top" sits below the point.
+export function bubbleLayout(side: Side) {
+  return {
+    right: { dx: TAIL, dy: 0, xPercent: 0, yPercent: -50, origin: "0% 50%", edge: "left", stroke: ["Left", "Bottom"] },
+    left: { dx: -TAIL, dy: 0, xPercent: -100, yPercent: -50, origin: "100% 50%", edge: "right", stroke: ["Top", "Right"] },
+    top: { dx: 0, dy: TAIL, xPercent: -50, yPercent: 0, origin: "50% 0%", edge: "top", stroke: ["Top", "Left"] },
+    bottom: { dx: 0, dy: -TAIL, xPercent: -50, yPercent: -100, origin: "50% 100%", edge: "bottom", stroke: ["Bottom", "Right"] },
+  }[side];
+}
+
+// A speech bubble whose tail points at (x, y), scene-local. side: see bubbleLayout. maxWidth: px, the text wraps.
 // hide takes an optional position, for example "<" to hide together with another bubble.
 export function bubble(
   ctx: Ctx,
   opts: BubbleOpts,
 ): { show: StepAdder; hide: (tl: gsap.core.Timeline, at?: gsap.Position) => void } {
-  const { x, y, text, side } = opts;
-  const right = side === "right";
+  const { x, y, text } = opts;
+  const L = bubbleLayout(opts.side ?? "right");
   const box = document.createElement("div");
   box.textContent = text;
   Object.assign(box.style, {
     position: "absolute",
-    left: `${x + (right ? TAIL : -TAIL)}px`,
-    top: `${y}px`,
+    left: `${x + L.dx}px`,
+    top: `${y + L.dy}px`,
     width: "max-content",
-    maxWidth: "640px",
+    maxWidth: `${opts.maxWidth ?? 640}px`,
     boxSizing: "border-box",
     padding: "20px 32px",
     borderRadius: "6px",
@@ -96,20 +109,22 @@ export function bubble(
   // The tail: a diamond with the stroke on its two outer sides; its inner half covers the box's stroke.
   const tail = document.createElement("div");
   const stroke = `${LINE}px solid var(--k-accent)`;
+  const across = L.edge === "left" || L.edge === "right" ? "top" : "left";
   Object.assign(tail.style, {
     position: "absolute",
-    top: `calc(50% - ${TAIL / 2}px)`,
-    [right ? "left" : "right"]: `${-TAIL / 2 - LINE / 2}px`,
+    [across]: `calc(50% - ${TAIL / 2}px)`,
+    [L.edge]: `${-TAIL / 2 - LINE / 2}px`,
     width: `${TAIL}px`,
     height: `${TAIL}px`,
     boxSizing: "border-box",
     background: "var(--k-bg)",
-    ...(right ? { borderLeft: stroke, borderBottom: stroke } : { borderTop: stroke, borderRight: stroke }),
+    [`border${L.stroke[0]}`]: stroke,
+    [`border${L.stroke[1]}`]: stroke,
     rotate: "45deg",
   });
   box.append(tail);
   ctx.html.append(box);
-  gsap.set(box, { xPercent: right ? 0 : -100, yPercent: -50, autoAlpha: 0, transformOrigin: right ? "0% 50%" : "100% 50%" });
+  gsap.set(box, { xPercent: L.xPercent, yPercent: L.yPercent, autoAlpha: 0, transformOrigin: L.origin });
   return {
     show(tl) {
       tl.fromTo(box, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)", immediateRender: false });

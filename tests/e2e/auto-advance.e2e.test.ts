@@ -47,3 +47,14 @@ test('a manual press during the wait advances exactly one step', async () => {
   expect(await index(page)).toBe(4)
   await page.close()
 })
+
+test('opening the overview during the wait cancels the auto advance', async () => {
+  const page = await open('#/b/two/1', 2)
+  await page.evaluate(() => window.klappe.stepper.next()) // plays two/2, then waits 1.5 s
+  expect(await index(page)).toBe(3)
+  await page.keyboard.press('o')
+  await page.waitForTimeout(2500) // past the 1.5 s timer
+  expect(await index(page)).toBe(3)
+  expect(await page.evaluate(() => window.klappe.overview.isOpen)).toBe(true)
+  await page.close()
+})

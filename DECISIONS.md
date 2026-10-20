@@ -171,3 +171,12 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **`countdown` runs on `gsap.ticker` like `mesh3d`: root `data-k-ignore`, no update while hidden, `destroy()`. A `minutes` count starts on the first visible frame.**
   - Why: the time left depends on the wall clock, not on the timeline, so play and seek cannot agree on it. There is no step-enter hook, so the first visible frame stands in for "the step showed it". A hidden countdown does not start.
   - `remaining(nowMs, target)` is a pure function for the unit test. It rounds a part second up, so `0:00` shows only when the time is over, then holds there.
+
+## 2026-10-20 (bubble layout, mesh3d idle, panels stop auto)
+
+- **`bubble` takes `maxWidth` and the vertical sides `top` and `bottom`. `left` and `right` keep their old meaning (where the bubble sits). `top` and `bottom` name the edge with the tail, so `top` puts the bubble below the point.**
+  - Why: the deck plan asks for "side top: the tail on the top edge", and old callers must keep working. The mixed meaning is the cost; `bubbleLayout` holds the table.
+- **`mesh3d` reads no computed style per frame. A `visible` flag, set from the progress of the `show` and `hide` tweens, and `form` gate the draw.**
+  - Why: a style read each frame on every mesh cost layout work while idle. The flag follows seeks, because it comes from tween progress. Limit: it does not see a hidden canvas, so a shown mesh on another canvas keeps drawing.
+- **Opening the overview or the section list cancels a pending `auto` advance.**
+  - Why: the deck must not move under an open panel. Limit: a panel opened while the step still plays does not stop the wait that starts after the play.

@@ -124,12 +124,13 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
   let a = 0.6; // a tilted start pose, also the frozen pose under reduced motion
   let b = 0.4;
   let last = "";
+  // Set from show/hide tween progress only (a seek lands right); no style read per frame.
+  // shortcut: a mesh on a canvas the stepper hid keeps drawing; hide() it on scene exit if that costs.
+  let visible = dotStart;
 
   const draw = () => {
     if (!c2d) return;
-    const cs = getComputedStyle(canvas);
-    // Hidden (own autoAlpha or a hidden canvas above) or nothing to draw: cost one style read.
-    if (cs.visibility === "hidden" || cs.opacity === "0" || (!dotStart && st.form === 0)) return;
+    if (!visible || (!dotStart && st.form === 0)) return;
     const sig = `${st.form}|${st.collapse}|${st.r}|${st.g}|${st.b}`;
     if (reduced && sig === last) return;
     last = sig;
@@ -198,10 +199,20 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
       const fx = !dotStart && o.from ? o.from.x - x : 0;
       const fy = !dotStart && o.from ? o.from.y - y : 0;
       tl.set(canvas, { autoAlpha: 1 }, at);
-      tl.fromTo(st, { form: 0, fx, fy }, { form: 1, fx, fy, duration: motion.camera, ease: "power2.out", immediateRender: false }, "<");
+      tl.fromTo(st, { form: 0, fx, fy }, {
+        form: 1, fx, fy, duration: motion.camera, ease: "power2.out", immediateRender: false,
+        onUpdate(this: gsap.core.Tween) {
+          visible = dotStart || this.progress() > 0;
+        },
+      }, "<");
     },
     hide(tl, at) {
-      tl.fromTo(canvas, { autoAlpha: 1 }, { autoAlpha: 0, duration: motion.step, immediateRender: false }, at);
+      tl.fromTo(canvas, { autoAlpha: 1 }, {
+        autoAlpha: 0, duration: motion.step, immediateRender: false,
+        onUpdate(this: gsap.core.Tween) {
+          visible = this.progress() < 1;
+        },
+      }, at);
     },
     mood(tl, name, at) {
       const next = MOODS[name];

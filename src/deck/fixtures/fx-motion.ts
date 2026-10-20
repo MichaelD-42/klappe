@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { bubble, counter, morph } from "klappe/fx";
+import { bubble, counter, mesh3d, morph } from "klappe/fx";
 import type { Ctx, SceneModule } from "../../types";
 import { assembleDeck } from "../assemble";
 
@@ -106,6 +106,23 @@ const counts: SceneModule = {
   ],
 };
 
+// A mesh with a wrapped bubble beside it and a bubble below it (tail on its top edge).
+const wrap: SceneModule = {
+  build(ctx) {
+    return {
+      h: heading(ctx, "Bubble layout"),
+      m: mesh3d(ctx, { x: 760, y: 440, size: 360 }),
+      beside: bubble(ctx, { x: 960, y: 440, maxWidth: 400, side: "right", text: "A wrapped bubble beside the mesh, at most 400 px wide." }),
+      below: bubble(ctx, { x: 760, y: 640, side: "top", text: "A bubble below the mesh." }),
+    };
+  },
+  steps: [
+    (tl, { h, m }) => (tl.to(h, { autoAlpha: 1, duration: 0.6 }), m.show(tl)),
+    (tl, { beside }) => beside.show(tl),
+    (tl, { below }) => below.show(tl),
+  ],
+};
+
 const md = (title: string, steps: string[]) => `## ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
 
 export default () =>
@@ -117,11 +134,13 @@ export default () =>
       "sections/10-a/20-shapes/scene.md": md("Shapes", ["Show the square.", "It becomes a circle."]),
       "sections/10-a/30-talk/scene.md": md("Talk", ["Show the speakers.", "Question.", "Answer.", "Both hide."]),
       "sections/10-a/40-counts/scene.md": md("Counts", ["Questions shrink to zero.", "Documents count up."]),
+      "sections/10-a/50-wrap/scene.md": md("Wrap", ["Show the mesh.", "A bubble beside it.", "A bubble below it."]),
     },
     {
       "sections/10-a/10-chain/scene.ts": chain,
       "sections/10-a/20-shapes/scene.ts": shapes,
       "sections/10-a/30-talk/scene.ts": talk,
       "sections/10-a/40-counts/scene.ts": counts,
+      "sections/10-a/50-wrap/scene.ts": wrap,
     },
   );

@@ -50,6 +50,42 @@ test('each counter shows from before its step and to after it', async () => {
   await page.close()
 })
 
+test('bubble maxWidth wraps the text; side top puts the tail on the top edge', async () => {
+  const page = await open('?fixture=fx-motion#/a/wrap/3')
+  const r = await page.evaluate(() => {
+    const find = (t: string) => [...document.querySelectorAll<HTMLElement>('div')].find((d) => d.firstChild?.textContent?.startsWith(t))!
+    const beside = find('A wrapped').getBoundingClientRect()
+    const below = find('A bubble below')
+    const b = below.getBoundingClientRect()
+    const t = below.firstElementChild!.getBoundingClientRect()
+    return { w: beside.width, h: beside.height, tailY: t.top + t.height / 2 - b.top, tailX: t.left + t.width / 2 - (b.left + b.width / 2) }
+  })
+  expect(r.w).toBeLessThanOrEqual(400)
+  expect(r.h).toBeGreaterThan(120) // wrapped onto more than one line
+  expect(Math.abs(r.tailY)).toBeLessThan(3)
+  expect(Math.abs(r.tailX)).toBeLessThan(3)
+  await page.close()
+})
+
+test('a shown mesh3d does not read computed style per frame', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const gcs = window.getComputedStyle
+    ;(window as any).canvasReads = 0
+    window.getComputedStyle = function (e: Element, p?: string | null) {
+      if (e instanceof HTMLCanvasElement) (window as any).canvasReads++
+      return gcs.call(window, e, p)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.waitForTimeout(300)
+  await page.evaluate(() => ((window as any).canvasReads = 0))
+  await page.waitForTimeout(500)
+  expect(await page.evaluate(() => (window as any).canvasReads)).toBe(0)
+  await page.close()
+})
+
 test('morph keeps a transform the author set', async () => {
   const page = await open('?fixture=fx-motion#/a/shapes/1')
   const placed = () => page.evaluate(() => document.querySelector('rect')!.getBoundingClientRect().toJSON())
