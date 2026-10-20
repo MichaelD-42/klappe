@@ -24,6 +24,7 @@ describe("theme", () => {
       for (const bg of ["--k-bg", "--k-surface"])
         for (const fg of ["--k-fg", "--k-muted"]) expect(contrast(t[fg], t[bg]), `${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t["--k-accent"], t["--k-bg"])).toBeGreaterThanOrEqual(3);
+      expect(contrast(t["--k-line"], t["--k-bg"])).toBeGreaterThanOrEqual(3);
     });
   }
   it("bold defines every calm token", () => {

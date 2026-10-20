@@ -52,5 +52,6 @@ At load, the resolved theme is measured on the real page. A failure is a deck pr
 
 - `--k-fg` and `--k-muted` on `--k-bg` and on `--k-surface`: at least 4.5:1.
 - `--k-accent` on `--k-bg` and on `--k-surface`: at least 3:1.
+- `--k-line` on `--k-bg`: at least 3:1 (non-text contrast), and dimmer than `--k-muted`.
 
 The design rules apply to theme files too: no cream or off-white backgrounds. Effects in `src/fx/` take every colour from these tokens, so a theme restyles them all.

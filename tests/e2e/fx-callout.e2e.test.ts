@@ -17,8 +17,8 @@ for (const vp of [
   test(`walk: play equals seek and callouts stay in frame at ${vp.w}x${vp.h}`, async () => {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-callout`, vp)
     expect(r.errors).toEqual([])
-    // The walk's own legibility check sees the same label outside the stage; that is the only failure.
-    expect(r.checks.filter((c) => !c.ok).map((c) => c.name.replace(/\/\d+: /, ': '))).toEqual(['step #/a/far: legible'])
+    // The label that does not fit is not drawn, so the walk finds nothing out of the stage.
+    expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual(['callout: "Out of the frame" does not fit the frame on side left'])
   })
 

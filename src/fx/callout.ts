@@ -55,7 +55,7 @@ export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
       label.setAttribute("data-k-callout", "");
       Object.assign(label.style, {
         position: "absolute", left: "0", top: "0", width: "max-content", maxWidth: "520px", boxSizing: "border-box",
-        padding: "14px 22px", borderRadius: "12px", background: "var(--k-surface)", color: "var(--k-fg)",
+        padding: "14px 22px", borderRadius: "12px", background: "var(--k-surface)", border: "2px solid var(--k-accent)", color: "var(--k-fg)",
         font: "600 32px/1.25 var(--k-font)", zIndex: "4",
       });
       const span = label.appendChild(document.createElement("span"));
@@ -65,13 +65,15 @@ export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
       Object.assign(label.style, { left: `${pos.x}px`, top: `${pos.y}px` });
       gsap.set(label, { autoAlpha: 0 });
       gsap.set(span, { opacity: 0 });
-      if (pos.x < 0 || pos.y < 0 || pos.x + label.offsetWidth > ctx.rect.w || pos.y + label.offsetHeight > ctx.rect.h)
-        ctx.problem(`callout: "${text}" does not fit the frame on side ${side}`);
+      if (pos.x < 0 || pos.y < 0 || pos.x + label.offsetWidth > ctx.rect.w || pos.y + label.offsetHeight > ctx.rect.h) {
+        label.remove(); // nothing half-drawn reaches the audience
+        return ctx.problem(`callout: "${text}" does not fit the frame on side ${side}`);
+      }
 
       const line = document.createElementNS(SVG, "line");
       line.setAttribute("data-k-callout", "");
       for (const [k, v] of Object.entries({ x1: from.x, y1: from.y, x2: to.x, y2: to.y })) line.setAttribute(k, String(v));
-      Object.assign(line.style, { stroke: "var(--k-line)", strokeWidth: "3", strokeLinecap: "round" });
+      Object.assign(line.style, { stroke: "var(--k-accent)", strokeWidth: "3", strokeLinecap: "round" });
       ctx.svg.append(line);
 
       drawOn(line, { duration: 0.5 })(tl);

@@ -2,7 +2,7 @@
 
 Points at a part of a scene: a leader line draws from the target to a label box, then the label's text fades in. Works on code lines, any HTML or SVG element, or a plain point.
 
-Gallery: section `160-callout` (`#/callout/code/1` and `#/callout/point/1`).
+Gallery: section `160-callout` (`#/callout/code/2` and `#/callout/point/1`).
 
 ## `callout`
 
@@ -36,13 +36,13 @@ export default captioned("callout() — a leader line draws on, then the label a
 
 | Handle | Step |
 | --- | --- |
-| `show` | the leader draws on from the target edge (`--k-line`), the label box (`--k-surface`) fades in, then its text |
+| `show` | the leader draws on from the target edge (`--k-accent`), the label box (`--k-surface`, 2px `--k-accent` border) fades in, then its text |
 
 ### Limits
 
 - Coordinates are scene-local, like `ctx.svg` and `ctx.html`. The target is measured when `show` is added, as a ratio of its rect to the scene's, so the camera does not matter. The target must have a size and be laid out then; if not, the deck shows `callout: target of "<text>" has no size to measure` and nothing draws.
-- The label is 32 px text, up to 520 units wide. If it would leave the frame, the deck shows `callout: "<text>" does not fit the frame on side <side>`; the label is not moved. Pick another `side` or a smaller `offset`.
-- A target that moves after `show` (a code `diff`) leaves the leader where it was.
+- The label is 32 px text, up to 520 units wide. If it would leave the frame, the deck shows `callout: "<text>" does not fit the frame on side <side>`; nothing is drawn and the label is not moved. Pick another `side` or a smaller `offset`.
+- The target must be laid out and in its final position when `show` is added: no earlier step may move, scale or jump it. After a code `diff`, both the leader and the label stay where they were.
 
 ## `anchor`
 

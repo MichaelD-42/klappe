@@ -50,6 +50,7 @@ const CHECKS: [string, string, number][] = [
   ["--k-muted", "--k-surface", 4.5],
   ["--k-accent", "--k-bg", 3],
   ["--k-accent", "--k-surface", 3],
+  ["--k-line", "--k-bg", 3],
 ];
 
 /** Injects calm, then the chosen theme (after it, so missing tokens fall back), and returns problems. */
