@@ -5,7 +5,8 @@ export * from "./draw";
 export * from "./figure";
 export * from "./icons";
 export * from "./map";
-export * from "./media";
+// Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
+export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
 export * from "./motion";
 export * from "./shatter";
 export * from "./shout";

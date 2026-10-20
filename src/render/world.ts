@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { KEN_BURNS, STEP_LABEL, chart, image, shout, video, type ImageHandle } from "../fx";
+import { chart, image, shout, video } from "../fx";
+import { KEN_BURNS, STEP_LABEL, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { motion } from "../theme";
