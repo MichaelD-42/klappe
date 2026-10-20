@@ -6,7 +6,7 @@ import { syncClaude } from './sync-claude.mjs'
 
 const klappeDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const [cmd, ...rest] = process.argv.slice(2)
-const i = rest.indexOf('--deck')
+const i = rest.lastIndexOf('--deck') // the last one wins, so `npm run dev -- --deck x` overrides the script's
 const decksDir = path.join(process.cwd(), 'decks')
 
 if (!['dev', 'build', 'test', 'init'].includes(cmd)) {
