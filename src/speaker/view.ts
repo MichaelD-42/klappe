@@ -47,9 +47,9 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const side = el("aside", "k-sp-side");
   const time = el("p", "k-sp-time", clock(0));
   const next = el("p", "k-sp-next");
-  const send = (cmd: "next" | "prev" | "goto", i?: number) => channel.send({ t: "cmd", cmd, index: i });
+  const send = (cmd: "next" | "prev" | "goto" | "timer", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
-  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")));
+  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), button(t("timer", lang), () => send("timer")));
   side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, el("h2", "k-sp-label", t("upNext", lang)), next, buttons);
   view.append(now, side);
   root.append(view);
@@ -74,7 +74,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
 
   addEventListener("keydown", (e) => {
     const a = keyAction(e);
-    if (a === "next" || a === "prev") send(a);
+    if (a === "next" || a === "prev" || a === "timer") send(a);
     else if (a === "home") send("goto", 0);
     else if (a === "end") send("goto", steps.length - 1);
     else return;

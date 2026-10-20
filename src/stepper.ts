@@ -100,9 +100,9 @@ export class Stepper {
 
     this.i = i;
     this.emit("step", to);
-    // Helpers (video) hear every move: the step's time span on its own canvas, null on the others.
+    // Helpers (video, timer) hear every move: the step's time span on its own canvas, null on the others, and its scene.
     const span: [number, number] = [typeof prev === "number" ? prev : c.tl.labels[prev], c.tl.labels[label]];
-    this.canvases.forEach((cv, k) => this.call("step", cv.stepListeners, { play, span: k === to.canvas ? span : null }));
+    this.canvases.forEach((cv, k) => this.call("step", cv.stepListeners, { play, span: k === to.canvas ? span : null, scene: to.scene }));
     const anims: gsap.core.Animation[] = [];
     let after = 0; // the step waits for a long transition (or its "reveal" label); cut and fade keep M1 timing
     if (from?.canvas !== to.canvas) {

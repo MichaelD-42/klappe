@@ -11,6 +11,7 @@ export const strings = {
     notes: "Notes",
     elapsed: "Elapsed",
     problems: "Deck problems",
+    timer: "Timer",
     // Effect UI words (src/fx and the default media slot).
     dataMissing: "DATA MISSING",
     dataError: "DATA ERROR",
@@ -26,6 +27,8 @@ export const strings = {
     total: "Total",
     increase: "Increase",
     decrease: "Decrease",
+    timesUp: "Time's up",
+    pressT: "Press T to start",
   },
 };
 

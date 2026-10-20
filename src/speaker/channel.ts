@@ -1,6 +1,6 @@
 export type Msg =
   | { t: "state"; index: number }
-  | { t: "cmd"; cmd: "next" | "prev" | "goto"; index?: number }
+  | { t: "cmd"; cmd: "next" | "prev" | "goto" | "timer"; index?: number }
   | { t: "hello" };
 
 export interface Channel {
@@ -15,7 +15,7 @@ export function isMsg(x: unknown): x is Msg {
   const m = x as Record<string, unknown>;
   if (m.t === "hello") return true;
   if (m.t === "state") return isIndex(m.index);
-  if (m.t === "cmd") return m.cmd === "next" || m.cmd === "prev" || (m.cmd === "goto" && isIndex(m.index));
+  if (m.t === "cmd") return m.cmd === "next" || m.cmd === "prev" || m.cmd === "timer" || (m.cmd === "goto" && isIndex(m.index));
   return false;
 }
 

@@ -3,8 +3,9 @@ import MarkdownIt from "markdown-it";
 const md = new MarkdownIt();
 
 export interface Block {
-  type: "h1" | "h2" | "h3" | "paragraph" | "item" | "quote";
+  type: "h1" | "h2" | "h3" | "paragraph" | "item" | "quote" | "fence";
   text: string;
+  info?: string; // a fence's info string: "ts {1-2|4}"
 }
 
 const clean = (s: string) => s.replace(/\r/g, "").trim();
@@ -16,6 +17,11 @@ export function blocks(src: string): Block[] {
   let i = 0;
   while (i < toks.length) {
     const t = toks[i];
+    if (t.type === "fence" && t.level === 0) {
+      out.push({ type: "fence", text: t.content, info: t.info });
+      i++;
+      continue;
+    }
     if (t.level !== 0 || t.nesting !== 1) {
       i++;
       continue;

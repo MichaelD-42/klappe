@@ -4,6 +4,7 @@ import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
 import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
+import { loadHighlighter } from "./fx/code";
 import { renderWorld } from "./render/world";
 import { runSelftestIfAsked } from "./selftest";
 import { Router } from "./router";
@@ -30,7 +31,10 @@ if (query.get("speaker") === "1") {
   applyTheme(deck, query.get("theme")); // tokens only; the speaker page shows no problems
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
-} else startDeck();
+} else {
+  await loadHighlighter(); // code() highlights synchronously at build time
+  startDeck();
+}
 
 function startDeck() {
   const { stage, ui, worlds } = mountStage(document.body);
@@ -60,13 +64,16 @@ function startDeck() {
       window.open(url, `klappe-speaker:${deck.meta.title}`, "popup,width=1280,height=800");
     },
   };
-  bindInput(stepper, { overview, selector, speaker, autoplay }, stage, steps.length - 1);
+  // Starts or pauses the current scene's timer; a scene without one ignores it.
+  const timer = () => document.dispatchEvent(new CustomEvent("klappe:timer"));
+  bindInput(stepper, { overview, selector, speaker, autoplay, timer }, stage, steps.length - 1);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   stepper.on("step", (a: StepAddr) => channel.send({ t: "state", index: a.index }));
   channel.on((m) => {
     if (m.t === "hello" && stepper.index >= 0) channel.send({ t: "state", index: stepper.index });
     if (m.t !== "cmd") return;
+    if (m.cmd === "timer") return timer();
     autoplay.stop();
     if (m.cmd === "next") stepper.next();
     else if (m.cmd === "prev") stepper.prev();

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { chart, image, shout, video } from "../fx";
+import { agenda, chart, checklist, code, image, shout, terminal, video } from "../fx";
+import { LANGS } from "../fx/code";
 import { KEN_BURNS, STEP_LABEL, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
@@ -45,6 +46,10 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
 const notBuilt = (e: unknown) => e instanceof Error && e.message.endsWith(": not built yet");
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+// A code fence in a language Shiki does not bundle still shows, as plain text.
+export const fenceProblem = (lang: string) =>
+  lang && lang !== "console" && !LANGS.includes(lang) ? `language "${lang}" not bundled; shown plain` : null;
+
 // The media effect for a step: image, video, or chart from data/. The chart reads and checks the file
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
@@ -59,17 +64,71 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
 }
 
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
-// Shout-outs use the shout effect. With media steps, the text takes the left column and the media the right.
+// Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
+// media, code or terminal the right. Task-list items build one checklist, a time-range list an agenda.
 // Returns the title and the steps an effect plays, by step number.
 function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
   const { html, rect } = ctx;
   const fx = new Map<number, StepAdder>();
   const shown: Element[] = [];
   const add = <E extends Element>(parent: Element, e: E) => (parent.append(e), shown.push(e), e);
-  const hasMedia = scene.steps.some((s) => s.media);
+  const fence = scene.fence;
+  const hasMedia = scene.steps.some((s) => s.media) || !!fence;
   const col = hasMedia ? html.appendChild(el("div", "")) : html;
   if (hasMedia) col.style.width = "45%";
   const slot: Rect = { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
+  // An effect that throws (a stub: not built yet) leaves a dashed EFFECT MISSING box in its place and a problem.
+  const missing = (parent: Element, at: Rect, where: string, name: string, e: unknown): StepAdder => {
+    if (!notBuilt(e)) console.error(`${where}: ${name}: ${message(e)}`);
+    const label = `${t("effectMissing", meta.lang)}: ${name}`;
+    ctx.problem(`${where}: ${label} (${message(e)})`);
+    const box = add(parent, el("div", "", label));
+    Object.assign(box.style, {
+      position: "absolute",
+      left: `${at.x}px`,
+      top: `${at.y}px`,
+      width: `${at.w}px`,
+      height: `${at.h}px`,
+      boxSizing: "border-box",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      border: "4px dashed var(--k-accent)",
+      background: "var(--k-bg)",
+      color: "var(--k-accent)",
+      fontSize: "48px",
+      fontWeight: "700",
+    });
+    return (tl) => tl.to(box, { autoAlpha: 1, duration: motion.step });
+  };
+  // Builds the effect for a Markdown part, with problems that say where: its handle h, or miss when it throws.
+  const part = <T>(n: number, name: string, at: Rect, make: (c: Ctx) => T): { h?: T; miss?: StepAdder } => {
+    const where = `${scene.source} step ${n}`;
+    try {
+      return { h: make({ ...ctx, problem: (msg) => ctx.problem(`${where}: ${msg}`) }) };
+    } catch (e) {
+      return { miss: missing(html, at, where, name, e) };
+    }
+  };
+  const lists: Rect = { x: rect.w * 0.083, y: rect.h * 0.28, w: rect.w * (hasMedia ? 0.37 : 0.83), h: rect.h * 0.6 };
+  const firstOf = (kind: string) => scene.steps.findIndex((s) => s.part?.kind === kind) + 1;
+  if (fence) {
+    const lang = fenceProblem(fence.lang);
+    if (lang) ctx.problem(`${scene.source}: ${lang}`);
+  }
+  // The code or terminal in the slot, built once at the scene's first code or console step.
+  const term = fence?.lang === "console";
+  const fenceN = firstOf(term ? "console" : "code");
+  const codeFx = fence && fenceN && !term ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
+  const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => terminal(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
+  // One checklist from all check items; one agenda per agenda step.
+  const checks = scene.steps.filter((s) => s.part?.kind === "check");
+  const checkN = firstOf("check");
+  const list = checkN
+    ? part(checkN, "checklist", lists, (c) =>
+        checklist(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
+      )
+    : undefined;
   const title = add(col, el("h2", "", scene.title));
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
@@ -86,8 +145,30 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       }
     }
     if (s.kind === "shout-hold" || s.kind === "shout-fade") return;
+    const pt = s.part;
+    if (pt?.kind === "check" && list) {
+      const k = checks.indexOf(s);
+      return fx.set(n, (tl) => {
+        if (n === checkN) (list.h?.show ?? list.miss!)(tl);
+        list.h?.tick(k)(tl);
+      });
+    }
+    if (pt?.kind === "agenda") {
+      const current = pt.rows.find((r) => r.current)?.title;
+      const a = part(n, "agenda", lists, (c) => agenda(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
+      return fx.set(n, (a.h?.show ?? a.miss)!);
+    }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
     p.dataset.step = String(n);
+    const fenced = codeFx ?? termFx;
+    if ((pt?.kind === "code" || pt?.kind === "console") && fenced) {
+      return fx.set(n, (tl) => {
+        tl.to(p, { autoAlpha: 1, duration: motion.step });
+        if (n === fenceN) (fenced.h?.show ?? fenced.miss!)(tl);
+        if (pt.kind === "code") codeFx?.h?.focus(fence!.groups[pt.group])(tl);
+        else termFx?.h?.run(pt.command)(tl);
+      });
+    }
     if (!s.media) return;
     // Each media step builds in its own wrapper: a full-scene div and an SVG group with an opaque
     // backdrop under the slot. Coordinates stay scene-local.
@@ -108,27 +189,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       const problem = (msg: string) => ctx.problem(`${scene.source} step ${n}: ${msg}`);
       show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot);
     } catch (e) {
-      if (!notBuilt(e)) console.error(`${scene.source} step ${n}: ${s.media.kind}: ${message(e)}`);
-      const label = `${t("effectMissing", meta.lang)}: ${s.media.kind}`;
-      ctx.problem(`${scene.source} step ${n}: ${label} (${message(e)})`);
-      const box = add(wrap, el("div", "", label));
-      Object.assign(box.style, {
-        position: "absolute",
-        left: `${slot.x}px`,
-        top: `${slot.y}px`,
-        width: `${slot.w}px`,
-        height: `${slot.h}px`,
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        border: "4px dashed var(--k-accent)",
-        background: "var(--k-bg)",
-        color: "var(--k-accent)",
-        fontSize: "48px",
-        fontWeight: "700",
-      });
-      show = (tl) => tl.to(box, { autoAlpha: 1, duration: motion.step });
+      show = missing(wrap, slot, `${scene.source} step ${n}`, s.media.kind, e);
     }
     fx.set(n, (tl) => {
       tl.to(p, { autoAlpha: 1, duration: motion.step });
@@ -263,7 +324,7 @@ export function renderWorld(
     const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene");
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);
