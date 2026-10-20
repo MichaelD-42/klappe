@@ -21,6 +21,8 @@ export default defineConfig({
           globalSetup: ['tests/e2e/setup.ts'],
           testTimeout: 120_000,
           hookTimeout: 120_000,
+          // Each file drives its own browser; more at once timed out tests on a busy machine.
+          maxWorkers: 6,
         },
       },
     ],
