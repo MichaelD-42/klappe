@@ -66,7 +66,6 @@ export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
 export interface Background {
   href: string;
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
-
   scrim?: number;
   kenBurns?: boolean;
 }
