@@ -6,6 +6,8 @@ import { captioned } from "../../../caption";
 const FULL: Rect = { x: 0, y: 0, w: 1920, h: 1080 };
 const FROM: Rect = { x: 160, y: 380, w: 400, h: 520 }; // ends above the caption strip at y 960
 const TO: Rect = { x: 1360, y: 440, w: 400, h: 400 };
+// The pile lands inside the Analysis box, below its label: an inset that keeps the 14 px dots off the border.
+const PILE: Rect = { x: TO.x + 24, y: TO.y + 90, w: TO.w - 48, h: TO.h - 114 };
 
 // A labelled outline for an area, hidden until step 1.
 function area(r: Rect, label: string): HTMLElement {
@@ -21,7 +23,7 @@ function area(r: Rect, label: string): HTMLElement {
 // The default 2000 seeded points stream from the inbox into analysis.
 export default captioned("swarm() — seeded dots stream from one area to another: stream", {
   build(ctx) {
-    const s = swarm(ctx, { rect: FULL, from: FROM, to: TO, seed: 1 }); // first, so the labels sit above the canvas
+    const s = swarm(ctx, { rect: FULL, from: FROM, to: PILE, seed: 1 }); // first, so the labels sit above the canvas
     const boxes = [area(FROM, "Inbox"), area(TO, "Analysis")];
     ctx.html.append(...boxes);
     gsap.set(boxes, { autoAlpha: 0 });

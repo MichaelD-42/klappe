@@ -1,6 +1,6 @@
-## shout(), bold
+## Shout-out, bold
 
-> Use bold for a training or a kick-off: a question that should hit hard.
+> Use a bold shout-out for a training or a kick-off: a question that should hit hard.
 
 ### Who owns the release?
 

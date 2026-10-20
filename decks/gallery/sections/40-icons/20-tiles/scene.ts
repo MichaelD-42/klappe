@@ -3,7 +3,7 @@ import { captioned } from "../../../caption";
 import { row } from "../section";
 
 // Each tone form: a bare token name and a full custom property.
-export default captioned('iconTile(ctx, name, { tone: "accent" }) — an icon on a tile, in a theme colour', {
+export default captioned('iconTile(ctx, name, { tone: "accent" }) — an icon on a tile, in a theme color', {
   build: (ctx) => [
     iconTile(ctx, "lightbulb", { x: 300, y: 500, tone: "accent" }),
     iconTile(ctx, "cpu", { x: 600, y: 500, size: 160, tone: "--k-phosphor" }),

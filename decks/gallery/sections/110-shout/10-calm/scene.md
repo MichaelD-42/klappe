@@ -1,6 +1,6 @@
-## shout(), calm
+## Shout-out, calm
 
-> Use calm for a board audience: one question to think about, no drama.
+> Use a calm shout-out for a board audience: one question to think about, no drama.
 
 ### Who owns the release?
 

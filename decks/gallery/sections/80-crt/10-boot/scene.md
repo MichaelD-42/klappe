@@ -1,6 +1,6 @@
-## crt()
+## Old screen
 
-> Use it to open a story in the past: an old screen boots, then the new world loads.
+> Use an old screen to open a story in the past: it boots, then the new world loads.
 
 - Power on.
 - Banner.

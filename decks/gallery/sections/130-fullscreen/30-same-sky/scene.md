@@ -1,5 +1,6 @@
 ## The same picture, next scene
 
-- The camera moves on; the section background is behind this scene too.
+> Use one section background for a run of text scenes; plain scene.md text is enough.
 
-> Plain scene.md text sits on top; no scene.ts needed.
+- scene.md text only, no scene.ts — the section background stays behind the next scene
+- The camera moves on; the picture stays still behind the text.
