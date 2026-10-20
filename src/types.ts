@@ -92,6 +92,8 @@ export interface SceneModule {
   place?(rects: Record<string, Rect>): Rect;
   build?(ctx: Ctx): any;
   steps?: (StepFn | null)[];
+  // Seconds to wait after a step's live forward play, then advance by itself. Lines up with steps. null: wait for input.
+  auto?: (number | null)[];
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
@@ -134,6 +136,7 @@ export interface StepAddr {
   section: string;
   scene: string;
   step: number;
+  auto?: number | null; // from SceneModule.auto
 }
 export interface SelftestCheck {
   name: string;

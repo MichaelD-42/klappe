@@ -17,11 +17,18 @@ export function planMove(
   return { kind: "seek", transition: "cut" };
 }
 
+// ms to wait before a step advances by itself: only after a live forward play, and only for a finite auto >= 0.
+export function autoDelay(to: StepAddr, play: boolean): number | null {
+  const s = to.auto;
+  return play && typeof s === "number" && Number.isFinite(s) && s >= 0 ? s * 1000 : null;
+}
+
 export class Stepper {
   private i = -1;
   private queue: Promise<void> = Promise.resolve();
   private running: gsap.core.Animation[] = [];
   private pending = 0;
+  private autoTimer: ReturnType<typeof setTimeout> | undefined;
   private fns = new Map<Ev, ((data: any) => void)[]>();
 
   constructor(
@@ -41,12 +48,18 @@ export class Stepper {
 
   // Back to "nothing shown yet", like a fresh page load. Call only when no move is queued.
   reset(): void {
+    this.cancelAuto();
     this.i = -1;
     this.running = [];
   }
 
   on(ev: Ev, fn: (data: any) => void): void {
     this.fns.set(ev, [...(this.fns.get(ev) ?? []), fn]);
+  }
+
+  // Drops a pending auto advance. Every move calls it, so a press during the wait advances once.
+  cancelAuto(): void {
+    clearTimeout(this.autoTimer);
   }
 
   goto(i: number, how: How): Promise<void> {
@@ -62,6 +75,7 @@ export class Stepper {
   // Review focus 2: finish what is playing, then run moves one at a time.
   // The target is read when the move runs, so fast presses each advance exactly once.
   private enqueue(target: () => number, how: How): Promise<void> {
+    this.cancelAuto();
     for (const a of this.running) a.progress(1);
     this.pending++;
     const run = this.queue.then(() => {
@@ -135,5 +149,7 @@ export class Stepper {
     this.running = anims;
     await Promise.all(anims);
     this.running = [];
+    const ms = autoDelay(to, play);
+    if (ms !== null && !this.pending) this.autoTimer = setTimeout(() => this.next(), ms);
   }
 }

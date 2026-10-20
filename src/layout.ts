@@ -58,7 +58,7 @@ export function buildStepList(deck: Deck, canvases: CanvasLayout[]): StepAddr[] 
   for (const s of deck.sections) {
     const canvas = canvases.findIndex((c) => c.sectionIds.includes(s.id));
     for (const sc of s.scenes)
-      sc.steps.forEach((_, i) => out.push({ index: out.length, canvas, section: s.id, scene: sc.id, step: i + 1 }));
+      sc.steps.forEach((_, i) => out.push({ index: out.length, canvas, section: s.id, scene: sc.id, step: i + 1, auto: sc.module?.auto?.[i] }));
   }
   return out;
 }

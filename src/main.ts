@@ -8,7 +8,7 @@ import { loadHighlighter } from "./fx/code";
 import { renderWorld } from "./render/world";
 import { runSelftestIfAsked } from "./selftest";
 import { Router } from "./router";
-import { Stepper } from "./stepper";
+import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
@@ -47,7 +47,7 @@ function startDeck() {
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
-  const autoplay = new Autoplay(stepper, () => motion.autoHoldMs);
+  const autoplay = new Autoplay(stepper, (a) => autoDelay(a, true) ?? motion.autoHoldMs);
   // Every manual jump (selector, overview, speaker, history) stops auto-play.
   const go = (i: number) => {
     autoplay.stop();
