@@ -108,6 +108,21 @@ test('video boxes are 16:9 inside the slot, framed, with the title as a caption'
   await page.close()
 })
 
+test('offline, a video shows its fallback image and caption; one without a fallback is a deck problem', async () => {
+  const page = await open('?fixture=fx-media&offline=1#/a/youtube/2')
+  const r = await page.evaluate(() => {
+    const m = document.querySelector('[data-scene$="youtube"] div[data-k-media]')!
+    const img = m.querySelector('img')
+    return { img: img?.getAttribute('src'), shown: img?.checkVisibility({ opacityProperty: true, visibilityProperty: true }), iframe: !!m.querySelector('iframe'), text: m.textContent }
+  })
+  expect(r).toMatchObject({ shown: true, iframe: false, text: 'Video needs a network connection' })
+  expect(r.img).toMatch(/^data:image/)
+  const problems: string[] = await page.evaluate(() => window.klappe.problems)
+  expect(problems.some((p) => p.includes('vimeo') && p.includes('Video needs a network connection'))).toBe(true)
+  expect(problems.some((p) => p.includes('youtube'))).toBe(false)
+  await page.close()
+})
+
 test('a click into an embedded player leaves the arrow keys working', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.route('https://www.youtube.com/**', (r) => r.fulfill({ body: '<body style="background:#333">player</body>', contentType: 'text/html' }))

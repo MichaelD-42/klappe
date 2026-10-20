@@ -54,7 +54,7 @@ export const fenceProblem = (lang: string) =>
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
-  if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
+  if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect, fallback: m.fallback }).show;
   const c = chart(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
     c.axes(tl);

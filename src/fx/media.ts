@@ -29,6 +29,7 @@ export interface VideoOpts {
   href: string; // a local "media/x.mp4", a direct link, or a YouTube or Vimeo link
   title: string;
   rect: Rect;
+  fallback?: string; // an image href in media/, shown instead of an online video when there is no network
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -217,6 +218,20 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     textOverflow: "ellipsis",
   });
   if (online) b.dataset.kNote = `${t("video", ctx.deck.lang)} "${title}" ${t("needsInternet", ctx.deck.lang)}`;
+  // Read here, not at module load: unit tests import this file in node. No load timeout for embeds:
+  // a cross-origin iframe fires load for the browser's own error page too, so "not loaded" cannot be seen.
+  const offline = online && (!navigator.onLine || new URLSearchParams(location.search).get("offline") === "1");
+  const still = offline && opts.fallback ? ctx.files.media[key(opts.fallback)] : undefined;
+  if (still !== undefined) {
+    const img = document.createElement("img");
+    img.src = still;
+    img.alt = title;
+    Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" });
+    caption.textContent = t("videoOffline", ctx.deck.lang);
+    b.append(img, caption);
+    return fade(b);
+  }
+  if (offline) ctx.problem(`${t("videoOffline", ctx.deck.lang)}: ${title}` + (opts.fallback ? ` (${t("imageMissing", ctx.deck.lang)}: ${key(opts.fallback)})` : ""));
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;

@@ -12,15 +12,17 @@ const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
 const CHECK = /^\[([ xX])\]\s+/;
 
 // The first image, video or chart link in a step. Its link shows as its label; other links stay as written.
+// An image after a video link is the video's offline fallback and does not show in the text.
 function withMedia(text: string): StepDoc {
   let media: StepDoc["media"];
   const shown = text.replace(LINK, (all, bang: string, alt: string, href: string, title?: string) => {
+    if (bang && media?.kind === "video" && !media.fallback) return (media.fallback = href), "";
     const kind = bang ? "image" : VIDEO.test(href) ? "video" : CHART.test(href) ? "chart" : undefined;
     if (!kind || media) return all;
     media = { kind, href, alt, ...(title === undefined ? {} : { title }) };
     return alt;
   });
-  return { text: shown, notes: "", kind: "step", ...(media ? { media } : {}) };
+  return { text: shown.trim(), notes: "", kind: "step", ...(media ? { media } : {}) };
 }
 
 export function parseScene(md: string, folder: string): { scene: SceneDoc; problems: string[] } {

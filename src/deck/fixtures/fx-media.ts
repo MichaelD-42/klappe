@@ -20,7 +20,8 @@ export default () => {
         scene(1, "Image", '![A red dot on blue](media/dot.png "A red dot")'),
         scene(2, "Local video", "[A local clip](media/clip.webm)"),
         scene(3, "Online video", `[An online clip](${H}klappe.test/clip.webm)`),
-        scene(4, "YouTube", `[A YouTube talk](${H}www.youtube.com/watch?v=dQw4w9WgXcQ)`),
+        scene(4, "YouTube", `[A YouTube talk](${H}www.youtube.com/watch?v=dQw4w9WgXcQ)
+  ![A still](media/dot.png)`),
         scene(5, "Vimeo", `[A Vimeo talk](${H}vimeo.com/76979871)`),
       ]),
     },
