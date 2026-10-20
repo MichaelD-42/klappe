@@ -1,4 +1,4 @@
-import { drawOn } from "klappe/fx";
+import { drawOn, image } from "klappe/fx";
 import type { Rect, SceneModule } from "klappe/types";
 import { GROW, grow, heading } from "../section";
 
@@ -26,6 +26,14 @@ function rest(stream: Record<string, any>) {
 
 const scene: SceneModule = {
   build(ctx) {
+    // First, so the title paints above it. The scrim keeps the title readable on the bright whiteboard.
+    const hero = image(ctx, {
+      href: "media/value-stream-hero.png",
+      alt: "A hand sketches a process flow on a whiteboard: five circled icons joined by arrows",
+      fit: "cover",
+      kenBurns: true,
+      scrim: 0.6,
+    });
     const title = heading(ctx, "Overview");
     // The same heading for the pulled-back view, sized so it reads like every other scene title, and a caption.
     const { s, title: at, caption: under } = rest(ctx.canvas.refs.stream);
@@ -39,10 +47,16 @@ const scene: SceneModule = {
     place(big, at, 88);
     place(caption, under, 48);
     caption.style.fontWeight = "400";
-    return { title, big, caption };
+    return { hero, title, big, caption };
   },
   steps: [
+    // The hero picture, with the title over it.
+    (tl, r) => {
+      r.hero.show(tl);
+      tl.to(r.title, { autoAlpha: 1, duration: 0.6 }, "<0.4");
+    },
     (tl, r, ctx) => {
+      r.hero.hide(tl); // gone before the stream draws and the camera moves
       const { line, boxes, tiles, bounds: b } = ctx.canvas.refs.stream;
       const length = Number(line.getAttribute("stroke-dasharray"));
       const stage = (i: number, at: number) => {
@@ -50,7 +64,6 @@ const scene: SceneModule = {
         tl.fromTo(boxes[i].querySelector("text"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, at + 0.3);
         tiles[i].draw(tl, at);
       };
-      tl.to(r.title, { autoAlpha: 1, duration: 0.6 });
       // Stage by stage: the camera rides along the band while the line draws to the next stage.
       let t = tl.duration();
       stage(0, t);

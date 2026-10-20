@@ -5,7 +5,6 @@ import type { SceneModule } from "klappe/types";
 // The classic title slide from the spike (docs/superpowers/spikes/opening), in theme tokens.
 // The style sits on the scene, not the slide, so the 30 shard clones do not each carry a copy.
 const CSS = `
-.k-oldway-black { position: absolute; inset: 0; background: var(--k-blackout); }
 .k-oldway-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-family: var(--k-font); color: var(--k-fg);
   background: radial-gradient(900px 520px at 50% 46%, color-mix(in srgb, var(--k-accent) 18%, transparent), transparent 70%),
@@ -36,15 +35,13 @@ const scene: SceneModule = {
   build(ctx): Refs {
     const style = document.createElement("style");
     style.textContent = CSS;
-    // Black under the slide: once the shards are gone the screen is black, not the stage colour.
-    const black = document.createElement("div");
-    black.className = "k-oldway-black";
+    // Nothing under the slide: once the shards are gone, the section's dark stage backdrop shows.
     const slide = document.createElement("div");
     slide.className = "k-oldway-slide";
     slide.innerHTML = `${LOGO}<h1>Engineering Excellence 2026</h1><div class="k-oldway-rule"></div>
       <p class="k-oldway-sub">Annual engineering update</p>
       <div class="k-oldway-foot"><span>October 2026</span><span>Engineering</span></div>`;
-    ctx.html.append(style, black, slide);
+    ctx.html.append(style, slide);
     const fx = shatter(ctx, { target: slide });
     gsap.set(slide, { autoAlpha: 0 });
     return { slide, fx };
