@@ -8,7 +8,7 @@ import * as fx from '../../src/fx'
 // Task 13 removes the M2 effects with the effects page.
 const PENDING = [
   // M3 elements
-  'sequence', 'swimlanes',
+  'swimlanes',
   'decisionTree', 'checklist', 'agenda', 'timer',
   // M2 effects
   'KEN_BURNS', 'MIN_FONT', 'arcPath', 'bubble', 'chart', 'chartDomain', 'counted', 'counter', 'counterText', 'crt',
