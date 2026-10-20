@@ -111,7 +111,8 @@ const PUSH: KenBurnsPose = { scale: 1.08, x: -24, y: -12 }; // 4 % overscan per 
 // Keeps the drift inside the overscan, so the picture never leaves an edge gap. It scales about its centre.
 export function clampPose(p: KenBurnsPose, rect: Rect): KenBurnsPose {
   const c = (v: number, max: number) => Math.max(-max, Math.min(max, v));
-  return { scale: p.scale, x: c(p.x, (rect.w * (p.scale - 1)) / 2), y: c(p.y, (rect.h * (p.scale - 1)) / 2) };
+  const over = Math.max(0, p.scale - 1); // below scale 1 there is no overscan, so no drift
+  return { scale: p.scale, x: c(p.x, (rect.w * over) / 2), y: c(p.y, (rect.h * over) / 2) };
 }
 
 export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {

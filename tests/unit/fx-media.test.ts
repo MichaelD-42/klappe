@@ -78,6 +78,7 @@ test('clampPose keeps a Ken Burns drift inside the overscan', async () => {
   expect(pose(1, -24, -12)).toEqual([1, 0, 0]);
   expect(pose(1.08, -24, -12)).toEqual([1.08, -24, -12]);
   expect(pose(1.02, 100, -100)).toEqual([1.02, 19.2, -10.8]);
+  expect(pose(0.9, 50, -50)).toEqual([0.9, 0, 0]); // no overscan below scale 1: no drift
 });
 
 test('the full-frame prompt suffix is the same string in bin/todo.mjs and src/fx/media.ts', () => {
