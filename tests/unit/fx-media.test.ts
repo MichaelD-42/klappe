@@ -3,7 +3,8 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { expect, test } from 'vitest';
 // @ts-expect-error plain .mjs, no types
-import { writeTodos } from '../../bin/todo.mjs';
+import { FULL_FRAME, writeTodos } from '../../bin/todo.mjs';
+import { FULL_FRAME_PROMPT } from '../../src/fx/media';
 
 const deck = () => {
   const d = mkdtempSync(join(tmpdir(), 'todo-'));
@@ -32,7 +33,7 @@ test('writeTodos lists missing media and data files with exact lines', () => {
   expect(readFileSync(join(d, 'media/TODO.md'), 'utf8')).toBe(
     [
       '- [ ] media/engine.png — prompt: A cutaway of an engine for a presentation scene about The engine',
-      '- [ ] media/plain.png — prompt: No title for a presentation scene about The engine, 16:9, 1920x1080, no text, no logos',
+      '- [ ] media/plain.png — prompt: No title for a presentation scene about The engine, square, 1024x1024, no text, no logos',
       '',
     ].join('\n'),
   );
@@ -77,4 +78,32 @@ test('clampPose keeps a Ken Burns drift inside the overscan', async () => {
   expect(pose(1, -24, -12)).toEqual([1, 0, 0]);
   expect(pose(1.08, -24, -12)).toEqual([1.08, -24, -12]);
   expect(pose(1.02, 100, -100)).toEqual([1.02, 19.2, -10.8]);
+});
+
+test('the full-frame prompt suffix is the same string in bin/todo.mjs and src/fx/media.ts', () => {
+  expect(FULL_FRAME).toBe(FULL_FRAME_PROMPT);
+});
+
+test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 prompt from alt', () => {
+  const d = deck();
+  writeFileSync(join(d, 'sections/10-a/section.md'), '# The plant\n');
+  writeFileSync(join(d, 'sections/10-a/section.ts'), 'export default { background: { href: "media/sky.png", alt: "A sky, at dusk", scrim: 0.6 } };\n');
+  writeFileSync(
+    join(d, 'sections/10-a/10-one/scene.ts'),
+    [
+      'export default {',
+      '  background: { scrim: 0.6, href: "media/bare.png" },',
+      '  build: (ctx) => ({ i: image(ctx, { alt: "A dawn sky", href: "media/hero.png", fit: "cover" }),',
+      '    v: video(ctx, { href: "media/clip.mp4", title: "A clip", rect }), h: image(ctx, { href: "media/here.png", alt: "x" }) }),',
+      '};',
+    ].join('\n'),
+  );
+  writeTodos(d);
+  expect(readFileSync(join(d, 'media/TODO.md'), 'utf8').split('\n').slice(2)).toEqual([
+    '- [ ] media/bare.png — needed by sections/10-a/10-one/scene.ts',
+    '- [ ] media/hero.png — prompt: A dawn sky for a presentation scene about The engine, 16:9, 1920x1080, no text, no logos',
+    '- [ ] media/clip.mp4 — needed by sections/10-a/10-one/scene.ts',
+    '- [ ] media/sky.png — prompt: A sky, at dusk for a presentation scene about The plant, 16:9, 1920x1080, no text, no logos',
+    '',
+  ]);
 });
