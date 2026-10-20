@@ -92,9 +92,10 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: str
 
 const CAPTION = 48; // the row under a video box for its caption
 
-const fade = (b: HTMLElement, duration = motion.step) => ({
-  show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration }, at),
-  hide: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 0, duration }, at),
+// show may take a longer fade and its own ease; hide always fades over motion.step.
+const fade = (b: HTMLElement, duration = motion.step, ease?: string) => ({
+  show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration, ease }, at),
+  hide: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 0, duration: motion.step }, at),
 });
 const key = (href: string) => href.replace(/^\.\//, "");
 
@@ -121,15 +122,16 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   const cover = opts.fit === "cover";
   const fullFrame = cover && !opts.rect;
   const at0 = (tl: gsap.core.Timeline, at?: number | string) => at ?? (fullFrame ? tl.labels[STEP_LABEL] : undefined);
-  // A full frame fades over a camera flight: it slides in with the world, so its edge never crosses the frame opaque.
+  // A full frame fades in over a camera flight with an ease-in, so it stays faint while its edge crosses the frame.
   const fadeTime = fullFrame ? motion.camera : motion.step;
+  const fadeEase = fullFrame ? "power2.in" : undefined;
   const url = ctx.files.media[key(href)];
   const text = [key(href), alt].filter(Boolean).join(" — ");
   if (url === undefined) {
     // A prompt for an image generator, for a cover picture with alt text.
     const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", LANG), text, prompt);
-    const f = fade(b, fadeTime);
+    const f = fade(b, fadeTime, fadeEase);
     return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
   const b = box(ctx, rect);
@@ -151,7 +153,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     if (ctx.reducedMotion) return;
     tl.fromTo(img, from, { ...to, duration, ease: "sine.inOut", immediateRender: false }, at);
   };
-  const f = fade(b, fadeTime);
+  const f = fade(b, fadeTime, fadeEase);
   return {
     show(tl, at) {
       f.show(tl, at0(tl, at));
