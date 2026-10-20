@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { counted, fitFont, MIN_FONT, typed } from '../../src/fx/crt'
+import { counted, cursorCentre, fitFont, MIN_FONT, typed } from '../../src/fx/crt'
 
 describe('crt typing', () => {
   const full = 'DRIVES A: B: C: ... OK'
@@ -46,5 +46,16 @@ describe('crt font fit', () => {
   test('content that clips even at the floor does not fit', () => {
     expect(fitFont(40, 35, w, h)).toEqual({ size: MIN_FONT, fits: false })
     expect(fitFont(5, 200, w, h)).toEqual({ size: MIN_FONT, fits: false })
+  })
+})
+
+describe('crt prompt rows', () => {
+  test('7 boot lines, READY, 2 prompts and the cursor row keep 46 px', () => {
+    expect(fitFont(7 + 1 + 2 + 1, 35, 1500, 760)).toEqual({ size: 46, fits: true })
+  })
+
+  test('the cursor centre sits on its row, half a row down, .3 em in', () => {
+    expect(cursorCentre(0, 46)).toEqual({ x: 210 + 0.3 * 46, y: 180 + 0.5 * 69 })
+    expect(cursorCentre(10, 40).y - cursorCentre(9, 40).y).toBe(60)
   })
 })

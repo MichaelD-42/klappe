@@ -6,16 +6,27 @@ import type { TransitionOpts } from "./transitions";
 // A boot line. { text: "MEMORY TEST: 640K OK", count: true } types its label, then counts up to the number.
 export type CrtLine = string | { text: string; count?: true };
 export interface CrtOpts {
-  color?: "green" | "amber"; // default green
+  color?: "green" | "amber" | "teal" | (string & {}); // default green; any other string is a CSS colour
   lines: CrtLine[];
+  // Lines typed after READY., on the cursor row, one prompt() step each. Declared here so their DOM exists at build.
+  prompts?: string[];
 }
 export interface CrtHandle {
   powerOn: StepAdder;
+  // Only the brightness settle of powerOn, no beam: for a CRT that the crt transition already flashed on.
+  settle: StepAdder;
   type(tl: gsap.core.Timeline, line: number | "all"): void;
   ready: StepAdder;
+  // Types prompts[index] on the cursor row; the cursor then rests on the next row. cps defaults to 8 (a human).
+  prompt(tl: gsap.core.Timeline, index: number, opts?: { cps?: number; at?: gsap.Position }): void;
+  hideCursor(tl: gsap.core.Timeline, at?: gsap.Position): void;
+  // The cursor block's centre, scene-local, on its row after all prompts are typed.
+  cursorAt(): { x: number; y: number };
 }
 
+const COLORS: Record<string, string> = { amber: "var(--k-phosphor-amber)", teal: "#009A9B" };
 const CPS = 34; // typing speed, characters per second (the spike's value)
+const HUMAN_CPS = 8;
 const COUNT = 1.4; // seconds a count line counts up
 const PAUSE = 0.15; // between lines when typing them all
 const CURSOR = "█"; // the block that trails the text while a line types
@@ -40,6 +51,7 @@ export function counted(full: string, p: number): string {
 // The terminal box inside the scene: the screen is inset 40 px, the text 170 px from the sides,
 // 140 px from the top and 100 px from the bottom.
 const BOX = { w: 80 + 340, h: 80 + 240 };
+const TERM = { x: 40 + 170, y: 40 + 140 }; // the text's top-left, scene-local
 const MAX_FONT = 46; // the spike's size
 export const MIN_FONT = 20; // 14.2 px at 1366, the legibility floor
 const LINE_H = 1.5;
@@ -50,6 +62,9 @@ export function fitFont(rows: number, cols: number, w: number, h: number): { siz
   const size = Math.min(MAX_FONT, h / (rows * LINE_H), w / (Math.max(1, cols) * CHAR_W));
   return { size: Math.max(MIN_FONT, Math.floor(size)), fits: size >= MIN_FONT };
 }
+
+// The centre of the cursor block (.6em x 1em) on text row `row` at font size `size`, scene-local.
+export const cursorCentre = (row: number, size: number) => ({ x: TERM.x + 0.3 * size, y: TERM.y + (row + 0.5) * LINE_H * size });
 
 // The spike's look, scoped to .k-retro (the only place monospace is allowed). Flicker and blink are
 // CSS loops on leaf elements marked data-k-ignore, so the self-test snapshot skips them.
@@ -90,52 +105,78 @@ const div = (parent: Element, cls: string) => parent.appendChild(Object.assign(d
 export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
   addStyle();
   const lines = opts.lines.map((l) => (typeof l === "string" ? { text: l, count: false } : { text: l.text, count: !!l.count }));
+  const prompts = opts.prompts ?? [];
   for (const l of lines)
     if (l.count && !COUNTED.test(l.text))
       ctx.problem(`crt: count line "${l.text}" needs a label and a number with K, like "MEMORY TEST: 640K OK"`);
   const root = div(ctx.html, "k-retro");
-  if (opts.color === "amber") root.style.setProperty("--k-crt", "var(--k-phosphor-amber)");
+  if (opts.color && opts.color !== "green") root.style.setProperty("--k-crt", COLORS[opts.color] ?? opts.color);
   const screen = div(root, "k-crt-screen");
   const term = div(screen, "k-crt-term");
-  // Rows: the lines, READY. and the cursor row. Columns: the longest line plus the typing cursor.
-  const fit = fitFont(lines.length + 2, Math.max(0, ...lines.map((l) => l.text.length)) + 1, ctx.rect.w - BOX.w, ctx.rect.h - BOX.h);
-  if (!fit.fits) ctx.problem(`crt: ${lines.length} lines do not fit the screen even at ${MIN_FONT} px; shorten or split them`);
+  // Rows: the lines, READY., the prompts and the cursor row. Columns: the longest line plus the typing cursor.
+  const texts = [...lines.map((l) => l.text), ...prompts];
+  const fit = fitFont(lines.length + 2 + prompts.length, Math.max(0, ...texts.map((t) => t.length)) + 1, ctx.rect.w - BOX.w, ctx.rect.h - BOX.h);
+  if (!fit.fits) ctx.problem(`crt: ${lines.length + prompts.length} lines do not fit the screen even at ${MIN_FONT} px; shorten or split them`);
   term.style.fontSize = `${fit.size}px`;
   const lineEls = lines.map(() => {
     const e = div(term, "");
     e.dataset.kText = "";
     return e;
   });
+  // READY., one row per prompt, then the cursor's last row. Each row has its own cursor, so nothing moves:
+  // prompt() hides one row's cursor and shows the next one's.
   const ready = div(term, "");
-  ready.append("READY.", document.createElement("br"));
-  div(ready, "k-crt-cursor").setAttribute("data-k-ignore", "");
+  ready.append("READY.");
+  const promptEls: HTMLElement[] = [];
+  const cursors = [...prompts, ""].map((_, i) => {
+    const row = div(ready, "");
+    if (i < prompts.length) {
+      const e = row.appendChild(document.createElement("span"));
+      e.dataset.kText = "";
+      promptEls.push(e);
+    }
+    const c = div(row, "k-crt-cursor");
+    c.setAttribute("data-k-ignore", "");
+    return c;
+  });
   div(screen, "k-crt-scan");
   div(screen, "k-crt-vignette");
   div(screen, "k-crt-flicker").setAttribute("data-k-ignore", "");
   const beam = div(root, "k-crt-beam");
-  gsap.set([root, screen, beam, ready], { autoAlpha: 0 });
+  gsap.set([root, screen, beam, ready, ...cursors.slice(1)], { autoAlpha: 0 });
   // The beam's start pose is set at build too: a seek back before powerOn then writes the same transform as a fresh load.
   gsap.set(beam, { scaleX: 0, scaleY: 0.004 });
 
-  const typeLine = (tl: gsap.core.Timeline, i: number, at?: string) => {
-    const line = lines[i];
-    if (!line) throw new Error(`crt: no line ${i} (${lines.length} lines)`);
-    const e = lineEls[i];
-    const m = line.count ? COUNTED.exec(line.text) : null; // a bad count line was reported and just types
-    const textAt = m ? counted : typed;
+  // Types text into e from onUpdate, a pure function of progress; the block trails the text while it types.
+  const typeInto = (tl: gsap.core.Timeline, e: HTMLElement, text: string, textAt: typeof typed, duration: number, at?: gsap.Position) =>
     tl.to(
       {},
       {
-        duration: m ? countDuration(m[1]) : Math.max(0.1, line.text.length / CPS),
+        duration,
         ease: "none",
         onUpdate(this: gsap.core.Tween) {
           const p = this.progress();
-          e.textContent = textAt(line.text, p) + (p > 0 && p < 1 ? CURSOR : "");
+          e.textContent = textAt(text, p) + (p > 0 && p < 1 ? CURSOR : "");
         },
       },
       at,
     );
+
+  const typeLine = (tl: gsap.core.Timeline, i: number, at?: string) => {
+    const line = lines[i];
+    if (!line) throw new Error(`crt: no line ${i} (${lines.length} lines)`);
+    const m = line.count ? COUNTED.exec(line.text) : null; // a bad count line was reported and just types
+    typeInto(tl, lineEls[i], line.text, m ? counted : typed, m ? countDuration(m[1]) : Math.max(0.1, line.text.length / CPS), at);
   };
+
+  // Bright and blurred to the glowing terminal; powerOn and settle share it.
+  const settleScreen = (tl: gsap.core.Timeline, at?: gsap.Position) =>
+    tl.fromTo(
+      screen,
+      { filter: "brightness(2.2) blur(2px)" },
+      { filter: "brightness(1) blur(0px)", duration: 1.1, ease: "power2.out", immediateRender: false },
+      at,
+    );
 
   return {
     // The spike's power-on: a line flashes across, opens to a bright screen, which fades to the glowing terminal.
@@ -145,12 +186,11 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
       tl.to(beam, { scaleY: 1, duration: 0.2, ease: "expo.in" });
       tl.set(screen, { autoAlpha: 1 });
       tl.to(beam, { autoAlpha: 0, duration: 0.7, ease: "power2.out" });
-      tl.fromTo(
-        screen,
-        { filter: "brightness(2.2) blur(2px)" },
-        { filter: "brightness(1) blur(0px)", duration: 1.1, ease: "power2.out", immediateRender: false },
-        "<",
-      );
+      settleScreen(tl, "<");
+    },
+    settle(tl) {
+      tl.set([root, screen], { autoAlpha: 1 });
+      settleScreen(tl, "<");
     },
     type(tl, line) {
       if (line === "all") lines.forEach((_, i) => typeLine(tl, i, i ? `+=${PAUSE}` : undefined));
@@ -159,6 +199,17 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
     ready(tl) {
       tl.fromTo(ready, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, immediateRender: false });
     },
+    prompt(tl, i, { cps = HUMAN_CPS, at } = {}) {
+      const text = prompts[i];
+      if (text === undefined) throw new Error(`crt: no prompt ${i} (${prompts.length} prompts)`);
+      tl.set(cursors[i], { autoAlpha: 0 }, at);
+      typeInto(tl, promptEls[i], text, typed, Math.max(0.1, text.length / cps), "<");
+      tl.set(cursors[i + 1], { autoAlpha: 1 }, ">");
+    },
+    hideCursor(tl, at) {
+      tl.set(cursors, { autoAlpha: 0 }, at);
+    },
+    cursorAt: () => cursorCentre(lines.length + 1 + prompts.length, fit.size),
   };
 }
 
