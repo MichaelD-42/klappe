@@ -1,0 +1,1 @@
+export default { transition: "blackout" };

@@ -1,0 +1,7 @@
+# source: klappe demo sample
+step,delta
+Start,100
+Step A,-25
+Step B,15
+Step C,-30
+Step D,20
