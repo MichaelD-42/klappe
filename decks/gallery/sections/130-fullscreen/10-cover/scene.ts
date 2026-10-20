@@ -1,5 +1,5 @@
 import { image, type ImageHandle } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 export default captioned('image({ fit: "cover", kenBurns: true, scrim: 0.6 }) — fills the frame, pushes in', {
   build: (ctx) =>

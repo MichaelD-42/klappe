@@ -1,5 +1,5 @@
 import { figure } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 export default captioned(
   'figure() — a stick figure appears, then f.walk(tl, "M ... C ...") walks it along a curve',

@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { shatter, type ShatterHandle } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 // A card, shown in step 1, then cracked, cracked to the edges and shattered. It ends above the caption strip.
 export default captioned("shatter() — the card cracks, cracks to the edges, then falls apart: crack, crack2, fall", {

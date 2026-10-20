@@ -1,5 +1,5 @@
 import { worldMap, type WorldMapHandle } from "klappe/fx";
-import { captioned, captionOf } from "../../10-chart/section";
+import { captioned, captionOf } from "../../../caption";
 
 // Placeholder sites at plausible land coordinates; not real locations of anyone.
 const sites = [

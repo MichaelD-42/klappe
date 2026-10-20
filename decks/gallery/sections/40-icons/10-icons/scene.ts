@@ -1,5 +1,6 @@
 import { icon } from "klappe/fx";
-import { captioned, row } from "../section";
+import { captioned } from "../../../caption";
+import { row } from "../section";
 
 export default captioned(
   'icon(ctx, "rocket", { x, y, size, color }) — any Lucide icon draws on, then lights up',

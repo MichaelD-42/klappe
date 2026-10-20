@@ -1,5 +1,5 @@
 import { chart } from "klappe/fx";
-import { captioned } from "../section";
+import { captioned } from "../../../caption";
 
 export default captioned(
   "chart({ type: \"stacked\" }) — each bar grows from its parts",

@@ -1,8 +1,6 @@
 import { gsap } from "gsap";
 import type { Ctx, SectionModule } from "klappe/types";
 
-export { captioned } from "../10-chart/section";
-
 // A scene heading, hidden until a step shows it.
 export function heading(ctx: Ctx, text: string): HTMLElement {
   const h = document.createElement("h2");

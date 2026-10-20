@@ -1,5 +1,5 @@
 import { shout, type ShoutHandle } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 // Per-scene intensity: shout() with intensity "calm", whatever deck.md says. In scene.md, ### Question? uses the deck's intensity.
 export default captioned('shout({ intensity: "calm" }) — a gentle dim, the question holds, the answer lands', {

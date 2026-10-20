@@ -1,5 +1,5 @@
 import { iconTile, type IconHandle } from "klappe/fx";
-import { captioned, captionOf } from "../../10-chart/section";
+import { captioned, captionOf } from "../../../caption";
 
 // The caption sits outside the zoomed frame, so it leaves with the camera and comes back with it.
 export default captioned("ctx.camera.to(tl, rect) — the camera zooms into part of the scene and back", {

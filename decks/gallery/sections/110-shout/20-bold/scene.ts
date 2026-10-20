@@ -1,5 +1,5 @@
 import { shout, type ShoutHandle } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 // Per-scene intensity: shout() with intensity "bold", whatever deck.md says. The scene.md holds its 4 steps.
 export default captioned('shout({ intensity: "bold" }) — a hard entry, a heavy dim, the answer pops', {

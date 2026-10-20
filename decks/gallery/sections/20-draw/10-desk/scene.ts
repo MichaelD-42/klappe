@@ -1,6 +1,6 @@
 import { lineArt } from "klappe/fx";
 import desk from "klappe/fx/art/engineer-desk.svg?raw";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 export default captioned(
   'lineArt() — a trusted SVG draws stroke by stroke; glow() lights one part',

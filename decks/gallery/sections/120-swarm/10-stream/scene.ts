@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { swarm, type SwarmHandle } from "klappe/fx";
 import type { Rect } from "klappe/types";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 const FULL: Rect = { x: 0, y: 0, w: 1920, h: 1080 };
 const FROM: Rect = { x: 160, y: 380, w: 400, h: 520 }; // ends above the caption strip at y 960

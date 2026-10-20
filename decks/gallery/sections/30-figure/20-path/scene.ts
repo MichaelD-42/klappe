@@ -1,5 +1,5 @@
 import { figure } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 const SVG = "http://www.w3.org/2000/svg";
 

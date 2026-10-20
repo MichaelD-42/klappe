@@ -1,6 +1,6 @@
 import type { gsap } from "gsap";
 import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 const BOOT: CrtLine[] = ["DEMO-OS v1.0  (c) 1986", "", { text: "MEMORY TEST: 640K OK", count: true }, "DRIVES A: B: C: ... OK"];
 

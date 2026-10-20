@@ -1,5 +1,5 @@
 import { image, type ImageHandle } from "klappe/fx";
-import { captioned } from "../../10-chart/section";
+import { captioned } from "../../../caption";
 
 // No kenBurns here: show() would play the push too, and move() would then start it again.
 export default captioned("img.show(tl) · img.move(tl) · img.hide(tl) — one step each", {

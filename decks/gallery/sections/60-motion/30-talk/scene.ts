@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { bubble } from "klappe/fx";
-import { box, captioned, heading } from "../section";
+import { captioned } from "../../../caption";
+import { box, heading } from "../section";
 
 // A question and its answer as bubbles beside two speakers, then both hide.
 export default captioned('bubble(ctx, { x, y, text, side }) — b.show(tl) and b.hide(tl)', {

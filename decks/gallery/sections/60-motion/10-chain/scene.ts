@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { morph } from "klappe/fx";
-import { box, captioned, heading } from "../section";
+import { captioned } from "../../../caption";
+import { box, heading } from "../section";
 
 // A document becomes a fact becomes a card: two chained HTML morphs.
 export default captioned(

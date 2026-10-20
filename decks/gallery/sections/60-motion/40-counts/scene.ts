@@ -1,5 +1,6 @@
 import { counter } from "klappe/fx";
-import { captioned, heading } from "../section";
+import { captioned } from "../../../caption";
+import { heading } from "../section";
 
 // Sample numbers: one counter runs down to zero, the other up.
 export default captioned("counter(ctx, { from, to, label }) — a number counts up or down", {

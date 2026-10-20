@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { morph } from "klappe/fx";
-import { captioned, heading } from "../section";
+import { captioned } from "../../../caption";
+import { heading } from "../section";
 
 const SVG = "http://www.w3.org/2000/svg";
 
