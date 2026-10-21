@@ -182,3 +182,17 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: the deck must not move under an open panel. The stepper sets the timer after the play ends, so `cancelAuto` bumps a counter; a move that was queued or playing at a cancel sets no timer.
 - **The stepper marks the active canvas root (`.k-canvas`) with `data-k-active`. Self-running helpers (`mesh3d`, `countdown`) find that root once at build and draw only while it has the attribute.**
   - Why: Day 1 has about 15 mesh scenes, and a shown mesh on another canvas kept drawing. One attribute read per frame is cheaper than a computed-style read and covers every hidden canvas. The new canvas gets the mark when the move starts (it draws during its transition in); the old one loses it when the move ends. The countdown dropped its 200 ms computed-style throttle for the same mark plus a show/hide flag.
+
+## 2026-10-21 (replayed deck helpers onto M3; countdown folded into timer)
+
+- **The 11 deck-helper commits of `feat/deck-helpers` were cherry-picked (`-x`) onto M3 `main` as `feat/deck-helpers-m3`.** 701d3b6 and 8dfe718 are one commit: only 701d3b6's own files, without its accidental revert of the video fallback.
+  - Why: main's history was rewritten, so the old branch shares no commit with it. The README hunks of the old commits went to `docs/reference/` instead (deck-format.md, `elements/crt.md`, `elements/bubble.md`, `elements/mesh3d.md`).
+- **`countdown` is gone. `timer` takes `until: "HH:MM"` as the other choice to `minutes` (user decision).** An `until` timer runs whenever its step is in view, `T` and a click do nothing, it never goes negative, and at zero it shows "Time's up" in `--k-bad`. Its ring and warn phase measure from the time left when the step comes into view. `minutes` works as before.
+  - Why: two wall-clock elements would duplicate the clock, the styles and the done state. The 2026-10-20 countdown entry above describes the old helper.
+  - Lost from countdown: `h:mm:ss` over an hour (the timer shows `m:ss`, for example `75:00`) and the "careful" orange at zero.
+  - A bad option (both, neither, or an `until` that is not `HH:MM`) is a deck problem, not a throw, as for the other elements.
+- **`decks/<id>/deck.css` stays. A theme holds tokens only; deck.css holds fonts and component classes, and it may override tokens.** `applyTheme` moves the deck.css `<style>` after the theme's, before the contrast check reads the tokens.
+  - Why: the theme loads after `loadDeck()`, so without the move the theme won over deck.css at equal specificity.
+- **`mesh3d` mood colours stay fixed hex. The design lint exempts `mesh3d.ts` from the colour-literal rule, like `crt.ts` and `media.ts`.**
+  - Why: a mood is part of the story (calm, curious, careful), not of the look, so a theme must not change it. `bubble` already takes `--k-accent`, `--k-bg` and `--k-fg`. The `crt` preset `teal` (#009A9B) stays a named preset; no teal token exists, and `color` takes any CSS colour.
+- **The demo deck shows `mesh3d` in "Your turn" (process training), for the coverage lint.** Gallery `140-mesh3d` became `230-mesh3d`, because M3 uses 140 for code.

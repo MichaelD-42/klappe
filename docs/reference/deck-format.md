@@ -46,6 +46,7 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
+- An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `  ![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
 - A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
 - A ```` ```console ```` block replays a terminal session. Each `$ ` line is a command: it types itself, then its output lines appear. Each command is one step, and the list items after the block are their text, as for code. A console block with no `$ ` line is a problem.
 - Task-list items, `- [ ] Backup verified`, build one checklist: each item is a step that ticks its box. `- [x]` starts ticked.
@@ -59,6 +60,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a 1920x1080 frame at x = its position on the canvas times 1920.
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
+- `auto` is an array with one number or `null` per step. It lines up with the steps by position. A number N advances the deck by itself N seconds after the step has played forward. It also goes into the next scene and through a section transition. `null` or a missing entry waits for a press. A deep link, a jump, a back move and `?instant=1` never advance by themselves. A press during the wait advances one step at once. Opening the overview or the section list stops the wait. Autoplay holds a step for its `auto` time. Example: `auto: [null, 1, 0.5]`.
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
@@ -81,7 +83,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in 1920x1080 units.
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
-- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`. Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
+- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `mesh3d`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`, among them [crt](elements/crt.md) (colour, `settle`, prompts, `cursorAt`), [bubble](elements/bubble.md) (`side`, `maxWidth`), [mesh3d](elements/mesh3d.md) and [timer](elements/timer.md). Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
 - Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
 - Shout-out intensity: `intensity` in `deck.md` sets every shout-out, including one a `scene.ts` builds with `shout(ctx, { question, answer })`. Pass `intensity` to set it for one shout-out (see the example below).
 - `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
@@ -141,6 +143,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // image and video: a file from media/ (or a YouTube or Vimeo link for video), with a placeholder when it is missing.
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
+// fallback: an image in media/ that an online video shows when there is no network (see scene.md).
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
@@ -201,6 +204,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?speaker=1`: open the speaker view.
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?selftest=walk` or `?selftest=ac`: run the self-test.
+- `?offline=1`: online videos show their fallback image (see scene.md).
 
 ## Deep links
 
