@@ -19,11 +19,20 @@ export default () =>
       "sections/10-a/30-bar/scene.md": "## Bar\n\n- The timer.\n",
       "sections/10-a/40-donut/scene.md": "## Donut\n\n- The timer.\n",
       "sections/10-a/50-text/scene.md": "## Text\n\n- The timer.\n",
+      "sections/10-a/60-until/scene.md": "## Until\n\n- Two timers to a time of day.\n",
     },
     {
       "sections/10-a/20-ring/scene.ts": one({ minutes: 10, style: "ring", x: 760, y: 220, size: 400, label: "Exercise 1" }, 2),
       "sections/10-a/30-bar/scene.ts": one({ minutes: 10, style: "bar", x: 360, y: 400, size: 1200, label: "Group work" }),
       "sections/10-a/40-donut/scene.ts": one({ minutes: 5, style: "donut", x: 760, y: 220, size: 400 }),
       "sections/10-a/50-text/scene.ts": one({ minutes: 1, style: "text", x: 660, y: 300, size: 600 }),
+      // until: a time ahead and midnight, which has passed (the e2e test sets the clock to 10:05:30).
+      "sections/10-a/60-until/scene.ts": {
+        build: (ctx) => ({
+          a: timer(ctx, { until: "10:20", style: "text", x: 260, y: 300, size: 600 }),
+          b: timer(ctx, { until: "00:00", style: "text", x: 1060, y: 300, size: 600 }),
+        }),
+        steps: [(tl, r: { a: TimerHandle; b: TimerHandle }) => (r.a.show(tl), r.b.show(tl))],
+      },
     },
   );

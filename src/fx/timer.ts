@@ -43,7 +43,7 @@ const svgEl = (parent: Element, tag: string, attrs: Record<string, string | numb
 export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   const { size, style } = opts;
   const bad = (opts.minutes === undefined) === (opts.until === undefined) ? "set exactly one of minutes and until"
-    : opts.until !== undefined && !/^([01]?d|2[0-3]):[0-5]d$/.test(opts.until) ? `until "${opts.until}" is not HH:MM` : "";
+    : opts.until !== undefined && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(opts.until) ? `until "${opts.until}" is not HH:MM` : "";
   if (bad) ctx.problem(`timer: ${bad}`);
   const until = bad ? undefined : opts.until;
   // until: the ring and the warn phase measure from the time left when the step comes into view.

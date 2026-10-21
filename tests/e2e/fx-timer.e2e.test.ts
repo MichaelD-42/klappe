@@ -121,3 +121,23 @@ test('autoplay over the timer step starts it on play', async () => {
   expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
   await page.close()
 })
+
+test('until counts to the time of day by itself, from a deep link; t does not pause it; a past time is up', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.clock.install({ time: new Date(2026, 9, 21, 10, 5, 30) })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-timer#/a/until/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const read = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('[data-scene$="until"] [data-k-timer]')].map((t) => ({
+        text: t.querySelector('[data-k-timer-text]')!.textContent,
+        hint: t.querySelector('[data-k-timer-hint]')!.textContent,
+      })),
+    )
+  await page.clock.runFor(2000 + 20)
+  expect(await read()).toEqual([{ text: '14:28', hint: '' }, { text: '0:00', hint: "Time's up" }])
+  await page.keyboard.press('t')
+  await page.clock.runFor(3000)
+  expect((await read())[0].text).toBe('14:25')
+  await page.close()
+})
