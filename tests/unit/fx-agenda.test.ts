@@ -86,3 +86,10 @@ test('the rows shrink to a size between 20 and 40 px when they fit there', () =>
   expect(made[0].style.fontSize).toBe('30px')
   expect(problems).toEqual([])
 })
+
+test('the handle gives the root as el and one element per row', () => {
+  const { made, ctx } = setup()
+  const h = agenda(ctx, { rows, x: 0, y: 0, w: 1000 })
+  expect(h.el).toBe(made[0])
+  expect(h.rows.map((r) => r.style.color)).toEqual(['var(--k-muted)', 'var(--k-accent)', 'var(--k-fg)'])
+})

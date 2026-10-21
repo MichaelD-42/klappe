@@ -51,8 +51,8 @@ const el = (tag: string, attrs: Record<string, string | number>, parent: Element
 
 // The advisor v2 glyph: 2 px non-scaling strokes, round caps and joins, a 0.2 tint inside closed shapes.
 // The returned group has no transform (filters work in world units); x, y is the glyph centre.
-function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, size: number, color: string): IconHandle {
-  const root = el("g", { class: "k-icon" }, parent);
+function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, size: number, color: string): IconHandle & { el: SVGGElement } {
+  const root = el("g", { class: "k-icon" }, parent) as SVGGElement;
   root.style.color = color;
   const k = size / 24;
   const inner = el("g", {
@@ -71,6 +71,7 @@ function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, si
   }
   let drawn = false;
   return {
+    el: root,
     draw(tl, at) {
       drawn = true;
       const start = drawOn(inner, { at, duration: DRAW, each: EACH })(tl);
@@ -95,7 +96,8 @@ function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, si
 const mark = (tl: gsap.core.Timeline, t: number) => void tl.set({}, {}, t);
 
 // A Lucide icon centred at (x, y), scene-local, size wide.
-export function icon(ctx: Ctx, name: string, opts: IconOpts): IconHandle {
+// el is the glyph group, for a scene that moves the icon.
+export function icon(ctx: Ctx, name: string, opts: IconOpts): IconHandle & { el: SVGGElement } {
   return glyph(ctx, ctx.svg, name, opts.x, opts.y, opts.size ?? 96, opts.color);
 }
 

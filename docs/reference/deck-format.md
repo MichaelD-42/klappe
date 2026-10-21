@@ -112,6 +112,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // icon and iconTile: a Lucide icon by name draws on, then lights up.
 // iconTile also returns el, the tile's SVG group: a scene moves the tile with tl.to(i.el, { x: 200 }).
+// icon also returns el, the glyph's SVG group.
 { build: (ctx) => iconTile(ctx, "lightbulb", { x: 960, y: 540, tone: "accent" }), steps: [(tl, i) => i.draw(tl), (tl, i) => i.light(tl)] }
 { build: (ctx) => icon(ctx, "rocket", { x: 960, y: 540, size: 160, color: "var(--k-fg)" }), steps: [(tl, i) => i.draw(tl)] }
 
@@ -136,7 +137,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, s) => s.stream(tl, { duration: 2 })] }
 
 // morph, bubble, counter: one element turns into another; a speech bubble shows and hides; a number counts up.
-// doc and fact are elements you built first in build().
+// doc and fact are elements you built first in build(). counter also returns el, its box.
 { build: (ctx) => ({ m: morph(ctx, { from: doc, to: fact }),
                      b: bubble(ctx, { x: 400, y: 520, text: "A question for [Site 1]?", side: "right" }),
                      n: counter(ctx, { x: 960, y: 540, from: 0, to: 120, label: "Sample units" }) }),

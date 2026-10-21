@@ -16,7 +16,7 @@ A list of `HH:MM–HH:MM title` items in `scene.md`; the arrow `←` marks the c
 
 ## `agenda`
 
-In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show }`.
+In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, el, rows }`. `el` is the root element. `rows` holds one element per row, in order: a scene can move or mark a row with `tl.to(a.rows[1], { x: 20 })`.
 
 ### Options
 

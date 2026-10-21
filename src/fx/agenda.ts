@@ -12,6 +12,8 @@ export interface AgendaOpts {
 }
 export interface AgendaHandle {
   show: StepAdder;
+  el: HTMLElement; // the root
+  rows: HTMLElement[]; // one element per row, in order
 }
 
 const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
@@ -62,6 +64,8 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
   };
 
   return {
+    el: root,
+    rows,
     show: (tl) => {
       const at = tl.duration();
       if (!fit()) return void tl.set({}, {}, at + 0.4);
