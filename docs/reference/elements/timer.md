@@ -46,7 +46,7 @@ These rules are for `minutes`. An `until` timer runs by itself (see Until a time
 
 With `until`, the timer shows the time left to `HH:MM` today on the wall clock.
 
-- It runs whenever its step is in view: after the step plays, after a deep link and after a cut onto it. `T` and a click do nothing.
+- It runs whenever its step is in view: after the step plays, after a deep link and after a cut onto it. `T` does nothing to it. A click on it steps the deck, as a click anywhere does.
 - Leaving the scene stops it. Back in view, it shows the true time left again.
 - It never goes negative. At zero, and for a time that has passed, it shows `0:00`, "Time's up" and `--k-bad`.
 - The ring, donut and bar empty from the time left when the step came into view. The last 20% of that time is the warn phase.

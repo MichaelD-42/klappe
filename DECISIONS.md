@@ -187,7 +187,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 
 - **The 11 deck-helper commits of `feat/deck-helpers` were cherry-picked (`-x`) onto M3 `main` as `feat/deck-helpers-m3`.** 701d3b6 and 8dfe718 are one commit: only 701d3b6's own files, without its accidental revert of the video fallback.
   - Why: main's history was rewritten, so the old branch shares no commit with it. The README hunks of the old commits went to `docs/reference/` instead (deck-format.md, `elements/crt.md`, `elements/bubble.md`, `elements/mesh3d.md`).
-- **`countdown` is gone. `timer` takes `until: "HH:MM"` as the other choice to `minutes` (user decision).** An `until` timer runs whenever its step is in view, `T` and a click do nothing, it never goes negative, and at zero it shows "Time's up" in `--k-bad`. Its ring and warn phase measure from the time left when the step comes into view. `minutes` works as before.
+- **`countdown` is gone. `timer` takes `until: "HH:MM"` as the other choice to `minutes` (user decision).** An `until` timer runs whenever its step is in view, `T` does nothing to it (a click on it steps the deck, as anywhere), it never goes negative, and at zero it shows "Time's up" in `--k-bad`. Its ring and warn phase measure from the time left when the step comes into view. `minutes` works as before.
   - Why: two wall-clock elements would duplicate the clock, the styles and the done state. The 2026-10-20 countdown entry above describes the old helper.
   - Lost from countdown: `h:mm:ss` over an hour (the timer shows `m:ss`, for example `75:00`) and the "careful" orange at zero.
   - A bad option (both, neither, or an `until` that is not `HH:MM`) is a deck problem, not a throw, as for the other elements.

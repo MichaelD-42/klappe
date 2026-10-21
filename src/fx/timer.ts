@@ -147,7 +147,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
     draw();
   };
   const toggle = () => {
-    if (!here || until) return; // an until timer runs by itself: T and a click do nothing
+    if (!here || until) return; // an until timer runs by itself: T does nothing; a click steps the deck (no data-no-advance)
     if (draw().phase === "done") reset();
     else if (raf) pause();
     else run();
