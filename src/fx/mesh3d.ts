@@ -132,10 +132,14 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
   // Set from show/hide tween progress only (a seek lands right); no style read per frame.
   let visible = dotStart;
   const root = canvas.closest(".k-canvas"); // the stepper marks the active canvas root data-k-active
+  let current = true; // its scene is the current step's scene; the stepper tells on every move
+  ctx.onStep(({ scene }) => {
+    current = !ctx.scene || scene === ctx.scene;
+  });
 
   const draw = () => {
     if (!c2d) return;
-    if (!visible || (!dotStart && st.form === 0) || (root && !root.hasAttribute("data-k-active"))) return;
+    if (!visible || (!dotStart && st.form === 0) || !current || (root && !root.hasAttribute("data-k-active"))) return;
     const sig = `${st.form}|${st.collapse}|${st.r}|${st.g}|${st.b}`;
     if (reduced && sig === last) return;
     last = sig;

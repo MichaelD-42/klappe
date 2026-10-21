@@ -52,6 +52,6 @@ The mood colours are fixed. A theme does not change them, because a mood is part
 ### Limits
 
 - The turn runs on its own frame loop (`gsap.ticker`), outside the steps. The root has `data-k-ignore`, so the self-test leaves it out. The form, the colour, the speed and the collapse are on the timeline, so a seek lands on the right look.
-- The loop draws only between `show` and `hide`, and only while its canvas is the active one (`data-k-active`). It reads no style per frame.
+- The loop draws only between `show` and `hide`, only while its scene is the current scene, and only while its canvas is the active one (`data-k-active`). On another scene of the same canvas the mesh stops. It goes on when the deck comes back to its scene. It reads no style per frame.
 - Reduced motion draws still frames.
 - An unknown mood name throws.
