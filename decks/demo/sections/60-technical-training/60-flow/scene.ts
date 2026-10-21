@@ -20,7 +20,7 @@ const scene: SceneModule = {
         { id: "worker", label: "Worker", col: 3, row: 0, icon: "cpu" },
       ],
       edges: [
-        { from: "client", to: "api", label: "POST /jobs" },
+        { from: "client", to: "api" },
         { from: "api", to: "queue" },
         { from: "queue", to: "worker" },
       ],

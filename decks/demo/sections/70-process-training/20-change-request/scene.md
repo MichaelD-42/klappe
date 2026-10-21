@@ -7,4 +7,4 @@
 - The team makes the change.
 - The requester accepts the result.
 
-> Follow the dot: the change moves between people, and every hand-over is a lane change. Most waiting happens at those hand-overs.
+> Follow the dot: the change moves between people, and every hand-over is a lane change. Each hand-over is a place where work can wait.

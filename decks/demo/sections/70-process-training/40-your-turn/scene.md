@@ -1,6 +1,6 @@
 ## Your turn
 
-- An engineer at a desk draws itself, line by line.
-- The bulb lights up.
+- Ten minutes, in pairs.
+- Bring a change from your own team.
 
 > Enough watching. The next ten minutes are yours, with a change from your own team.
