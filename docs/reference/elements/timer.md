@@ -30,7 +30,7 @@ The remaining part draws in `--k-accent` (then `--k-warn`, then `--k-bad`); the 
 
 | Handle | Step |
 | --- | --- |
-| `show` | fades the timer in. When this step plays, the timer starts; its count begins once the step's camera flight has landed |
+| `show(tl, at?)` | fades the timer in, at the GSAP position `at` (default: the end of the timeline). When this step plays, the timer starts; its count begins once the step's camera flight has landed |
 
 ### Start, pause and lifecycle
 

@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { t } from "../strings";
-import type { Ctx, StepAdder } from "../types";
+import type { Ctx } from "../types";
 
 export interface TimerOpts {
   minutes?: number; // set exactly one of minutes and until
@@ -12,7 +12,8 @@ export interface TimerOpts {
   label?: string;
 }
 export interface TimerHandle {
-  show: StepAdder;
+  // at: a GSAP position, default the end of the timeline.
+  show(tl: gsap.core.Timeline, at?: gsap.Position): void;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -173,10 +174,10 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   });
 
   return {
-    show: (tl) => {
-      start = tl.duration();
+    show: (tl, at) => {
       timeline = tl;
-      tl.to(root, { autoAlpha: 1, duration: 0.4 }, start);
+      tl.to(root, { autoAlpha: 1, duration: 0.4 }, at ?? tl.duration());
+      start = (tl.recent() as gsap.core.Tween).startTime(); // onStep compares the step span with this
     },
   };
 }

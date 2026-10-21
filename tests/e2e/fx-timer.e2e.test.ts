@@ -141,3 +141,40 @@ test('until counts to the time of day by itself, from a deep link; t does not pa
   expect((await read())[0].text).toBe('14:25')
   await page.close()
 })
+
+// Runs in the page with a bare ctx: show(tl, "<") places the fade with the tween before it, and the timer
+// starts when a played step spans that place, not the end of the timeline.
+test('timer show takes a position; the start follows it', async () => {
+  const page = await open('', '#/a/intro/1')
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/timer.ts').then((m) => { window.__timer = m.timer })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const make = () => {
+      let listener: any
+      const ctx = { html, scene: 's', problem: () => {}, onStep: (fn: any) => (listener = fn) }
+      const h = (window as any).__timer(ctx, { minutes: 1, style: 'text', x: 0, y: 0, size: 300 })
+      const hint = html.lastElementChild!.querySelector('[data-k-timer-hint]')!
+      return { h, step: (e: any) => listener(e), hint: () => hint.textContent }
+    }
+    const TL = window.klappe.canvases[0].tl.constructor as any
+    const withAt = make()
+    const tl = new TL({ paused: true })
+    tl.to({}, { duration: 2 })
+    withAt.h.show(tl, '<')
+    withAt.step({ play: true, span: [0, 2], scene: 's' })
+    const appended = make()
+    const tl2 = new TL({ paused: true })
+    tl2.to({}, { duration: 2 })
+    appended.h.show(tl2)
+    const out = {
+      at: tl.getChildren()[1].startTime(),
+      startedWithAt: withAt.hint(),
+      end: tl2.getChildren()[1].startTime(),
+    }
+    html.remove()
+    return out
+  })
+  expect(r).toEqual({ at: 0, startedWithAt: '', end: 2 })
+  await page.close()
+})
