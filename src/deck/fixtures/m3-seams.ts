@@ -1,6 +1,6 @@
 import { assembleDeck } from "../assemble";
 
-// The four Markdown parts of M3 in plain scene.md files. While an element is a stub (all but code and terminal), its scene shows
+// The four Markdown parts of M3 in plain scene.md files. Code, terminal, checklist and agenda are built; a part whose element is a stub shows
 // EFFECT MISSING and a problem; the cobol fence shows plain and reports that its language is not bundled.
 const f = "```";
 export default () =>
