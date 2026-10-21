@@ -5,12 +5,13 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
-import { afterAll, beforeAll, expect, test } from 'vitest'
+import { afterAll, beforeAll, expect, inject, test } from 'vitest'
 
 // The static build of decks/demo, served from a sub-path: relative asset URLs must still load.
 let out = ''
 let server: Server
 beforeAll(async () => {
+  if (!inject('IS_DEMO_DECK')) return // the title check needs decks/demo; a deck repo builds its own deck
   out = mkdtempSync(path.join(tmpdir(), 'klappe-build-'))
   await build({ configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)), build: { outDir: out, emptyOutDir: true }, logLevel: 'silent' })
   const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' }
@@ -31,7 +32,7 @@ afterAll(() => {
   if (out) rmSync(out, { recursive: true, force: true })
 })
 
-test('the built deck runs from a sub-path and the page title is the deck title', async () => {
+test.skipIf(!inject('IS_DEMO_DECK'))('the built deck runs from a sub-path and the page title is the deck title', async () => {
   const browser = await chromium.launch()
   try {
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
