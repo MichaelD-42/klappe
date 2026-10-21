@@ -29,6 +29,8 @@ An unknown name shows the problem `theme "<name>" not found; using calm`. `inten
 
 Add `?theme=<name>` to the URL to try another theme without editing the deck.
 
+A theme sets tokens only. Fonts and component classes for one deck go in its optional `decks/<id>/deck.css`, which loads after the theme (see [deck.css](deck-format.md#deckcss)).
+
 ## Example
 
 ```css

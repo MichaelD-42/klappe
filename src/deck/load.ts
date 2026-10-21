@@ -27,8 +27,12 @@ export function loadDeck() {
     fixture.deck.themes = { ...themesOf(), ...fixture.deck.themes };
     return fixture; // fixtures keep the klappe look, so a deck repo's deck.css cannot break them
   }
-  // Appended after the klappe styles, so the deck wins at equal specificity.
-  for (const css of Object.values(deckCss)) document.head.append(Object.assign(document.createElement("style"), { textContent: css }));
+  // Appended after the klappe styles; applyTheme moves it after the theme, so the deck wins at equal specificity.
+  for (const css of Object.values(deckCss)) {
+    const s = Object.assign(document.createElement("style"), { textContent: css });
+    s.dataset.kDeckCss = "";
+    document.head.append(s);
+  }
   const files = import.meta.glob("@deck/**/*.md", { query: "?raw", import: "default", eager: true });
   const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });
   const data = import.meta.glob<string>("@deck/data/*", { query: "?raw", import: "default", eager: true });

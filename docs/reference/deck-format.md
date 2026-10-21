@@ -30,6 +30,14 @@ Frontmatter keys:
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
 
+## deck.css
+
+Optional. Put `decks/<id>/deck.css` next to `deck.md` for a corporate look.
+A theme file holds tokens only; deck.css holds the deck's fonts (`@font-face`) and its own component classes, and it loads after the theme.
+It may also override `--k-*` tokens. The contrast check measures the result.
+A `url()` is relative to the deck folder, for example `url(./fonts/brand.woff2)` or `url(./media/logo.png)`. The build bundles these files.
+The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore it.
+
 ## scene.md
 
 - `## Title` names the scene. It is required.
