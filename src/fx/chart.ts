@@ -239,8 +239,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
-    const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
-    s.style.fill = "var(--k-phosphor-amber)";
+    // Ends at the plot right edge, inside the rect: the right margin keeps it off the frame edge.
+    const s = text(root, t("sampleData", ctx.deck.lang), { x: P.x + P.w, y: R.y + 34, "text-anchor": "end" });
+    s.style.fill = "var(--k-warn)";
     head.push(s);
   }
   if (legend.length) {

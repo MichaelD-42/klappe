@@ -84,6 +84,18 @@ test('values count up to the data and the source is in the DOM', async () => {
   await page.close()
 })
 
+test('the Sample data label uses --k-warn and ends inside the chart rect', async () => {
+  const page = await open('/a/bar/1')
+  const r = await page.evaluate(() => {
+    const s = [...document.querySelectorAll<SVGTextElement>('[data-k-chart="bar"] text')].find((e) => e.textContent === 'Sample data')!
+    const b = s.getBBox()
+    return { fill: s.style.fill, right: b.x + b.width }
+  })
+  expect(r.fill).toBe('var(--k-warn)')
+  expect(r.right).toBeLessThanOrEqual(160 + 1600 - 20) // the fixture rect ends at x 1760
+  await page.close()
+})
+
 test('a missing dataset shows DATA MISSING with the file name', async () => {
   const page = await open('/a/missing/1')
   await page.waitForFunction(() => window.klappe.stepper.index === 15)

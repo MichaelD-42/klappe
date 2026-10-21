@@ -116,7 +116,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 { build: (ctx) => icon(ctx, "rocket", { x: 960, y: 540, size: 160, color: "var(--k-fg)" }), steps: [(tl, i) => i.draw(tl)] }
 
 // chart: bar, stacked, line, waterfall or timeline from data/. "Sample data" shows when sample is true
-// or the data's source is "klappe demo sample".
+// or the data's source is "klappe demo sample". It is in --k-warn, top right, inside rect.
 { build: (ctx) => chart(ctx, { src: "data/units.csv", type: "bar", rect: { x: 160, y: 140, w: 1600, h: 800 }, title: "Units by quarter" }),
   steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)] }
 
