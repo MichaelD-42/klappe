@@ -95,3 +95,23 @@ test('a row given "<" draws and lights together', async () => {
   }
   await page.close()
 })
+
+// Runs in the page with a bare ctx: the handle's el is the tile's group, so a scene can move the tile.
+test('iconTile returns its group as el', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-icons`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/icons.ts').then((m) => { window.__iconTile = m.iconTile })")
+  const r = await page.evaluate(() => {
+    const svg = document.body.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
+    const g = svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'g'))
+    const problems: string[] = []
+    const h = (window as any).__iconTile({ svg: g, problem: (m: string) => problems.push(m) }, 'cpu', { x: 100, y: 100, tone: 'accent' })
+    const out = { problems, isTile: h.el === g.lastElementChild && h.el.classList.contains('k-tile'), tag: h.el.tagName }
+    svg.remove()
+    return out
+  })
+  expect(r).toEqual({ problems: [], isTile: true, tag: 'g' })
+  await page.close()
+})

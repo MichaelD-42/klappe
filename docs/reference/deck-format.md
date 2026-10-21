@@ -111,6 +111,7 @@ import desk from "klappe/fx/art/engineer-desk.svg?raw";
 steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path you built in build()
 
 // icon and iconTile: a Lucide icon by name draws on, then lights up.
+// iconTile also returns el, the tile's SVG group: a scene moves the tile with tl.to(i.el, { x: 200 }).
 { build: (ctx) => iconTile(ctx, "lightbulb", { x: 960, y: 540, tone: "accent" }), steps: [(tl, i) => i.draw(tl), (tl, i) => i.light(tl)] }
 { build: (ctx) => icon(ctx, "rocket", { x: 960, y: 540, size: 160, color: "var(--k-fg)" }), steps: [(tl, i) => i.draw(tl)] }
 
