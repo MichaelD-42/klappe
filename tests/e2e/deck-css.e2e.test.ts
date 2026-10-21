@@ -20,7 +20,7 @@ describe.skipIf(!inject('IS_DEMO_DECK'))('deck.css on klappe decks/demo', () => 
           // The deck's <style> comes after the theme's, so the deck wins at equal specificity.
           afterTheme: (() => {
             const all = [...document.head.querySelectorAll('style')]
-            return all.findIndex((s) => s.hasAttribute('data-k-deck-css')) > all.findLastIndex((s) => s.hasAttribute('data-k-theme'))
+            return all.findIndex((s) => s.hasAttribute('data-k-deck-css')) > all.map((s) => s.hasAttribute('data-k-theme')).lastIndexOf(true)
           })(),
         }
       })
