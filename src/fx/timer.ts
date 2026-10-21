@@ -3,7 +3,8 @@ import { t } from "../strings";
 import type { Ctx, StepAdder } from "../types";
 
 export interface TimerOpts {
-  minutes: number;
+  minutes?: number; // set exactly one of minutes and until
+  until?: string; // "HH:MM", a wall-clock time today
   style: "bar" | "donut" | "ring" | "text";
   x: number;
   y: number;
@@ -25,6 +26,12 @@ export function timerState(totalMs: number, elapsedMs: number): { remainingMs: n
   return { remainingMs, phase, text: `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` };
 }
 
+// ms from nowMs to "HH:MM" today, local time; 0 once it has passed.
+export function untilMs(until: string, nowMs: number): number {
+  const [h, m] = until.split(":").map(Number);
+  return Math.max(0, new Date(nowMs).setHours(h, m, 0, 0) - nowMs);
+}
+
 const svgEl = (parent: Element, tag: string, attrs: Record<string, string | number>) => {
   const e = parent.appendChild(document.createElementNS(SVG, tag));
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
@@ -35,14 +42,19 @@ const svgEl = (parent: Element, tag: string, attrs: Record<string, string | numb
 // performance.now, under data-k-ignore so the self-test snapshot leaves it out. size is the width, scene px.
 export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   const { size, style } = opts;
-  const total = opts.minutes * 60000;
+  const bad = (opts.minutes === undefined) === (opts.until === undefined) ? "set exactly one of minutes and until"
+    : opts.until !== undefined && !/^([01]?d|2[0-3]):[0-5]d$/.test(opts.until) ? `until "${opts.until}" is not HH:MM` : "";
+  if (bad) ctx.problem(`timer: ${bad}`);
+  const until = bad ? undefined : opts.until;
+  // until: the ring and the warn phase measure from the time left when the step comes into view.
+  let total = until ? untilMs(until, Date.now()) : (opts.minutes ?? 0) * 60000;
   const root = document.createElement("div");
   root.setAttribute("data-k-ignore", "");
-  root.setAttribute("data-no-advance", ""); // a click toggles the timer instead of stepping
+  if (!until) root.setAttribute("data-no-advance", ""); // a click toggles the timer instead of stepping
   root.setAttribute("data-k-timer", "");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${size}px`, display: "flex", flexDirection: "column",
-    alignItems: "center", gap: "12px", font: "600 28px/1.2 var(--k-font)", color: "var(--k-fg)", cursor: "pointer", zIndex: "2",
+    alignItems: "center", gap: "12px", font: "600 28px/1.2 var(--k-font)", color: "var(--k-fg)", cursor: until ? "default" : "pointer", zIndex: "2",
   });
 
   // The graphic, with mm:ss over its centre (ring, donut), under it (bar) or alone (text).
@@ -95,13 +107,13 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   let timeline: gsap.core.Timeline | undefined;
   let here = false; // the current step is this scene's, at or after the show step
   const draw = () => {
-    const s = timerState(total, elapsed);
+    const s = timerState(total, until ? total - untilMs(until, Date.now()) : elapsed);
     const colour = PHASE[s.phase];
     clock.textContent = s.text;
     clock.style.color = colour;
     if (fill) fill.style[style === "bar" ? "fill" : "stroke"] = colour;
-    setFrac(s.remainingMs / total);
-    hint.textContent = s.phase === "done" ? t("timesUp", ctx.deck.lang) : !raf && !elapsed ? t("pressT", ctx.deck.lang) : "";
+    setFrac(total ? s.remainingMs / total : 0);
+    hint.textContent = s.phase === "done" ? t("timesUp", ctx.deck.lang) : !until && !raf && !elapsed ? t("pressT", ctx.deck.lang) : "";
     hint.style.color = s.phase === "done" ? "var(--k-bad)" : "var(--k-muted)";
     return s;
   };
@@ -135,7 +147,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
     draw();
   };
   const toggle = () => {
-    if (!here) return;
+    if (!here || until) return; // an until timer runs by itself: T and a click do nothing
     if (draw().phase === "done") reset();
     else if (raf) pause();
     else run();
@@ -144,7 +156,14 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   document.addEventListener("klappe:timer", toggle);
   root.addEventListener("click", toggle);
   ctx.onStep(({ play, span, scene }) => {
+    const was = here;
     here = scene === ctx.scene && !!span && span[1] > start;
+    if (until) {
+      // Runs whenever its step is in view, also after a deep link or a cut; stops when the scene is left.
+      if (!here) return pause();
+      if (!was) total = untilMs(until, Date.now());
+      return run();
+    }
     if (!here) return reset(); // another scene, or a step before the timer shows
     // Its own step played starts it; a cut onto it, or within the scene, leaves it as it is (reset: full, paused).
     if (play && span![0] <= start && start < span![1]) {

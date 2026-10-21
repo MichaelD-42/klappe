@@ -10,7 +10,7 @@ const ALLOW = [
   'KEN_BURNS', 'LANGS', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText',
   'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'lineDiff', 'loadHighlighter',
   'parseCsv', 'parseGroups', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
-  'timerState', 'treeLayout', 'treeRoute', 'typed', 'waterfallSteps',
+  'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.
   'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
 ]
