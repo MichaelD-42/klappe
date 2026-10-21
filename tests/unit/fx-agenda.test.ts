@@ -93,3 +93,62 @@ test('the handle gives the root as el and one element per row', () => {
   expect(h.el).toBe(made[0])
   expect(h.rows.map((r) => r.style.color)).toEqual(['var(--k-muted)', 'var(--k-accent)', 'var(--k-fg)'])
 })
+
+test('move slides the marker from the current row to another and moves the row colours', () => {
+  const { made, ctx } = laid()
+  const { tl, log } = rec()
+  const a = agenda(ctx, { rows, x: 0, y: 0, w: 1000 })
+  a.show(tl)
+  const n = log.length
+  a.move(tl, 2)
+  const bar = made[made.length - 1]
+  const top = (i: number) => a.rows[i].offsetTop
+  const slide = log.slice(n).find((l) => l.op === 'fromTo')!
+  expect(slide.target).toBe(bar)
+  expect(slide.from.y).toBe(0)
+  expect(slide.vars.y).toBe(top(2) - top(1))
+  expect(slide.vars.immediateRender).toBe(false)
+  const colours = log.slice(n).filter((l) => l.op === 'set').map((l) => [a.rows.indexOf(l.target), l.vars.color, l.vars.immediateRender])
+  expect(colours).toEqual([[1, 'var(--k-muted)', false], [2, 'var(--k-accent)', false]])
+})
+
+test('a second move starts where the first one ended', () => {
+  const { ctx } = laid()
+  const { tl, log } = rec()
+  const a = agenda(ctx, { rows, x: 0, y: 0, w: 1000 })
+  a.show(tl)
+  a.move(tl, 2)
+  const n = log.length
+  a.move(tl, 0)
+  const top = (i: number) => a.rows[i].offsetTop
+  const slide = log.slice(n).find((l) => l.op === 'fromTo')!
+  expect([slide.from.y, slide.vars.y]).toEqual([top(2) - top(1), top(0) - top(1)])
+  const colours = log.slice(n).filter((l) => l.op === 'set').map((l) => [a.rows.indexOf(l.target), l.vars.color])
+  expect(colours).toEqual([[0, 'var(--k-accent)'], [1, 'var(--k-fg)'], [2, 'var(--k-fg)']])
+})
+
+test('move to a row that does not exist reports it and moves nothing', () => {
+  const problems: string[] = []
+  const { ctx } = laid()
+  ctx.problem = (m: string) => problems.push(m)
+  const { tl, log } = rec()
+  const a = agenda(ctx, { rows, x: 0, y: 0, w: 1000 })
+  a.show(tl)
+  const n = log.length
+  a.move(tl, 3)
+  expect(problems).toEqual(['agenda: no row 3'])
+  expect(log.slice(n).some((l) => l.op === 'fromTo' || l.vars?.color)).toBe(false)
+})
+
+test('move with no current row shows the marker on the target row', () => {
+  const { made, ctx } = laid()
+  const { tl, log } = rec()
+  const a = agenda(ctx, { rows: rows.map((r) => ({ ...r, current: false })), x: 0, y: 0, w: 1000 })
+  a.show(tl)
+  a.move(tl, 1)
+  const bar = made[made.length - 1]
+  expect(bar.style.top).toBe(`${a.rows[1].offsetTop}px`)
+  expect(log.some((l) => l.op === 'set' && l.target === bar && l.vars.autoAlpha === 1)).toBe(true)
+  const colours = log.filter((l) => l.op === 'set' && l.vars.color).map((l) => [a.rows.indexOf(l.target), l.vars.color])
+  expect(colours).toEqual([[0, 'var(--k-muted)'], [1, 'var(--k-accent)']])
+})

@@ -2,7 +2,7 @@ import { assembleDeck } from "../assemble";
 import { agenda, type AgendaHandle } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
-// show with the marker on a middle row, on the first row, with no marker, an unknown current row, long titles, and too many rows.
+// show with the marker on a middle row, on the first row, with no marker, an unknown current row, long titles, too many rows, and a marker that moves down two rows and back to the first.
 const rect = { x: 160, y: 200, w: 1500, h: 600 };
 const row = (from: string, to: string, title: string, current = false) => ({ from, to, title, current });
 const rows = [row("09:00", "09:45", "Basics"), row("09:45", "10:30", "Practice"), row("10:30", "11:00", "Wrap-up")];
@@ -26,10 +26,15 @@ export default () =>
       "sections/10-a/40-unknown/scene.md": md("Unknown"),
       "sections/10-a/50-long/scene.md": md("Long titles"),
       "sections/10-a/60-many/scene.md": md("Too many"),
+      "sections/10-a/70-move/scene.md": "## Move\n\n- Show.\n- Down to Wrap-up.\n- Back to Basics.\n",
     },
     {
       "sections/10-a/40-unknown/scene.ts": one(rows, { current: "Nope" }),
       "sections/10-a/50-long/scene.ts": one([{ ...long[0], current: true }, long[1]]),
       "sections/10-a/60-many/scene.ts": one(many),
+      "sections/10-a/70-move/scene.ts": {
+        build: (ctx) => ({ a: agenda(ctx, { rows: [{ ...rows[0], current: true }, rows[1], rows[2]], ...rect }) }),
+        steps: [(tl, r: { a: AgendaHandle }) => r.a.show(tl), (tl, r: { a: AgendaHandle }) => r.a.move(tl, 2), (tl, r: { a: AgendaHandle }) => r.a.move(tl, 0)],
+      } satisfies SceneModule,
     },
   );

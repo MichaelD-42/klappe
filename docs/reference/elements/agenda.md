@@ -16,7 +16,7 @@ A list of `HH:MM–HH:MM title` items in `scene.md`; the arrow `←` marks the c
 
 ## `agenda`
 
-In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, el, rows }`. `el` is the root element. `rows` holds one element per row, in order: a scene can move or mark a row with `tl.to(a.rows[1], { x: 20 })`.
+In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, move, el, rows }`. `el` is the root element. `rows` holds one element per row, in order: a scene can move or mark a row with `tl.to(a.rows[1], { x: 20 })`.
 
 ### Options
 
@@ -32,9 +32,12 @@ In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, el,
 | Handle | Step |
 | --- | --- |
 | `show` | fades the rows in, then slides the marker to the current row |
+| `move(tl, toRow, at)` | slides the marker from the current row to row `toRow` (counts from 0) in 0.7 s, at time `at` (default: the end of the timeline). The colours move with it: rows above `toRow` turn `--k-muted`, row `toRow` `--k-accent`, rows below `--k-fg`. Each `move` starts where the one before ended. Call it after `show`. |
 
 ### Limits
 
 - A `current` that matches no title shows `agenda: no row "<title>"`; the rows draw with no marker.
 - Text is 40 px and shrinks to 20 px (14 px at 1366) to fit `h`. If it still does not fit, the deck shows `agenda: N rows do not fit Hpx at 20px text` and nothing draws.
+- A `toRow` that is not a row shows `agenda: no row N`; nothing moves.
+- With no current row, `move` shows the marker on `toRow` without a slide.
 - Long titles wrap; times sit in a right-aligned column.
