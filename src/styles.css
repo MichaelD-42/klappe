@@ -8,15 +8,15 @@ body {
 
 .k-stage {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 0;
+  top: 0;
   width: 1920px;
   height: 1080px;
   overflow: hidden;
   background: var(--k-bg);
   color: var(--k-fg);
   font-family: var(--k-font);
-  transform-origin: 50% 50%;
+  transform-origin: 0 0;
 }
 
 .k-worlds,
