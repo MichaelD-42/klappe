@@ -21,7 +21,7 @@ const BOX = 32;
 const GAP = 20; // between rows
 
 // Square boxes with a 2 px --k-line stroke; tick(i) draws the check in --k-ok, brightens the text to --k-fg
-// and lights the box in --k-accent until the next tick.
+// and lights the box in --k-accent until the next tick. A done item's check already drew in show, so tick does not redraw it.
 export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
   const root = document.createElement("div");
   Object.assign(root.style, {
@@ -87,8 +87,10 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
         const set = (el: Element, vars: gsap.TweenVars, t = at) => tl.set(el, { ...vars, immediateRender: false }, t);
         if (rows[prev]) set(rows[prev].box, { stroke: "var(--k-line)" });
         set(r.box, { stroke: "var(--k-accent)" });
-        set(r.mark, { autoAlpha: 1 });
-        drawOn(r.mark, { duration: 0.5, each: 0, at })(tl);
+        if (!r.done) {
+          set(r.mark, { autoAlpha: 1 });
+          drawOn(r.mark, { duration: 0.5, each: 0, at })(tl);
+        }
         set(r.text, { color: "var(--k-fg)" }, at + 0.25);
       };
     },

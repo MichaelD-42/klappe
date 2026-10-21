@@ -31,7 +31,7 @@ In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ show, tick(i) 
 | Handle | Step |
 | --- | --- |
 | `show` | fades the list in and draws the checks of `done` items |
-| `tick(i)` | draws item `i`'s check, brightens its text; the box is lit in `--k-accent` until the next tick |
+| `tick(i)` | draws item `i`'s check, brightens its text; the box is lit in `--k-accent` until the next tick. On a `done` item the check is not drawn again (`show` drew it); only the box highlight and text change |
 
 ### Limits
 

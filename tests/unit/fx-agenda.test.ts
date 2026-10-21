@@ -35,3 +35,54 @@ test('too many rows for the rect report a problem at the floor', () => {
   h.show(gsap.timeline())
   expect(problems).toEqual(['agenda: 3 rows do not fit 300px at 20px text'])
 })
+
+const rec = () => {
+  const log: { op: string; target: any; from?: any; vars?: any }[] = []
+  const tl: any = {
+    duration: () => 0,
+    to: (target: any, vars: any) => log.push({ op: 'to', target, vars }),
+    set: (target: any, vars: any) => log.push({ op: 'set', target, vars }),
+    fromTo: (target: any, from: any, vars: any) => log.push({ op: 'fromTo', target, from, vars }),
+  }
+  return { tl, log }
+}
+// Elements get an offsetTop by creation order, so rows sit at distinct heights.
+const laid = () => {
+  const made: any[] = []
+  ;(globalThis as any).document = {
+    createElement: () => (made.push({ ...el(), offsetTop: made.length * 10, offsetHeight: 50 }), made[made.length - 1]),
+    createElementNS: () => el(),
+  }
+  return { made, ctx: { svg: el(), html: el(), problem: () => {} } as any }
+}
+
+test('the marker lands on the current row, slides from the first row', () => {
+  const { made, ctx } = laid()
+  const { tl, log } = rec()
+  agenda(ctx, { rows, x: 0, y: 0, w: 1000 }).show(tl)
+  const bar = made[made.length - 1]
+  const [first, cur] = [made[1], made[4]] // root, then row/time/text per row
+  const slide = log.find((l) => l.op === 'fromTo')!
+  expect(slide.target).toBe(bar)
+  expect(bar.style.top).toBe(`${cur.offsetTop}px`)
+  expect(slide.from.y).toBe(first.offsetTop - cur.offsetTop)
+  expect(slide.vars.y).toBe(0)
+})
+
+test('with no current row there is no marker', () => {
+  const { made, ctx } = laid()
+  const { tl, log } = rec()
+  agenda(ctx, { rows: rows.map((r) => ({ ...r, current: false })), x: 0, y: 0, w: 1000 }).show(tl)
+  expect(log.some((l) => l.op === 'fromTo' || l.target === made[made.length - 1])).toBe(false)
+})
+
+test('the rows shrink to a size between 20 and 40 px when they fit there', () => {
+  const made: any[] = []
+  const tall = (): any => ({ append() {}, setAttribute() {}, style: {}, appendChild: (c: unknown) => c, offsetTop: 0, get offsetHeight() { return parseInt(this.style.fontSize || '40') * 10 } })
+  ;(globalThis as any).document = { createElement: () => (made.push(tall()), made[made.length - 1]), createElementNS: () => el() }
+  const problems: string[] = []
+  const ctx: any = { svg: el(), html: el(), problem: (m: string) => problems.push(m) }
+  agenda(ctx, { rows, x: 0, y: 0, w: 1000, h: 300 }).show(rec().tl)
+  expect(made[0].style.fontSize).toBe('30px')
+  expect(problems).toEqual([])
+})
