@@ -43,7 +43,7 @@ The handle's `root` is the `.k-retro` element, the whole CRT. A scene moves or f
 
 ### The crt transition
 
-`{ transition: "crt" }` in `section.ts` squashes the old canvas to a line and opens the new one. It takes the same colour: `{ transition: "crt", transitionOptions: { color: "teal" } }`.
+`{ transition: "crt" }` in `section.ts` squashes the old canvas to a line and opens the new one. As it squashes, the old canvas fades into the line colour: the chosen colour, 70 % toward white. It takes the same colour: `{ transition: "crt", transitionOptions: { color: "teal" } }`.
 
 ### `crtColor`
 

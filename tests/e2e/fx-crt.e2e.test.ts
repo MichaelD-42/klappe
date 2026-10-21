@@ -147,3 +147,43 @@ test('the crt handle exposes its root, and a second dim starts where the first e
   expect(r.start).toBe('brightness(1) blur(0px)')
   await page.close()
 })
+
+// The collapsing frame flashes in the chosen colour mixed toward white, not a saturated hue:
+// brightness(3) on a teal frame clipped to pure cyan (#00FFFF). Each sampled pixel must lie between
+// the frame colour, teal (0, 154, 155), and teal 70 % toward white, (179, 225, 225).
+test('the crt transition collapse flashes a tint of its colour, not a saturated hue', async () => {
+  const page = await open('#/a/green/1')
+  await page.evaluate("import('/src/fx/crt.ts').then((m) => { window.__transitionCrt = m.transitionCrt })")
+  await page.evaluate(() => {
+    const div = (parent: HTMLElement, css: string) => {
+      const d = parent.appendChild(document.createElement('div'))
+      d.style.cssText = css
+      return d
+    }
+    const stage = div(document.body, 'position:fixed;left:0;top:0;width:400px;height:400px;z-index:99999')
+    const worlds = div(stage, 'position:absolute;inset:0')
+    const from = div(worlds, 'position:absolute;inset:0;background:#009A9B')
+    const to = div(worlds, 'position:absolute;inset:0;background:#fff')
+    const tl = (window as any).__transitionCrt({ el: from }, { el: to }, { color: 'teal' })
+    tl.pause(0)
+    ;(window as any).__seek = (t: number) => void tl.seek(t)
+  })
+  const px: number[][] = []
+  for (const t of [0.05, 0.1, 0.15, 0.19]) {
+    await page.evaluate((t) => (window as any).__seek(t), t)
+    const png = (await page.screenshot({ clip: { x: 200, y: 200, width: 1, height: 1 } })).toString('base64')
+    const [r, g, b] = await page.evaluate(async (src) => {
+      const img = new Image()
+      img.src = `data:image/png;base64,${src}`
+      await img.decode()
+      const c = document.createElement('canvas').getContext('2d')!
+      c.drawImage(img, 0, 0)
+      return [...c.getImageData(0, 0, 1, 1).data]
+    }, png)
+    px.push([r, g, b])
+  }
+  const [lo, hi] = [[0, 154, 155], [179, 225, 225]]
+  const between = px.map((p) => p.every((c, i) => c >= lo[i] - 8 && c <= hi[i] + 8))
+  expect({ px, between }).toEqual({ px, between: px.map(() => true) })
+  await page.close()
+})

@@ -254,12 +254,15 @@ export function transitionCrt(
     .timeline()
     .set(stage, { backgroundColor: "var(--k-blackout)" })
     .set(to.el, { autoAlpha: 0 })
-    .to(worlds, { scaleY: 0.004, filter: "brightness(3)", duration: 0.2, ease: "power2.in" })
+    // The frame fades into the line tint as it squashes: brightness(3) here clipped a saturated colour to pure hue (teal to cyan).
     .set(worlds, { backgroundColor: `rgba(${line}, 1)` })
+    .to(worlds, { scaleY: 0.004, duration: 0.2, ease: "power2.in" })
+    .to(from.el, { autoAlpha: 0, duration: 0.2, ease: "power2.in" }, "<")
     .set(from.el, { autoAlpha: 0 })
     .to(worlds, { scaleX: 0, duration: 0.12, ease: "power2.in" })
     .fromTo(...glow(60, 0.8, 0, 0, 0.12, "power2.in"))
     .set(to.el, { autoAlpha: 1 }, "+=0.15")
+    .set(worlds, { filter: "brightness(3)" }, "<") // the new canvas opens bright, then settles
     .to(worlds, { scaleX: 1, duration: 0.22, ease: "power3.out" })
     .fromTo(...glow(0, 0.8, 60, 0.8, 0.22, "power3.out"))
     .to(worlds, { scaleY: 1, duration: 0.2, ease: "expo.in" })
