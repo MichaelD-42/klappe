@@ -80,11 +80,11 @@ export function bubbleLayout(side: Side) {
 }
 
 // A speech bubble whose tail points at (x, y), scene-local. side: see bubbleLayout. maxWidth: px, the text wraps.
-// hide takes an optional position, for example "<" to hide together with another bubble.
+// show and hide take an optional position, for example "<" to show or hide together with another bubble.
 export function bubble(
   ctx: Ctx,
   opts: BubbleOpts,
-): { show: StepAdder; hide: (tl: gsap.core.Timeline, at?: gsap.Position) => void } {
+): { show: (tl: gsap.core.Timeline, at?: gsap.Position) => void; hide: (tl: gsap.core.Timeline, at?: gsap.Position) => void } {
   const { x, y, text } = opts;
   const L = bubbleLayout(opts.side ?? "right");
   const box = document.createElement("div");
@@ -126,8 +126,8 @@ export function bubble(
   ctx.html.append(box);
   gsap.set(box, { xPercent: L.xPercent, yPercent: L.yPercent, autoAlpha: 0, transformOrigin: L.origin });
   return {
-    show(tl) {
-      tl.fromTo(box, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)", immediateRender: false });
+    show(tl, at) {
+      tl.fromTo(box, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)", immediateRender: false }, at);
     },
     hide(tl, at) {
       tl.to(box, { autoAlpha: 0, duration: motion.step }, at);

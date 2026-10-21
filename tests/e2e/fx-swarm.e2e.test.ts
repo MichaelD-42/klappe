@@ -194,3 +194,25 @@ test('a morph starts from the shape as it stands', async () => {
   expect(moves[0]).toBeLessThan(2) // power2.inOut: the first frame barely moves
   await page.close()
 })
+
+// Runs in the page with a bare ctx: show(tl, "<") pops a bubble in together with the one before; show(tl) appends.
+test('bubble show takes a position, like hide', async () => {
+  const page = await open('?fixture=fx-motion#/a/talk/1')
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/motion.ts').then((m) => { window.__bubble = m.bubble })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const bubble = (window as any).__bubble
+    const [a, b, c] = ['A', 'B', 'C'].map((text) => bubble({ html }, { x: 100, y: 100, text }))
+    const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+    a.show(tl)
+    b.show(tl, '<')
+    c.show(tl)
+    const starts = tl.getChildren().map((t: any) => t.startTime())
+    html.remove()
+    return starts
+  })
+  expect(r[1]).toBe(r[0])
+  expect(r[2]).toBeGreaterThan(r[1])
+  await page.close()
+})

@@ -28,7 +28,7 @@ The border is `--k-accent`, the fill `--k-bg` and the text `--k-fg`.
 
 | Handle | Step |
 | --- | --- |
-| `show(tl)` | the bubble pops in |
+| `show(tl, at?)` | the bubble pops in. Use `at: "<"` to show it together with another one |
 | `hide(tl, at?)` | the bubble fades out. Use `at: "<"` to hide it together with another one |
 
 ### `bubbleLayout`
