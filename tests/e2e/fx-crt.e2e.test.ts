@@ -25,7 +25,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(13)
+    expect(r.steps).toBe(14)
     expect(r.ok).toBe(true)
   })
 
@@ -111,5 +111,39 @@ test('a count line without a number is reported and still types', async () => {
   })
   expect(r.problems).toEqual(['crt: count line "MEMORY TEST: lots" needs a label and a number with K, like "MEMORY TEST: 640K OK"'])
   expect(r.text).toContain('MEMORY TEST: lots')
+  await page.close()
+})
+
+// dim() is a fromTo on the screen's filter: a deep link onto it and a cut back from it agree with play.
+test('dim lowers the screen brightness, and a cut back restores it', async () => {
+  const page = await open('#/b/amber/4')
+  const filter = () => page.evaluate(() => getComputedStyle(document.querySelector('[data-scene="amber"] .k-crt-screen')!).filter)
+  expect(await filter()).toBe('brightness(0.3) blur(0px)')
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index - 1, 'cut'))
+  expect(await filter()).toBe('brightness(1) blur(0px)')
+  await page.close()
+})
+
+// Runs in the page with a bare ctx: the handle's root is the .k-retro element, and dims chain from the last level.
+test('the crt handle exposes its root, and a second dim starts where the first ended', async () => {
+  const page = await open('#/a/green/1')
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/crt.ts').then((m) => { window.__crt = m.crt })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const h = (window as any).__crt({ html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, problem: () => {} }, { lines: ['A'] })
+    const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+    h.dim(tl)
+    h.dim(tl, { to: 1, at: '+=1' })
+    const screen = h.root.querySelector('.k-crt-screen') as HTMLElement
+    const at = (t: number) => (tl.seek(t), screen.style.filter)
+    const out = { isRoot: h.root === html.lastElementChild && h.root.classList.contains('k-retro'), mid: at(0.6), end: at(tl.duration()), start: at(0) }
+    html.remove()
+    return out
+  })
+  expect(r.isRoot).toBe(true)
+  expect(r.mid).toBe('brightness(0.3) blur(0px)')
+  expect(r.end).toBe('brightness(1) blur(0px)')
+  expect(r.start).toBe('brightness(1) blur(0px)')
   await page.close()
 })

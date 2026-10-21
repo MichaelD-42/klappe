@@ -17,10 +17,15 @@ const green: SceneModule = {
   ],
 };
 
-// A scene that types all its lines in one step.
-const all = (color: "green" | "amber", lines: CrtLine[]): SceneModule => ({
+// A scene that types all its lines in one step; with dim, a last step dims the screen.
+const all = (color: "green" | "amber", lines: CrtLine[], dim = false): SceneModule => ({
   build: (ctx) => crt(ctx, { color, lines }),
-  steps: [(tl, h: CrtHandle) => h.powerOn(tl), (tl, h: CrtHandle) => h.type(tl, "all"), (tl, h: CrtHandle) => h.ready(tl)],
+  steps: [
+    (tl, h: CrtHandle) => h.powerOn(tl),
+    (tl, h: CrtHandle) => h.type(tl, "all"),
+    (tl, h: CrtHandle) => h.ready(tl),
+    ...(dim ? [(tl: gsap.core.Timeline, h: CrtHandle) => h.dim(tl)] : []),
+  ],
 });
 
 const three = (title: string) => `## ${title}\n\n- Power on.\n- All lines.\n- Ready.\n`;
@@ -33,14 +38,14 @@ export default () =>
       "sections/10-a/section.md": "# A\n",
       "sections/10-a/10-green/scene.md": "## Green\n\n- Power on.\n- Banner.\n- Blank.\n- Memory.\n- Drives.\n- Ready.\n",
       "sections/20-b/section.md": "# B\n",
-      "sections/20-b/10-amber/scene.md": three("Amber"),
+      "sections/20-b/10-amber/scene.md": three("Amber") + "- Dim.\n",
       "sections/20-b/20-long/scene.md": three("Long"),
       "sections/30-c/section.md": "# C\n",
       "sections/30-c/10-after/scene.md": "## After\n\n- A plain scene after a green CRT transition.\n",
     },
     {
       "sections/10-a/10-green/scene.ts": green,
-      "sections/20-b/10-amber/scene.ts": all("amber", ["Loading: AI agents ............ OK", "Loading: knowledge graph ...... OK"]),
+      "sections/20-b/10-amber/scene.ts": all("amber", ["Loading: AI agents ............ OK", "Loading: knowledge graph ...... OK"], true),
       "sections/20-b/20-long/scene.ts": all("green", LONG),
       "sections/20-b/section.ts": { transition: "crt", transitionOptions: { color: "amber" } },
       "sections/30-c/section.ts": { transition: "crt" },

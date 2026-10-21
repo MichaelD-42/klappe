@@ -22,6 +22,11 @@ export interface CrtHandle {
   hideCursor(tl: gsap.core.Timeline, at?: gsap.Position): void;
   // The cursor block's centre, scene-local, on its row after all prompts are typed.
   cursorAt(): { x: number; y: number };
+  // Dims the screen (text and scanlines) to brightness `to`, default 0.3. Each call starts at the level the call
+  // before it left, so dim(tl, { to: 1 }) brings it back.
+  dim(tl: gsap.core.Timeline, opts?: { to?: number; at?: gsap.Position }): void;
+  // The .k-retro element: the whole CRT, for a scene that moves or fades it.
+  root: HTMLElement;
 }
 
 const COLORS: Record<string, string> = { green: "var(--k-phosphor)", amber: "var(--k-phosphor-amber)", teal: "#009A9B" };
@@ -181,6 +186,7 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
       at,
     );
 
+  let level = 1; // the brightness the last dim() left; step adders run in order at load
   return {
     // The spike's power-on: a line flashes across, opens to a bright screen, which fades to the glowing terminal.
     powerOn(tl) {
@@ -213,6 +219,13 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
       tl.set(cursors, { autoAlpha: 0 }, at);
     },
     cursorAt: () => cursorCentre(lines.length + 1 + prompts.length, fit.size),
+    dim(tl, { to = 0.3, at } = {}) {
+      // The same filter list as settleScreen, so both tween one filter on the screen.
+      const from = `brightness(${level}) blur(0px)`;
+      tl.fromTo(screen, { filter: from }, { filter: `brightness(${to}) blur(0px)`, duration: 0.6, ease: "power2.out", immediateRender: false }, at);
+      level = to;
+    },
+    root,
   };
 }
 

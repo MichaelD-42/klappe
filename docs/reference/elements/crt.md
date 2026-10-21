@@ -34,7 +34,12 @@ The font size fits all rows (lines, `READY.`, prompts and the cursor row) in the
 | `ready(tl)` | shows `READY.` and the blinking cursor |
 | `prompt(tl, index, { cps?, at? })` | types `prompts[index]` on the cursor row. The cursor then rests on the next row. `cps`: characters per second, default 8 (a human) |
 | `hideCursor(tl, at?)` | hides the cursor block |
+| `dim(tl, { to?, at? })` | dims the screen (text and scanlines) with a brightness filter, to `to` (default 0.3) over 0.6 s. Each call starts at the level the call before it left, so `dim(tl, { to: 1 })` brings the screen back. It is a `fromTo`, so seek equals play |
 | `cursorAt()` | not a step: the cursor block's centre, scene-local, on its row after the last prompt. Use it to start another effect there, for example `mesh3d`'s `show(tl, at, { from: h.cursorAt() })` |
+
+### `root`
+
+The handle's `root` is the `.k-retro` element, the whole CRT. A scene moves or fades it with its own tweens.
 
 ### The crt transition
 
