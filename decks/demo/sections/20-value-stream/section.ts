@@ -73,7 +73,9 @@ export function grow(tl: TL, stream: Record<string, any>, on: boolean, at?: numb
   tl.fromTo(stream.line, { y: a.line.y, attr: { "stroke-width": a.line.w } }, { y: b.line.y, attr: { "stroke-width": b.line.w }, ...d }, "<");
 }
 
+// The default, written out: the boot screen fades to the value stream (the acceptance check AC-5 wants a fade here).
 const section: SectionModule = {
+  transition: "fade",
   build(ctx) {
     const x1 = X0;
     const x2 = X0 + GAP * (NAMES.length - 1);

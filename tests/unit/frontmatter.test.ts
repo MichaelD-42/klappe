@@ -28,6 +28,7 @@ describe("frontmatter", () => {
     expect(problems).toContain("deck.md: missing title");
     expect(meta).toMatchObject({ lang: "en", theme: "calm", intensity: "calm", confidential: false, sharedCanvas: [] });
     expect(toDeckMeta({ title: "x", theme: "bold" }).meta.intensity).toBe("bold");
+    expect(toDeckMeta({ title: "x", theme: "house" }).meta).toMatchObject({ theme: "house", intensity: "calm" });
   });
   it("strips BOM and handles CRLF", () => {
     expect(parseFrontmatter("\uFEFF---\r\ntitle: X\r\n---\r\nbody")).toEqual({ data: { title: "X" }, body: "body" });

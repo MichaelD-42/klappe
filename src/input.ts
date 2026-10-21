@@ -1,6 +1,6 @@
 import type { Stepper } from "./stepper";
 
-export type Action = "next" | "prev" | "home" | "end" | "overview" | "selector" | "speaker" | "autoplay" | "close";
+export type Action = "next" | "prev" | "home" | "end" | "overview" | "selector" | "speaker" | "autoplay" | "timer" | "close";
 
 const KEYS: Record<string, Action> = {
   ArrowRight: "next",
@@ -15,6 +15,7 @@ const KEYS: Record<string, Action> = {
   s: "selector",
   n: "speaker",
   a: "autoplay",
+  t: "timer",
   Escape: "close",
 };
 
@@ -35,7 +36,7 @@ export interface Panel {
 
 export function bindInput(
   stepper: Stepper,
-  ui: { overview: Panel; selector: Panel; speaker?: { open(): void }; autoplay?: { stop(): void; toggle(): void } },
+  ui: { overview: Panel; selector: Panel; speaker?: { open(): void }; autoplay?: { stop(): void; toggle(): void }; timer?: () => void },
   stage: HTMLElement,
   lastIndex: number,
 ): void {
@@ -47,7 +48,7 @@ export function bindInput(
   const run = (a: Action) => {
     const nav = a === "next" || a === "prev" || a === "home" || a === "end";
     if (nav && (ui.overview.isOpen || ui.selector.isOpen)) return; // steps don't move under an open panel
-    if (a !== "autoplay") ui.autoplay?.stop();
+    if (a !== "autoplay" && a !== "timer") ui.autoplay?.stop(); // the timer is not a step: autoplay goes on
     if (a === "next") stepper.next();
     else if (a === "prev") stepper.prev();
     else if (a === "home") stepper.goto(0, "cut");
@@ -56,6 +57,7 @@ export function bindInput(
     else if (a === "selector") toggle(ui.selector, ui.overview);
     else if (a === "speaker") ui.speaker?.open();
     else if (a === "autoplay") ui.autoplay?.toggle();
+    else if (a === "timer") ui.timer?.();
     else if (ui.overview.isOpen) ui.overview.close();
     else ui.selector.close();
   };

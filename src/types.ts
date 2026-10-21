@@ -9,19 +9,26 @@ export interface Rect {
 export interface DeckMeta {
   title: string;
   lang: string;
-  theme: "calm" | "bold";
+  theme: string;
   intensity: "calm" | "bold";
   confidential: boolean;
   sharedCanvas: string[][];
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-hold" | "shout-fade" | "shout-answer";
+// A step built from Markdown by an element: a code group, a console command, a task-list item, an agenda.
+export type Part =
+  | { kind: "code"; group: number } // index into SceneDoc.fence.groups
+  | { kind: "console"; command: number } // index of the "$ " line among the commands
+  | { kind: "check"; done: boolean }
+  | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean }[] };
 export interface StepDoc {
   text: string;
   notes: string;
   kind: StepKind;
   // A media link in the step's list item; the link shows as its label in text.
   media?: { kind: "image" | "video" | "chart"; href: string; alt: string; title?: string };
+  part?: Part;
 }
 export interface SceneDoc {
   id: string;
@@ -29,6 +36,8 @@ export interface SceneDoc {
   title: string;
   notes: string;
   steps: StepDoc[];
+  // The scene's one code or console block. groups: the highlight groups, line lists, 1-based.
+  fence?: { lang: string; src: string; groups: number[][] };
 }
 export interface SectionDoc {
   id: string;
@@ -52,11 +61,14 @@ export interface Ctx {
   files: { data: Record<string, string>; media: Record<string, string> };
   // Called on every move. span: this step's start and end time on this canvas's timeline,
   // or null when the current step is on another canvas. play: the step plays (not a cut).
-  onStep(fn: (e: { play: boolean; span: [number, number] | null }) => void): void;
+  // scene: the current step's scene id.
+  onStep(fn: (e: { play: boolean; span: [number, number] | null; scene: string | null }) => void): void;
   // Records a deck problem: shown on screen and fails the self-test.
   problem(msg: string): void;
   // The viewer asked for reduced motion: effects leave out decorative motion (Ken Burns).
   reducedMotion?: boolean;
+  // The scene id, on a scene's ctx only.
+  scene?: string;
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
@@ -102,6 +114,8 @@ export interface Deck {
   meta: DeckMeta;
   sections: Section[];
   files?: Ctx["files"];
+  // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
+  themes?: Record<string, string>;
 }
 export interface CanvasLayout {
   id: string;

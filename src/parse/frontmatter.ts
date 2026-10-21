@@ -45,8 +45,8 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   const problems: string[] = [];
   const title = typeof data.title === "string" ? data.title : "";
   if (!title) problems.push("deck.md: missing title");
-  const theme = data.theme === "bold" ? "bold" : "calm";
-  const intensity = data.intensity === "bold" || data.intensity === "calm" ? data.intensity : theme;
+  const theme = typeof data.theme === "string" && data.theme ? data.theme : "calm";
+  const intensity = data.intensity === "bold" || data.intensity === "calm" ? data.intensity : theme === "bold" ? "bold" : "calm";
   const sc = Array.isArray(data["shared-canvas"]) ? (data["shared-canvas"] as unknown[]) : [];
   const sharedCanvas = (sc.every(Array.isArray) ? sc : sc.length ? [sc] : []).map((g) =>
     (g as unknown[]).map(String),

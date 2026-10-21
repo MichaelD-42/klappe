@@ -100,7 +100,7 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
 const LANG = "en";
-const PALETTE = ["var(--k-accent)", "var(--k-phosphor)", "var(--k-phosphor-amber)", "var(--k-fg)"];
+const PALETTE = [1, 2, 3, 4].map((n) => `var(--k-series-${n})`);
 const UP = "var(--k-phosphor)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
 // Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
