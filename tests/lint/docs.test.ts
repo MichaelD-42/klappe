@@ -7,8 +7,6 @@ import * as fx from '../../src/fx'
 // Exports not documented yet. Each element task removes its own names when its reference page lands;
 // Task 13 removes the M2 effects with the effects page.
 const PENDING = [
-  // M3 elements
-  'timer',
   // M2 effects
   'KEN_BURNS', 'MIN_FONT', 'arcPath', 'bubble', 'chart', 'chartDomain', 'counted', 'counter', 'counterText', 'crt',
   'dataError', 'drawOn', 'figure', 'fitFont', 'fitProjection', 'icon', 'iconGlyph', 'iconTile', 'image', 'limbAngle',
