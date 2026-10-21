@@ -251,8 +251,9 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       return (tl) => {
         fit();
         const at = tl.duration();
-        tl.to(on.map((id) => rings.get(id)!), { autoAlpha: 1, duration: 0.3 }, at);
-        tl.to(off.map((id) => rings.get(id)!), { autoAlpha: 0, duration: 0.3 }, at);
+        // An empty target list makes GSAP warn "target not found": skip it.
+        if (on.length) tl.to(on.map((id) => rings.get(id)!), { autoAlpha: 1, duration: 0.3 }, at);
+        if (off.length) tl.to(off.map((id) => rings.get(id)!), { autoAlpha: 0, duration: 0.3 }, at);
         if (!on.length && !off.length) tl.set({}, {}, at + 0.3);
       };
     },
