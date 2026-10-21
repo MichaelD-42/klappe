@@ -26,6 +26,7 @@ const steps = buildStepList(deck, layout.canvases);
 if (!steps.length) problems.push("deck has no steps");
 const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
+document.title = deck.meta.title;
 
 if (query.get("speaker") === "1") {
   applyTheme(deck, query.get("theme")); // tokens only; the speaker page shows no problems

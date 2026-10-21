@@ -38,7 +38,7 @@ node klappe/bin/klappe.mjs init --deck <id>
 npm i
 ```
 
-5. Build the deck. The result is `dist/<id>/index.html`.
+5. Build the deck. The result is `dist/<id>/index.html`. Its asset paths are relative, so you can host the folder at any path. Open it over http or https: browsers block its ES module from `file://`.
 
 ```sh
 npm run build -- --deck <id>

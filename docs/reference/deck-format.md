@@ -23,7 +23,7 @@ decks/<id>/
 
 Frontmatter keys:
 
-- `title`: required.
+- `title`: required. It is also the page title in the browser tab.
 - `lang`: default `en`.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
