@@ -139,7 +139,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, s) => s.stream(tl, { duration: 2 })] }
 
 // morph, bubble, counter: one element turns into another; a speech bubble shows and hides; a number counts up.
-// doc and fact are elements you built first in build(). counter also returns el, its box.
+// doc and fact are elements you built first in build(). counter also returns el, its box, and caption, the label under the number.
 { build: (ctx) => ({ m: morph(ctx, { from: doc, to: fact }),
                      b: bubble(ctx, { x: 400, y: 520, text: "A question for [Site 1]?", side: "right" }),
                      n: counter(ctx, { x: 960, y: 540, from: 0, to: 120, label: "Sample units" }) }),
@@ -149,6 +149,9 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
 // fallback: an image in media/ that an online video shows when there is no network (see scene.md).
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
+// A YouTube or Vimeo player loads when its scene becomes the current one, not at deck start. Until then the box shows the
+// fallback image (or stays black). In a section.ts build() (no scene), the player loads at deck start.
+// image() also returns el, the picture's box (or the IMAGE MISSING box).
 // An animated GIF, APNG or WebP loops by itself and needs no option: the self-test compares styles and marked text, not pixels.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }

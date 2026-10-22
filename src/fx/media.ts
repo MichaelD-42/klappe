@@ -19,6 +19,7 @@ export interface ImageOpts {
   scrim?: number; // 0..1: a dark layer over the picture, for text on top
 }
 export interface ImageHandle {
+  el: HTMLElement; // the picture's box (or the IMAGE MISSING stand-in), last in ctx.html
   // A full-frame picture (fit cover, no rect) shows from its step's start, so it is there while the camera flies in.
   show(tl: gsap.core.Timeline, at?: number | string): void;
   hide(tl: gsap.core.Timeline, at?: number | string): void;
@@ -132,7 +133,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", ctx.deck.lang), text, prompt);
     const f = fade(b, fadeTime, fadeEase);
-    return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
+    return { el: b, show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
   const b = box(ctx, rect);
   const img = document.createElement("img");
@@ -155,6 +156,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   };
   const f = fade(b, fadeTime, fadeEase);
   return {
+    el: b,
     show(tl, at) {
       f.show(tl, at0(tl, at));
       // After the fade: under the slow fade-in of a full frame the push would play mostly unseen.
@@ -221,8 +223,8 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   // Read here, not at module load: unit tests import this file in node. No load timeout for embeds:
   // a cross-origin iframe fires load for the browser's own error page too, so "not loaded" cannot be seen.
   const offline = online && (!navigator.onLine || new URLSearchParams(location.search).get("offline") === "1");
-  const still = offline && opts.fallback ? ctx.files.media[key(opts.fallback)] : undefined;
-  if (still !== undefined) {
+  const still = online && opts.fallback ? ctx.files.media[key(opts.fallback)] : undefined;
+  if (offline && still !== undefined) {
     const img = document.createElement("img");
     img.src = still;
     img.alt = title;
@@ -242,6 +244,18 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     el.allow = "fullscreen; picture-in-picture";
     el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
+    // The fallback still (or an empty box) holds the player's place; the player replaces it, so the caption
+    // keeps its index and the self-test's element paths match before and after.
+    const poster = document.createElement(still !== undefined ? "img" : "div");
+    if (poster instanceof HTMLImageElement) Object.assign(poster, { src: still, alt: title });
+    Object.assign(poster.style, { width: "100%", height: "100%", objectFit: "contain" });
+    poster.setAttribute("data-k-ignore", "");
+    b.append(poster, caption);
+    // The player loads when its scene becomes current, not at deck load: a deck with many embeds
+    // otherwise loads every player on start, also on a deep link to another scene.
+    const load = () => !el.isConnected && poster.replaceWith(el);
+    if (ctx.scene) ctx.onStep(({ scene }) => void (scene === ctx.scene && load()));
+    else load();
   } else {
     el.src = src;
     el.preload = "auto";
@@ -255,7 +269,7 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
       Object.assign(b.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     });
   }
-  b.append(el, caption);
+  if (!frame) b.append(el, caption);
 
   return {
     show(tl) {

@@ -157,3 +157,44 @@ test('a video host link without a video id is a deck problem with a placeholder'
   expect(r.text).toContain('VIDEO MISSING')
   await page.close()
 })
+
+// A bare ctx, as in fx-crt: el is the picture's box, for a found file and for the IMAGE MISSING stand-in.
+test('the image handle exposes its box as el', async () => {
+  const page = await open('?fixture=fx-media#/a/image/1')
+  await page.evaluate("import('/src/fx/media.ts').then((m) => { window.__image = m.image })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { data: {}, media: { 'media/a.png': 'data:image/png;base64,' } }, deck: { lang: 'en', intensity: 'calm' }, problem: () => {} }
+    const found = (window as any).__image(ctx, { href: 'media/a.png', alt: 'A' })
+    const isFound = found.el === html.lastElementChild && !!found.el.querySelector('img')
+    const gone = (window as any).__image(ctx, { href: 'media/none.png', alt: 'B' })
+    const isGone = gone.el === html.lastElementChild && gone.el.textContent.includes('IMAGE MISSING')
+    html.remove()
+    return { isFound, isGone }
+  })
+  expect(r).toEqual({ isFound: true, isGone: true })
+  await page.close()
+})
+
+// An embed loads only when its scene is the current one: a deep link elsewhere makes no iframe.
+test('YouTube and Vimeo iframes are created only when their scene becomes current', async () => {
+  const page = await open('?fixture=fx-media#/a/image/1')
+  for (const host of ['https://www.youtube.com/**', 'https://player.vimeo.com/**']) await page.route(host, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
+  const frames = () => page.evaluate(() => [...document.querySelectorAll('iframe[data-k-video]')].map((f) => f.closest('[data-scene]')!.getAttribute('data-scene')!.split('/').pop()))
+  expect(await frames()).toEqual([])
+  // Before its scene, the YouTube box holds its fallback still as a poster, outside the self-test's snapshot;
+  // the player replaces it.
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="youtube"] [data-k-media] img')?.hasAttribute('data-k-ignore'))).toBe(true)
+  const go = (name: string) =>
+    page.evaluate((n) => {
+      const s = window.klappe.stepper as any
+      return s.goto(s.steps.findIndex((x: { scene: string }) => x.scene.endsWith(n)), 'cut')
+    }, name)
+  await go('youtube')
+  expect(await frames()).toEqual(['youtube'])
+  expect(await page.evaluate(() => !!document.querySelector('[data-scene$="youtube"] [data-k-media] img'))).toBe(false)
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="youtube"] iframe')!.hasAttribute('data-k-ignore'))).toBe(true)
+  await go('vimeo')
+  expect(await frames()).toEqual(['youtube', 'vimeo'])
+  await page.close()
+})
