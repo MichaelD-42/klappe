@@ -450,7 +450,12 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
   const mode = new URLSearchParams(location.search).get("selftest");
   if (!mode) return;
   const checks: SelftestCheck[] = [];
+  // main copied each canvas's problems once; later ctx.problem calls (after a web font loads, during
+  // the walk) land in the canvas arrays, so collect what comes after that copy until the test ends.
+  const copied = ctx.canvases.map((c) => c.problems.length);
   try {
+    await document.fonts.ready; // helpers measure text once the web font loads
+    await new Promise(requestAnimationFrame);
     if (mode === "walk") await walk(ctx, checks);
     else if (mode === "ac") {
       await ctx.stepper.goto(0, "cut"); // let main's first move land
@@ -465,6 +470,8 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
   } catch (e) {
     ctx.errors.push(`selftest: ${e instanceof Error ? e.message : e}`);
   }
+  for (const [k, c] of ctx.canvases.entries())
+    for (const p of c.problems.slice(copied[k])) if (!ctx.problems.includes(p)) ctx.problems.push(p);
   // Always write a result, so a failure reads as a failure and not as a driver timeout.
   const result: SelftestResult = {
     mode,

@@ -208,7 +208,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
-- `?selftest=walk` or `?selftest=ac`: run the self-test.
+- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`.
 - `?offline=1`: online videos show their fallback image (see scene.md).
 
 ## Deep links

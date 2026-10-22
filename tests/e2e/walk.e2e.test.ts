@@ -43,3 +43,10 @@ test('walk flags text made small by a scaled group', async () => {
   expect(detail).toContain('Tiny html')
   expect(detail).toContain('Tiny svg')
 })
+
+// A problem raised after document.fonts.ready, or during the walk, still fails the walk.
+test('walk reports problems raised after fonts.ready and during the walk', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=late-problem`)
+  expect(r.problems.filter((p) => p.includes('late:')).sort()).toEqual(['late: after fonts.ready', 'late: during the walk'].map((p) => expect.stringContaining(p)))
+  expect(r.ok).toBe(false)
+})
