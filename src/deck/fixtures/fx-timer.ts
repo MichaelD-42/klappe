@@ -33,6 +33,6 @@ export default () =>
           b: timer(ctx, { until: "00:00", style: "text", x: 1060, y: 300, size: 600 }),
         }),
         steps: [(tl, r: { a: TimerHandle; b: TimerHandle }) => (r.a.show(tl), r.b.show(tl))],
-      },
+      } satisfies SceneModule,
     },
   );
