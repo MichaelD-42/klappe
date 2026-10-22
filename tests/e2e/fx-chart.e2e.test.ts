@@ -57,6 +57,24 @@ test('a waterfall starts plain, signs its changes and closes with a total', asyn
   await page.close()
 })
 
+// bars: the bar rects in data order (waterfall: then the total; stacked: series by series), none for a line.
+test('the handle returns the bars in data order', async () => {
+  const page = await open('/a/bar/1')
+  const r = await page.evaluate(() =>
+    Object.fromEntries(
+      ['bar', 'stacked', 'line', 'waterfall', 'timeline'].map((t) => {
+        const bars = [...document.querySelectorAll<SVGRectElement>(`[data-k-chart="${t}"] [data-bar]`)]
+        return [t, { n: bars.length, ordered: bars.every((b, i) => b.dataset.bar === String(i)), x: bars.map((b) => +b.getAttribute('x')!), y: bars.map((b) => +b.getAttribute('y')!) }]
+      }),
+    ),
+  )
+  expect([r.bar.n, r.stacked.n, r.line.n, r.waterfall.n, r.timeline.n]).toEqual([4, 12, 0, 6, 3])
+  for (const t of ['bar', 'stacked', 'waterfall', 'timeline']) expect(r[t].ordered).toBe(true)
+  for (const t of ['bar', 'waterfall']) expect(r[t].x).toEqual([...r[t].x].sort((a, b) => a - b))
+  expect(r.timeline.y).toEqual([...r.timeline.y].sort((a, b) => a - b))
+  await page.close()
+})
+
 test('a bad cell shows DATA ERROR and draws nothing', async () => {
   const page = await open('/a/bad/1')
   await page.waitForFunction(() => window.klappe.stepper.index === 20)
