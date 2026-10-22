@@ -116,7 +116,7 @@ test('iconTile returns its group as el', async () => {
   await page.close()
 })
 
-// The same bare ctx: icon's el is its glyph group; counter's el is its box.
+// The same bare ctx: icon's el is its glyph group; counter's el is its box, its caption the label under the number.
 test('icon and counter return their element as el', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-icons`)
@@ -133,11 +133,12 @@ test('icon and counter return their element as el', async () => {
       problems,
       icon: i.el === svg.lastElementChild && i.el.classList.contains('k-icon'),
       counter: n.el === html.lastElementChild && !!n.el.querySelector('[data-k-text]'),
+      caption: n.caption === n.el.lastElementChild && n.caption.textContent === 'n',
     }
     svg.remove()
     html.remove()
     return out
   })
-  expect(r).toEqual({ problems: [], icon: true, counter: true })
+  expect(r).toEqual({ problems: [], icon: true, counter: true, caption: true })
   await page.close()
 })

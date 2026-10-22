@@ -136,7 +136,7 @@ export function bubble(
 }
 
 // A big number with a label under it, centred on (x, y), scene-local. run counts from -> to.
-export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTMLElement } {
+export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTMLElement; caption: HTMLElement } {
   const { x, y, from, to, label } = opts;
   const box = document.createElement("div");
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
@@ -152,6 +152,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTML
   gsap.set(box, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
   return {
     el: box,
+    caption: cap,
     run(tl) {
       tl.to(box, { autoAlpha: 1, duration: motion.step });
       tl.to({}, {
