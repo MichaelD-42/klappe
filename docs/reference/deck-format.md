@@ -46,9 +46,9 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
-- An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
-- A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ` ```ts {1-2|4} `, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
-- A ` ```console ` block replays a terminal session. Each `$` line is a command: it types itself, then its output lines appear. Each command is one step, and the list items after the block are their text, as for code. A console block with no `$` line is a problem.
+- An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `  ![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
+- A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
+- A ```` ```console ```` block replays a terminal session. Each `$ ` line is a command: it types itself, then its output lines appear. Each command is one step, and the list items after the block are their text, as for code. A console block with no `$ ` line is a problem.
 - Task-list items, `- [ ] Backup verified`, build one checklist: each item is a step that ticks its box. `- [x]` starts ticked.
 - A scene whose list items all start with a time range, `- 09:00–09:45 Basics`, shows an agenda in one step. A trailing `←` marks the current row. A mix of time ranges and plain items stays plain steps.
 - A missing file shows a placeholder box (IMAGE MISSING, VIDEO MISSING or DATA MISSING) and a deck problem, not a blank slide. `klappe test` and `klappe build` write `media/TODO.md` and `data/TODO.md` with one line per missing file. They read the links in `scene.md` and the `href: "media/..."` values in `scene.ts` and `section.ts`. For an image, the line holds a prompt made from the scene heading and the link's title (the `"prompt"` part, else the alt text), or the `alt` next to the `href` in a `.ts` file. A title stays as written. A prompt from alt text gets a shape: ", square, 1024x1024, no text, no logos" for a `scene.md` image, which shows in a near-square column, and ", 16:9, 1920x1080, no text, no logos" for an image in a `.ts` file, the shape of a full-frame picture or background; edit the line for an image with a smaller `rect`. A `.ts` file only counts an `href` written as a plain string in the call's `{ ... }`; a path built at run time is not listed. Full-frame pictures and backgrounds need `scene.ts` or `section.ts` (see Effects); there is no Markdown syntax for them.
@@ -187,19 +187,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 Import types from `"klappe/types"` and effects from `"klappe/fx"`. `klappe init` writes a `tsconfig.json` with these mappings if none exists:
 
 ```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noEmit": true,
-    "types": ["vite/client"],
-    "paths": {
-      "klappe/types": ["./klappe/src/types"],
-      "klappe/fx": ["./klappe/src/fx"],
-      "klappe/fx/*": ["./klappe/src/fx/*"]
-    }
-  },
-  "include": ["decks"]
-}
+{ "compilerOptions": { "strict": true, "noEmit": true, "types": ["vite/client"], "paths": { "klappe/types": ["./klappe/src/types"], "klappe/fx": ["./klappe/src/fx"], "klappe/fx/*": ["./klappe/src/fx/*"] } }, "include": ["decks"] }
 ```
 
 If you have your own `tsconfig.json`, add the `paths` entries yourself.
