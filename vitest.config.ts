@@ -5,6 +5,8 @@ const src = (p: string) => fileURLToPath(new URL(`./src/${p}`, import.meta.url))
 
 export default defineConfig({
   test: {
+    // The on-disk transform cache keeps a stale import.meta.glob (src/deck/fixtures.ts) after a fixture is added.
+    fsModuleCache: false,
     projects: [
       {
         // Same aliases as vite.config.ts, so fixtures can import "klappe/fx" in unit tests.
