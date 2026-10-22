@@ -94,6 +94,8 @@ export interface SceneModule {
   steps?: (StepFn | null)[];
   // Seconds to wait after a step's live forward play, then advance by itself. Lines up with steps. null: wait for input.
   auto?: (number | null)[];
+  // The scene's button text in the overview, instead of its title.
+  overviewLabel?: string;
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
@@ -107,6 +109,8 @@ export interface SectionModule {
   // Extra options for the transition, for example { shards: 20 } for shatter.
   transitionOptions?: Record<string, unknown>;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;
+  // The section's name in the overview, instead of its title: the row title and the prefix of a repeated scene title.
+  overviewLabel?: string;
 }
 export interface Scene extends SceneDoc {
   sectionId: string;

@@ -52,3 +52,34 @@ test('each scene of a large deck is a readable, separate target; the current one
   expect(await page.evaluate(() => window.klappe.overview.isOpen)).toBe(false)
   await page.close()
 })
+
+// A canvas with 9 scenes in a row was a 25 px sliver: each scene card is a 16:9 thumbnail of its own scene.
+test('each scene card is a 16:9 thumbnail', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=overview-many`)
+  await page.waitForFunction(() => window.klappe?.stepper, undefined, { timeout: 30_000 })
+  await page.keyboard.press('o')
+  // Layout px (offset*), not screen px: the stage scales the whole overlay.
+  const bad = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.k-overlay .k-ov-thumb')]
+      .map((t, i) => (Math.abs(t.offsetWidth / t.offsetHeight - 16 / 9) > 0.02 ? `card ${i}: ${t.offsetWidth}x${t.offsetHeight}` : ''))
+      .filter(Boolean),
+  )
+  expect(bad).toEqual([])
+  await page.close()
+})
+
+// Agenda hops all titled "Today": a repeated scene title gets its section's label in front.
+test('a repeated scene title shows its section label; a section or scene can set its own overview label', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=overview-labels`)
+  await page.waitForFunction(() => window.klappe?.stepper, undefined, { timeout: 30_000 })
+  await page.keyboard.press('o')
+  const r = await page.evaluate(() => ({
+    captions: [...document.querySelectorAll('.k-overlay .k-ov-caption')].map((e) => e.textContent),
+    markers: [...document.querySelectorAll('.k-overlay .k-ov-title')].map((e) => e.textContent),
+  }))
+  expect(r.captions).toEqual(['Intro', 'Lab', 'Wrap-up'])
+  expect(r.markers).toEqual(['Intro · Today', 'Why', 'Lab · Today', 'Setup', 'Wrap-up · Today', 'Thanks and questions'])
+  await page.close()
+})

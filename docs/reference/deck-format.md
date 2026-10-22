@@ -61,6 +61,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
 - `auto` is an array with one number or `null` per step. It lines up with the steps by position. A number N advances the deck by itself N seconds after the step has played forward. It also goes into the next scene and through a section transition. `null` or a missing entry waits for a press. A deep link, a jump, a back move and `?instant=1` never advance by themselves. A press during the wait advances one step at once. Opening the overview or the section list stops the wait. Autoplay holds a step for its `auto` time. Example: `auto: [null, 1, 0.5]`.
+- `overviewLabel` replaces the scene's title on its button in the overview (`O`). Without it, a scene title that repeats in the deck shows as `<section> · <title>`, for example `Lab · Today`.
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
@@ -72,6 +73,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 
 - `transition` sets how the deck enters this section when it moves forward by one step onto a new canvas. Default `fade`. A back move, a jump and `?instant=1` always cut.
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
+- `overviewLabel` replaces the section's title in the overview: the row title and the prefix of a repeated scene title.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) darkens it for text on top; use 0.6 or more, so theme text keeps 4.5:1 contrast even over white. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
 
@@ -201,7 +203,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Next: Right arrow, Space, Page Down, Enter, click.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step.
-- `O`: overview. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 
 ## URL flags
 
