@@ -149,6 +149,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
 // fallback: an image in media/ that an online video shows when there is no network (see scene.md).
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
+// An animated GIF, APNG or WebP loops by itself and needs no option: the self-test compares styles and marked text, not pixels.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 
