@@ -16,7 +16,7 @@ A list of `HH:MM–HH:MM title` items in `scene.md`; the arrow `←` marks the c
 
 ## `agenda`
 
-In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, move, el, rows }`. `el` is the root element. `rows` holds one element per row, in order: a scene can move or mark a row with `tl.to(a.rows[1], { x: 20 })`.
+In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current, slide })` returns `{ show, move, el, rows }`. `el` is the root element. `rows` holds one element per row, in order: a scene can move or mark a row with `tl.to(a.rows[1], { x: 20 })`.
 
 ### Options
 
@@ -26,12 +26,13 @@ In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current })` returns `{ show, mov
 | `x`, `y`, `w` | number | required | the agenda's top-left corner and width, scene units |
 | `h` | number | none | the height the rows must fit |
 | `current` | string | the row marked `current` | the title of the current row |
+| `slide` | boolean | `true` | `false`: `show` fades the marker in on the current row with the rows, with no slide from the first row. For an agenda that shows the finished row, then moves on |
 
 ### Step adders
 
 | Handle | Step |
 | --- | --- |
-| `show` | fades the rows in, then slides the marker to the current row |
+| `show` | fades the rows in, then slides the marker to the current row (with `slide: false`, the marker fades in on it) |
 | `move(tl, toRow, at)` | slides the marker from the current row to row `toRow` (counts from 0) in 0.7 s, at time `at` (default: the end of the timeline). The colours move with it: rows above `toRow` turn `--k-muted`, row `toRow` `--k-accent`, rows below `--k-fg`. Each `move` starts where the one before ended. Call it after `show`. |
 
 ### Limits

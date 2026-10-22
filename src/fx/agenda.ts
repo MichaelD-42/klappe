@@ -9,6 +9,7 @@ export interface AgendaOpts {
   w: number;
   h?: number; // with h, the rows shrink to fit it, down to the floor, then report a problem
   current?: string; // a row title; default: the row marked current
+  slide?: boolean; // false: show puts the marker on the current row with no slide from the first; default true
 }
 export interface AgendaHandle {
   show: StepAdder;
@@ -48,6 +49,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
   Object.assign(bar.style, { position: "absolute", left: "0", width: "8px", borderRadius: "4px", background: "var(--k-accent)" });
   ctx.html.append(root);
   gsap.set([root, bar], { autoAlpha: 0 });
+  gsap.set(bar, { y: 0 }); // the transform from load, as a seek back over a move leaves it
 
   let fits: boolean | undefined;
   const fit = () => {
@@ -78,6 +80,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
       anchor = cur;
       const [first, row] = [rows[0], rows[cur]];
       Object.assign(bar.style, { top: `${row.offsetTop}px`, height: `${row.offsetHeight}px` });
+      if (opts.slide === false) return void tl.set(bar, { autoAlpha: 1, immediateRender: false }, at); // fades in with the rows
       tl.set(bar, { autoAlpha: 1, immediateRender: false }, at + 0.5);
       tl.fromTo(bar, { y: first.offsetTop - row.offsetTop }, { y: 0, duration: 0.7, ease: "power2.inOut" }, at + 0.5);
     },
