@@ -124,7 +124,9 @@ test('autoplay over the timer step starts it on play', async () => {
 
 test('until counts to the time of day by itself, from a deep link; t does not pause it; a past time is up', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
-  await page.clock.install({ time: new Date(2026, 9, 21, 10, 5, 30) })
+  // Paused before load: a flowing clock would add the page-load time to the count.
+  await page.clock.install({ time: new Date(2026, 9, 21, 10, 5, 29) })
+  await page.clock.pauseAt(new Date(2026, 9, 21, 10, 5, 30))
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-timer#/a/until/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const read = () =>
