@@ -5,6 +5,7 @@ import type { Ctx } from "../types";
 export interface TimerOpts {
   minutes?: number; // set exactly one of minutes and until
   until?: string; // "HH:MM", a wall-clock time today
+  cycle?: boolean; // minutes only: after "Time's up", one T starts the next run (one run per speaker)
   style: "bar" | "donut" | "ring" | "text";
   x: number;
   y: number;
@@ -44,6 +45,7 @@ const svgEl = (parent: Element, tag: string, attrs: Record<string, string | numb
 export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   const { size, style } = opts;
   const bad = (opts.minutes === undefined) === (opts.until === undefined) ? "set exactly one of minutes and until"
+    : opts.cycle && opts.until !== undefined ? "cycle needs minutes, not until"
     : opts.until !== undefined && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(opts.until) ? `until "${opts.until}" is not HH:MM` : "";
   if (bad) ctx.problem(`timer: ${bad}`);
   const until = bad ? undefined : opts.until;
@@ -149,8 +151,10 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   };
   const toggle = () => {
     if (!here || until) return; // an until timer runs by itself: T does nothing; a click steps the deck (no data-no-advance)
-    if (draw().phase === "done") reset();
-    else if (raf) pause();
+    if (draw().phase === "done") {
+      reset();
+      if (opts.cycle) run();
+    } else if (raf) pause();
     else run();
   };
   draw();

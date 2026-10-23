@@ -6,7 +6,7 @@ Catalog: section `320-timer` (`#/timer/countdown/1`, `#/timer/styles/1`, `#/time
 
 ## `timer`
 
-In `scene.ts`: `timer(ctx, { minutes, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ show }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
+In `scene.ts`: `timer(ctx, { minutes, cycle, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ show }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
 
 ```ts
 build: (ctx) => ({ t: timer(ctx, { minutes: 10, style: "ring", x: 700, y: 260, size: 520, label: "Exercise 1: map the process" }) }),
@@ -19,6 +19,7 @@ steps: [(tl, r: { t: TimerHandle }) => r.t.show(tl), null],
 | --- | --- | --- | --- |
 | `minutes` | number | one of `minutes` and `until` | the time to count down. Starts with `T` (see below) |
 | `until` | string | one of `minutes` and `until` | `"HH:MM"`, a wall-clock time today. The timer counts to it (see Until a time). Set exactly one of `minutes` and `until`; else the deck gets the problem `timer: set exactly one of minutes and until` |
+| `cycle` | boolean | `false` | `minutes` only: after "Time's up", one `T` starts the next run at full time, for one run per speaker (for example `minutes: 1.5` for a 90-second pitch). With `until`, the deck gets the problem `timer: cycle needs minutes, not until` |
 | `style` | `"bar" \| "donut" \| "ring" \| "text"` | required | `bar`: a bar that empties, mm:ss under it. `donut`: a thick arc that empties, mm:ss in its centre. `ring`: a thin circle that empties, mm:ss in its centre. `text`: large mm:ss only |
 | `x`, `y` | number | required | the top-left corner, scene units |
 | `size` | number | required | the width (the diameter for `donut` and `ring`), scene units. The mm:ss scales with it |
@@ -36,7 +37,7 @@ The remaining part draws in `--k-accent` (then `--k-warn`, then `--k-bad`); the 
 
 These rules are for `minutes`. An `until` timer runs by itself (see Until a time).
 
-- `T` (and the speaker view's timer button) starts or pauses the timer of the current scene; a click on the timer does the same. It is not a step: the stepper and timeline do not move. On a scene without a timer, `T` does nothing. After "Time's up", `T` resets it to full and paused.
+- `T` (and the speaker view's timer button) starts or pauses the timer of the current scene; a click on the timer does the same. It is not a step: the stepper and timeline do not move. On a scene without a timer, `T` does nothing. After "Time's up", `T` resets it to full and paused. With `cycle`, `T` resets it and starts it again.
 - It keeps running through the later steps of its scene, and back onto its step within the scene leaves it as it is.
 - Leaving the scene stops it and resets it to full.
 - A deep link or a cut from another scene onto its step shows it full and paused, with "Press T to start" under it.

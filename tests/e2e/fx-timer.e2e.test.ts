@@ -144,6 +144,22 @@ test('until counts to the time of day by itself, from a deep link; t does not pa
   await page.close()
 })
 
+test("cycle: after Time's up, one t starts the next run at full time", async () => {
+  const page = await open('', '#/a/cycle/1')
+  const read = () =>
+    page.evaluate(() => {
+      const q = (s: string) => document.querySelector(`[data-scene$="cycle"] [data-k-timer-${s}]`)!.textContent
+      return { text: q('text'), hint: q('hint') }
+    })
+  await page.keyboard.press('t')
+  await page.clock.runFor(3000 + 40)
+  expect(await read()).toEqual({ text: '0:00', hint: "Time's up" })
+  await page.keyboard.press('t')
+  await page.clock.runFor(1000 + 20)
+  expect(await read()).toEqual({ text: '0:02', hint: '' })
+  await page.close()
+})
+
 // Runs in the page with a bare ctx: show(tl, "<") places the fade with the tween before it, and the timer
 // starts when a played step spans that place, not the end of the timeline.
 test('timer show takes a position; the start follows it', async () => {
