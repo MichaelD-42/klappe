@@ -114,3 +114,11 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: decks and repos can restyle everything without code, and the contrast check turns a bad palette into a deck problem.
   - Shiki (css-variables theme) maps syntax colours onto `--k-code-*` tokens.
   - Theme CSS is imported with `?raw`, not `?inline`: vitest blanks `?inline` CSS, and plain theme files need no CSS processing. `vitest.config.ts` lets the unit project read `src/themes/*.css`.
+
+## 2026-10-24 (single-file build dropped)
+
+- **No single-file build. The deck ships as the static Vite build (`klappe build`), served over http, for example from GitHub Pages.**
+  - Why: the user dropped the feature. The static build with relative asset URLs already works from any folder on a web server.
+  - So `file://` is not supported: ES modules do not load from it, and the speaker channel's `file://` case needs no work.
+  - `klappe build` does not fail on deck problems: it runs no browser. `klappe test` fails on them, and CI runs the tests before it deploys.
+  - `vite-plugin-singlefile` is no longer needed.
