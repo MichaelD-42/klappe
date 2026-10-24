@@ -79,7 +79,7 @@ The bundled languages: `ts`, `js`, `python`, `bash`, `json`, `yaml`, `sql`, `htm
 
 ## `loadHighlighter`
 
-Shiki's one-time async init (JavaScript regex engine, the bundled languages, a `css-variables` theme with the prefix `--k-code-`). klappe awaits it before the deck renders; deck code never calls it. If it fails, it logs one console error and code shows plain text: the deck never goes blank.
+Shiki's one-time async init (JavaScript regex engine, the bundled languages, a `css-variables` theme with the prefix `--k-code-`). klappe awaits it before the deck renders, and only for a deck that shows code: a `scene.md` with a code fence, or deck code that imports `code` by name from `"klappe/fx"` (the build scans for the import). Deck code never calls it. A `code()` call when it did not run reports `code: highlighting was not loaded, so "<lang>" shows plain; …`. If it fails, it logs one console error and code shows plain text: the deck never goes blank.
 
 ## `parseGroups`
 

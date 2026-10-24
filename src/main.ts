@@ -4,9 +4,9 @@ import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
 import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
-import { loadHighlighter } from "./fx/code";
+import { loadTransitions } from "./fx/transitions";
+import { loadParts } from "./render/parts";
 import { renderWorld } from "./render/world";
-import { runSelftestIfAsked } from "./selftest";
 import { Router } from "./router";
 import { Stepper } from "./stepper";
 import { applyTheme, motion } from "./theme";
@@ -19,7 +19,7 @@ import { Selector } from "./ui/selector";
 import type { StepAddr } from "./types";
 
 const errors = installErrorCapture();
-const { deck, problems } = loadDeck();
+const { deck, problems } = await loadDeck();
 const layout = layoutDeck(deck);
 problems.push(...layout.problems);
 const steps = buildStepList(deck, layout.canvases);
@@ -32,7 +32,11 @@ if (query.get("speaker") === "1") {
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
 } else {
-  await loadHighlighter(); // code() highlights synchronously at build time
+  // Effects build synchronously at load: the ones the deck may not use load first (Markdown parts, Shiki, transitions).
+  await Promise.all([
+    loadParts(deck, query.has("fixture")),
+    loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
+  ]);
   startDeck();
 }
 
@@ -88,5 +92,8 @@ function startDeck() {
   showProblems(ui, problems, deck.meta.lang);
   const first = stepper.goto(router.start(), "cut");
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
-  runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors });
+  // The self-test loads only when asked.
+  if (query.get("selftest")) import("./selftest")
+      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors }))
+      .catch((e) => console.error(`selftest: ${e instanceof Error ? e.message : e}`));
 }

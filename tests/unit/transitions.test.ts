@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { playTransition, registry } from "../../src/fx/transitions";
+import { loadTransitions, playTransition, registry } from "../../src/fx/transitions";
 import type { CanvasRuntime } from "../../src/render/world";
 
 // Plain objects stand in for the canvas elements; gsap tweens their properties directly.
@@ -31,5 +31,19 @@ describe("transition registry", () => {
   it("falls back to fade on an unknown name", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(playTransition("shater" as any, canvas(), canvas(), {}).kind).toBe("fade");
+  });
+  it("falls back to fade for a lazy transition that was not loaded, and plays it once loaded", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(playTransition("crt", canvas(), canvas(), {}).kind).toBe("fade");
+    expect(err).toHaveBeenCalledWith(expect.stringContaining("crt: not loaded"));
+    await loadTransitions(["crt", "fade"]);
+    // The loaded crt needs a real DOM, so it may still throw here; what counts is that it is no longer missing.
+    let thrown = "";
+    try {
+      registry.crt(canvas(), canvas(), {});
+    } catch (e) {
+      thrown = String(e);
+    }
+    expect(thrown).not.toContain("not loaded");
   });
 });

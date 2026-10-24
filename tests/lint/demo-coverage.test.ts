@@ -12,7 +12,7 @@ const ALLOW = [
   'parseCsv', 'parseGroups', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
   'timerState', 'treeLayout', 'treeRoute', 'typed', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.
-  'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
+  'loadTransitions', 'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']

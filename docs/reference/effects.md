@@ -550,6 +550,10 @@ Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the c
 
 `playTransition(kind, from, to, opts)` runs `registry[kind]` and returns `{ kind, tl }`. A transition that throws logs `transition '<kind>': <error>; playing fade` and plays `fade`, so the move still lands.
 
+## `loadTransitions`
+
+`loadTransitions(kinds)` loads the code of `zoom`, `shatter` and `crt` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
+
 ## `transitionZoom`
 
 Catalog: section `170-zoom`. The old canvas dives into a ref (`zoomTarget`, an element or a world rect on the old canvas, else the frame centre), then the new canvas grows in from that point. Sets `reveal`, so the new step starts while it grows. From `decks/demo/sections/170-zoom/section.ts`:

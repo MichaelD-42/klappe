@@ -25,6 +25,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - The single-file build is dropped (see DECISIONS).
 - A timeline chart reads its start and end columns by name (`start`/`from`/`begin`, `end`/`to`/`until`) when they are named, else the first two number columns as before.
 - Only the Lucide icons a deck names are bundled (the demo's JS drops from 1.19 MB to 0.77 MB). A name is found when it stands in the deck's code as a string literal; a name built at run time reports `icon: unknown Lucide name` and needs the icon itself.
+- The engine loads Markdown-part effects, Shiki, the `zoom`/`shatter`/`crt` transitions, the self-test and the test fixtures only when a deck needs them. A Markdown-only deck loads 218 KB of JS at start instead of 674 KB. `code()` in a `scene.ts` needs `code` imported by name from `"klappe/fx"`, so the build sees it.
 - A shout-out is three steps: enter, fade, answer. `enter` grows the question straight to its full size (1.04 calm, 1.12 bold); the `hold` step and `ShoutHandle.hold` are gone. A `scene.ts` that plays a shout drops its `hold` step, and a `### Question?` in `scene.md` makes three steps.
 - `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
 

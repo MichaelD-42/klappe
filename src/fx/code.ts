@@ -1,6 +1,5 @@
 import { gsap } from "gsap";
-import { createCssVariablesTheme, createHighlighterCore, type HighlighterCore } from "shiki/core";
-import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import type { HighlighterCore } from "shiki/core";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
@@ -24,11 +23,19 @@ export interface CodeHandle {
 }
 
 let hl: HighlighterCore | null = null;
+let tried = false; // loadHighlighter ran, even if it failed
 
-// Shiki's one-time async init; main.ts awaits it before the world renders.
+// Shiki's one-time async init; main.ts awaits it before the world renders, only for a deck that shows code.
+// Shiki itself loads here, so a deck without code never fetches it.
 // A failed init is logged once and code shows plain, so the deck never goes blank.
 export async function loadHighlighter(): Promise<void> {
+  if (tried) return;
+  tried = true;
   try {
+    const [{ createCssVariablesTheme, createHighlighterCore }, { createJavaScriptRegexEngine }] = await Promise.all([
+      import("shiki/core"),
+      import("shiki/engine/javascript"),
+    ]);
     hl = await createHighlighterCore({
       themes: [createCssVariablesTheme({ name: "klappe", variablePrefix: "--k-code-" })],
       langs: [
@@ -141,6 +148,9 @@ export const codeLines = (src: string, lang: string): { content: string; color?:
 
 export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   addStyle();
+  // main.ts loads Shiki only when the deck's code imports code() by name, or a scene.md has a code fence.
+  if (!tried && LANGS.includes(opts.lang))
+    ctx.problem(`code: highlighting was not loaded, so "${opts.lang}" shows plain; import code by name: import { code } from "klappe/fx"`);
   const h = opts.h ?? ctx.rect.h - opts.y;
   let texts = splitLines(opts.src);
   const cols = Math.max(1, ...texts.map((t) => t.length));

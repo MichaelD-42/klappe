@@ -135,3 +135,13 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - 0.x while the deck format, the `scene.ts` API and the CLI still change; a minor version may break, and says so under **Changed**. 1.0.0 with the deck template (M4).
   - Back-filled: 0.1.0 = M0 and M1, 0.2.0 = M2, 0.3.0 = M3 (`main` on 2026-10-24).
   - Release steps: move **Unreleased** under the new version and date, bump `package.json` (and the lockfile), merge, tag the merge commit, push the tag.
+
+## 2026-10-24 (bundle size)
+
+- **Only the Lucide icons a deck names are bundled.** A Vite plugin (`bin/scan-plugin.mjs`) reads the deck's code at build time and keeps the string literals that are Lucide names; `icon()`, `iconTile()` and flow nodes also take the icon itself (`import { Rocket } from "klappe/fx/lucide"`).
+  - Why: the full icon set was 415 KB of the demo's 1.19 MB main chunk. Keeping string names keeps every existing deck and the skill's examples working; a name built at run time reports a problem instead of failing silently.
+  - Over-matching is harmless: a word such as `"check"` that is also an icon name adds a few hundred bytes.
+- **An async start loads what a deck may not use.** Before the world renders, `main.ts` awaits the Markdown parts the `scene.md` files use (shout, checklist, agenda, chart with d3, terminal), Shiki when the deck shows code, and the `zoom`, `shatter` and `crt` transitions its sections name. The self-test loads only for `?selftest=`, the test fixtures only for `?fixture=`.
+  - Why: build stays synchronous (the timeline rule: DOM and SVG exist at load), so loading has to finish before it. Deck code still imports effects statically; the bundler drops the ones it never imports.
+  - Shiki is needed for a code fence or when deck code imports `code`; the build scans for that import (`virtual:klappe-fx`), because a call cannot be seen before build runs.
+  - Result: a Markdown-only deck loads 218 KB of JS at start instead of 674 KB; the demo, which uses every effect, loads 537 KB at start plus Shiki.

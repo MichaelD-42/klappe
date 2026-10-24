@@ -26,7 +26,7 @@ export interface IconHandle {
 const SVG = "http://www.w3.org/2000/svg";
 const SHAPES = "path,line,polyline,polygon,circle,rect,ellipse";
 const FALLBACK = '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8l8 8M16 8l-8 8"/>';
-// Only the icons the deck's code names are bundled (bin/icons-plugin.mjs).
+// Only the icons the deck's code names are bundled (bin/scan-plugin.mjs).
 const lucide = named as Record<string, IconNode>;
 const [DRAW, EACH] = [0.9, 0.06]; // a glyph's stroke draw: duration per stroke, stagger
 

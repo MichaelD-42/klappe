@@ -1,10 +1,10 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
-import { agenda, chart, checklist, code, image, shout, terminal, video } from "../fx";
-import { LANGS } from "../fx/code";
-import { KEN_BURNS, STEP_LABEL, type ImageHandle } from "../fx/media";
+import { code, LANGS } from "../fx/code";
+import { KEN_BURNS, STEP_LABEL, image, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
+import { part as fxPart } from "./parts";
 import { motion } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
@@ -55,7 +55,7 @@ export const fenceProblem = (lang: string) =>
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
-  const c = chart(ctx, { src: m.href.replace(/^\.\//, ""), rect });
+  const c = fxPart("chart")(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
     c.axes(tl);
     c.grow(tl);
@@ -120,13 +120,13 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const term = fence?.lang === "console";
   const fenceN = firstOf(term ? "console" : "code");
   const codeFx = fence && fenceN && !term ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
-  const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => terminal(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
+  const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => fxPart("terminal")(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
   // One checklist from all check items; one agenda per agenda step.
   const checks = scene.steps.filter((s) => s.part?.kind === "check");
   const checkN = firstOf("check");
   const list = checkN
     ? part(checkN, "checklist", lists, (c) =>
-        checklist(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
+        fxPart("checklist")(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
       )
     : undefined;
   const title = add(col, el("h2", "", scene.title));
@@ -137,7 +137,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     if (fx.has(n)) return; // a later phase of a shout-out the effect plays
     if (s.kind === "shout-enter") {
       try {
-        const h = shout(ctx, { question: s.text, answer: scene.steps[i + 2]?.text ?? "", intensity: meta.intensity });
+        const h = fxPart("shout")(ctx, { question: s.text, answer: scene.steps[i + 2]?.text ?? "", intensity: meta.intensity });
         [h.enter, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
         return;
       } catch (e) {
@@ -155,7 +155,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     }
     if (pt?.kind === "agenda") {
       const current = pt.rows.find((r) => r.current)?.title;
-      const a = part(n, "agenda", lists, (c) => agenda(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
+      const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
       return fx.set(n, (a.h?.show ?? a.miss)!);
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));

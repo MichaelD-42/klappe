@@ -1,9 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import type { TransitionKind } from "../types";
-import { transitionCrt } from "./crt";
-import { transitionShatter } from "./shatter";
-import { transitionZoom } from "./zoom";
 
 // What a section gives its entry transition: its transitionOptions plus target from zoomTarget.
 export interface TransitionOpts {
@@ -39,14 +36,34 @@ const blackout: Transition = (from, to) => {
     .set(back, { clearProps: "backgroundColor" });
 };
 
+// zoom, shatter and crt load only when a section asks for them: main.ts awaits loadTransitions first.
+const loaders = {
+  zoom: () => import("./zoom").then((m) => m.transitionZoom),
+  shatter: () => import("./shatter").then((m) => m.transitionShatter),
+  crt: () => import("./crt").then((m) => m.transitionCrt),
+} satisfies Partial<Record<TransitionKind, () => Promise<Transition>>>;
+type Lazy = keyof typeof loaders;
+const loaded: Partial<Record<Lazy, Transition>> = {};
+const lazy = (kind: Lazy): Transition => (from, to, opts) => {
+  const f = loaded[kind];
+  if (!f) throw new Error(`${kind}: not loaded`);
+  return f(from, to, opts);
+};
+
 export const registry = {
   cut,
   fade,
   blackout,
-  zoom: transitionZoom,
-  shatter: transitionShatter,
-  crt: transitionCrt,
+  zoom: lazy("zoom"),
+  shatter: lazy("shatter"),
+  crt: lazy("crt"),
 } satisfies Record<TransitionKind, Transition>;
+
+export async function loadTransitions(kinds: Iterable<TransitionKind>): Promise<void> {
+  await Promise.all(
+    [...new Set(kinds)].filter((k): k is Lazy => k in loaders).map(async (k) => void (loaded[k] = await loaders[k]())),
+  );
+}
 
 // A transition that throws (an effect not built yet, or a bug) falls back to fade, so the move still lands.
 export function playTransition(
