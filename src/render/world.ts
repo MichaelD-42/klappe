@@ -65,6 +65,8 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
   };
 }
 
+const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
+
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
 // Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
 // media, code or terminal the right. Task-list items build one checklist, a time-range list an agenda.
@@ -472,7 +474,8 @@ export function renderWorld(
           const start = tl.duration();
           if (i === 0) {
             ctx.camera.to(tl, ctx.rect);
-            if (title) tl.to(title, { autoAlpha: 1, duration: motion.step });
+            // Over the flight's last 0.4 s, so the frame is never empty after it lands; not before the step (a cut).
+            if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));

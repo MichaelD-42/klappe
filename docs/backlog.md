@@ -36,7 +36,6 @@ Effects:
 
 Engine and panels:
 
-- The step title fades in 0.6 s after a camera move ends.
 - Speaker view: the current step as the largest text, larger notes, type that scales with the window, an "N / M" progress, the next preview clamped to 2 lines.
 - Overview thumbnails show no backgrounds (clone `c.el` and clear the world transform); the selector marks the current section only with its focus ring.
 
