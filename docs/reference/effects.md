@@ -649,11 +649,11 @@ Catalog: section `215-reveal` (`#/reveal/quote/1` and `#/reveal/statement/1`). A
 From `decks/demo/sections/215-reveal/10-quote/scene.ts`, with the quote as one list item on three source lines in `scene.md`:
 
 ```ts
-build: (ctx) => reveal(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 340, size: 72 }),
+build: (ctx) => reveal(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 340, size: 72, delay: 0.4 }),
 steps: [(tl, r) => r.run(tl)],
 ```
 
-`reveal(ctx, { text, x, y, w?, size?, by? })`: `text` is a string, whose lines are its line breaks (the source lines of a list item), or a list of strings, one line each; empty lines are dropped. `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 56, weight 600). `by` is `"line"` (default) or `"word"`: what rises as one. The units are the source lines or the words, never the lines the browser wraps to, so the reveal is the same with every font. A line too long for `w` wraps and rises as one block. `run(tl)` lifts each unit half its font size and fades it in over 0.9 s (`power2.out`), 0.3 s apart by line, 0.08 s apart by word. `el` is the text box. Reduced motion: the whole text fades in, already in place.
+`reveal(ctx, { text, x, y, w?, size?, by?, delay? })`: `text` is a string, whose lines are its line breaks (the source lines of a list item), or a list of strings, one line each; empty lines are dropped. `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 56, weight 600). `by` is `"line"` (default) or `"word"`: what rises as one. `delay` is the seconds `run` holds before the first unit rises (default 0). A section's first step plays under the section fade (0.4 s), so give a reveal there `delay: 0.4`, or its first line has risen before the room sees it. The units are the source lines or the words, never the lines the browser wraps to, so the reveal is the same with every font. A line too long for `w` wraps and rises as one block. `run(tl)` lifts each unit half its font size and fades it in over 0.9 s (`power2.out`), 0.3 s apart by line, 0.15 s apart by word. `el` is the text box. Reduced motion: the whole text fades in, already in place.
 
 ## `scrambleGlyphs`
 

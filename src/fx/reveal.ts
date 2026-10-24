@@ -9,13 +9,14 @@ export interface RevealOpts {
   w?: number; // the width the text wraps at; default: to the scene's right edge
   size?: number; // font size in scene px; default 56
   by?: "line" | "word"; // what rises as one; default "line"
+  delay?: number; // seconds the step holds before the first unit rises; default 0. For a first step that plays under a section fade
 }
 export interface RevealHandle {
   run: StepAdder;
   el: HTMLElement;
 }
 
-const GAP = { line: 0.3, word: 0.08 }; // seconds between one unit's start and the next
+const GAP = { line: 0.3, word: 0.15 }; // seconds between one unit's start and the next
 
 // The units that rise one after another: the source lines, or the words. Never the rendered lines, so the
 // reveal does not depend on where a font wraps. Empty lines are dropped. Pure.
@@ -27,7 +28,7 @@ export function revealUnits(text: string | string[], by: "line" | "word" = "line
 // A statement or a quote whose lines (or words) rise in one after another, in --k-fg. Every unit is laid
 // out at build; only its opacity and y tween, so nothing reflows. Reduced motion: the whole text fades in.
 export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
-  const { x, y, size = 56, by = "line" } = opts;
+  const { x, y, size = 56, by = "line", delay = 0 } = opts;
   const root = ctx.html.appendChild(document.createElement("div"));
   root.setAttribute("data-k-reveal", "");
   Object.assign(root.style, {
@@ -47,9 +48,9 @@ export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
   return {
     el: root,
     run(tl) {
-      if (ctx.reducedMotion) return void tl.fromTo(root, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false });
+      if (ctx.reducedMotion) return void tl.fromTo(root, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, delay, immediateRender: false });
       tl.fromTo(units, { autoAlpha: 0, y: size * 0.5 }, {
-        autoAlpha: 1, y: 0, duration: motion.step * 1.5, ease: "power2.out", stagger: GAP[by], immediateRender: false,
+        autoAlpha: 1, y: 0, duration: motion.step * 1.5, ease: "power2.out", stagger: GAP[by], delay, immediateRender: false,
       });
     },
   };

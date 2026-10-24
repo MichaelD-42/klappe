@@ -60,6 +60,25 @@ test('by word, each word is its own unit, in order', async () => {
   await page.close()
 })
 
+// The word reveal holds 0.3 s (delay) before its first word rises, then rises 0.15 s apart.
+test('delay holds the reveal before its first unit rises', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.clock.install()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal#/a/text/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.clock.runFor(500)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  const words = () => page.evaluate(() => [...document.querySelectorAll('[data-k-reveal]')[1].children].map((u) => Number(getComputedStyle(u).opacity)))
+  await page.clock.runFor(250)
+  expect((await words()).every((o) => o === 0)).toBe(true)
+  await page.clock.runFor(200) // 0.45 s: the first word has risen for 0.15 s, the second only starts
+  const [a, b, c] = await words()
+  expect(a).toBeGreaterThan(0)
+  expect(b).toBeLessThan(a)
+  expect(c).toBe(0)
+  await page.close()
+})
+
 test('with reduced motion the whole text fades in, every line already in place', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal&reducedmotion=1#/a/text/1`)
