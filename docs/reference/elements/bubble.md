@@ -2,11 +2,11 @@
 
 A speech bubble with a tail that points at a spot in the scene.
 
-Gallery: section `230-mesh3d` (`#/mesh3d/avatar/3`), and `60-motion` (`#/motion/talk/1`).
+Catalog: sections `340-mesh3d` (`#/mesh3d/avatar/3`) and `160-motion` (`#/motion/talk/1`).
 
 ## `bubble`
 
-In `scene.ts`: `bubble(ctx, { x, y, text, side, maxWidth })` returns `{ show, hide }`. From `decks/gallery/sections/230-mesh3d/10-avatar/scene.ts`:
+In `scene.ts`: `bubble(ctx, { x, y, text, side, maxWidth })` returns `{ show, hide }`. From `decks/demo/sections/340-mesh3d/10-avatar/scene.ts`:
 
 ```ts
 beside: bubble(ctx, { x: 1290, y: 400, side: "right", maxWidth: 440, text: "Beside the mesh, wrapped at 440 px." }),

@@ -2,11 +2,11 @@
 
 An 80s computer screen. It powers on, types boot lines one step at a time, shows `READY.`, and can type prompt lines after that.
 
-Gallery: section `80-crt` (`#/crt/boot/1`, `#/crt/teal-prompt/1`).
+Catalog: section `180-crt` (`#/crt/power-on/1`, `#/crt/teal-prompt/1`).
 
 ## `crt`
 
-In `scene.ts`: `crt(ctx, { color, lines, prompts })` returns the handle below. From `decks/gallery/sections/80-crt/20-teal-prompt/scene.ts`:
+In `scene.ts`: `crt(ctx, { color, lines, prompts })` returns the handle below. From `decks/demo/sections/180-crt/20-teal-prompt/scene.ts`:
 
 ```ts
 build: (ctx) => crt(ctx, { color: "teal", lines: ["DEMO-OS v1.0", "", "Loading: AI agents ............ OK"], prompts: ["> who are you?", "I read. I plan. I act. You approve."] }),

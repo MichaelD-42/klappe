@@ -4,7 +4,7 @@
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
-- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `shatter`, `shout`, `swarm`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
@@ -16,4 +16,7 @@
   - [checklist](elements/checklist.md): boxes that tick.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [timer](elements/timer.md): a countdown on the wall clock.
+  - [crt](elements/crt.md): colour, settle, prompt lines and dim of the retro terminal.
+  - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.
+  - [mesh3d](elements/mesh3d.md): a self-running 3D dot mesh with moods.
 - [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

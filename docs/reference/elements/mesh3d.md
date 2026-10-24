@@ -2,11 +2,11 @@
 
 A mesh of dots that turns in 3D by itself: a quiet character for a scene. Its colour and speed show a mood.
 
-Gallery: section `230-mesh3d` (`#/mesh3d/avatar/1`). Demo: `#/process-training/your-turn/1`.
+Catalog: section `340-mesh3d` (`#/mesh3d/avatar/1`). Story: `#/process-training/your-turn/1`.
 
 ## `mesh3d`
 
-In `scene.ts`: `mesh3d(ctx, { x, y, size, mood, speed, density, seed, start, dot, minAlpha })` returns `{ show, hide, mood, collapse, destroy }`. From `decks/gallery/sections/230-mesh3d/10-avatar/scene.ts`:
+In `scene.ts`: `mesh3d(ctx, { x, y, size, mood, speed, density, seed, start, dot, minAlpha })` returns `{ show, hide, mood, collapse, destroy }`. From `decks/demo/sections/340-mesh3d/10-avatar/scene.ts`:
 
 ```ts
 build: (ctx) => ({ m: mesh3d(ctx, { x: 960, y: 400, size: 640, seed: 1 }) }),
