@@ -43,3 +43,14 @@ describe("frontmatter", () => {
     expect(t("next", "en")).toBe("Next");
   });
 });
+
+describe("frontmatter lists, edge cases", () => {
+  it("keeps a comma inside a quoted list item", () => {
+    expect(parseFrontmatter('---\ntags: ["a, b", c]\n---\n').data).toEqual({ tags: ["a, b", "c"] });
+  });
+  it("reports a shared-canvas list that mixes ids and groups instead of flattening it", () => {
+    const { meta, problems } = toDeckMeta({ title: "x", "shared-canvas": ["a", ["b", "c"]] });
+    expect(meta.sharedCanvas).toEqual([]);
+    expect(problems).toContain("deck.md: shared-canvas mixes ids and lists; use [a, b] or [[a, b], [c, d]]");
+  });
+});

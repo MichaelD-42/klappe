@@ -99,3 +99,19 @@ describe("question followed by a note", () => {
     expect(scene.steps.at(-1)?.text).toBe("");
   });
 });
+
+describe("notes, edge cases", () => {
+  it("keeps every note of a step, in order", () => {
+    expect(parseScene("## A\n\n- one\n\n> first\n\n> second\n", "10-a").scene.steps[0].notes).toBe("first\n\nsecond");
+    expect(parseSection("# S\n\n> first\n\n> second\n", "10-s").section.notes).toBe("first\n\nsecond");
+  });
+  it("takes a quote nested in a list item as that step's note", () => {
+    const { steps } = parseScene("## A\n\n- one\n\n  > say this\n- two\n", "10-a").scene;
+    expect(steps.map((s) => [s.text, s.notes])).toEqual([["one", "say this"], ["two", ""]]);
+  });
+  it("keeps the paragraphs of a note apart", () => {
+    expect(parseScene("## A\n\n- one\n\n> first line\n>\n> second paragraph\n", "10-a").scene.steps[0].notes).toBe(
+      "first line\n\nsecond paragraph",
+    );
+  });
+});

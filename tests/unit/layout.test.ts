@@ -61,3 +61,12 @@ describe("buildStepList", () => {
     expect(buildStepList(d, layoutDeck(d).canvases).map((s) => s.canvas)).toEqual([0, 0, 1]);
   });
 });
+
+describe("a section listed twice in one shared group", () => {
+  it("is on its canvas once", () => {
+    const d = deck([section("a", [scene("s1", "a")]), section("b", [scene("s2", "b")])], [["a", "a", "b"]]);
+    const { canvases, problems } = layoutDeck(d);
+    expect(problems).toEqual([]);
+    expect(canvases.map((c) => c.sectionIds)).toEqual([["a", "b"]]);
+  });
+});

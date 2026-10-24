@@ -11,11 +11,11 @@ Presenting risks:
 
 Markdown and deck parsing:
 
-- [ ] Frontmatter inline lists split on commas inside quotes; a mixed list `[a, [b]]` is flattened.
-- [ ] Several notes (`> note`) on one step: a scene keeps the last, a section the first. Keep all, in order.
-- [ ] A quote nested in a list item joins the step text instead of becoming its note.
-- [ ] A note of several paragraphs loses its breaks.
-- [ ] A duplicate id inside a shared-canvas group stays in the group's ids.
+- [x] Frontmatter inline lists split on commas inside quotes; a mixed list `[a, [b]]` is flattened.
+- [x] Several notes (`> note`) on one step: a scene keeps the last, a section the first. Keep all, in order.
+- [x] A quote nested in a list item joins the step text instead of becoming its note.
+- [x] A note of several paragraphs loses its breaks.
+- [x] ~~A duplicate id inside a shared-canvas group stays in the group's ids.~~ Stale: its test passed unchanged; kept as a guard.
 
 CLI and sync:
 

@@ -34,7 +34,7 @@ Frontmatter keys:
 
 - `## Title` names the scene. It is required.
 - Each list item is one step.
-- A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene.
+- A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.

@@ -74,9 +74,11 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
       const q = (kind: StepDoc["kind"], text: string): StepDoc => ({ text, notes: "", kind });
       steps.push(q("shout-enter", b.text), q("shout-hold", b.text), q("shout-fade", b.text), q("shout-answer", answer));
     } else if (b.type === "quote") {
-      if (steps.length) steps[steps.length - 1].notes = b.text;
-      else notes = b.text;
+      const add = (n: string) => (n ? `${n}\n\n${b.text}` : b.text); // several notes on one step stay, in order
+      if (steps.length) steps[steps.length - 1].notes = add(steps[steps.length - 1].notes);
+      else notes = add(notes);
     }
+    if (b.type === "item" && b.note && steps.length) steps[steps.length - 1].notes = b.note;
   }
   // More groups or commands than items: the rest are steps with no text.
   steps.splice(fenceAt, 0, ...parts.map((part) => ({ text: "", notes: "", kind: "step" as const, part })));
