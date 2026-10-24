@@ -77,9 +77,11 @@ function startDeck() {
   bindInput(stepper, { overview, selector, speaker, autoplay, timer }, stage, steps.length - 1);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
-  stepper.on("step", (a: StepAddr) => channel.send({ t: "state", index: a.index }));
+  const state = (i: number) =>
+    channel.send({ t: "state", index: i, timer: !!document.querySelector(`[data-scene="${CSS.escape(steps[i].scene)}"] [data-k-timer]`) });
+  stepper.on("step", (a: StepAddr) => state(a.index));
   channel.on((m) => {
-    if (m.t === "hello" && stepper.index >= 0) channel.send({ t: "state", index: stepper.index });
+    if (m.t === "hello" && stepper.index >= 0) state(stepper.index);
     if (m.t !== "cmd") return;
     if (m.cmd === "timer") return timer();
     autoplay.stop();

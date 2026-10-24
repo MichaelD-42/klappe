@@ -33,7 +33,7 @@ The remaining part draws in `--k-accent` (then `--k-warn`, then `--k-bad`); the 
 
 ### Start, pause and lifecycle
 
-- `T` (and the speaker view's timer button) starts or pauses the timer of the current scene; a click on the timer does the same. It is not a step: the stepper and timeline do not move. On a scene without a timer, `T` does nothing. After "Time's up", `T` resets it to full and paused.
+- `T` (and the speaker view's timer button) starts or pauses the timer of the current scene; a click on the timer does the same. It is not a step: the stepper and timeline do not move. On a scene without a timer, `T` does nothing and the speaker view's timer button is disabled. After "Time's up", `T` resets it to full and paused.
 - It keeps running through the later steps of its scene, and back onto its step within the scene leaves it as it is.
 - Leaving the scene stops it and resets it to full.
 - A deep link or a cut from another scene onto its step shows it full and paused, with "Press T to start" under it.

@@ -37,6 +37,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Router: overlapping back presses, a failed navigation, a stale hash after back.
 - Autoplay started mid-play holds from the end of the play; a failing step stops it with an error.
 - The speaker channel is keyed by the deck's path too, so two decks with one title stay apart.
+- The speaker view's timer button is disabled on a scene without a timer, where it did nothing.
 - Frontmatter: commas inside quoted list items.
 - CLI: `--deck` followed by a flag; the `init` guard on Windows; `init` says when it moves klappe to `dependencies`.
 - Self-test: text in a scaled group is checked at its real size; an empty result names its cause.

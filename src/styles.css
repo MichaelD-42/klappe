@@ -122,6 +122,12 @@ body {
   border-color: var(--k-accent);
 }
 
+.k-btn:disabled {
+  color: var(--k-muted);
+  border-color: color-mix(in srgb, var(--k-fg) 15%, transparent);
+  cursor: default;
+}
+
 .k-btn:focus-visible,
 .k-ov-marker:focus-visible {
   outline: 4px solid var(--k-accent);
