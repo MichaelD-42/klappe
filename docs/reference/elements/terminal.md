@@ -52,7 +52,7 @@ export default captioned("terminal() — show and run(command), with a custom pr
 | `lines` | string[] | required | `"$ "` lines are commands, the rest output; output before the first command is ignored |
 | `x`, `y`, `w`, `h` | number | required | the panel's corner and the most room it may take, in scene units |
 | `prompt` | string | `"$"` | the prompt glyph shown before each command |
-| `wrap` | boolean | `false` | long lines wrap onto more rows, indented by 2 characters, instead of clipping. A break goes after the last space that fits, else inside the word |
+| `wrap` | boolean | `false` | long lines wrap onto more rows, indented by 2 characters, instead of clipping. A break goes after the last space or `/` that fits, else inside the word |
 
 ### Step adders
 
@@ -71,3 +71,7 @@ Colours come from the theme: the panel is `--k-surface`, text `--k-fg`, the prom
 ## `splitConsole`
 
 `splitConsole(lines)` groups console lines into `{ cmd, out }`: `cmd` is a `"$ "` line without the prompt, `out` the lines after it. `splitConsole(["stray", "$ a", "x"])` gives `[{ cmd: "a", out: ["x"] }]`.
+
+## `wrapBreaks`
+
+`wrapBreaks(line, width)` gives the indexes where `wrap: true` starts a new row: after the last space or `/` that fits in `width` characters (continuation rows are 2 shorter, for the indent), else mid-word. A path splits between its parts: `cat /var/log/nginx/access.log` at 16 gives `cat /var/log/`, `nginx/`, `access.log`.

@@ -49,11 +49,12 @@ const CSS = `
 `;
 
 // Where s breaks into rows of at most width characters (continuation rows lose INDENT): after the last space
-// that fits, else mid-word.
-function breaks(s: string, width: number): number[] {
+// or "/" that fits, so a path splits between its parts, else mid-word.
+export function wrapBreaks(s: string, width: number): number[] {
   const out: number[] = [];
   for (let start = 0, room = width; s.length - start > room; room = Math.max(1, width - INDENT)) {
-    const sp = s.lastIndexOf(" ", start + room - 1);
+    const end = start + room - 1;
+    const sp = Math.max(s.lastIndexOf(" ", end), s.lastIndexOf("/", end));
     start = sp >= start ? sp + 1 : start + room;
     out.push(start);
   }
@@ -78,7 +79,7 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
   const texts = cmds.flatMap((c) => [prompt + c.cmd, ...c.out]);
   const cols = Math.max(1, ...texts.map((l) => l.length));
   const widthAt = (size: number) => Math.max(1, Math.floor((opts.w - PAD_X - PAD_Y) / (size * CHAR_W)));
-  const breaksAt = (size: number) => texts.map((l) => (opts.wrap ? breaks(l, widthAt(size)) : []));
+  const breaksAt = (size: number) => texts.map((l) => (opts.wrap ? wrapBreaks(l, widthAt(size)) : []));
   const rowsAt = (size: number) => breaksAt(size).reduce((n, b) => n + 1 + b.length, 0);
   let size = Math.max(
     MIN_FONT,
