@@ -1,64 +1,10 @@
 # Backlog
 
-One ranked list, rebuilt from the M1 and M2 review findings on 2026-10-24. Fixed and stale entries are gone; git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
+One ranked list, rebuilt from the M1 and M2 review findings on 2026-10-24; git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-## Defects and gaps from M1 and M2 (branch `backlog-m1-m2`)
+## Defects and gaps from M1 and M2
 
-Presenting risks:
-
-- [x] An open overview or section list stays open while the stage moves under it (speaker view command, browser back, autoplay).
-- [x] Reduced motion still plays the zoom dive, the CRT flash and the shatter: fall back to a fade.
-
-Markdown and deck parsing:
-
-- [x] Frontmatter inline lists split on commas inside quotes; a mixed list `[a, [b]]` is flattened.
-- [x] Several notes (`> note`) on one step: a scene keeps the last, a section the first. Keep all, in order.
-- [x] A quote nested in a list item joins the step text instead of becoming its note.
-- [x] A note of several paragraphs loses its breaks.
-- [x] ~~A duplicate id inside a shared-canvas group stays in the group's ids.~~ Stale: its test passed unchanged; kept as a guard.
-
-CLI and sync:
-
-- [x] `klappe dev --deck --foo` takes `--foo` as the deck id.
-- [x] The guard against running `init` in the klappe folder compares paths as plain strings (case on Windows).
-- [x] `init` moves `devDependencies.klappe` to `dependencies` without saying so.
-- [x] `klappe:sync` never removes files that left `skills/klappe/`.
-- [x] `package.json` keeps npm-init leftovers (`main`, `directories`) and has no `bin`.
-
-Navigation, autoplay, speaker:
-
-- [x] Router: one `navigating` flag for overlapping back and forward presses; a rejected navigation is an unhandled rejection; a stale hash is not replaced.
-- [x] Autoplay's first hold counts from the key press, mid-play; a rejected loop is unhandled.
-- [x] The speaker channel is keyed by deck title: two decks with one title talk to each other.
-- [x] A scene whose `place()` returns no rect: a throw was already caught; a missing or half rect is now a deck problem instead of a silent fallback or a `NaN` canvas.
-- [x] A step that starts with a negative offset (`"-=0.3"`, `"<"`) reaches into the previous step: report it as a deck problem.
-
-Self-test, lint and tests:
-
-- [x] An empty self-test result gives a bare `SyntaxError` in the driver.
-- [x] The `ac` self-test can run past the driver's 90 s wait (12 checks of up to 8 s): the driver waits 110 s. A timed-out check already stopped at its next step.
-- [x] The legibility check takes the camera scale only: it now measures the scale each text is drawn at, so a scaled group counts. Section layers were already checked.
-- [x] The design lint misses named monospace fonts, `font: italic` and `oblique`, pills beyond `.btn` and in `em`, and protocol-relative `//cdn` URLs. A `var()` radius stays unchecked: a lint cannot resolve it.
-- [x] The real-input test finds the speaker's Next button with a non-exact `getByRole`.
-- [x] The production build ships the self-test and the test fixtures.
-
-Engine API gaps:
-
-- [x] Scenes copy their text (title, shout question and answer) from `scene.md` into `scene.ts`: give it to them on `ctx`.
-- [x] `ctx` has no deck meta (`lang`, `intensity`): effect words ("Total", media labels) and number grouping are English.
-- [x] The `worldMap` handle does not expose site positions or arc paths; the demo imports `fitProjection` and `arcPath`.
-- [x] `figure` has no stroke-width option.
-- [x] `arc()` and `appear()` take no `at` position.
-- [x] A chart timeline reads its columns by position, not by header.
-
-Effect defects:
-
-- [x] Art: the `javascript:` filter misses entity and whitespace tricks and keeps `set`, `animate`, `use` and `image`; normalisation sets `fill: none` inside `defs`, `clipPath` and `mask`.
-- [x] Icons: the draw start is computed outside `drawOn` (fragile); the 0.5 cutoff is undocumented.
-- [x] CRT: no test for the bad count-line problem.
-- [x] Figure: the pose mapping has no unit test. Morph: no test of its play-time start values.
-- [x] ~~Full-frame picture: `show()` finds its step start through a label that `appendStep` moves.~~ No change: the label is read only while a step is built, and step functions run only then; the code marks it as a shortcut.
-- [x] Media: a `youtu.be` link with an empty id; `youtube-nocookie.com` and `music.youtube.com` not matched; a video host link with no id played as a broken box; no negative test for the embed allowlist. The HTML wrapper's backdrop was already opaque.
+Done on branch `backlog-m1-m2` (2026-10-24): every entry is fixed, or was found stale by its test. CHANGELOG.md, under Unreleased, lists what changed.
 
 ## Waiting on a decision
 
