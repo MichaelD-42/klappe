@@ -1,5 +1,8 @@
 import type { CanvasLayout, Deck, Rect, Section, StepAddr } from "./types";
 
+const isRect = (r: unknown): r is Rect =>
+  !!r && (["x", "y", "w", "h"] as const).every((k) => Number.isFinite((r as Rect)[k]));
+
 export function layoutDeck(deck: Deck): { canvases: CanvasLayout[]; problems: string[] } {
   const problems: string[] = [];
   const known = new Set(deck.sections.map((s) => s.id));
@@ -25,6 +28,11 @@ export function layoutDeck(deck: Deck): { canvases: CanvasLayout[]; problems: st
       let rect: Rect | undefined;
       try {
         rect = sc.module?.place?.({ ...rects });
+        // A typo in rects["id"] gives undefined: say so, or the scene silently lands in the next frame.
+        if (sc.module?.place && !isRect(rect)) {
+          problems.push(`${sc.source}: place() returned no rect {x, y, w, h}; using the next free frame`);
+          rect = undefined;
+        }
       } catch (e) {
         problems.push(`${sc.source}: place() ${e instanceof Error ? e.message : e}`);
       }

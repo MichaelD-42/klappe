@@ -27,11 +27,11 @@ CLI and sync:
 
 Navigation, autoplay, speaker:
 
-- [ ] Router: one `navigating` flag for overlapping back and forward presses; a rejected navigation is an unhandled rejection; a stale hash is not replaced.
-- [ ] Autoplay's first hold counts from the key press, mid-play; a rejected loop is unhandled.
-- [ ] The speaker channel is keyed by deck title: two decks with one title talk to each other.
-- [ ] A scene whose `place()` returns no rect throws outside `safe()`.
-- [ ] A step that starts with a negative offset (`"-=0.3"`, `"<"`) reaches into the previous step: report it as a deck problem.
+- [x] Router: one `navigating` flag for overlapping back and forward presses; a rejected navigation is an unhandled rejection; a stale hash is not replaced.
+- [x] Autoplay's first hold counts from the key press, mid-play; a rejected loop is unhandled.
+- [x] The speaker channel is keyed by deck title: two decks with one title talk to each other.
+- [x] A scene whose `place()` returns no rect: a throw was already caught; a missing or half rect is now a deck problem instead of a silent fallback or a `NaN` canvas.
+- [x] A step that starts with a negative offset (`"-=0.3"`, `"<"`) reaches into the previous step: report it as a deck problem.
 
 Self-test, lint and tests:
 

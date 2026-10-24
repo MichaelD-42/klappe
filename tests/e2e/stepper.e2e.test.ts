@@ -72,3 +72,20 @@ test('a step from outside the panels closes the overview and the section list', 
   expect(after).toEqual([false, false, false])
   await page.close()
 })
+
+// Autoplay switched on mid-play holds after the play ends, and does not cut the playing step short.
+test('autoplay started mid-play holds from the end of the play', async () => {
+  const page = await open()
+  const ms = await page.evaluate(async () => {
+    const { stepper, autoplay } = window.klappe
+    const t0 = performance.now()
+    stepper.next() // step 2 plays for 0.6 s
+    await new Promise((r) => setTimeout(r, 150))
+    autoplay.start()
+    await new Promise<void>((r) => stepper.on('step', (a: any) => a.index === 2 && r()))
+    autoplay.stop()
+    return performance.now() - t0
+  })
+  expect(ms).toBeGreaterThan(600 + 2500 - 100) // the play, then the full hold
+  await page.close()
+}, 30_000)

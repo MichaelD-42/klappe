@@ -89,3 +89,43 @@ describe("Router.push", () => {
     expect(history.pushState).not.toHaveBeenCalled();
   });
 });
+
+describe("Router popstate, edge cases", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const setup = (hash: string, onNavigate: (i: number) => void | Promise<void>) => {
+    const history = { pushState: vi.fn(), replaceState: vi.fn() };
+    const loc = { hash };
+    let pop: () => Promise<void> = async () => {};
+    vi.stubGlobal("window", { addEventListener: (_: string, f: () => Promise<void>) => (pop = f) });
+    vi.stubGlobal("location", loc);
+    vi.stubGlobal("history", history);
+    const r = new Router(steps, onNavigate);
+    return { r, history, loc, pop: () => pop() };
+  };
+
+  it("stays silent until the last of two overlapping back presses is done", async () => {
+    let release: () => void = () => {};
+    const first = new Promise<void>((res) => (release = res));
+    let n = 0;
+    const { r, history, pop } = setup(formatHash(steps[1]), () => (n++ === 0 ? first : new Promise(() => {}))); // the second never ends here
+    const a = pop();
+    void pop();
+    release();
+    await a;
+    r.push(4); // a late step event while the second navigation still runs
+    expect(history.pushState).not.toHaveBeenCalled();
+  });
+
+  it("reports a navigation that fails instead of leaving an unhandled rejection", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { pop } = setup(formatHash(steps[1]), () => Promise.reject(new Error("boom")));
+    await expect(pop()).resolves.toBeUndefined();
+    expect(error).toHaveBeenCalledWith(expect.stringContaining("boom"));
+  });
+
+  it("replaces a stale hash with the step it landed on", async () => {
+    const { history, pop } = setup("#/value-stream/gone/1", () => {});
+    await pop();
+    expect(history.replaceState).toHaveBeenCalledWith(null, "", formatHash(steps[1]));
+  });
+});

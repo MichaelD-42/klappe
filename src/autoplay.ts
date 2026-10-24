@@ -23,7 +23,10 @@ export class Autoplay {
   start(): void {
     if (this.on) return;
     this.on = true;
-    this.loop(++this.run);
+    this.loop(++this.run).catch((e) => {
+      console.error(`autoplay: ${e instanceof Error ? e.message : e}`);
+      this.stop();
+    });
   }
 
   stop(): void {
@@ -39,6 +42,7 @@ export class Autoplay {
   }
 
   private async loop(run: number): Promise<void> {
+    await this.stepper.idle; // started mid-play: hold from the end of the play, not from the key press
     while (run === this.run) {
       const hold = this.at ? this.holdMs(this.at) : 0;
       await new Promise((r) => (this.timer = window.setTimeout(r, hold)));
