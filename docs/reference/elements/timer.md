@@ -6,7 +6,7 @@ Catalog: section `320-timer` (`#/timer/countdown/1`, `#/timer/styles/1`, `#/time
 
 ## `timer`
 
-In `scene.ts`: `timer(ctx, { minutes, cycle, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ show, hide }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
+In `scene.ts`: `timer(ctx, { minutes, cycle, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ el, show, hide }`; `el` is the timer's block, for a scene that places or moves it. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
 
 ```ts
 build: (ctx) => ({ t: timer(ctx, { minutes: 10, style: "ring", x: 700, y: 260, size: 520, label: "Exercise 1: map the process" }) }),

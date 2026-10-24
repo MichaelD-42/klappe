@@ -45,12 +45,8 @@ const scene: SceneModule = {
   build(ctx) {
     const title = ctx.html.appendChild(document.createElement("h2"));
     title.textContent = ctx.doc!.title;
-    const bodies: Element[] = [];
-    const figures = SEATS.map(([x, y]) => {
-      const f = figure(ctx, { x, y, scale: SCALE, color: "var(--k-fg)" });
-      bodies.push(ctx.svg.lastElementChild!); // the figure's root group, dimmed for the shout-out
-      return f;
-    });
+    const figures = SEATS.map(([x, y]) => figure(ctx, { x, y, scale: SCALE, color: "var(--k-fg)" }));
+    const bodies = figures.map((f) => f.el); // dimmed for the shout-out
 
     // The table, drawn after the figures so it hides the legs of those behind it.
     const table = document.createElementNS(SVG, "g");

@@ -11,14 +11,16 @@ const MAP: Rect = { x: FRAME.x + 20, y: 240, w: 1800, h: 800 };
 // Placeholder sites at plausible land coordinates; not real locations of anyone.
 // lift: how far each flight arc bows up (a share of its length; below 0 bows down), so the four read as spokes.
 // Every arc leaves its site upward or sideways, above the figures; the site's name sits under them.
-const SITES: (Site & { lift: number })[] = [
+// Our sites always have a label: we draw them ourselves, so the map gets none (see build).
+type Named = Site & { label: string };
+const SITES: (Named & { lift: number })[] = [
   { id: "s1", label: "[Site 1]", lon: -100, lat: 40, lift: 0.14 },
   { id: "s2", label: "[Site 2]", lon: -50, lat: -10, lift: 0.06 },
   { id: "s3", label: "[Site 3]", lon: 78, lat: 22, lift: 0.04 },
   // Bows well down: it passes south of Site 3 and leaves the host steeper than Site 3's arc.
   { id: "s4", label: "[Site 4]", lon: 135, lat: -25, lift: -0.28 },
 ];
-const HOST: Site = { id: "host", label: "[Host site]", lon: 12, lat: 48 };
+const HOST: Named = { id: "host", label: "[Host site]", lon: 12, lat: 48 };
 const PER_SITE = 2;
 
 // Figures are about 230 units tall at scale 1. The thick stroke keeps them visible at world zoom;
@@ -71,7 +73,7 @@ function build(ctx: Ctx) {
   const mapLayer = g.appendChild(document.createElementNS(SVG, "g"));
   gsap.set(mapLayer, { opacity: 1 }); // written at load, as a seek back to the start leaves it
   // No map labels: the map puts them right of the dot, where the east arcs leave. Ours sit clear of the arcs.
-  const map = worldMap({ ...ctx, svg: mapLayer }, { rect: MAP, sites: [...SITES, HOST].map((s) => ({ ...s, label: "" })) });
+  const map = worldMap({ ...ctx, svg: mapLayer }, { rect: MAP, sites: [...SITES, HOST].map(({ id, lon, lat }) => ({ id, lon, lat })) });
   // The map's own positions, so sites and routes land on the drawn map.
   const at = (s: Site) => map.point(s.id)!;
   const host = at(HOST);
@@ -89,7 +91,7 @@ function build(ctx: Ctx) {
       const side = k ? 1 : -1;
       const home: [number, number] = [sx + 16 * side, sy + 62];
       const fig = figure(ctx, { x: home[0], y: home[1], scale: FIG.scale, color: "var(--k-fg)", strokeWidth: FIG.stroke });
-      const body = g.lastElementChild as SVGGElement; // the figure's root group
+      const body = fig.el;
       // The role on a faint backing, so coastlines stay behind it.
       const role = g.appendChild(document.createElementNS(SVG, "g"));
       const back = role.appendChild(document.createElementNS(SVG, "rect"));

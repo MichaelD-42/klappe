@@ -151,7 +151,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `rect` | `{ x, y, w, h }` | required | the whole globe, fitted into this rect |
-| `sites` | `{ id, label, lon, lat }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out |
+| `sites` | `{ id, label?, lon, lat }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out. Without `label` the map draws no text for it, for a deck that places its own labels |
 | `arcs` | `{ from, to }[]` | none | arcs created at load; `arc` then only draws them |
 
 ### Step adders
@@ -208,6 +208,8 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
+
+The handle's `el` is the figure's root group, for a scene that dims or moves it (`tl.to(f.el, { opacity: 0.3 })`).
 
 ### Limits
 

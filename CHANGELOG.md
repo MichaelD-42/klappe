@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `figure`, `timer` and `checklist` handles expose `el`; a `worldMap` site's `label` is optional (no label, no text).
 - `scrimSide` on `image()`, `wipe()` and backgrounds: the scrim covers one side only, so the rest of the picture keeps its light.
 - `ctx.onStep` events carry `next`, the scene of the following step.
 - `crt` and the `crt` transition: `flash: "soft"`, a gentler power-on that keeps the phosphor colour instead of flashing near white.

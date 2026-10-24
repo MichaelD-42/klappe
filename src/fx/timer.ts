@@ -13,6 +13,7 @@ export interface TimerOpts {
   label?: string;
 }
 export interface TimerHandle {
+  el: HTMLElement; // the timer's block, for a scene that places or moves it
   // at: a GSAP position, default the end of the timeline.
   show(tl: gsap.core.Timeline, at?: gsap.Position): void;
   // Fades it out; from this step on it is stopped and reset, as if its scene were left.
@@ -181,6 +182,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   });
 
   return {
+    el: root,
     show: (tl, at) => {
       timeline = tl;
       tl.to(root, { autoAlpha: 1, duration: 0.4 }, at ?? tl.duration());

@@ -22,9 +22,9 @@ const scene: SceneModule = {
     const big = ctx.html.appendChild(document.createElement("div"));
     Object.assign(big.style, { position: "absolute", left: "0", top: "0", transform: `scale(${SCALE})`, transformOrigin: "0 0" });
     const list = checklist({ ...ctx, html: big }, { items: ITEMS, x: 160 / SCALE, y: 0, w: 780 });
-    centre(big.lastElementChild as HTMLElement, SCALE);
+    centre(list.el, SCALE);
     const t = timer(ctx, { minutes: 10, style: "ring", x: 1280, y: 0, size: 460, label: "In pairs" });
-    centre(ctx.html.lastElementChild as HTMLElement); // timer() appends its block last
+    centre(t.el);
     return { h, list, t };
   },
   steps: [

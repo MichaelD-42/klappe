@@ -70,3 +70,31 @@ test('figure takes a stroke width, and appear() a position', async () => {
   expect(r.start).toBe(0.5)
   await browser.close()
 }, 30_000)
+
+// Handles expose the element they build, so a scene moves or dims it without reaching into the DOM.
+test('figure, timer and checklist handles expose their root as el', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-figure`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const imp = new Function('p', 'return import(p)') as (p: string) => Promise<any>
+    const [{ figure }, { timer }, { checklist }] = await Promise.all(['/src/fx/figure.ts', '/src/fx/timer.ts', '/src/fx/checklist.ts'].map(imp))
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    document.querySelector('svg')!.append(svg)
+    const html = document.body.appendChild(document.createElement('div'))
+    const ctx = { svg, html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, deck: { lang: 'en', intensity: 'calm' }, onStep() {}, problem() {} }
+    const f = figure(ctx, { x: 0, y: 0, color: 'red' })
+    const out = { figure: f.el === svg.lastElementChild }
+    const t = timer(ctx, { minutes: 1, style: 'text', x: 0, y: 0, size: 300 })
+    Object.assign(out, { timer: t.el === html.lastElementChild && t.el.hasAttribute('data-k-timer') })
+    const c = checklist(ctx, { items: [{ text: 'A' }], x: 0, y: 0, w: 400 })
+    Object.assign(out, { checklist: c.el === html.lastElementChild })
+    svg.remove()
+    html.remove()
+    return out
+  })
+  expect(r).toEqual({ figure: true, timer: true, checklist: true })
+  await browser.close()
+})
