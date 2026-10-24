@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Bundled fonts (SIL OFL, from npm, offline): Inter in calm, Space Grotesk in bold, JetBrains Mono for code and terminal in both. They load before the deck renders, so text measures the same on every machine and in the PDF. Digits are fixed-width on the stage; code has no ligatures.
 - `klappe pdf` (`npm run pdf`): the deck as `dist/<id>.pdf`, one 1920x1080 page per step, each step as it ends, with no UI on top. Deck problems are listed but do not stop it; a page error fails it.
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion; README section on presenting.
 - `klappe --version`.
@@ -28,6 +29,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
+- The calm and bold themes use the bundled fonts instead of the system font: text widths, and so wrapping, change a little.
 - Shiki loads only the grammars a deck uses: the languages of its code fences, and the `lang` values its `scene.ts` code passes to `code()`. Write `lang` as a string literal: a computed one shows plain and reports a deck problem. The demo fetches one grammar instead of nine (about 600 KB).
 - Reduced motion also turns the `zoom`, `crt` and `shatter` transitions into a fade.
 - The Ken Burns push starts when the picture's fade-in ends, so the step lasts the fade plus 6 s.

@@ -1,4 +1,8 @@
 import "./styles.css";
+// The theme fonts ship with klappe (SIL OFL): a deck looks and measures the same on every machine, offline too.
+import "@fontsource-variable/inter";
+import "@fontsource-variable/space-grotesk";
+import "@fontsource-variable/jetbrains-mono";
 import { Autoplay } from "./autoplay";
 import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
@@ -9,7 +13,7 @@ import { loadParts } from "./render/parts";
 import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { Stepper } from "./stepper";
-import { applyTheme, motion } from "./theme";
+import { applyTheme, loadFonts, motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
@@ -39,16 +43,17 @@ if (query.get("speaker") === "1") {
     loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
     svgBackgrounds(deck),
   ]);
-  startDeck(svg);
+  await startDeck(svg);
 }
 
-function startDeck(svg: Record<string, string>) {
+async function startDeck(svg: Record<string, string>) {
   const { stage, ui, worlds } = mountStage(document.body);
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
   // ?reducedmotion=0 overrides the system setting: a presenter laptop with animations off still plays the deck in full.
   const flag = query.get("reducedmotion");
   const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
+  problems.push(...(await loadFonts()));
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });

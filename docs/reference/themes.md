@@ -13,7 +13,7 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-accent`, `--k-accent-2` | emphasis and the current item; second emphasis |
 | `--k-ok`, `--k-warn`, `--k-bad` | done, time running out, failure; `--k-bad` also colours the problems overlay |
 | `--k-series-1` to `--k-series-6` | chart series, diagram participant colours |
-| `--k-font`, `--k-font-code` | text font; code and terminal font |
+| `--k-font`, `--k-font-code` | text font; code and terminal font. klappe bundles Inter Variable (calm), Space Grotesk Variable (bold) and JetBrains Mono Variable (code, both); a theme may name any of them, or an installed font. The faces they name are loaded before the deck renders. |
 | `--k-code-foreground`, `--k-code-background`, `--k-code-token-constant`, `-string`, `-comment`, `-keyword`, `-parameter`, `-function`, `-string-expression`, `-punctuation`, `-link` | syntax colours, mapped from Shiki's `css-variables` theme |
 | `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition |
 

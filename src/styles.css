@@ -16,6 +16,7 @@ body {
   background: var(--k-bg);
   color: var(--k-fg);
   font-family: var(--k-font);
+  font-variant-numeric: tabular-nums; /* counters, timers and scrambles do not jitter */
   transform-origin: 50% 50%;
 }
 

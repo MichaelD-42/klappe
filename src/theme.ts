@@ -53,6 +53,18 @@ const CHECKS: [string, string, number][] = [
   ["--k-line", "--k-bg", 3],
 ];
 
+// Loads the faces the theme's --k-font and --k-font-code name: effects measure text while they build.
+// A font that is not installed or declared falls back as CSS does; a bad token value is a deck problem.
+export async function loadFonts(): Promise<string[]> {
+  const root = getComputedStyle(document.documentElement);
+  try {
+    await Promise.all(["--k-font", "--k-font-code"].map((v) => document.fonts.load(`16px ${root.getPropertyValue(v)}`)));
+    return [];
+  } catch (e) {
+    return [`theme: fonts did not load (${e instanceof Error ? e.message : e})`];
+  }
+}
+
 /** Injects calm, then the chosen theme (after it, so missing tokens fall back), and returns problems. */
 export function applyTheme(deck: Deck, override?: string | null): string[] {
   const name = override || deck.meta.theme;

@@ -22,6 +22,9 @@
     "klappe": "bin/klappe.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@playwright/test": "^1.64.1",
     "@types/d3": "^7.4.3",
     "@types/topojson-client": "^3.1.5",

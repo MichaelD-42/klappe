@@ -27,7 +27,6 @@ Not on this list, because they exist: code morph (`code().diff()`) and packets a
 
 ## Milestones
 
-- Offline fonts (the single-file build is dropped; see DECISIONS; PDF export is done).
 - M4: deck template and agents.
 - Demo: a local `media/sample.mp4` for the Markdown video scene; the catalog's YouTube scene needs a network too.
 

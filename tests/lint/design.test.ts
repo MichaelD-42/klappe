@@ -51,7 +51,8 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
     }
   } else
     for (const line of text.split('\n')) {
-      if (MONO.test(line) && !/k-(?:retro|code|term)\b/.test(line)) hit('monospace', line)
+      // A bare import names a module, not a font in use (the bundled code font's package).
+      if (MONO.test(line) && !/k-(?:retro|code|term)\b/.test(line) && !/^\s*import\s+["']/.test(line)) hit('monospace', line)
       const radius = line.match(/border-?radius["']?\s*:\s*([^,;}\n]+)/i)
       if (radius && isPill(radius[1], /button|btn/i.test(line))) hit('pill-button', line)
     }
@@ -130,6 +131,7 @@ describe('design lint catches each rule', () => {
       ['tests/unit/x.test.ts', 'expect(hash).toBe("#/a/b/01")'],
       ['src/styles.css', '.k-x { font: 600 24px var(--k-font); }\n.k-avatar { border-radius: 50%; }\n.k-btn { border-radius: 0.4em; }'],
       ['src/parse/x.ts', 'const VIDEO = /^(?:https?:)?\\/\\/youtube/ // a regex, not a URL'],
+      ['src/main.ts', 'import "@fontsource-variable/jetbrains-mono";'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
   })

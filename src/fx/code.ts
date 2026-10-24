@@ -110,7 +110,7 @@ const DIM = 0.7;
 // Monospace is allowed under .k-code: code is not a label.
 const CSS = `
 .k-code { position: absolute; margin: 0; box-sizing: border-box; overflow: hidden; border-radius: 12px;
-  background: var(--k-surface); color: var(--k-code-foreground); font-family: var(--k-font-code); }
+  background: var(--k-surface); color: var(--k-code-foreground); font-family: var(--k-font-code); font-variant-ligatures: none; }
 .k-code > div { position: absolute; left: 0; right: 0; top: ${PAD_Y}px; }
 .k-code [data-line] { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; white-space: pre; padding-left: ${PAD_X}px; }
 .k-code .k-code-bar { position: absolute; left: 0; top: 0; bottom: 0; width: ${BAR}px; background: var(--k-accent); }

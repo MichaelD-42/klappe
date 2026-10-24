@@ -145,3 +145,10 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: build stays synchronous (the timeline rule: DOM and SVG exist at load), so loading has to finish before it. Deck code still imports effects statically; the bundler drops the ones it never imports.
   - Shiki is needed for a code fence or when deck code imports `code`; the build scans for that import (`virtual:klappe-fx`), because a call cannot be seen before build runs.
   - Result: a Markdown-only deck loads 218 KB of JS at start instead of 674 KB; the demo, which uses every effect, loads 537 KB at start plus Shiki.
+
+## 2026-10-24 (bundled fonts)
+
+- **klappe bundles its theme fonts: Inter (calm), Space Grotesk (bold) and JetBrains Mono (code and terminal, both), as `@fontsource-variable` npm packages.**
+  - Why: effects measure text while they build, so the system font made layout differ between the presenter's laptop, CI and the PDF export. Bundled, the deck needs no font CDN and works offline.
+  - Variable fonts, so a deck can tween the weight; all three have fixed-width digits, set on the stage, so counters, timers and scrambles do not jitter. Code has ligatures off: `<=` reads as typed.
+  - `main.ts` awaits `document.fonts.load` for the faces `--k-font` and `--k-font-code` name before the world renders; only the subsets the text uses download.
