@@ -14,18 +14,16 @@ Done on branch `backlog-m1-m2` (2026-10-24): every entry is fixed, or was found 
 
 ## Effects, M4 (user decision 2026-10-24)
 
-In this order, each with a catalog scene, a reference entry and tests. Branch `effects-m4`.
+Done on branch `effects-m4` (2026-10-24), each with a catalog scene, a reference entry and tests: animated backgrounds (a looping `.mp4`/`.webm` or `animate: "aurora"`), full-screen `video()` with no `rect`, `spotlight`, `annotate`, `wipe`, `scramble`, `parallax: true` on a background, `qr`. CHANGELOG.md, under Unreleased, lists them. Also fixed: the speaker view's timer button is disabled on a scene without a timer.
 
-- Animated backgrounds: a `.mp4` or `.webm` `href` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. They run on the wall clock, outside the timeline: under `data-k-ignore`, still under reduced motion and in the self-test, paused while their background is not on screen.
-- Full-screen video: `video()` with no `rect` fills the scene frame, `cover`, no caption or border.
-- `spotlight`: dims everything but a rect or an element; the next step moves the hole.
-- Hand-drawn annotations: circle, underline, arrow, strike over existing content, drawn on with `drawOn`.
-- Before/after wipe: two pictures and a divider that sweeps across on a step.
-- Text scramble: a decode reveal, written from `onUpdate` as a function of progress.
-- Parallax: background layers move with a fraction of the camera's flight.
-- QR code for a link.
+Open:
 
-Not here: mesh3d and decorative loop elements (an animated character, an avatar). The user has both in another repo and brings them over; mesh3d brings its own loop, so check whether the background loop rules fit it then. Already built, so not on this list: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
+- Mesh3d and decorative loop elements (an animated character, an avatar): the user has both in another repo and brings them over. Mesh3d brings its own loop; check it against the background loop rules (under `data-k-ignore`, still with reduced motion and in the self-test, paused off screen).
+- The demo has no local video file, so the video background has a fixture and a reference entry but no catalog scene; the catalog shows the aurora. A real `media/` clip would let it show both.
+- `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
+- Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
+
+Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 
 ## Milestones
 
