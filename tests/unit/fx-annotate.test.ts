@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { MARKER_MIX, scribble } from '../../src/fx/annotate'
+import { lean, MARKER_MIX, scribble } from '../../src/fx/annotate'
 import { contrast, parseTokens } from '../../src/theme'
 
 const box = { x: 400, y: 300, w: 240, h: 60 }
@@ -99,6 +99,16 @@ test('a highlight runs level through the middle of the box, end to end', () => {
   // Inside the pad: the band's slanted ends lean past its line's ends, and must stay out of the next word.
   expect(Math.min(...xs(band))).toBeGreaterThan(box.x - PAD)
   expect(Math.max(...xs(band))).toBeLessThan(box.x + box.w + PAD)
+})
+
+// Each end stops short by what the lean show gives that line adds (half the band times its slant), not the most lean.
+test('a highlight end stops short by its own lean', () => {
+  for (const seed of [1, 2, 5]) {
+    const [band] = scribble('highlight', box, { pad: PAD, seed })
+    const o = (box.h * 0.8 * lean(seed)) / 2
+    expect(band[0].x).toBeCloseTo(box.x - PAD + o)
+    expect(band.at(-1)!.x).toBeCloseTo(box.x + box.w + PAD - o)
+  }
 })
 
 // The band is --k-accent at MARKER_MIX over the stage (color-mix in srgb). The code and the reference page

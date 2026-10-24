@@ -1,6 +1,7 @@
 // Effects for deck code: import { shatter, crt, chart } from "klappe/fx".
 export * from "./agenda";
-export * from "./annotate";
+// Not lean: the per-line slant, shared with scribble for its unit test.
+export { annotate, MARKER_MIX, scribble, type AnnotateHandle, type AnnotateOpts, type AnnotationKind } from "./annotate";
 export * from "./attention";
 export * from "./callout";
 export * from "./chart";

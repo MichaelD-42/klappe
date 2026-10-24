@@ -38,6 +38,9 @@ function random(seed: number) {
   };
 }
 
+// The slant (tan of the angle) a highlight band on the line with this seed leans by: a little more or less on each line.
+export const lean = (seed: number) => SLANT * (0.6 + 0.4 * random(seed)());
+
 // A run from a to b in n pieces, bowed to one side by up to `bow` at its middle, as a quick stroke is.
 function line(a: P, b: P, n: number, bow: number, rnd: () => number): P[] {
   const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
@@ -92,9 +95,9 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
   }
   if (kind === "underline") return [line({ x: x0, y: y1 + rnd() * 4 }, { x: x1, y: y1 + 4 + rnd() * 6 }, 16, 3, rnd)];
   // highlight: a near-level band through the middle, as a marker drags across. show makes it BAND of the line's
-  // height and leans its ends up to SLANT, so each end stops short by what its lean adds.
+  // height and leans its ends by lean(seed), so each end stops short by what its lean adds.
   if (kind === "highlight") {
-    const o = (box.h * BAND * SLANT) / 2;
+    const o = (box.h * BAND * lean(opts.seed)) / 2;
     return [line({ x: x0 + o, y: cy + (rnd() - 0.5) * 8 }, { x: x1 - o, y: cy + (rnd() - 0.5) * 8 }, 16, 3, rnd)];
   }
   if (kind === "strike") return [line({ x: x0, y: cy + 4 - rnd() * 4 }, { x: x1, y: cy - 4 + rnd() * 4 }, 16, 3, rnd)];
@@ -155,7 +158,7 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
         const stroke = hl ? { stroke: MARKER, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: "var(--k-accent)", strokeWidth: "4", strokeLinecap: "round" };
         Object.assign(p.style, { fill: "none", strokeLinejoin: "round", ...stroke });
         if (hl) {
-          const t = SLANT * (0.6 + 0.4 * random(seed + i)());
+          const t = lean(seed + i);
           p.setAttribute("transform", `translate(${(-(b.y + b.h / 2) * t).toFixed(1)} 0) skewX(${((Math.atan(t) * 180) / Math.PI).toFixed(1)})`);
         }
         return svg.appendChild(p);
