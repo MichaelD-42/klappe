@@ -15,6 +15,8 @@ export interface TimerOpts {
 export interface TimerHandle {
   // at: a GSAP position, default the end of the timeline.
   show(tl: gsap.core.Timeline, at?: gsap.Position): void;
+  // Fades it out; from this step on it is stopped and reset, as if its scene were left.
+  hide(tl: gsap.core.Timeline, at?: gsap.Position): void;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -97,7 +99,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
     Object.assign(d.style, { fontSize: `${Math.max(24, Math.min(40, size * 0.07))}px`, textAlign: "center" });
     return d;
   };
-  if (opts.label) line(opts.label);
+  if (opts.label) line(opts.label).setAttribute("data-k-timer-label", ""); // a deck.css hook for its font and colour
   const hint = line();
   hint.setAttribute("data-k-timer-hint", "");
   ctx.html.append(root);
@@ -107,6 +109,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   let since = 0;
   let raf = 0; // the frame loop's id, 0 while stopped
   let start = Infinity; // the show step's start on tl
+  let end = Infinity; // the hide step's start on tl
   let timeline: gsap.core.Timeline | undefined;
   let here = false; // the current step is this scene's, at or after the show step
   const draw = () => {
@@ -162,7 +165,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
   root.addEventListener("click", toggle);
   ctx.onStep(({ play, span, scene }) => {
     const was = here;
-    here = scene === ctx.scene && !!span && span[1] > start;
+    here = scene === ctx.scene && !!span && span[1] > start && span[1] <= end;
     if (until) {
       // Runs whenever its step is in view, also after a deep link or a cut; stops when the scene is left.
       if (!here) return pause();
@@ -182,6 +185,10 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
       timeline = tl;
       tl.to(root, { autoAlpha: 1, duration: 0.4 }, at ?? tl.duration());
       start = (tl.recent() as gsap.core.Tween).startTime(); // onStep compares the step span with this
+    },
+    hide: (tl, at) => {
+      tl.to(root, { autoAlpha: 0, duration: 0.4 }, at ?? tl.duration());
+      end = (tl.recent() as gsap.core.Tween).startTime();
     },
   };
 }

@@ -6,7 +6,7 @@ Catalog: section `320-timer` (`#/timer/countdown/1`, `#/timer/styles/1`, `#/time
 
 ## `timer`
 
-In `scene.ts`: `timer(ctx, { minutes, cycle, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ show }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
+In `scene.ts`: `timer(ctx, { minutes, cycle, style, x, y, size, label })` or `timer(ctx, { until, style, x, y, size, label })` returns `{ show, hide }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
 
 ```ts
 build: (ctx) => ({ t: timer(ctx, { minutes: 10, style: "ring", x: 700, y: 260, size: 520, label: "Exercise 1: map the process" }) }),
@@ -23,7 +23,7 @@ steps: [(tl, r: { t: TimerHandle }) => r.t.show(tl), null],
 | `style` | `"bar" \| "donut" \| "ring" \| "text"` | required | `bar`: a bar that empties, mm:ss under it. `donut`: a thick arc that empties, mm:ss in its centre. `ring`: a thin circle that empties, mm:ss in its centre. `text`: large mm:ss only |
 | `x`, `y` | number | required | the top-left corner, scene units |
 | `size` | number | required | the width (the diameter for `donut` and `ring`), scene units. The mm:ss scales with it |
-| `label` | string | none | a line under the timer, for example the exercise name |
+| `label` | string | none | a line under the timer, for example the exercise name. It carries `data-k-timer-label`, so a deck's `deck.css` can set its font and colour: `[data-k-timer-label] { font-family: ...; color: var(--k-accent); }` |
 
 The remaining part draws in `--k-accent` (then `--k-warn`, then `--k-bad`); the track is `--k-line`.
 
@@ -32,6 +32,7 @@ The remaining part draws in `--k-accent` (then `--k-warn`, then `--k-bad`); the 
 | Handle | Step |
 | --- | --- |
 | `show(tl, at?)` | fades the timer in, at the GSAP position `at` (default: the end of the timeline). When this step plays, the timer starts; its count begins once the step's camera flight has landed |
+| `hide(tl, at?)` | fades the timer out. From this step on it is stopped and reset, as when its scene is left, and `T` no longer reaches it; back before this step, the rules below apply again |
 
 ### Start, pause and lifecycle
 
