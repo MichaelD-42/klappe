@@ -8,12 +8,14 @@ afterAll(() => browser?.close())
 
 const NO_SIZE = 'glow: target has no size to measure'
 
-for (const vp of [
-  { w: 1920, h: 1080 },
-  { w: 1366, h: 768 },
-])
-  test(`walk: play equals seek at ${vp.w}x${vp.h}`, async () => {
-    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-attention`, vp)
+// Reduced motion too: breathe then holds steady, and camera moves cut.
+for (const [vp, q] of [
+  [{ w: 1920, h: 1080 }, ''],
+  [{ w: 1366, h: 768 }, ''],
+  [{ w: 1920, h: 1080 }, '&reducedmotion=1'],
+] as const)
+  test(`walk: play equals seek at ${vp.w}x${vp.h}${q}`, async () => {
+    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-attention${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([NO_SIZE])
