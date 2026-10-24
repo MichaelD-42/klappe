@@ -127,3 +127,18 @@ describe("showsSample", () => {
     expect(showsSample(undefined, undefined)).toBe(false);
   });
 });
+
+describe("timeline columns by name", () => {
+  // end before start in the file, plus an extra number column first: the names decide, not the order.
+  const rows = [
+    { phase: "A", people: 3, end: 2021, start: 2019 },
+    { phase: "B", people: 5, end: 2023, start: 2020 },
+  ];
+  test("reads start and end by header", () => {
+    expect(dataError(rows, "timeline")).toBe("");
+    expect(chartDomain(rows, "timeline")).toEqual([2019, 2023]);
+  });
+  test("takes from and to as well", () => {
+    expect(chartDomain([{ p: "A", n: 1, to: 2024, from: 2022 }], "timeline")).toEqual([2022, 2024]);
+  });
+});

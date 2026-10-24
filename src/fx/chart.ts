@@ -6,7 +6,8 @@ import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
 // must be a number in every row (only all-text columns are text). bar and waterfall use the first series;
-// stacked and line use all of them; timeline reads two series per row: start, then end (for example years).
+// stacked and line use all of them; timeline reads a start and an end per row (for example years): the
+// columns named start/from/begin and end/to/until, else the first two number columns.
 export type Row = Record<string, string | number>;
 export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline";
 export interface ChartOpts {
@@ -56,6 +57,12 @@ function columns(rows: Row[]) {
   return { label, series: rest.filter((k) => rows.some((r) => typeof r[k] === "number")) };
 }
 const num = (r: Row, k: string) => r[k] as number;
+// A timeline's start and end columns: named ones (start/from/begin, end/to/until) win, else the first two.
+function span(series: string[]): [string, string] {
+  const find = (re: RegExp) => series.find((k) => re.test(k));
+  const [s, e] = [find(/^(start|from|begin)$/i), find(/^(end|to|until)$/i)];
+  return s && e ? [s, e] : [series[0], series[1]];
+}
 
 // Why rows cannot be drawn as this type, or "". Never plot around a bad cell: that would invent numbers.
 export function dataError(rows: unknown[], type: ChartType): string {
@@ -68,7 +75,7 @@ export function dataError(rows: unknown[], type: ChartType): string {
   for (const [i, r] of data.entries())
     for (const k of series) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
   if (type === "timeline") {
-    const [a, b] = series;
+    const [a, b] = span(series);
     const i = data.findIndex((r) => num(r, b) < num(r, a));
     if (i >= 0) return `row ${i + 1}, ${b} before ${a}`;
   }
@@ -84,9 +91,12 @@ export function waterfallSteps(deltas: number[]): [number, number][] {
 // The value axis range before nice(): zero is always in it, except for a timeline.
 export function chartDomain(rows: Row[], type: ChartType): [number, number] {
   const { series } = columns(rows);
-  const [a, b] = series;
+  const [a] = series;
   let vs: number[];
-  if (type === "timeline") return [d3.min(rows, (r) => num(r, a)) ?? 0, d3.max(rows, (r) => num(r, b)) ?? 0];
+  if (type === "timeline") {
+    const [s, e] = span(series);
+    return [d3.min(rows, (r) => num(r, s)) ?? 0, d3.max(rows, (r) => num(r, e)) ?? 0];
+  }
   if (type === "waterfall") vs = waterfallSteps(rows.map((r) => num(r, a))).flat();
   else if (type === "stacked")
     vs = rows.flatMap((r) => {
@@ -266,7 +276,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   let xAxis: d3.Axis<any>;
   let yAxis: d3.Axis<any>;
   if (type === "timeline") {
-    const [a, b] = series;
+    const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
     const y = d3.scaleBand().domain(band).range([P.y, P.y + P.h]).padding(0.35);
     const tdec = decimals(data.flatMap((r) => [num(r, a), num(r, b)]));

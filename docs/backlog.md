@@ -49,7 +49,7 @@ Engine API gaps:
 - [x] The `worldMap` handle does not expose site positions or arc paths; the demo imports `fitProjection` and `arcPath`.
 - [x] `figure` has no stroke-width option.
 - [x] `arc()` and `appear()` take no `at` position.
-- [ ] A chart timeline reads its columns by position, not by header.
+- [x] A chart timeline reads its columns by position, not by header.
 
 Effect defects:
 

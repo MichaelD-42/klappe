@@ -22,6 +22,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - A `shared-canvas` list that mixes ids and groups is a deck problem instead of being flattened.
 - The demo: the charts leave the story; the catalog keeps them.
 - The single-file build is dropped (see DECISIONS).
+- A timeline chart reads its start and end columns by name (`start`/`from`/`begin`, `end`/`to`/`until`) when they are named, else the first two number columns as before.
 - `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
 
 ### Fixed

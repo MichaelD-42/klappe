@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads two (start, end) per row |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
