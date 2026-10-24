@@ -19,6 +19,7 @@ const QUADS: Quadrant[] = ["tl", "tr", "bl", "br"];
 const GUTTER = 56; // left of the plot for the y title, below it for the x title
 const NAME_H = 48; // the band at the top of a quadrant for its name
 const PAD = 16;
+const NAME_X = 2 * PAD; // a quadrant name's inset from its side, clear of the y arrowhead
 const CHIP_H = 64;
 const COLS = 2;
 const ARROW = 20;
@@ -98,7 +99,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   const names = QUADS.filter((q) => opts.quadrants?.[q]).map((q) => {
     const b = quads[q];
     return [q, div({
-      left: `${b.x + PAD}px`, top: `${b.y + 8}px`, width: `${b.w - 2 * PAD}px`, height: `${NAME_H - 8}px`, whiteSpace: "nowrap",
+      left: `${b.x + NAME_X}px`, top: `${b.y + 8}px`, width: `${b.w - 2 * NAME_X}px`, height: `${NAME_H - 8}px`, whiteSpace: "nowrap",
       textAlign: q[1] === "r" ? "right" : "left", color: "var(--k-muted)", font: `600 ${NAME_FONT}px/${LINE_H} var(--k-font)`,
     }, opts.quadrants![q]!)] as const;
   });
@@ -106,7 +107,8 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   const chip = slots.tl[0] ?? { w: 0, h: CHIP_H };
   const items = new Map(opts.items.map((it) => {
     const c = div({
-      left: "0", top: "0", width: `${chip.w}px`, height: `${chip.h}px`, padding: "4px 12px", border: "3px solid var(--k-line)", borderRadius: "12px",
+      left: "0", top: "0", width: `${chip.w}px`, height: `${chip.h}px`, padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: "12px",
+      outline: "2px solid transparent", // in the accent during its step: 4 px of accent in all, with no change to the layout
       background: "var(--k-surface)", color: "var(--k-fg)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, zIndex: "2",
     }, it.label);
@@ -172,8 +174,8 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
         fit();
         const t = tl.duration();
         // The previous item settles as this one starts (sets, so they seek).
-        if (prev && prev !== id) tl.set(items.get(prev)!.el, { borderColor: "var(--k-line)", zIndex: 2, immediateRender: false }, t);
-        tl.set(item.el, { borderColor: "var(--k-accent)", zIndex: 3, immediateRender: false }, t);
+        if (prev && prev !== id) tl.set(items.get(prev)!.el, { borderColor: "var(--k-line)", outlineColor: "transparent", zIndex: 2, immediateRender: false }, t);
+        tl.set(item.el, { borderColor: "var(--k-accent)", outlineColor: "var(--k-accent)", zIndex: 3, immediateRender: false }, t);
         if (!from) tl.fromTo(item.el, { x: s.x, y: s.y, autoAlpha: 0 }, { x: s.x, y: s.y, autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
         else if (from.q !== q) tl.to(item.el, { x: s.x, y: s.y, duration: motion.step, ease: "power2.inOut" }, t);
         else tl.set({}, {}, t + 0.4);

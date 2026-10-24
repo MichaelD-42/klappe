@@ -33,7 +33,7 @@ steps: [
 | --- | --- | --- | --- |
 | `x`, `y`, `w`, `h` | numbers | required | the area; the left 56 px hold the y title and the bottom 56 px the x title, the rest is the plot |
 | `axes` | `{ x, y }` | required | the axis titles, 26 px: `x` under the plot, `y` up its left side. The axes point from low (bottom left) to high |
-| `quadrants` | `{ tl?, tr?, bl?, br? }` | none | quadrant names, one line, 24 px in `--k-muted`, at the quadrant's top (left-aligned on the left, right-aligned on the right) |
+| `quadrants` | `{ tl?, tr?, bl?, br? }` | none | quadrant names, one line, 24 px in `--k-muted`, at the quadrant's top, 32 px in from its side (left-aligned on the left, right-aligned on the right) |
 | `items` | `{ id, label }[]` | required | the items; all are built hidden and appear when first placed |
 
 ### Step adders
@@ -41,7 +41,7 @@ steps: [
 | Handle | Step |
 | --- | --- |
 | `show` | a step adder itself (`r.m.show(tl)`): the axes and the dividers draw on with `drawOn`, then the arrowheads, titles and quadrant names fade in |
-| `place(id, quadrant)` | `quadrant` is `"tl"`, `"tr"`, `"bl"` or `"br"`. The first time, the item fades in at the lowest free slot of that quadrant. Later, it moves there from its old slot, 0.6 s. Placed in the quadrant it is already in, it stays put. The item has a `--k-accent` border during its step and settles to `--k-line` when the next `place` starts. An unknown id throws `matrix: unknown item "<id>"`, an unknown quadrant `matrix: unknown quadrant "<q>"` |
+| `place(id, quadrant)` | `quadrant` is `"tl"`, `"tr"`, `"bl"` or `"br"`. The first time, the item fades in at the lowest free slot of that quadrant. Later, it moves there from its old slot, 0.6 s. Placed in the quadrant it is already in, it stays put. The item has a 4 px `--k-accent` border during its step (its 2 px border and a 2 px outline, so nothing moves) and settles to a 2 px `--k-line` border when the next `place` starts. An unknown id throws `matrix: unknown item "<id>"`, an unknown quadrant `matrix: unknown quadrant "<q>"` |
 
 ### Limits
 

@@ -20,7 +20,7 @@ for (const vp of [
   })
 
 // Step 5 moves "sso" from big bets (top right) to quick wins (top left): it is the accent one, the item placed
-// before it has settled, and it ends in the top-left quadrant.
+// before it has settled, and it ends in the top-left quadrant. The accent is the border and an outline around it (4 px).
 test('the moved item is in the accent and lands in its new quadrant', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-matrix#/a/sort/5`)
@@ -34,7 +34,8 @@ test('the moved item is in the accent and lands in its new quadrant', async () =
     const want = getComputedStyle(probe).color
     probe.remove()
     const [sso, exp] = [el('sso').getBoundingClientRect(), el('export').getBoundingClientRect()]
-    return { sso: getComputedStyle(el('sso')).borderTopColor === want, export: getComputedStyle(el('export')).borderTopColor === want, leftOfExport: sso.right < exp.left, sameRow: Math.abs(sso.top - exp.top) < 1 }
+    const cs = (id: string) => getComputedStyle(el(id))
+    return { sso: cs('sso').borderTopColor === want && cs('sso').outlineColor === want, export: cs('export').borderTopColor === want || cs('export').outlineColor === want, leftOfExport: sso.right < exp.left, sameRow: Math.abs(sso.top - exp.top) < 1 }
   })
   expect(r).toEqual({ sso: true, export: false, leftOfExport: true, sameRow: true })
   await page.close()
