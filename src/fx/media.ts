@@ -28,7 +28,7 @@ export interface ImageHandle {
 export interface VideoOpts {
   href: string; // a local "media/x.mp4", a direct link, or a YouTube or Vimeo link
   title: string;
-  rect: Rect;
+  rect?: Rect; // default: the full scene frame, cropped to cover, with no frame or caption
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -209,18 +209,21 @@ export function embed(href: string): string | null {
 }
 
 export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
-  const { href, title, rect } = opts;
+  const { href, title } = opts;
+  const full = !opts.rect;
+  const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
+  const shape = full ? rect : fit(rect);
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
-  if (src === undefined) return fade(missing(ctx, fit(rect), t("videoMissing", ctx.deck.lang), `${key(href)} — ${title}`));
+  if (src === undefined) return fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${key(href)} — ${title}`));
   const frame = embed(href);
   // A video host's page that is not one video (a channel, a playlist page) cannot play in a box.
   if (online && !frame && VIDEO_HOST.test(new URL(href).hostname))
-    return fade(missing(ctx, fit(rect), t("videoMissing", ctx.deck.lang), `${href} has no video id; link one video — ${title}`));
-  // A border and a caption, so the box reads as a video even when it cannot load (offline).
-  const area = { ...rect, h: rect.h - CAPTION };
-  const b = box(ctx, fit(area), "#000"); // black letterbox bars
-  Object.assign(b.style, { border: "2px solid color-mix(in srgb, var(--k-fg) 40%, transparent)", overflow: "visible" });
+    return fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${href} has no video id; link one video — ${title}`));
+  // A border and a caption, so the box reads as a video even when it cannot load (offline). A full frame has neither.
+  const area = full ? rect : { ...rect, h: rect.h - CAPTION };
+  const b = box(ctx, full ? rect : fit(area), "#000"); // black letterbox bars
+  if (!full) Object.assign(b.style, { border: "2px solid color-mix(in srgb, var(--k-fg) 40%, transparent)", overflow: "visible" });
   const caption = document.createElement("div");
   caption.textContent = title;
   Object.assign(caption.style, {
@@ -250,21 +253,24 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     el.src = src;
     el.preload = "auto";
     el.playsInline = true;
-    el.style.objectFit = "contain";
+    el.style.objectFit = full ? "cover" : "contain";
     el.setAttribute("data-k-video", "file");
     // Once the size is known, the box takes the clip's own aspect ratio.
     el.addEventListener("loadedmetadata", () => {
-      if (!el.videoWidth) return;
+      if (full || !el.videoWidth) return;
       const r = fit(area, el.videoWidth / el.videoHeight);
       Object.assign(b.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     });
   }
-  b.append(el, caption);
+  b.append(el);
+  if (!full) b.append(caption);
 
   return {
     show(tl) {
       const start = tl.duration(); // after the step's padding, so this step spans [start - pad, ...]
-      tl.to(b, { autoAlpha: 1, duration: motion.step });
+      // A full frame fades in over the camera flight, slowly at first, like a full-frame picture.
+      if (full) tl.to(b, { autoAlpha: 1, duration: motion.camera, ease: "power2.in" }, tl.labels[STEP_LABEL]);
+      else tl.to(b, { autoAlpha: 1, duration: motion.step });
       if (el instanceof HTMLIFrameElement) return; // the viewer starts an embedded player
       let wait: (() => void) | undefined;
       const stop = () => {

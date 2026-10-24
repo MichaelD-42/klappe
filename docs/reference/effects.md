@@ -329,8 +329,8 @@ steps: [(tl, v) => v.show(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `href` | string | required | a local `"media/x.mp4"`, a direct link, or a YouTube or Vimeo link |
-| `title` | string | required | the caption under the box |
-| `rect` | `{ x, y, w, h }` | required | the area; the box is the largest 16:9 (later the clip's own ratio) inside it |
+| `title` | string | required | the caption under the box; the player's title in a full frame |
+| `rect` | `{ x, y, w, h }` | the full scene frame | the area; the box is the largest 16:9 (later the clip's own ratio) inside it. Without `rect` the video fills the scene frame, cropped to cover, with no border or caption, and fades in over the camera flight like a full-frame picture (catalog `#/media/full-frame/1`) |
 
 `show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer, and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
 

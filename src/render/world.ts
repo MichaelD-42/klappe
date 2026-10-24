@@ -225,7 +225,7 @@ const PAD = 0.001;
 // previous step, so playing it no longer matches a seek to it.
 export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): number {
   tl.to({}, { duration: PAD });
-  // shortcut: one label, moved every step, tells a helper where the current step starts (image() uses it);
+  // shortcut: one label, moved every step, tells a helper where the current step starts (image() and video() use it);
   // read it only while the step is built. Upgrade to a step-start argument if more helpers need it.
   tl.addLabel(STEP_LABEL);
   const start = tl.duration();
