@@ -319,7 +319,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     const s = d.appendChild(el("div", ""));
     Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(bg.scrim) });
   }
-  gsap.set(d.children, { autoAlpha: 1 });
+  if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });
   return { el: d, push: bg.kenBurns ? img : undefined, loop };
 }
