@@ -146,3 +146,78 @@ test('the speaker view timer button starts the timer, and is disabled on a scene
   await expect.poll(async () => (await ring(main)).text, { timeout: 5000 }).not.toBe(paused)
   await context.close()
 }, 60_000)
+
+test('until counts to the time of day by itself, from a deep link; t does not pause it; a past time is up', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  // Paused before load: a flowing clock would add the page-load time to the count.
+  await page.clock.install({ time: new Date(2026, 9, 21, 10, 5, 29) })
+  await page.clock.pauseAt(new Date(2026, 9, 21, 10, 5, 30))
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-timer#/a/until/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const read = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('[data-scene$="until"] [data-k-timer]')].map((t) => ({
+        text: t.querySelector('[data-k-timer-text]')!.textContent,
+        hint: t.querySelector('[data-k-timer-hint]')!.textContent,
+      })),
+    )
+  await page.clock.runFor(2000 + 20)
+  expect(await read()).toEqual([{ text: '14:28', hint: '' }, { text: '0:00', hint: "Time's up" }])
+  await page.keyboard.press('t')
+  await page.clock.runFor(3000)
+  expect((await read())[0].text).toBe('14:25')
+  await page.close()
+})
+
+test("cycle: after Time's up, one t starts the next run at full time", async () => {
+  const page = await open('', '#/a/cycle/1')
+  const read = () =>
+    page.evaluate(() => {
+      const q = (s: string) => document.querySelector(`[data-scene$="cycle"] [data-k-timer-${s}]`)!.textContent
+      return { text: q('text'), hint: q('hint') }
+    })
+  await page.keyboard.press('t')
+  await page.clock.runFor(3000 + 40)
+  expect(await read()).toEqual({ text: '0:00', hint: "Time's up" })
+  await page.keyboard.press('t')
+  await page.clock.runFor(1000 + 20)
+  expect(await read()).toEqual({ text: '0:02', hint: '' })
+  await page.close()
+})
+
+// Runs in the page with a bare ctx: show(tl, "<") places the fade with the tween before it, and the timer
+// starts when a played step spans that place, not the end of the timeline.
+test('timer show takes a position; the start follows it', async () => {
+  const page = await open('', '#/a/intro/1')
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/timer.ts').then((m) => { window.__timer = m.timer })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const make = () => {
+      let listener: any
+      const ctx = { html, scene: 's', deck: { lang: 'en', intensity: 'calm' }, problem: () => {}, onStep: (fn: any) => (listener = fn) }
+      const h = (window as any).__timer(ctx, { minutes: 1, style: 'text', x: 0, y: 0, size: 300 })
+      const hint = html.lastElementChild!.querySelector('[data-k-timer-hint]')!
+      return { h, step: (e: any) => listener(e), hint: () => hint.textContent }
+    }
+    const TL = window.klappe.canvases[0].tl.constructor as any
+    const withAt = make()
+    const tl = new TL({ paused: true })
+    tl.to({}, { duration: 2 })
+    withAt.h.show(tl, '<')
+    withAt.step({ play: true, span: [0, 2], scene: 's' })
+    const appended = make()
+    const tl2 = new TL({ paused: true })
+    tl2.to({}, { duration: 2 })
+    appended.h.show(tl2)
+    const out = {
+      at: tl.getChildren()[1].startTime(),
+      startedWithAt: withAt.hint(),
+      end: tl2.getChildren()[1].startTime(),
+    }
+    html.remove()
+    return out
+  })
+  expect(r).toEqual({ at: 0, startedWithAt: '', end: 2 })
+  await page.close()
+})

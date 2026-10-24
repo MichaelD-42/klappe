@@ -41,6 +41,10 @@ export class Overview extends OverlayPanel {
     body.classList.add("k-overview");
     const here = this.steps[this.current()];
     const copies = new Map<CanvasRuntime, HTMLElement>(); // one end-state copy per canvas, cloned again per card
+    const sectionLabel = (s: Deck["sections"][number]) => s.module?.overviewLabel ?? s.title;
+    // A scene title that repeats in the deck (agenda hops all titled "Today") gets its section's label in front.
+    const titles = this.deck.sections.flatMap((s) => s.scenes.map((sc) => sc.title));
+    const repeated = (t: string) => titles.indexOf(t) !== titles.lastIndexOf(t);
 
     for (const s of this.deck.sections) {
       const c = this.canvases.find((c) => c.layout.sectionIds.includes(s.id));
@@ -48,7 +52,7 @@ export class Overview extends OverlayPanel {
       if (!copies.has(c)) copies.set(c, endState(c));
       const row = document.createElement("section");
       row.className = "k-ov-row";
-      row.append(Object.assign(document.createElement("h3"), { className: "k-ov-caption", textContent: s.title }));
+      row.append(Object.assign(document.createElement("h3"), { className: "k-ov-caption", textContent: sectionLabel(s) }));
       const cards = document.createElement("div");
       cards.className = "k-ov-cards";
 
@@ -67,8 +71,9 @@ export class Overview extends OverlayPanel {
         scaler.style.transform = `translate(${dx}px, ${dy}px) scale(${fit})`;
         scaler.append(copies.get(c)!.cloneNode(true));
         thumb.append(scaler);
+        const label = sc.module?.overviewLabel ?? (repeated(sc.title) ? `${sectionLabel(s)} · ${sc.title}` : sc.title);
         const m = button("", () => this.pick(() => this.go(first)), "k-ov-marker");
-        m.append(thumb, Object.assign(document.createElement("span"), { className: "k-ov-title", textContent: sc.title }));
+        m.append(thumb, Object.assign(document.createElement("span"), { className: "k-ov-title", textContent: label }));
         if (here?.section === s.id && here.scene === sc.id) m.setAttribute("aria-current", "true");
         cards.append(m);
       }

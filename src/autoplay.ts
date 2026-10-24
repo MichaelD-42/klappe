@@ -44,6 +44,7 @@ export class Autoplay {
   private async loop(run: number): Promise<void> {
     await this.stepper.idle; // started mid-play: hold from the end of the play, not from the key press
     while (run === this.run) {
+      this.stepper.cancelAuto(); // autoplay owns the advance; it holds a step for its auto time instead
       const hold = this.at ? this.holdMs(this.at) : 0;
       await new Promise((r) => (this.timer = window.setTimeout(r, hold)));
       if (run !== this.run) return;

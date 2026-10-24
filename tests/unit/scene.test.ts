@@ -85,6 +85,11 @@ describe("parseScene media", () => {
   it("shows the link label as the step text", () => {
     expect(media("See [Sales](data/sales.csv) here").text).toBe("See Sales here");
   });
+  it("takes an image right after a video link in the same step as its fallback", () => {
+    const s = media("[Talk](https://youtu.be/x)\n  ![Still](media/still.jpeg)");
+    expect(s.media).toEqual({ kind: "video", href: "https://youtu.be/x", alt: "Talk", fallback: "media/still.jpeg" });
+    expect(s.text).toBe("Talk");
+  });
   it("leaves a plain link as text", () => {
     const s = media("[klappe](https://example.com/docs)");
     expect(s.media).toBeUndefined();

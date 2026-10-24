@@ -17,13 +17,22 @@ function themesOf() {
   ]);
 }
 
+// ?inline runs the CSS through Vite, so url() resolves against the deck folder and the assets are bundled.
+const deckCss = import.meta.glob<string>("@deck/deck.css", { query: "?inline", import: "default", eager: true });
+
 // The test fixtures load only for ?fixture=, so a deck never carries them.
 export async function loadDeck() {
   const name = new URLSearchParams(location.search).get("fixture");
   const fixture = name === null ? undefined : (await import("./fixtures")).loadFixture(name);
   if (fixture) {
     fixture.deck.themes = { ...themesOf(), ...fixture.deck.themes };
-    return fixture;
+    return fixture; // fixtures keep the klappe look, so a deck repo's deck.css cannot break them
+  }
+  // Appended after the klappe styles; applyTheme moves it after the theme, so the deck wins at equal specificity.
+  for (const css of Object.values(deckCss)) {
+    const s = Object.assign(document.createElement("style"), { textContent: css });
+    s.dataset.kDeckCss = "";
+    document.head.append(s);
   }
   const files = import.meta.glob("@deck/**/*.md", { query: "?raw", import: "default", eager: true });
   const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });

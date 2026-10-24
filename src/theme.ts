@@ -65,7 +65,7 @@ export async function loadFonts(): Promise<string[]> {
   }
 }
 
-/** Injects calm, then the chosen theme (after it, so missing tokens fall back), and returns problems. */
+/** Injects calm, then the chosen theme (after it, so missing tokens fall back), then moves deck.css last; returns problems. */
 export function applyTheme(deck: Deck, override?: string | null): string[] {
   const name = override || deck.meta.theme;
   const { css, problem } = resolveTheme(name, deck.themes ?? {});
@@ -76,6 +76,8 @@ export function applyTheme(deck: Deck, override?: string | null): string[] {
     s.textContent = text;
     document.head.append(s);
   }
+  // A deck's deck.css (fonts, classes, token overrides) loads after the theme, and the contrast check sees it.
+  document.head.append(...document.querySelectorAll("style[data-k-deck-css]"));
   const problems = problem ? [problem] : [];
   const probe = document.body.appendChild(document.createElement("div"));
   const read = (v: string, prop: "color" | "backgroundColor") => {

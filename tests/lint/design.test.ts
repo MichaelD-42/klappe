@@ -69,8 +69,8 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
     // Protocol-relative: read from the raw text, since stripComments takes "//" for a comment.
     for (const [, url] of raw.matchAll(/["'`](\/\/[\w-]+\.[\w.-]+[^"'`\s]*)/g)) hit('runtime-url', url)
   }
-  // Effects take every colour from a --k-* token; crt.ts (light layers) and media.ts (letterbox) are the exceptions.
-  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media)\.ts$/.test(file))
+  // Effects take every colour from a --k-* token; crt.ts (light layers), media.ts (letterbox) and mesh3d.ts (mood colours) are the exceptions.
+  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media|mesh3d)\.ts$/.test(file))
     for (const m of text.matchAll(/#[\da-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi)) hit('colour-literal', m[0])
   return hits
 }
@@ -151,7 +151,7 @@ describe('design lint over the repo', () => {
     ...scan(klappeDir, 'src', ['.css', '.ts']),
     ...scan(process.cwd(), 'decks', ['.ts', '.md']),
     ...scan(process.cwd(), 'themes', ['.css']),
-    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/')),
+    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/') || f.file.endsWith('/deck.css')),
   ]
 
   test('finds the files to check', () => {

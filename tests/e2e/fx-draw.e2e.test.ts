@@ -21,7 +21,7 @@ for (const vp of [
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.ok).toBe(true)
-    expect(r.steps).toBe(6)
+    expect(r.steps).toBe(7)
   })
 
 // The dash state of each scene's shapes after a cut to global step i: [dasharray, dashoffset] per shape.
@@ -59,6 +59,39 @@ test('drawOn hides strokes until its step and ends on a plain stroke, play or cu
   // Back again: the cut restores the hidden state.
   d = await dashes(page, 4)
   expect(d.shapes.slice(3)).toEqual(hidden(5, 3))
+  await page.close()
+})
+
+// [computed dasharray, pathLength] per dashed path. pathLength "len" means unset or the path's own length:
+// both scale the dash in user units.
+async function dashed(page: Page) {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<SVGPathElement>('g[data-scene="dashed"] path')].map((s) => {
+      const pl = s.getAttribute('pathLength')
+      return [getComputedStyle(s).strokeDasharray, pl !== null && Math.abs(+pl - s.getTotalLength()) < 0.01 ? 'len' : (pl ?? 'len')]
+    }),
+  )
+}
+
+test('drawOn ends a dashed stroke on its own dash, after play and after a deep link', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  const url = `${inject('BASE_URL')}/?fixture=fx-draw`
+  await page.goto(url)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const hidden = [['1.01px, 2px', '1'], ['1.01px, 2px', '1']]
+  const own = [['8px, 6px', 'len'], ['10px, 5px', '100']]
+
+  await page.evaluate(() => window.klappe.stepper.goto(5, 'cut'))
+  expect(await dashed(page)).toEqual(hidden)
+  await page.evaluate(() => window.klappe.stepper.goto(6, 'play'))
+  expect(await dashed(page)).toEqual(own)
+  // A cut back hides the strokes again, pathLength included.
+  await page.evaluate(() => window.klappe.stepper.goto(5, 'cut'))
+  expect(await dashed(page)).toEqual(hidden)
+
+  await page.goto(`${url}#/a/dashed/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index === 6, undefined, { timeout: 30_000 })
+  expect(await dashed(page)).toEqual(own)
   await page.close()
 })
 

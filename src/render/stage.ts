@@ -11,7 +11,9 @@ export function mountStage(root: HTMLElement): { stage: HTMLElement; worlds: HTM
     // A window with no size (minimized, a background tab reloading) keeps scale 1: effects measure the stage
     // while the timeline is built, and scale 0 makes every rect 0. The resize on restore fits it.
     const s = Math.min(innerWidth / W, innerHeight / H) || 1;
-    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+    // Centred, offset rounded to whole pixels: a fractional offset left a 1 px sliver at the edge.
+    const [x, y] = [Math.round((innerWidth - W * s) / 2), Math.round((innerHeight - H * s) / 2)];
+    stage.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
   };
   fit();
   addEventListener("resize", fit);

@@ -12,7 +12,7 @@ import { loadTransitions } from "./fx/transitions";
 import { loadParts } from "./render/parts";
 import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
-import { Stepper } from "./stepper";
+import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, loadFonts, motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
@@ -30,6 +30,7 @@ const steps = buildStepList(deck, layout.canvases);
 if (!steps.length) problems.push("deck has no steps");
 const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
+document.title = deck.meta.title;
 
 if (query.get("speaker") === "1") {
   applyTheme(deck, query.get("theme")); // tokens only; the speaker page shows no problems
@@ -58,7 +59,7 @@ async function startDeck(svg: Record<string, string>) {
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
-  const autoplay = new Autoplay(stepper, () => motion.autoHoldMs);
+  const autoplay = new Autoplay(stepper, (a) => autoDelay(a, true) ?? motion.autoHoldMs);
   // Every manual jump (selector, overview, speaker, history) stops auto-play.
   const go = (i: number) => {
     autoplay.stop();

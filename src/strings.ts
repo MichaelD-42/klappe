@@ -20,6 +20,7 @@ export const strings = {
     effectMissing: "EFFECT MISSING",
     video: "Video",
     needsInternet: "needs internet",
+    videoOffline: "Video needs a network connection",
     sampleData: "Sample data",
     source: "Source",
     originNotStated: "origin not stated",

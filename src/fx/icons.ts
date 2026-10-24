@@ -61,8 +61,8 @@ const el = (tag: string, attrs: Record<string, string | number>, parent: Element
 
 // The advisor v2 glyph: 2 px non-scaling strokes, round caps and joins, a 0.2 tint inside closed shapes.
 // The returned group has no transform (filters work in world units); x, y is the glyph centre.
-function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, size: number, color: string): IconHandle {
-  const root = el("g", { class: "k-icon" }, parent);
+function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, size: number, color: string): IconHandle & { el: SVGGElement } {
+  const root = el("g", { class: "k-icon" }, parent) as SVGGElement;
   root.style.color = color;
   const k = size / 24;
   const inner = el("g", {
@@ -81,6 +81,7 @@ function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, 
   }
   let drawn = false;
   return {
+    el: root,
     draw(tl, at) {
       drawn = true;
       const start = drawOn(inner, { at, duration: DRAW, each: EACH })(tl);
@@ -105,7 +106,8 @@ function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, 
 const mark = (tl: gsap.core.Timeline, t: number) => void tl.set({}, {}, t);
 
 // A Lucide icon centred at (x, y), scene-local, size wide.
-export function icon(ctx: Ctx, name: IconName, opts: IconOpts): IconHandle {
+// el is the glyph group, for a scene that moves the icon.
+export function icon(ctx: Ctx, name: IconName, opts: IconOpts): IconHandle & { el: SVGGElement } {
   return glyph(ctx, ctx.svg, name, opts.x, opts.y, opts.size ?? 96, opts.color);
 }
 
@@ -113,7 +115,8 @@ let tiles = 0;
 
 // The icon tile centred at (x, y): a soft glow, a diagonal gradient well in the tone, a hairline edge,
 // and the glyph in the foreground colour. tone: a theme token, "accent" or "--k-accent".
-export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHandle {
+// el is the tile's group, for a scene that moves the tile.
+export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHandle & { el: SVGGElement } {
   const s = opts.size ?? 96;
   const [x0, y0, r] = [opts.x - s / 2, opts.y - s / 2, s / 12];
   let tone = opts.tone.startsWith("--") ? opts.tone : `--k-${opts.tone}`;
@@ -121,7 +124,7 @@ export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHand
     ctx.problem(`iconTile: unknown tone '${opts.tone}'`);
     tone = "--k-accent";
   }
-  const g = el("g", { class: "k-tile" }, ctx.svg);
+  const g = el("g", { class: "k-tile" }, ctx.svg) as SVGGElement;
   const id = `k-tile-well-${++tiles}`;
   const grad = el("linearGradient", { id, x1: 0, y1: 0, x2: 1, y2: 1 }, el("defs", {}, g));
   // Both stops lean to the background, so a pale tone (phosphor, amber) keeps contrast with the light glyph.
@@ -137,6 +140,7 @@ export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHand
   (edge as SVGElement).style.stroke = "var(--k-fg)";
   const icon = glyph(ctx, g, name, opts.x, opts.y, s * 0.6, "var(--k-fg)");
   return {
+    el: g,
     draw(tl, at) {
       tl.fromTo([well, edge], { opacity: 0 }, { opacity: 1, duration: 0.4 }, at);
       const start = (tl.recent() as gsap.core.Tween).startTime();

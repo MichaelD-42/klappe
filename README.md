@@ -89,7 +89,7 @@ npx playwright install chromium                    # once per machine, for the t
 npm run dev                                        # http://localhost:5173
 ```
 
-`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/`; `npm run pdf` writes `dist/my-talk.pdf`, one page per step at 1920x1080, each step as it ends; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/` with relative asset paths, so it works from any folder of a web server (not from `file://`, where browsers block its modules); `npm run pdf` writes `dist/my-talk.pdf`, one page per step at 1920x1080, each step as it ends; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 

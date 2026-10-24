@@ -52,19 +52,20 @@ export default captioned("terminal() — show and run(command), with a custom pr
 | `lines` | string[] | required | `"$ "` lines are commands, the rest output; output before the first command is ignored |
 | `x`, `y`, `w`, `h` | number | required | the panel's corner and the most room it may take, in scene units |
 | `prompt` | string | `"$"` | the prompt glyph shown before each command |
+| `wrap` | boolean | `false` | long lines wrap onto more rows, indented by 2 characters, instead of clipping. A break goes after the last space that fits, else inside the word |
 
 ### Step adders
 
 | Handle | Step |
 | --- | --- |
-| `show` | the panel fades in, empty |
+| `show(tl, at?)` | the panel fades in, empty. `at`: a GSAP position on the timeline; default: the end |
 | `run(command)` | types command `command` (0-based) at 34 characters a second, then fades in its output lines 0.08 s apart. Throws if there is no such command |
 
 Colours come from the theme: the panel is `--k-surface`, text `--k-fg`, the prompt `--k-accent`. The font is `--k-font-code`. A deep link onto command 2 shows command 1 and its output complete.
 
 ### Limits
 
-- The font starts at 30 px and shrinks to fit the lines into `h` and the longest line into `w`, down to 20 px (14 px at 1366×768). Past that the panel clips, its last row reads "+N more lines" in `--k-muted`, and the deck shows a problem: `terminal: N lines do not fit; max M`, or `terminal: lines longer than C characters are clipped`.
+- The font starts at 30 px and shrinks to fit the lines into `h` and the longest line into `w`, down to 20 px (14 px at 1366×768). With `wrap`, the font shrinks only to fit the wrapped rows into `h`, and long lines never clip. Past that the panel clips, its last row reads "+N more lines" in `--k-muted`, and the deck shows a problem: `terminal: N lines do not fit; max M` (N counts wrapped rows), or `terminal: lines longer than C characters are clipped` (not with `wrap`).
 - One code or console block per scene in Markdown.
 
 ## `splitConsole`

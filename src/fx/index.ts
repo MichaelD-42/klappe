@@ -14,6 +14,8 @@ export * from "./map";
 export * from "./qr";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
 export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
+// Not MOODS, rng, rotate, project or shade: data and math for its unit test.
+export { mesh3d, type Mesh3dHandle, type Mesh3dOpts, type Mood } from "./mesh3d";
 export * from "./motion";
 export * from "./sequence";
 export * from "./shatter";

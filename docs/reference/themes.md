@@ -13,7 +13,7 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-accent`, `--k-accent-2` | emphasis and the current item; second emphasis |
 | `--k-ok`, `--k-warn`, `--k-bad` | done, time running out, failure; `--k-bad` also colours the problems overlay |
 | `--k-series-1` to `--k-series-6` | chart series, diagram participant colours |
-| `--k-font`, `--k-font-code` | text font; code and terminal font. klappe bundles Inter Variable (calm), Space Grotesk Variable (bold) and JetBrains Mono Variable (code, both); a theme may name any of them, or an installed font. The faces they name are loaded before the deck renders. |
+| `--k-font`, `--k-font-code` | text font; code and terminal font. klappe bundles Inter Variable (calm), Space Grotesk Variable (bold) and JetBrains Mono Variable (code, both); a theme may name any of them, an installed font, or a font the deck's `deck.css` declares with `@font-face`. The faces they name are loaded before the deck renders. |
 | `--k-code-foreground`, `--k-code-background`, `--k-code-token-constant`, `-string`, `-comment`, `-keyword`, `-parameter`, `-function`, `-string-expression`, `-punctuation`, `-link` | syntax colours, mapped from Shiki's `css-variables` theme |
 | `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition; the CRT screen is always dark, so these stay bright in a light theme too |
 | `--k-scrim` | the layer a `scrim` lays over a picture: `#000` under light text, `#fff` in a light theme |
@@ -41,6 +41,8 @@ Try one with `?theme=<name>`. Each meets the contrast floors below, its code col
 An unknown name shows the problem `theme "<name>" not found; using calm`. `intensity` is separate; it defaults to `bold` for the `bold` theme and `calm` otherwise.
 
 Add `?theme=<name>` to the URL to try another theme without editing the deck.
+
+A theme sets tokens only. Fonts and component classes for one deck go in its optional `decks/<id>/deck.css`, which loads after the theme (see [deck.css](deck-format.md#deckcss)).
 
 ## Example
 

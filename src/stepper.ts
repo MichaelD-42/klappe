@@ -17,11 +17,19 @@ export function planMove(
   return { kind: "seek", transition: "cut" };
 }
 
+// ms to wait before a step advances by itself: only after a live forward play, and only for a finite auto >= 0.
+export function autoDelay(to: StepAddr, play: boolean): number | null {
+  const s = to.auto;
+  return play && typeof s === "number" && Number.isFinite(s) && s >= 0 ? s * 1000 : null;
+}
+
 export class Stepper {
   private i = -1;
   private queue: Promise<void> = Promise.resolve();
   private running: gsap.core.Animation[] = [];
   private pending = 0;
+  private autoTimer: ReturnType<typeof setTimeout> | undefined;
+  private autoGen = 0; // bumped by cancelAuto: a cancel while a move waits or plays also drops the wait after it
   private fns = new Map<Ev, ((data: any) => void)[]>();
 
   constructor(
@@ -41,12 +49,19 @@ export class Stepper {
 
   // Back to "nothing shown yet", like a fresh page load. Call only when no move is queued.
   reset(): void {
+    this.cancelAuto();
     this.i = -1;
     this.running = [];
   }
 
   on(ev: Ev, fn: (data: any) => void): void {
     this.fns.set(ev, [...(this.fns.get(ev) ?? []), fn]);
+  }
+
+  // Drops a pending auto advance. Every move calls it, so a press during the wait advances once.
+  cancelAuto(): void {
+    clearTimeout(this.autoTimer);
+    this.autoGen++;
   }
 
   goto(i: number, how: How): Promise<void> {
@@ -62,11 +77,13 @@ export class Stepper {
   // Review focus 2: finish what is playing, then run moves one at a time.
   // The target is read when the move runs, so fast presses each advance exactly once.
   private enqueue(target: () => number, how: How): Promise<void> {
+    this.cancelAuto();
     for (const a of this.running) a.progress(1);
     this.pending++;
+    const gen = this.autoGen;
     const run = this.queue.then(() => {
       this.pending--;
-      return this.move(target(), how);
+      return this.move(target(), how, gen);
     });
     this.queue = run.catch(() => {});
     return run;
@@ -86,7 +103,7 @@ export class Stepper {
       }
   }
 
-  private async move(i: number, how: How) {
+  private async move(i: number, how: How, gen: number) {
     if (i >= this.steps.length) return this.emit("end", { index: this.i });
     if (i < 0) return;
     const from = this.i >= 0 ? this.steps[this.i] : null;
@@ -104,6 +121,7 @@ export class Stepper {
       }
 
     this.i = i;
+    c.el.setAttribute("data-k-active", ""); // self-running helpers draw only on the active canvas, also during its transition in
     this.emit("step", to);
     // Helpers (video, timer) hear every move: the step's time span on its own canvas, null on the others, and its scene.
     const span: [number, number] = [typeof prev === "number" ? prev : c.tl.labels[prev], c.tl.labels[label]];
@@ -135,5 +153,8 @@ export class Stepper {
     this.running = anims;
     await Promise.all(anims);
     this.running = [];
+    if (this.i === i) this.canvases.forEach((cv, k) => cv.el.toggleAttribute("data-k-active", k === to.canvas));
+    const ms = autoDelay(to, play);
+    if (ms !== null && !this.pending && gen === this.autoGen) this.autoTimer = setTimeout(() => this.next(), ms);
   }
 }

@@ -4,12 +4,12 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- Mesh3d: on branch `contrib/deck-helpers` (with crt, timer, auto advance, deck.css and other helpers from a real training deck; see `docs/contrib/2026-10-24-deck-helpers.md` there). It predates PR #5 and needs merging. Still to come from the other repo: decorative loop elements (an animated character, an avatar).
+- Decorative loop elements (an animated character, an avatar): the user has them in another repo and brings them over. Check them against the background loop rules (under `data-k-ignore`, still with reduced motion and in the self-test, paused off screen), as `mesh3d` does.
 - The demo has no local video file, so the video background has a fixture and a reference entry but no catalog scene; the catalog shows the aurora. A real `media/` clip would let it show both.
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-Wanted by the training deck, not built (from the contrib note): a softer crt power-on flash; a `mesh3d` colour or brightness option (the deck uses a CSS filter on dark frames); `counter` decimals; `timer` label font and colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` calls in the on-screen problems list; lazy embeds one step early.
+Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): a softer crt power-on flash; a `mesh3d` colour or brightness option (the deck uses a CSS filter on dark frames); `counter` decimals; `timer` label font and colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` calls in the on-screen problems list; lazy embeds one step early.
 
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 
@@ -36,7 +36,6 @@ Effects:
 
 Engine and panels:
 
-- A 1 px subpixel edge at 1366.
 - The step title fades in 0.6 s after a camera move ends.
 - Speaker view: the current step as the largest text, larger notes, type that scales with the window, an "N / M" progress, the next preview clamped to 2 lines.
 - Overview thumbnails show no backgrounds (clone `c.el` and clear the world transform); the selector marks the current section only with its focus ring.

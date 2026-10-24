@@ -5,10 +5,14 @@ import type { SceneModule } from "../../types";
 // One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING), one bad
 // cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default
 // media slot; a donut and a slope chart.
-// All numbers are made-up sample data.
+// All numbers are made-up sample data. Each bar from the handle's bars carries its index as data-bar.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
-  build: (ctx) => chart(ctx, { rect, ...opts }),
+  build: (ctx) => {
+    const c = chart(ctx, { rect, ...opts });
+    c.bars.forEach((b, i) => b.setAttribute("data-bar", String(i)));
+    return c;
+  },
   steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 });
 const md = (title: string) => `## ${title}\n\n- Axes.\n- Grow.\n- Values.\n`;

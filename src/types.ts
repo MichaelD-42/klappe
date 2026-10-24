@@ -27,7 +27,7 @@ export interface StepDoc {
   notes: string;
   kind: StepKind;
   // A media link in the step's list item; the link shows as its label in text.
-  media?: { kind: "image" | "video" | "chart"; href: string; alt: string; title?: string };
+  media?: { kind: "image" | "video" | "chart"; href: string; alt: string; title?: string; fallback?: string };
   part?: Part;
 }
 export interface SceneDoc {
@@ -97,6 +97,10 @@ export interface SceneModule {
   place?(rects: Record<string, Rect>): Rect;
   build?(ctx: Ctx): any;
   steps?: (StepFn | null)[];
+  // Seconds to wait after a step's live forward play, then advance by itself. Lines up with steps. null: wait for input.
+  auto?: (number | null)[];
+  // The scene's button text in the overview, instead of its title.
+  overviewLabel?: string;
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
@@ -110,6 +114,8 @@ export interface SectionModule {
   // Extra options for the transition, for example { shards: 20 } for shatter.
   transitionOptions?: Record<string, unknown>;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;
+  // The section's name in the overview, instead of its title: the row title and the prefix of a repeated scene title.
+  overviewLabel?: string;
 }
 export interface Scene extends SceneDoc {
   sectionId: string;
@@ -139,6 +145,7 @@ export interface StepAddr {
   section: string;
   scene: string;
   step: number;
+  auto?: number | null; // from SceneModule.auto
 }
 export interface SelftestCheck {
   name: string;

@@ -31,13 +31,20 @@ function shapes(els: Element | ArrayLike<Element>): SVGGeometryElement[] {
   return out;
 }
 
-// Draws each shape from start to end, one after the other, and ends on a plain stroke.
+// Draws each shape from start to end, one after the other. It ends on a plain stroke, or on the
+// shape's own dash and pathLength if it had a dash.
 // The adder returns where the draw starts on the timeline (the end, with nothing to draw).
 export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {}): (tl: gsap.core.Timeline) => number {
   const { duration = 0.9, each = 0.06, at } = opts;
   const list = shapes(els);
   return (tl) => {
     if (!list.length) return tl.duration();
+    // Sampled before the draw takes over the dash. Without a pathLength, the path's own length scales the dash the same way.
+    // A plain stroke keeps pathLength 1, as before.
+    const own = list.map((s) => {
+      const dash = getComputedStyle(s).strokeDasharray;
+      return { dash, len: dash === "none" ? "1" : (s.getAttribute("pathLength") ?? String(s.getTotalLength())) };
+    });
     // With vector-effect non-scaling-stroke, Chromium applies the pathLength-normalised dash in
     // host units, so 1 is not the whole path: scale the dash by the shape's CTM scale k.
     // Dash 1.01k, gap 2k, offset 1.3k -> 0: hidden at the start, whole at the end. The advisor's 1.03k
@@ -45,17 +52,19 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
     // k is sampled here, at load. The camera is a CSS transform and does not change k; k goes stale
     // only if a step tweens the transform of an SVG ancestor inside the scene before the draw.
     const ks = list.map((s) => {
-      s.setAttribute("pathLength", "1");
       if (s.getAttribute("vector-effect") !== "non-scaling-stroke") return 1;
       const m = s.getCTM();
       return (m && Math.hypot(m.a, m.b)) || 1;
     });
+    // GSAP records each attribute before the fromTo and writes it back on a revert: a missing pathLength comes
+    // back as "", which the browser rejects with a console error. own.len looks the same as no pathLength.
+    list.forEach((s, i) => s.hasAttribute("pathLength") || s.setAttribute("pathLength", own[i].len));
     const dash = (i: number) => `${1.01 * ks[i]} ${2 * ks[i]}`;
     // autoRound off: GSAP rounds px to whole pixels, and the dash is in units of the path length.
     tl.fromTo(
       list,
-      { strokeDasharray: dash, strokeDashoffset: (i: number) => 1.3 * ks[i], autoRound: false },
-      { strokeDasharray: dash, strokeDashoffset: 0, duration, ease: "power1.inOut", stagger: each, autoRound: false },
+      { strokeDasharray: dash, strokeDashoffset: (i: number) => 1.3 * ks[i], attr: { pathLength: 1 }, autoRound: false },
+      { strokeDasharray: dash, strokeDashoffset: 0, attr: { pathLength: 1 }, duration, ease: "power1.inOut", stagger: each, autoRound: false },
       at,
     );
     const start = (tl.recent() as gsap.core.Tween).startTime();
@@ -65,7 +74,9 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
       if (s.getTotalLength() < 0.5)
         tl.fromTo(s, { strokeOpacity: 0 }, { strokeOpacity: 1, duration: duration / 4 }, start + i * each);
     });
-    tl.set(list, { strokeDasharray: "none" }, start + (list.length - 1) * each + duration);
+    const end = start + (list.length - 1) * each + duration;
+    // In the timeline, not set directly: a seek back to before the draw restores pathLength 1 and the hidden dash.
+    tl.set(list, { strokeDasharray: (i: number) => own[i].dash, attr: { pathLength: (i: number) => own[i].len } }, end);
     return start;
   };
 }

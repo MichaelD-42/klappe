@@ -22,6 +22,8 @@ export interface ChartHandle {
   axes: StepAdder;
   grow: StepAdder;
   values: StepAdder;
+  // The bar rects in data order: waterfall then its total, stacked series by series, none for a line or a placeholder.
+  bars: SVGElement[];
 }
 
 // shortcut: no quoted commas, upgrade to d3-dsv if decks need it
@@ -220,7 +222,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show };
+  return { axes: show, grow: show, values: show, bars: [] };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -293,7 +295,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
-    const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
+    // Ends at the plot right edge, inside the rect: the right margin keeps it off the frame edge.
+    const s = text(root, t("sampleData", ctx.deck.lang), { x: P.x + P.w, y: R.y + 34, "text-anchor": "end" });
     s.style.fill = "var(--k-warn)";
     head.push(s);
   }
@@ -311,6 +314,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const v = d3.scaleLinear().domain(chartDomain(data, type)).nice();
   const marks = svg(root, "g", {});
   const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number }[] = [];
+  const bars: SVGElement[] = [];
   const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string }[] = [];
   const labels: SVGElement[] = []; // names and headers that show with the axes step
   const sweeps: { el: SVGElement; len: number }[] = []; // donut arcs: drawn round, not scaled
@@ -324,6 +328,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const [y0, y1] = [v(lo), v(hi)];
     const r = svg(marks, "rect", { x, width: w, y: Math.min(y0, y1), height: Math.abs(y0 - y1) });
     r.style.fill = fill;
+    bars.push(r);
     grown.push({ el: r, origin: up ? "50% 100%" : "50% 0%", scale: "scaleY" });
   };
 
@@ -397,6 +402,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const top = y(band[i])!;
       const rect = svg(marks, "rect", { x: x(s), y: top, width: x(e) - x(s), height: y.bandwidth() });
       rect.style.fill = color(i);
+      bars.push(rect);
       grown.push({ el: rect, origin: "0% 50%", scale: "scaleX" });
       const yc = top + y.bandwidth() / 2 + FONT * 0.35;
       valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
@@ -494,6 +500,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
 
   return {
+    bars,
     axes(tl) {
       tl.to([...head, ...axesEls], { autoAlpha: 1, duration: motion.step, stagger: 0.1 });
     },

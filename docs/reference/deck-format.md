@@ -23,12 +23,20 @@ decks/<id>/
 
 Frontmatter keys:
 
-- `title`: required.
+- `title`: required. It is also the page title in the browser tab.
 - `lang`: default `en`.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
+
+## deck.css
+
+Optional. Put `decks/<id>/deck.css` next to `deck.md` for a corporate look.
+A theme file holds tokens only; deck.css holds the deck's fonts (`@font-face`) and its own component classes, and it loads after the theme.
+It may also override `--k-*` tokens. The contrast check measures the result.
+A `url()` is relative to the deck folder, for example `url(./fonts/brand.woff2)` or `url(./media/logo.png)`. The build bundles these files.
+The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore it.
 
 ## scene.md
 
@@ -38,6 +46,7 @@ Frontmatter keys:
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 3 steps: enter, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
+- An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `  ![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
 - A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
 - A ```` ```console ```` block replays a terminal session. Each `$ ` line is a command: it types itself, then its output lines appear. Each command is one step, and the list items after the block are their text, as for code. A console block with no `$ ` line is a problem.
 - Task-list items, `- [ ] Backup verified`, build one checklist: each item is a step that ticks its box. `- [x]` starts ticked.
@@ -51,6 +60,8 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a 1920x1080 frame at x = its position on the canvas times 1920.
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
+- `auto` is an array with one number or `null` per step. It lines up with the steps by position. A number N advances the deck by itself N seconds after the step has played forward. It also goes into the next scene and through a section transition. `null` or a missing entry waits for a press. A deep link, a jump, a back move and `?instant=1` never advance by themselves. A press during the wait advances one step at once. Opening the overview or the section list stops the wait. Autoplay holds a step for its `auto` time. Example: `auto: [null, 1, 0.5]`.
+- `overviewLabel` replaces the scene's title on its button in the overview (`O`). Without it, a scene title that repeats in the deck shows as `<section> · <title>`, for example `Lab · Today`.
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
@@ -62,6 +73,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 
 - `transition` sets how the deck enters this section when it moves forward by one step onto a new canvas. Default `fade`. A back move, a jump and `?instant=1` always cut.
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
+- `overviewLabel` replaces the section's title in the overview: the row title and the prefix of a repeated scene title.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) lays the theme's `--k-scrim` over it for text on top (black, or white in a light theme); use 0.6 or more, so theme text keeps 4.5:1 contrast over any picture. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
 - An animated background: an `href` to a `.mp4` or `.webm` file in `media/` plays muted in a loop and covers the stage (`kenBurns` is for pictures only); `{ animate: "aurora" }` instead of `href` draws a slow drift of light in the theme's accent colours, with no file. `scrim` works for both. They move on the wall clock, not with the steps: under `data-k-ignore`, so the self-test leaves them out. Only the background on screen moves; the one the camera leaves stops once the flight has landed. With reduced motion and in the self-test they stay still. Two more kinds move the same way. An `.svg` `href` whose file animates itself (CSS keyframes or SMIL) is inlined, sanitised as `lineArt` is but with its animations kept, in a shadow root, so its styles and ids stay its own; its `<style>` can use the theme tokens (`stroke: var(--k-line)`). A still `.svg` stays a picture. And `animate` takes a function, `(el) => ({ play, pause })`: it draws into `el` (the whole stage) and returns how to play and pause its loop, which it starts paused; klappe calls them. Catalog: `#/fullscreen/svg-loop/1`, `#/fullscreen/own-loop/1`. A missing video shows VIDEO MISSING and a deck problem; a background with neither `href` nor `animate` reports `background: needs an href or animate`. Catalog: `#/fullscreen/aurora/1`.
@@ -75,8 +87,8 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in 1920x1080 units.
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
-- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`. Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
-- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
+- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `mesh3d`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`, among them [crt](elements/crt.md) (colour, `settle`, prompts, `cursorAt`), [bubble](elements/bubble.md) (`side`, `maxWidth`), [mesh3d](elements/mesh3d.md) and [timer](elements/timer.md). Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
+- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. `fade` takes 0.4 s: the old canvas fades out in the first half, then the new one fades in, so two titles at the same spot do not overlap. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
 - Shout-out intensity: `intensity` in `deck.md` sets every shout-out, including one a `scene.ts` builds with `shout(ctx, { question, answer })`. Pass `intensity` to set it for one shout-out (see the example below).
 - `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
 - `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
@@ -96,18 +108,22 @@ Each example is a `scene.ts` default export: `build` returns the handle, `steps`
 { build: (ctx) => crt(ctx, { color: "amber", lines: ["DEMO-OS v1.0", { text: "MEMORY TEST: 640K OK", count: true }] }),
   steps: [(tl, h) => h.powerOn(tl), (tl, h) => h.type(tl, 0), (tl, h) => h.type(tl, 1), (tl, h) => h.ready(tl)] }
 
-// lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements.
+// lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements; a dashed stroke ends on its own dash.
 // Not a sanitizer: lineArt is for trusted, author-supplied SVG only.
 import desk from "klappe/fx/art/engineer-desk.svg?raw";
 { build: (ctx) => lineArt(ctx, { src: desk, x: 260, y: 120, w: 1400 }), steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")] }
 steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path you built in build()
 
 // icon and iconTile: a Lucide icon by name draws on, then lights up.
+// iconTile also returns el, the tile's SVG group: a scene moves the tile with tl.to(i.el, { x: 200 }).
+// icon also returns el, the glyph's SVG group.
 { build: (ctx) => iconTile(ctx, "lightbulb", { x: 960, y: 540, tone: "accent" }), steps: [(tl, i) => i.draw(tl), (tl, i) => i.light(tl)] }
 { build: (ctx) => icon(ctx, "rocket", { x: 960, y: 540, size: 160, color: "var(--k-fg)" }), steps: [(tl, i) => i.draw(tl)] }
 
 // chart: bar, stacked, line, waterfall or timeline from data/. "Sample data" shows when sample is true
-// or the data's source is "klappe demo sample".
+// or the data's source is "klappe demo sample". It is in --k-warn, top right, inside rect.
+// chart also returns bars, the bar SVG rects in data order, for an effect that starts at a bar: one per row
+// (waterfall: then the total; stacked: the first series' rows, then the next series'). A line chart or a placeholder has none.
 { build: (ctx) => chart(ctx, { src: "data/units.csv", type: "bar", rect: { x: 160, y: 140, w: 1600, h: 800 }, title: "Units by quarter" }),
   steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)] }
 
@@ -127,7 +143,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, s) => s.stream(tl, { duration: 2 })] }
 
 // morph, bubble, counter: one element turns into another; a speech bubble shows and hides; a number counts up.
-// doc and fact are elements you built first in build().
+// doc and fact are elements you built first in build(). counter also returns el, its box, and caption, the label under the number.
 { build: (ctx) => ({ m: morph(ctx, { from: doc, to: fact }),
                      b: bubble(ctx, { x: 400, y: 520, text: "A question for [Site 1]?", side: "right" }),
                      n: counter(ctx, { x: 960, y: 540, from: 0, to: 120, label: "Sample units" }) }),
@@ -135,7 +151,12 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // image and video: a file from media/ (or a YouTube or Vimeo link for video), with a placeholder when it is missing.
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
+// fallback: an image in media/ that an online video shows when there is no network (see scene.md).
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
+// A YouTube or Vimeo player loads when its scene becomes the current one, not at deck start. Until then the box shows the
+// fallback image (or stays black). In a section.ts build() (no scene), the player loads at deck start.
+// image() also returns el, the picture's box (or the IMAGE MISSING box).
+// An animated GIF, APNG or WebP loops by itself and needs no option: the self-test compares styles and marked text, not pixels.
 { build: (ctx) => image(ctx, { href: "media/desk.png", alt: "An engineer at a desk", rect: { x: 960, y: 140, w: 800, h: 800 } }), steps: [(tl, i) => i.show(tl)] }
 { build: (ctx) => video(ctx, { href: "media/clip.mp4", title: "A short clip", rect: { x: 960, y: 140, w: 800, h: 450 } }), steps: [(tl, v) => v.show(tl)] }
 
@@ -187,7 +208,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Next: Right arrow, Space, Page Down, Enter, click.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step.
-- `O`: overview. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 
 ## URL flags
 
@@ -197,7 +218,8 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
-- `?selftest=walk` or `?selftest=ac`: run the self-test.
+- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`.
+- `?offline=1`: online videos show their fallback image (see scene.md).
 
 ## Deep links
 

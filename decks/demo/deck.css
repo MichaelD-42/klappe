@@ -1,0 +1,7 @@
+/* Tests that the engine loads deck.css. Nothing here changes the look. */
+:root {
+  --k-deck-css: loaded;
+}
+.k-deck-css-probe {
+  background-image: url(./media/opening-backdrop.png);
+}

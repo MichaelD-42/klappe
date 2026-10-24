@@ -108,6 +108,21 @@ test('video boxes are 16:9 inside the slot, framed, with the title as a caption'
   await page.close()
 })
 
+test('offline, a video shows its fallback image and caption; one without a fallback is a deck problem', async () => {
+  const page = await open('?fixture=fx-media&offline=1#/a/youtube/2')
+  const r = await page.evaluate(() => {
+    const m = document.querySelector('[data-scene$="youtube"] div[data-k-media]')!
+    const img = m.querySelector('img')
+    return { img: img?.getAttribute('src'), shown: img?.checkVisibility({ opacityProperty: true, visibilityProperty: true }), iframe: !!m.querySelector('iframe'), text: m.textContent }
+  })
+  expect(r).toMatchObject({ shown: true, iframe: false, text: 'Video needs a network connection' })
+  expect(r.img).toMatch(/^data:image/)
+  const problems: string[] = await page.evaluate(() => window.klappe.problems)
+  expect(problems.some((p) => p.includes('vimeo') && p.includes('Video needs a network connection'))).toBe(true)
+  expect(problems.some((p) => p.includes('youtube'))).toBe(false)
+  await page.close()
+})
+
 test('a click into an embedded player leaves the arrow keys working', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.route('https://www.youtube.com/**', (r) => r.fulfill({ body: '<body style="background:#333">player</body>', contentType: 'text/html' }))
@@ -173,5 +188,46 @@ test('a full-frame video plays on its step and pauses on leave', async () => {
   await page.waitForFunction(() => !document.querySelector<HTMLVideoElement>('[data-scene="full-video"] video')!.paused, undefined, { timeout: 10_000 })
   await page.evaluate(() => window.klappe.stepper.next())
   expect(await paused()).toBe(true)
+  await page.close()
+})
+
+// A bare ctx, as in fx-crt: el is the picture's box, for a found file and for the IMAGE MISSING stand-in.
+test('the image handle exposes its box as el', async () => {
+  const page = await open('?fixture=fx-media#/a/image/1')
+  await page.evaluate("import('/src/fx/media.ts').then((m) => { window.__image = m.image })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { data: {}, media: { 'media/a.png': 'data:image/png;base64,' } }, deck: { lang: 'en', intensity: 'calm' }, problem: () => {} }
+    const found = (window as any).__image(ctx, { href: 'media/a.png', alt: 'A' })
+    const isFound = found.el === html.lastElementChild && !!found.el.querySelector('img')
+    const gone = (window as any).__image(ctx, { href: 'media/none.png', alt: 'B' })
+    const isGone = gone.el === html.lastElementChild && gone.el.textContent.includes('IMAGE MISSING')
+    html.remove()
+    return { isFound, isGone }
+  })
+  expect(r).toEqual({ isFound: true, isGone: true })
+  await page.close()
+})
+
+// An embed loads only when its scene is the current one: a deep link elsewhere makes no iframe.
+test('YouTube and Vimeo iframes are created only when their scene becomes current', async () => {
+  const page = await open('?fixture=fx-media#/a/image/1')
+  for (const host of ['https://www.youtube.com/**', 'https://player.vimeo.com/**']) await page.route(host, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
+  const frames = () => page.evaluate(() => [...document.querySelectorAll('iframe[data-k-video]')].map((f) => f.closest('[data-scene]')!.getAttribute('data-scene')!.split('/').pop()))
+  expect(await frames()).toEqual([])
+  // Before its scene, the YouTube box holds its fallback still as a poster, outside the self-test's snapshot;
+  // the player replaces it.
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="youtube"] [data-k-media] img')?.hasAttribute('data-k-ignore'))).toBe(true)
+  const go = (name: string) =>
+    page.evaluate((n) => {
+      const s = window.klappe.stepper as any
+      return s.goto(s.steps.findIndex((x: { scene: string }) => x.scene.endsWith(n)), 'cut')
+    }, name)
+  await go('youtube')
+  expect(await frames()).toEqual(['youtube'])
+  expect(await page.evaluate(() => !!document.querySelector('[data-scene$="youtube"] [data-k-media] img'))).toBe(false)
+  expect(await page.evaluate(() => document.querySelector('[data-scene$="youtube"] iframe')!.hasAttribute('data-k-ignore'))).toBe(true)
+  await go('vimeo')
+  expect(await frames()).toEqual(['youtube', 'vimeo'])
   await page.close()
 })

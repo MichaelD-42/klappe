@@ -49,6 +49,7 @@ export function bindInput(
     const nav = a === "next" || a === "prev" || a === "home" || a === "end";
     if (nav && (ui.overview.isOpen || ui.selector.isOpen)) return; // steps don't move under an open panel
     if (a !== "autoplay" && a !== "timer") ui.autoplay?.stop(); // the timer is not a step: autoplay goes on
+    if (a === "overview" || a === "selector") stepper.cancelAuto(); // no step moves under a panel
     if (a === "next") stepper.next();
     else if (a === "prev") stepper.prev();
     else if (a === "home") stepper.goto(0, "cut");
