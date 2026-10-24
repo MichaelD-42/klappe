@@ -39,7 +39,9 @@ if (query.get("speaker") === "1") {
 function startDeck() {
   const { stage, ui, worlds } = mountStage(document.body);
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
-  const reducedMotion = query.get("reducedmotion") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ?reducedmotion=0 overrides the system setting: a presenter laptop with animations off still plays the deck in full.
+  const flag = query.get("reducedmotion");
+  const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem

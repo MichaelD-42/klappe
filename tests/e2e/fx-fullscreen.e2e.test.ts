@@ -52,6 +52,17 @@ test('Ken Burns pushes in while the step plays and lands where a seek lands', as
   await page.close()
 }, 30_000)
 
+// A presenter laptop with animations off reports reduced motion; ?reducedmotion=0 plays the deck in full anyway.
+test('?reducedmotion=0 plays the Ken Burns push when the system asks for reduced motion', async () => {
+  for (const [flags, pushes] of [['', false], ['&reducedmotion=0', true]] as const) {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-fullscreen${flags}#/a/ken-burns/1`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    expect((await scale(page)).scale > 1, flags || 'no flag').toBe(pushes)
+    await page.close()
+  }
+}, 30_000)
+
 // The fade-in over the flight is slow and faint at first: a push that ran under it would play mostly unseen.
 test('Ken Burns waits for the picture to be fully in before it pushes', async () => {
   const page = await open('#/a/ken-burns/1')
