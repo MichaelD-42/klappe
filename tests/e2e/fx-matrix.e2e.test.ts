@@ -39,3 +39,23 @@ test('the moved item is in the accent and lands in its new quadrant', async () =
   expect(r).toEqual({ sso: true, export: false, leftOfExport: true, sameRow: true })
   await page.close()
 }, 60_000)
+
+// The early scene builds the move to top left before the first place in top right: the slot pick happens when
+// the step is added, so sso still fades in at top right on step 2 and moves to top left on step 3.
+test('place adders built out of step order still place, then move', async () => {
+  const at = async (step: number) => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-matrix#/a/early/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await page.waitForTimeout(300)
+    const r = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>('[data-scene="early"] [data-k-matrix-item="sso"]')!
+      const r = el.getBoundingClientRect()
+      return { shows: el.checkVisibility({ opacityProperty: true, visibilityProperty: true }), right: r.left > window.innerWidth / 2 }
+    })
+    await page.close()
+    return r
+  }
+  expect(await at(2)).toEqual({ shows: true, right: true })
+  expect(await at(3)).toEqual({ shows: true, right: false })
+}, 60_000)

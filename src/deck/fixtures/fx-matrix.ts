@@ -1,9 +1,10 @@
 import { assembleDeck } from "../assemble";
 import { matrix, type MatrixHandle, type MatrixOpts } from "klappe/fx";
-import type { SceneModule } from "../../types";
+import type { SceneModule, StepAdder } from "../../types";
 
 // show, place items, move one to another quadrant, place one again where it is (no move), move the first into
-// the gap, and one item label too long for its box (the fixture's only problem).
+// the gap, and one item label too long for its box (the fixture's only problem). A third scene builds its place
+// adders out of step order: the move to tl is built before the first place in tr.
 const opts: MatrixOpts = {
   x: 160, y: 140, w: 1600, h: 760,
   axes: { x: "Effort", y: "Impact" },
@@ -34,6 +35,15 @@ const long: SceneModule = {
   steps: [(tl, r: R) => r.m.show(tl), (tl, r: R) => r.m.place("x", "br")(tl)],
 };
 
+const early: SceneModule = {
+  build: (ctx) => {
+    const m = matrix(ctx, opts);
+    const move = m.place("sso", "tl");
+    return { m, move, first: m.place("sso", "tr") };
+  },
+  steps: [(tl, r: R) => r.m.show(tl), (tl, r: { first: StepAdder }) => r.first(tl), (tl, r: { move: StepAdder }) => r.move(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -41,6 +51,7 @@ export default () =>
       "sections/10-a/section.md": "# Matrix\n",
       "sections/10-a/10-sort/scene.md": md("Place and move", 7),
       "sections/10-a/20-long/scene.md": md("Too long", 2),
+      "sections/10-a/30-early/scene.md": md("Built early", 3),
     },
-    { "sections/10-a/10-sort/scene.ts": sort, "sections/10-a/20-long/scene.ts": long },
+    { "sections/10-a/10-sort/scene.ts": sort, "sections/10-a/20-long/scene.ts": long, "sections/10-a/30-early/scene.ts": early },
   );

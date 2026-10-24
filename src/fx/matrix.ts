@@ -151,23 +151,24 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       const item = items.get(id);
       if (!item) throw new Error(`matrix: unknown item "${id}"`);
       if (!QUADS.includes(q)) throw new Error(`matrix: unknown quadrant "${q}"`);
-      const from = where.get(id);
-      const prev = last;
-      let to = from;
-      if (from?.q !== q) {
-        const taken = new Set([...where].filter(([o, w]) => o !== id && w.q === q).map(([, w]) => w.k));
-        let k = 0;
-        while (taken.has(k)) k++;
-        if (k >= slots[q].length) {
-          ctx.problem(`matrix: quadrant "${q}" is full`);
-          k = Math.max(0, slots[q].length - 1); // shortcut: overlaps the last slot; a bigger rect is the fix
-        }
-        to = { q, k };
-        where.set(id, to);
-      }
-      last = id;
-      const s = slots[q][to!.k] ?? quads[q];
+      // The slot is picked when the step is added, not here: adders built out of step order still place in step order.
       return (tl) => {
+        const from = where.get(id);
+        const prev = last;
+        let to = from;
+        if (from?.q !== q) {
+          const taken = new Set([...where].filter(([o, w]) => o !== id && w.q === q).map(([, w]) => w.k));
+          let k = 0;
+          while (taken.has(k)) k++;
+          if (k >= slots[q].length) {
+            ctx.problem(`matrix: quadrant "${q}" is full`);
+            k = Math.max(0, slots[q].length - 1); // shortcut: overlaps the last slot; a bigger rect is the fix
+          }
+          to = { q, k };
+          where.set(id, to);
+        }
+        last = id;
+        const s = slots[q][to!.k] ?? quads[q];
         fit();
         const t = tl.duration();
         // The previous item settles as this one starts (sets, so they seek).
