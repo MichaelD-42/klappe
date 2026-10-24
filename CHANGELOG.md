@@ -10,6 +10,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
+- `worldMap` handle: `point(id)`, `arcPath(from, to)`, and an `at` position on `arc()`. `figure()`: a `strokeWidth` option and an `at` position on `appear()`.
 
 ### Changed
 

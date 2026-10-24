@@ -46,9 +46,9 @@ Engine API gaps:
 
 - [x] Scenes copy their text (title, shout question and answer) from `scene.md` into `scene.ts`: give it to them on `ctx`.
 - [x] `ctx` has no deck meta (`lang`, `intensity`): effect words ("Total", media labels) and number grouping are English.
-- [ ] The `worldMap` handle does not expose site positions or arc paths; the demo imports `fitProjection` and `arcPath`.
-- [ ] `figure` has no stroke-width option.
-- [ ] `arc()` and `appear()` take no `at` position.
+- [x] The `worldMap` handle does not expose site positions or arc paths; the demo imports `fitProjection` and `arcPath`.
+- [x] `figure` has no stroke-width option.
+- [x] `arc()` and `appear()` take no `at` position.
 - [ ] A chart timeline reads its columns by position, not by header.
 
 Effect defects:

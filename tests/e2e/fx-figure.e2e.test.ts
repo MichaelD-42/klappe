@@ -46,3 +46,27 @@ test('a walking figure lifts one leg at a time and swings the opposite arm', asy
   }
   await browser.close()
 }, 30_000)
+
+test('figure takes a stroke width, and appear() a position', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-figure`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const { figure } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/figure.ts') // a string: vitest would rewrite import()
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    document.querySelector('svg')!.append(svg)
+    const f = figure({ svg } as any, { x: 0, y: 0, color: 'red', strokeWidth: 10 })
+    const Timeline = window.klappe.canvases[0].tl.constructor
+    const tl = new Timeline({ paused: true })
+    tl.to({}, { duration: 3 })
+    f.appear(tl, 0.5)
+    const out = { width: (svg.lastElementChild as SVGElement).style.strokeWidth, start: tl.recent().startTime() }
+    svg.remove()
+    return out
+  })
+  expect(r.width).toBe('10')
+  expect(r.start).toBe(0.5)
+  await browser.close()
+}, 30_000)

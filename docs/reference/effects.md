@@ -102,7 +102,9 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | --- | --- |
 | `draw` | the land draws on (2.4 s) |
 | `site(tl, id)` | the site's dot pops in |
-| `arc(tl, from, to)` | the arc draws on. An arc not in `arcs` is created on the spot; declare arcs to keep step functions tween-only |
+| `arc(tl, from, to, at?)` | the arc draws on, at `at` on the timeline (default: the end). An arc not in `arcs` is created on the spot; declare arcs to keep step functions tween-only |
+| `point(id)` | the site's `[x, y]`, scene-local, where its dot sits: place your own figures, labels and routes with it. Unknown id: `undefined` and a deck problem |
+| `arcPath(from, to)` | the path data of the map's arc between two sites, for a figure's `walk` or your own drawing |
 | `zoomTo(tl, id)` | the camera flies to the site; only that site's label shows; strokes thin to keep their weight |
 | `world` | labels fade out, the camera frames the whole scene again |
 
@@ -113,11 +115,11 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 
 ## `fitProjection`
 
-`fitProjection(rect)` gives the d3 projection `worldMap` uses, with the globe fitted into `rect`. `fitProjection(rect)([lon, lat])` is the `[x, y]` of a place, for your own marks on the map.
+`fitProjection(rect)` gives the d3 projection `worldMap` uses, with the globe fitted into `rect`. `fitProjection(rect)([lon, lat])` is the `[x, y]` of a place that is not a site. For a site, use the handle's `point(id)`.
 
 ## `arcPath`
 
-`arcPath([ax, ay], [bx, by])` gives the SVG path data of the arc `worldMap` draws: a quadratic curve that bows upward by a quarter of its length.
+`arcPath([ax, ay], [bx, by])` gives the SVG path data of the arc `worldMap` draws: a quadratic curve that bows upward by a quarter of its length. Between two sites, the handle's `arcPath(from, to)` gives the same.
 
 ## `figure`
 
@@ -139,12 +141,13 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `x`, `y` | number | required | where the feet stand |
 | `color` | string | required | stroke colour, a token such as `"var(--k-fg)"` |
 | `scale` | number | 1 | size; scaling is about the feet |
+| `strokeWidth` | number | 4 | line weight in figure units, before `scale`: raise it for a small figure |
 
 ### Step adders
 
 | Handle | Step |
 | --- | --- |
-| `appear` | fades in (0.5 s) |
+| `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
 

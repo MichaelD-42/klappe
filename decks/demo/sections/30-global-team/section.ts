@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { figure, fitProjection, worldMap, type Site } from "klappe/fx";
+import { figure, worldMap, type Site } from "klappe/fx";
 import type { Ctx, Rect, SectionModule } from "klappe/types";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -29,19 +29,16 @@ export const ARC = { world: 1.5, zoomed: 0.75 };
 // Map-scale text: 24 units renders at 17 px at 1366x768, over the 14 px minimum.
 const LABEL = { site: 26, role: 24 };
 
-// fitProjection is the map's own, so sites and routes land on the drawn map.
-const proj = fitProjection(MAP);
-const at = (s: Site) => proj([s.lon, s.lat]) as [number, number];
-const [HX, HY] = at(HOST);
 
 // A quadratic arc from a to b whose middle sits `lift` of its length above the straight line.
 const curve = ([ax, ay]: [number, number], [bx, by]: [number, number], lift: number) =>
   `Q ${(ax + bx) / 2} ${(ay + by) / 2 - Math.hypot(bx - ax, by - ay) * lift} ${bx} ${by}`;
 
 // Where travellers land: two staggered rows either side of the host, under its dot and label.
-const ARRIVALS: [number, number][] = [-125, -95, -65, -35, 35, 65, 95, 125].map((dx, i) => [HX + dx, HY + 72 + (i % 2) * 12]);
+const arrivals = ([HX, HY]: [number, number]): [number, number][] =>
+  [-125, -95, -65, -35, 35, 65, 95, 125].map((dx, i) => [HX + dx, HY + 72 + (i % 2) * 12]);
 // Where they sit at the host table: six behind it (waist at the table top), one at each end.
-const SEATS: [number, number][] = [
+const seats = ([HX, HY]: [number, number]): [number, number][] => [
   ...[-100, -60, -20, 20, 60, 100].map((dx): [number, number] => [HX + dx, HY + 75]),
   [HX - 160, HY + 92],
   [HX + 160, HY + 92],
@@ -75,7 +72,11 @@ function build(ctx: Ctx) {
   gsap.set(mapLayer, { opacity: 1 }); // written at load, as a seek back to the start leaves it
   // No map labels: the map puts them right of the dot, where the east arcs leave. Ours sit clear of the arcs.
   const map = worldMap({ ...ctx, svg: mapLayer }, { rect: MAP, sites: [...SITES, HOST].map((s) => ({ ...s, label: "" })) });
-  const host: [number, number] = [HX, HY];
+  // The map's own positions, so sites and routes land on the drawn map.
+  const at = (s: Site) => map.point(s.id)!;
+  const host = at(HOST);
+  const [HX, HY] = host;
+  const [ARRIVALS, SEATS] = [arrivals(host), seats(host)];
   let n = 0;
   const sites = SITES.map((s) => {
     const [sx, sy] = at(s);
@@ -87,9 +88,8 @@ function build(ctx: Ctx) {
     const members = Array.from({ length: PER_SITE }, (_, k) => {
       const side = k ? 1 : -1;
       const home: [number, number] = [sx + 16 * side, sy + 62];
-      const fig = figure(ctx, { x: home[0], y: home[1], scale: FIG.scale, color: "var(--k-fg)" });
+      const fig = figure(ctx, { x: home[0], y: home[1], scale: FIG.scale, color: "var(--k-fg)", strokeWidth: FIG.stroke });
       const body = g.lastElementChild as SVGGElement; // the figure's root group
-      body.style.strokeWidth = String(FIG.stroke);
       // The role on a faint backing, so coastlines stay behind it.
       const role = g.appendChild(document.createElementNS(SVG, "g"));
       const back = role.appendChild(document.createElementNS(SVG, "rect"));
@@ -135,15 +135,16 @@ function build(ctx: Ctx) {
     hostLabel,
     zoomLabel,
     table,
+    // The zoom into the meeting room dives here: the host table, in canvas coordinates.
+    hostSite: { x: HX - 170, y: HY + 20, w: 340, h: 80 },
   };
 }
 export type GlobalTeam = ReturnType<typeof build>;
 
 const section: SectionModule = {
-  build: (ctx) => ({
-    globalTeam: build(ctx),
-    // The zoom into the meeting room dives here: the host table, in canvas coordinates.
-    hostSite: { x: HX - 170, y: HY + 20, w: 340, h: 80 },
-  }),
+  build: (ctx) => {
+    const globalTeam = build(ctx);
+    return { globalTeam, hostSite: globalTeam.hostSite };
+  },
 };
 export default section;
