@@ -230,7 +230,9 @@ build: (ctx) => [
 steps: [(tl, icons) => icons.forEach((i, n) => i.draw(tl, n ? "<" : undefined)), (tl, icons) => icons.forEach((i, n) => i.light(tl, n ? "<" : undefined))],
 ```
 
-`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+
+Only the icons a deck uses are bundled. The build finds a name when it stands in the deck's code as a string literal (`"rocket"`, also inside an array or a flow node). A name built at run time (`"ro" + "cket"`, or read from a file) is not found and reports the unknown-name problem: pass the icon itself instead. The same holds for `iconTile` and the `icon` of a `flow` node.
 
 | Handle | Step |
 | --- | --- |

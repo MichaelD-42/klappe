@@ -1,4 +1,5 @@
-import { icons, type IconNode } from "lucide";
+import type { IconNode } from "lucide";
+import named from "virtual:klappe-icons";
 import type { gsap } from "gsap";
 import type { Ctx } from "../types";
 import { drawOn } from "./draw";
@@ -25,18 +26,27 @@ export interface IconHandle {
 const SVG = "http://www.w3.org/2000/svg";
 const SHAPES = "path,line,polyline,polygon,circle,rect,ellipse";
 const FALLBACK = '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8l8 8M16 8l-8 8"/>';
-const lucide = icons as unknown as Record<string, IconNode>;
+// Only the icons the deck's code names are bundled (bin/icons-plugin.mjs).
+const lucide = named as Record<string, IconNode>;
 const [DRAW, EACH] = [0.9, 0.06]; // a glyph's stroke draw: duration per stroke, stagger
 
+// An icon: a Lucide name ("shield-check") or the icon itself (import { ShieldCheck } from "klappe/fx/lucide").
+export type IconName = string | IconNode;
+
 // A Lucide glyph as SVG markup on its 24 grid. An unknown name records a problem and gives a crossed box.
-export function iconGlyph(name: string, problem: (msg: string) => void): string {
+// A name is found only when it stands in the deck's code as a string literal; a computed one needs the icon itself.
+export function iconGlyph(name: IconName, problem: (msg: string) => void): string {
+  if (Array.isArray(name)) return markup(name);
   const key = name.replace(/(^|-)(\w)/g, (_, _dash, c: string) => c.toUpperCase()); // grid-2x2 -> Grid2x2
   if (!name || !Object.hasOwn(lucide, key)) {
     problem(`icon: unknown Lucide name '${name}'`);
     return FALLBACK;
   }
-  return lucide[key].map(([tag, a]) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}/>`).join("");
+  return markup(lucide[key]);
 }
+
+const markup = (node: IconNode) =>
+  node.map(([tag, a]) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}/>`).join("");
 
 // A closed shape takes the tint.
 const closed = (s: Element) =>
@@ -51,7 +61,7 @@ const el = (tag: string, attrs: Record<string, string | number>, parent: Element
 
 // The advisor v2 glyph: 2 px non-scaling strokes, round caps and joins, a 0.2 tint inside closed shapes.
 // The returned group has no transform (filters work in world units); x, y is the glyph centre.
-function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, size: number, color: string): IconHandle {
+function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, size: number, color: string): IconHandle {
   const root = el("g", { class: "k-icon" }, parent);
   root.style.color = color;
   const k = size / 24;
@@ -95,7 +105,7 @@ function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, si
 const mark = (tl: gsap.core.Timeline, t: number) => void tl.set({}, {}, t);
 
 // A Lucide icon centred at (x, y), scene-local, size wide.
-export function icon(ctx: Ctx, name: string, opts: IconOpts): IconHandle {
+export function icon(ctx: Ctx, name: IconName, opts: IconOpts): IconHandle {
   return glyph(ctx, ctx.svg, name, opts.x, opts.y, opts.size ?? 96, opts.color);
 }
 
@@ -103,7 +113,7 @@ let tiles = 0;
 
 // The icon tile centred at (x, y): a soft glow, a diagonal gradient well in the tone, a hairline edge,
 // and the glyph in the foreground colour. tone: a theme token, "accent" or "--k-accent".
-export function iconTile(ctx: Ctx, name: string, opts: IconTileOpts): IconHandle {
+export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHandle {
   const s = opts.size ?? 96;
   const [x0, y0, r] = [opts.x - s / 2, opts.y - s / 2, s / 12];
   let tone = opts.tone.startsWith("--") ? opts.tone : `--k-${opts.tone}`;

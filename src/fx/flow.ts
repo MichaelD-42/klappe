@@ -1,14 +1,14 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn } from "./draw";
-import { iconGlyph } from "./icons";
+import { iconGlyph, type IconName } from "./icons";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 gsap.registerPlugin(MotionPathPlugin);
 
 export interface FlowOpts {
-  nodes: { id: string; label: string; col: number; row: number; icon?: string }[];
+  nodes: { id: string; label: string; col: number; row: number; icon?: IconName }[];
   edges: { from: string; to: string; label?: string }[];
   grid: Rect & { cols: number; rows: number };
 }
