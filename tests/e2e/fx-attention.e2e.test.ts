@@ -29,8 +29,8 @@ async function open(hash: string, query = ''): Promise<Page> {
   return page
 }
 
-// Box 1's glow: whether its steady and its breathing layer show, how many wall-clock loops run on the
-// breathing leaf, and whether the glow box frames the box with a margin.
+// Box 1's glow: whether its steady and its breathing layer show, how many wall-clock loops run (not paused)
+// on the breathing leaf, and whether the glow box frames the box with a margin.
 const glowOf = (page: Page) =>
   page.evaluate(() => {
     const scene = document.querySelector('div[data-scene="boxes"]')!
@@ -43,7 +43,7 @@ const glowOf = (page: Page) =>
     return {
       steady: shows(steady),
       live: shows(live),
-      loops: live.querySelector('[data-k-ignore]')!.getAnimations().length,
+      loops: live.querySelector('[data-k-ignore]')!.getAnimations().filter((a) => a.playState === 'running').length,
       behind: wrap.nextElementSibling === el, // earlier in the DOM, so it paints under the box
       frames: g.x < box.x && g.y < box.y && g.right > box.right && g.bottom > box.bottom && box.x - g.x < 30,
     }
@@ -51,13 +51,45 @@ const glowOf = (page: Page) =>
 
 test('glow comes on behind the box, breathes on its own loop, then goes off', async () => {
   let page = await open('#/a/boxes/1')
-  expect(await glowOf(page)).toEqual({ steady: true, live: false, loops: 1, behind: true, frames: true })
+  expect(await glowOf(page)).toEqual({ steady: true, live: false, loops: 0, behind: true, frames: true })
   await page.close()
   page = await open('#/a/boxes/2')
-  expect(await glowOf(page)).toMatchObject({ steady: false, live: true })
+  expect(await glowOf(page)).toMatchObject({ steady: false, live: true, loops: 1 })
   await page.close()
   page = await open('#/a/boxes/3')
-  expect(await glowOf(page)).toMatchObject({ steady: false, live: false })
+  expect(await glowOf(page)).toMatchObject({ steady: false, live: false, loops: 0 })
+  await page.close()
+}, 60_000)
+
+// The loop only runs while its layer shows on the active canvas: a cut to another section pauses it, and
+// a step back (a seek) to before breathe stops it too.
+test('the breathe loop pauses on another canvas and before its step', async () => {
+  const page = await open('#/a/boxes/2')
+  const go = (i: number) => page.evaluate((i) => window.klappe.stepper.goto(i, 'cut'), i)
+  expect(await glowOf(page)).toMatchObject({ live: true, loops: 1 })
+  await go(7) // section b: its canvas hides box 1's, so only the loop count tells
+  expect(await glowOf(page)).toMatchObject({ loops: 0 })
+  await go(1)
+  expect(await glowOf(page)).toMatchObject({ live: true, loops: 1 })
+  await go(0)
+  expect(await glowOf(page)).toMatchObject({ live: false, loops: 0 })
+  await go(5) // after off
+  expect(await glowOf(page)).toMatchObject({ live: false, loops: 0 })
+  await go(1)
+  expect(await glowOf(page)).toMatchObject({ live: true, loops: 1 })
+  await page.close()
+}, 60_000)
+
+// The demo's flow node glows on before it breathes: no loop runs on the on step.
+test.skipIf(!inject('IS_DEMO_DECK'))('no glow loop runs before a breathe step in the demo', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.goto(`${inject('BASE_URL')}/#/attention/nudges/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const running = () =>
+    page.evaluate(() => [...document.querySelectorAll('[data-k-glow] [data-k-ignore]')].flatMap((e) => e.getAnimations()).filter((a) => a.playState === 'running').length)
+  expect(await running()).toBe(0)
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect(await running()).toBe(1)
   await page.close()
 }, 60_000)
 

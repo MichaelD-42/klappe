@@ -127,16 +127,22 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
   for (const s of g.querySelectorAll<SVGElement>(SHAPES))
     if (!s.closest(UNDRAWN))
       Object.assign(s.style, { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" });
+  const glowing = new WeakSet<Element>();
   return {
     draw: drawOn(g),
     glow(tl, selector) {
-      const els = g.querySelectorAll(selector);
+      // Not a glow's own copies (or its wrap), which a tag selector matches too.
+      const els = [...g.querySelectorAll(selector)].filter((e) => !e.closest("[data-k-glow]"));
       if (!els.length) return ctx.problem(`lineArt glow: nothing matches '${selector}'`);
+      // A part that already glows keeps its glow: a repeat call adds nothing for it.
+      const fresh = els.filter((e) => !glowing.has(e));
+      if (!fresh.length) return;
+      fresh.forEach((e) => glowing.add(e));
       const [fg, warm] = [token(g, "--k-fg"), token(g, "--k-warn")];
       // The shared glow in the warm colour, and the part itself turns warm with it.
-      glow(ctx, els, { color: "--k-warn" }).on(tl);
+      glow(ctx, fresh, { color: "--k-warn" }).on(tl);
       // The start values equal the look at load, so rendering them at load changes nothing on screen.
-      tl.fromTo(els, { color: fg }, { color: warm, duration: 0.5 }, "<");
+      tl.fromTo(fresh, { color: fg }, { color: warm, duration: 0.5 }, "<");
     },
   };
 }

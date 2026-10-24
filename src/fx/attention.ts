@@ -41,11 +41,13 @@ function shapeCopy(el: Element, color: string): SVGElement {
 // An HTML target gets a blurred box just before its top-level element in the scene, so it paints behind it.
 // An SVG target gets a blurred copy of itself just before it. breathe loops on the wall clock, outside the
 // timeline, on a leaf under data-k-ignore (as the crt blink does); the timeline only fades its layer in and out.
+// The loop exists only once a breathe step is added, and plays only while its layer shows on the current scene.
 export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowOpts = {}): GlowHandle {
   const color = `var(${opts.color ?? "--k-accent"})`;
   const steady: Element[] = [];
   const live: Element[] = [];
   const boxes: [HTMLElement, Element][] = [];
+  const leaves: Element[] = [];
   for (const el of target instanceof Element ? [target] : Array.from(target)) {
     let wrap: Element, a: Element, b: Element, leaf: Element;
     if (el instanceof SVGElement) {
@@ -72,12 +74,26 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
     }
     wrap.setAttribute("data-k-glow", "");
     leaf.setAttribute("data-k-ignore", "");
-    if (!ctx.reducedMotion)
-      leaf.animate([{ opacity: 1 }, { opacity: 0.3 }], { duration: BREATH_MS, iterations: Infinity, direction: "alternate", easing: "ease-in-out" });
+    leaves.push(leaf);
     steady.push(a);
     live.push(b);
   }
   gsap.set([...steady, ...live], { autoAlpha: 0 });
+
+  // Set from the breathing layer's tween progress (onUpdate fires on a seek too) and from every move.
+  let loops: Animation[] | null = null;
+  let shows = false;
+  let here = true;
+  const sync = () => loops?.forEach((a) => (shows && here ? a.play() : a.pause()));
+  const breathes = () => {
+    if (loops || ctx.reducedMotion) return;
+    loops = leaves.map((l) => l.animate([{ opacity: 1 }, { opacity: 0.3 }], { duration: BREATH_MS, iterations: Infinity, direction: "alternate", easing: "ease-in-out" }));
+    sync();
+    ctx.onStep(({ span, scene }) => {
+      here = span !== null && (!ctx.scene || scene === ctx.scene); // null span: the step is on another canvas
+      sync();
+    });
+  };
 
   let placed = false;
   let cur = { s: 0, l: 0 }; // the steady and the breathing layer's opacity at the end of the steps added so far
@@ -86,10 +102,18 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
     placed = true;
     // immediateRender off: a later step's start values must not apply at load.
     tl.fromTo(steady, { autoAlpha: cur.s }, { autoAlpha: s, duration: motion.step, immediateRender: false });
-    tl.fromTo(live, { autoAlpha: cur.l }, { autoAlpha: l, duration: motion.step, immediateRender: false }, "<");
+    const l0 = cur.l;
+    tl.fromTo(live, { autoAlpha: l0 }, {
+      autoAlpha: l, duration: motion.step, immediateRender: false,
+      onUpdate(this: gsap.core.Tween) {
+        shows = l0 + (l - l0) * this.progress() > 0;
+        sync();
+      },
+    }, "<");
     cur = { s, l };
   };
-  return { on: go(1, 0), breathe: go(0, 1), off: go(0, 0) };
+  const breathe = go(0, 1);
+  return { on: go(1, 0), breathe: (tl) => (breathes(), breathe(tl)), off: go(0, 0) };
 }
 
 // A ring in --k-accent around the target that grows and fades out once.

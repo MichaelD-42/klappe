@@ -3,7 +3,8 @@ import { glow, pulse, shake, type GlowHandle } from "klappe/fx";
 import type { StepAdder, SceneModule } from "../../types";
 
 // Two boxes and an SVG circle: box 1 glows on, breathes and goes off; box 2 pulses and shakes; the circle
-// glows. A second scene glows a target with no size (the fixture's only problem).
+// glows. A second scene glows a target with no size (the fixture's only problem). A second section is
+// another canvas, where box 1's breathe loop must pause.
 interface Refs {
   boxes: HTMLElement[];
   g: GlowHandle;
@@ -50,6 +51,8 @@ const noSize: SceneModule = {
   steps: [(tl, r: { g: GlowHandle }) => r.g.on(tl)],
 };
 
+const other: SceneModule = { build() {}, steps: [() => {}] };
+
 export default () =>
   assembleDeck(
     {
@@ -57,6 +60,8 @@ export default () =>
       "sections/10-a/section.md": "# Attention\n",
       "sections/10-a/10-boxes/scene.md": "## Boxes\n\n- Glow on.\n- Breathe.\n- Off.\n- Pulse.\n- Shake.\n- The circle glows.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
+      "sections/20-b/section.md": "# Other\n",
+      "sections/20-b/10-other/scene.md": "## Other\n\n- Elsewhere.\n",
     },
-    { "sections/10-a/10-boxes/scene.ts": boxes, "sections/10-a/20-no-size/scene.ts": noSize },
+    { "sections/10-a/10-boxes/scene.ts": boxes, "sections/10-a/20-no-size/scene.ts": noSize, "sections/20-b/10-other/scene.ts": other },
   );
