@@ -84,6 +84,7 @@ export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
 export interface Background {
   href?: string; // a picture, or a .mp4 or .webm video that plays muted in a loop
   animate?: "aurora"; // instead of href: a slow drift of light in the theme's colours, no file
+  parallax?: boolean; // drifts a little with each camera flight, as a far layer does
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
   kenBurns?: boolean;

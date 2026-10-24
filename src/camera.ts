@@ -16,6 +16,20 @@ export function frame(t: Rect): Pose {
   return { x: -t.x * scale + (W - t.w * scale) / 2, y: -t.y * scale + (H - t.h * scale) / 2, scale };
 }
 
+// How far a parallax background drifts from its rest, at most, in screen px; it is scaled up enough to hide its
+// edges at that drift (PARALLAX_SCALE).
+export const PARALLAX = 40;
+export const PARALLAX_SCALE = 1 + (2 * PARALLAX) / H;
+
+// A parallax background's offset with the camera on rect `at` of a canvas of `size`: it drifts the way the
+// content moves, PARALLAX at the canvas edges, so it reads as a far layer. Bounded, so it never shows an edge.
+export function parallaxPose(at: Rect, size: { w: number; h: number }): { x: number; y: number } {
+  const off = (c: number, half: number, span: number) => (span > 0 ? -PARALLAX * Math.max(-1, Math.min(1, (c - half) / span)) : 0);
+  const [cx, cy] = [at.x + at.w / 2, at.y + at.h / 2];
+  // Normalised by the reach of a scene centre: half the canvas less half a scene, so the outermost scenes drift the full PARALLAX.
+  return { x: off(cx, size.w / 2, (size.w - at.w) / 2) || 0, y: off(cy, size.h / 2, (size.h - at.h) / 2) || 0 };
+}
+
 export function flight(from: Rect, to: Rect): Pose[] {
   const [ax, ay] = [from.x + from.w / 2, from.y + from.h / 2];
   const [bx, by] = [to.x + to.w / 2, to.y + to.h / 2];

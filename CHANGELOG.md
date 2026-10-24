@@ -15,6 +15,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `annotate`: a hand-drawn ring, underline, frame, strike-through or arrow on a target, drawn on in the accent colour.
 - `spotlight`: dims the scene but for a hole around a target; the next step moves the hole or lifts the dim.
 - Full-screen video: `video()` with no `rect` fills the scene frame, cropped to cover, with no border or caption.
+- `parallax: true` on a background: it drifts a little with each camera flight, as a far layer does.
 - Animated backgrounds: a `.mp4` or `.webm` `href` in `background` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. Only the background on screen moves; reduced motion and the self-test keep them still.
 - `icon()`, `iconTile()` and flow nodes take a Lucide icon itself as well as a name: `import { Rocket } from "klappe/fx/lucide"`.
 - `worldMap` handle: `point(id)`, `arcPath(from, to)`, and an `at` position on `arc()`. `figure()`: a `strokeWidth` option and an `at` position on `appear()`.

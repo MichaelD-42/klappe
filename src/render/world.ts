@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { addCameraMove, frame } from "../camera";
+import { addCameraMove, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
 import { code, LANGS } from "../fx/code";
 import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
@@ -308,11 +308,15 @@ export function renderWorld(
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
     const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
     let cam = first;
+    const far: HTMLElement[] = []; // parallax backgrounds on this canvas
     const camera: Ctx["camera"] = {
       to(t, target, o) {
         if (["x", "y", "w", "h"].every((k) => cam[k as keyof Rect] === target[k as keyof Rect])) return; // already there
         // Reduced motion: camera flights become cuts (spec §7); the step padding keeps them off the labels.
         addCameraMove(t, world, cam, target, { ...o, instant: opts.reducedMotion });
+        // Parallax backgrounds drift with the flight, from its start; a cut moves them at once.
+        const pose = parallaxPose(target, layout.size);
+        if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
         cam = target;
       },
     };
@@ -355,6 +359,11 @@ export function renderWorld(
         if (bg && !pin) {
           const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
           pins.set(bg, (pin = background(ctx, pinned, bg, source, own ? sc.id : s.id)));
+          if (bg.parallax) {
+            // Scaled up so its edges stay out of view at full drift; at rest where the canvas opens.
+            gsap.set(pin.el, { scale: PARALLAX_SCALE, ...parallaxPose(first, layout.size) });
+            far.push(pin.el);
+          }
         }
         const build = sc.module?.build;
         perScene.set(sc, {
