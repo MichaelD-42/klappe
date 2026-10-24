@@ -187,3 +187,46 @@ test('the crt transition collapse flashes a tint of its colour, not a saturated 
   expect({ px, between }).toEqual({ px, between: px.map(() => true) })
   await page.close()
 })
+
+// flash: "soft" opens power-on at brightness(1.4), not 2.2, and the beam keeps more of the phosphor colour.
+test('flash soft lowers the power-on peak and tints the beam', async () => {
+  const page = await open('#/a/green/1')
+  await page.evaluate("import('/src/fx/crt.ts').then((m) => { window.__crt = m.crt })")
+  const peak = (flash?: string) =>
+    page.evaluate((flash) => {
+      const html = document.body.appendChild(document.createElement('div'))
+      const h = (window as any).__crt({ html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, problem: () => {} }, { lines: ['A'], ...(flash ? { flash } : {}) })
+      const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+      h.powerOn(tl)
+      const screen = h.root.querySelector('.k-crt-screen') as HTMLElement
+      tl.seek(0.43) // the screen shows as the beam opens: the settle's first frame
+      const out = { filter: screen.style.filter, soft: h.root.classList.contains('k-crt-soft') }
+      html.remove()
+      return out
+    }, flash)
+  expect(await peak()).toEqual({ filter: expect.stringContaining('brightness(2.'), soft: false })
+  expect(await peak('soft')).toEqual({ filter: expect.stringContaining('brightness(1.3'), soft: true })
+  await page.close()
+})
+
+// transitionOptions.flash "soft": the new canvas opens at brightness(1.4), not 3.
+test('the crt transition opens the new canvas softer with flash soft', async () => {
+  const page = await open('#/a/green/1')
+  await page.evaluate("import('/src/fx/crt.ts').then((m) => { window.__transitionCrt = m.transitionCrt })")
+  const open_ = (flash?: string) =>
+    page.evaluate((flash) => {
+      const stage = document.body.appendChild(document.createElement('div'))
+      const worlds = stage.appendChild(document.createElement('div'))
+      const from = worlds.appendChild(document.createElement('div'))
+      const to = worlds.appendChild(document.createElement('div'))
+      const tl = (window as any).__transitionCrt({ el: from }, { el: to }, flash ? { flash } : {})
+      tl.pause(0.48) // just after the new canvas shows
+      const f = worlds.style.filter
+      tl.progress(1)
+      stage.remove()
+      return f
+    }, flash)
+  expect(await open_()).toBe('brightness(3)')
+  expect(await open_('soft')).toBe('brightness(1.4)')
+  await page.close()
+})

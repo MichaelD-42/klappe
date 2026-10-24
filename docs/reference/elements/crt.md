@@ -21,6 +21,7 @@ steps: [(tl, h) => h.settle(tl), (tl, h) => h.type(tl, "all"), (tl, h) => h.read
 | `color` | `"green" \| "amber" \| "teal"` or a CSS colour | `green` | the text colour. `green` is `--k-phosphor`, `amber` is `--k-phosphor-amber`, `teal` is #009A9B. Any other string is used as a CSS colour |
 | `lines` | `(string \| { text, count: true })[]` | required | the boot lines. `{ text: "MEMORY TEST: 640K OK", count: true }` types the label, then counts up to the number |
 | `prompts` | string[] | none | lines that type after `READY.`, on the cursor row, one `prompt()` each. They are declared here, so their DOM exists at build |
+| `flash` | `"full" \| "soft"` | `full` | `soft` makes the power-on gentler: the screen opens at 1.4 times its brightness instead of 2.2, and the beam keeps more of the phosphor colour. For a calm deck, or a CRT that powers on often |
 
 The font size fits all rows (lines, `READY.`, prompts and the cursor row) in the screen, up to 46 px. Below 20 px, the deck gets a problem.
 
@@ -43,7 +44,7 @@ The handle's `root` is the `.k-retro` element, the whole CRT. A scene moves or f
 
 ### The crt transition
 
-`{ transition: "crt" }` in `section.ts` squashes the old canvas to a line and opens the new one. As it squashes, the old canvas fades into the line colour: the chosen colour, 70 % toward white. It takes the same colour: `{ transition: "crt", transitionOptions: { color: "teal" } }`.
+`{ transition: "crt" }` in `section.ts` squashes the old canvas to a line and opens the new one. As it squashes, the old canvas fades into the line colour: the chosen colour, 70 % toward white. It takes the same colour: `{ transition: "crt", transitionOptions: { color: "teal" } }`. `flash: "soft"` in `transitionOptions` opens the new canvas at 1.4 times its brightness instead of 3, so it does not wash out to near white.
 
 ### `crtColor`
 

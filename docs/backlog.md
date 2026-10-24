@@ -9,7 +9,7 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): a softer crt power-on flash; `timer` separate T groups (needs the deck's use case: how the presenter picks a group); a `dotGrid` helper; lazy embeds one step early.
+Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): `timer` separate T groups (needs the deck's use case: how the presenter picks a group); a `dotGrid` helper; lazy embeds one step early.
 
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 
@@ -27,7 +27,7 @@ Not on this list, because they exist: code morph (`code().diff()`) and packets a
 Effects:
 
 - Shatter: a black backdrop strip shows at the top mid-fall; the box is measured at the crack but the copy is taken at the fall; the black gaps layer (`src/fx/shatter.ts`) holds a black rectangle until a 0.4 s fade at the end.
-- CRT: bloom edges slightly olive-grey; amber READY cursor not captured in a shot (blink phase); long-text floor at about 14 px. The CRT transition's bright phase is a flat `#dadada`; `brightness(3)` washes out the phosphor tint, so calm decks get an off-white flash.
+- CRT: bloom edges slightly olive-grey; amber READY cursor not captured in a shot (blink phase); long-text floor at about 14 px. The CRT transition's default bright phase (`brightness(3)`) still washes out the tint; `flash: "soft"` avoids it, and the default stays as decks have it.
 - Shout: the `back.out` overshoot is not checked visually; the new one-click enter (straight to 1.04 calm, 1.12 bold) is not checked at full speed.
 - Figure: clearer arm swing (10 to 15 degrees); the seated figure needs a chair and arms; standing figures closer and the group larger at 1366.
 - Swarm and morph: dots cross the Inbox label mid-flight; the landed pile is a uniform grey; morph text has low contrast mid-frame, and morph scales the text with the box, so "Key fact" overflows its card; the swarm canvas is not re-rasterised on a deeper zoom.
