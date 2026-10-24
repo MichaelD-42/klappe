@@ -595,7 +595,7 @@ build(ctx) { /* … */ return { doc, a: morph(ctx, { from: doc, to: fact }), b: 
 steps: [(tl, { doc }) => tl.to(doc, { autoAlpha: 1, duration: 0.6 }), (tl, { a }) => a.play(tl), (tl, { b }) => b.play(tl)],
 ```
 
-`morph(ctx, { from, to })` takes two elements, HTML or SVG (`60-motion/20-shape-morph`). `play(tl)` moves `from` onto `to` over 1.2 s (`power2.inOut`) and crossfades over the middle 70%. Both scale by one factor (the geometric mean of the size ratios), so text is never stretched; a transform you set yourself is kept. `to` is hidden until `play`. Build `morph` after both elements are in place: positions are measured when the step is added.
+`morph(ctx, { from, to })` takes two elements, HTML or SVG (`60-motion/20-shape-morph`). `play(tl)` moves `from` onto `to` over 1.2 s (`power2.inOut`). `to` fades in first, over `from`, then `from` fades out, so one of them always shows strongly. Each scales uniformly, so text is never stretched: `from` by the smaller size ratio, so it ends inside `to`, and `to` from the larger, so it starts inside `from`. A transform you set yourself is kept. `to` is hidden until `play`. Build `morph` after both elements are in place: positions are measured when the step is added.
 
 ## `bubble`
 
