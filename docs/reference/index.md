@@ -9,6 +9,7 @@
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
+  - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.

@@ -13,7 +13,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 
 - Show code, one part at a time: a fenced block with `{1-2|4}` groups in `scene.md`. Code changing: `code` with `diff`. [code](klappe/docs/reference/elements/code.md)
 - Show a command and its output: a ```` ```console ```` fence. [terminal](klappe/docs/reference/elements/terminal.md)
-- Point at one thing: `callout`. [callout](klappe/docs/reference/elements/callout.md)
+- Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md)
 - Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
 - Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)

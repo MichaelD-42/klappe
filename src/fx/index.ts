@@ -16,6 +16,7 @@ export * from "./motion";
 export * from "./sequence";
 export * from "./shatter";
 export * from "./shout";
+export * from "./spotlight";
 export * from "./swarm";
 export * from "./swimlanes";
 export * from "./terminal";
