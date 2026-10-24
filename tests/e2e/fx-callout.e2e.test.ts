@@ -39,3 +39,17 @@ test('the leader ends at the code line edge and the label follows it', async () 
   expect(Math.abs(r.gap)).toBeLessThan(2)
   await page.close()
 })
+
+// A window with no size at load (minimized, or a background tab reloaded by the dev server) must not
+// collapse the stage: the callouts measure their targets while the timeline is built.
+test('a deck loaded in a window with no size measures its callout targets', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'innerWidth', { get: () => 0, configurable: true })
+    Object.defineProperty(window, 'innerHeight', { get: () => 0, configurable: true })
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-callout`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  expect(await page.evaluate(() => [...window.klappe.problems].filter((p: string) => p.includes('no size')))).toEqual([])
+  await page.close()
+})
