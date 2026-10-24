@@ -106,7 +106,7 @@ Each example is a `scene.ts` default export: `build` returns the handle, `steps`
 { build: (ctx) => crt(ctx, { color: "amber", lines: ["DEMO-OS v1.0", { text: "MEMORY TEST: 640K OK", count: true }] }),
   steps: [(tl, h) => h.powerOn(tl), (tl, h) => h.type(tl, 0), (tl, h) => h.type(tl, 1), (tl, h) => h.ready(tl)] }
 
-// lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements.
+// lineArt and drawOn: draw a shipped SVG and make one part glow; drawOn draws any stroked SVG elements; a dashed stroke ends on its own dash.
 // Not a sanitizer: lineArt is for trusted, author-supplied SVG only.
 import desk from "klappe/fx/art/engineer-desk.svg?raw";
 { build: (ctx) => lineArt(ctx, { src: desk, x: 260, y: 120, w: 1400 }), steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")] }
