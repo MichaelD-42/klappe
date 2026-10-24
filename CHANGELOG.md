@@ -62,6 +62,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - The self-test waits for web fonts and counts `ctx.problem` calls made before it ends.
 - A panel (overview, section list) cancels a pending `auto` advance.
 - Vitest runs without its fs module cache, which kept a stale fixture list.
+- `drawOn` never leaves an empty `pathLength` (GSAP wrote back an unrecorded attribute on revert).
+- The overview no longer scrolls the stage; a band no longer shows after it closes.
+- Self-test walks fail on errors the browser logs itself (not via `console.error`), except messages from third-party frames.
 
 ## 0.3.0 (2026-10-24)
 

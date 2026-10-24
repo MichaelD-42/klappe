@@ -26,7 +26,7 @@ const long: SceneModule = {
 
 // 143 characters: past the 20 px floor in this 1200-wide panel, so it wraps instead of clipping.
 const LONG_CMD =
-  "irm https://example.com/training/setup.ps1 -OutFile setup.ps1; ./setup.ps1 -Workspace C:/workspace/training -Proxy http://127.0.0.1:3128 -Quiet";
+  "irm https://example.com/training/setup.ps1 -OutFile setup.ps1; ./setup.ps1 -Workspace D:/work/demo-projects -Proxy http://proxy.lan:8080 -Quiet";
 const wrap: SceneModule = {
   build: (ctx) => terminal(ctx, { lines: [`$ ${LONG_CMD}`, "$ ls", "setup.ps1"], x: 160, y: 200, w: 1200, h: 500, wrap: true }),
   steps: [(tl, h: TerminalHandle) => (h.show(tl, "+=0.2"), h.run(0)(tl)), (tl, h: TerminalHandle) => h.run(1)(tl)],
