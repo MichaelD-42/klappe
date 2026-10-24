@@ -29,7 +29,8 @@ async function dashes(page: Page, i: number) {
   return page.evaluate(async (i) => {
     await window.klappe.stepper.goto(i, 'cut')
     const of = (scene: string) =>
-      [...document.querySelectorAll(`g[data-scene="${scene}"] :is(path, rect, circle)`)].map((s) => {
+      // Not the glow's blurred copies: they are never drawn on.
+      [...document.querySelectorAll(`g[data-scene="${scene}"] :is(path, rect, circle):not([data-k-glow] *)`)].map((s) => {
         const st = getComputedStyle(s)
         return [st.strokeDasharray, parseFloat(st.strokeDashoffset)] as const
       })
@@ -104,13 +105,17 @@ test('the glow turns the bulb warm', async () => {
       await window.klappe.stepper.goto(i, 'cut')
       const b = document.querySelector('g[data-scene="desk"] .bulb')!
       const root = getComputedStyle(document.documentElement)
-      return { color: getComputedStyle(b).color, filter: getComputedStyle(b).filter, warm: root.getPropertyValue('--k-warn').trim() }
+      const glow = document.querySelector('g[data-scene="desk"] [data-k-glow] > *')!
+      const shows = glow.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+      return { color: getComputedStyle(b).color, glow: shows, glowColor: getComputedStyle(glow).color, warm: root.getPropertyValue('--k-warn').trim() }
     }, i)
   const before = await bulb(0)
   const after = await bulb(1)
   expect(before.color).not.toBe(after.color)
   expect(after.color).toBe('rgb(255, 181, 71)') // --k-warn #ffb547
-  expect(after.filter).toContain('22px')
+  // The shared glow: a blurred copy in --k-warn behind the bulb, shown by the step.
+  expect([before.glow, after.glow]).toEqual([false, true])
+  expect(after.glowColor).toBe('rgb(255, 181, 71)')
   await page.close()
 })
 

@@ -11,9 +11,7 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 New effects, proposed 2026-10-24, not yet specified:
 
-- `glow`: a background glow on any element, as one step adder (on, off, and a slow breathe for "this one is live"). Lift it out of `lineArt().glow`, which keeps its colour shift and calls the shared one. Tweening `filter: drop-shadow` repaints every frame and is costly on big elements (see the perf notes); a blurred `--k-accent` layer behind the element that only fades in `opacity` should be the default, checked in the self-test and with reduced motion.
 - `annotate` kind `highlight`: a marker stroke sweeps in behind a phrase, per line for wrapped text as `underline` does. The one mark the hand-drawn set lacks.
-- `pulse` and `shake`: a short attention nudge (a ring that pulses out once, a two-cycle shake for "this failed"). Small enough to be step adders on a shared helper rather than an effect; a deck writes them by hand today.
 - Text reveal by word or line: the lines of a paragraph rise in one after another. `typed` and `scramble` go by character; a calm reveal for a statement or a quote is missing. Must not depend on wrapping (CI fonts).
 - `flipCard`: a card turns over to show its back (a question, then the answer; a myth, then the fact). A 3D `rotationY` with `backface-visibility`; check the PDF export shows the side the step leaves.
 - `matrix`: a 2×2 with axis labels, items placed and moved between quadrants step by step. A common business-deck diagram no effect covers.

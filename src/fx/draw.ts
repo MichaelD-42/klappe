@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import type { Ctx, StepAdder } from "../types";
+import { glow } from "./attention";
 
 export interface DrawOnOpts {
   duration?: number; // default 0.9
@@ -132,14 +133,10 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
       const els = g.querySelectorAll(selector);
       if (!els.length) return ctx.problem(`lineArt glow: nothing matches '${selector}'`);
       const [fg, warm] = [token(g, "--k-fg"), token(g, "--k-warn")];
+      // The shared glow in the warm colour, and the part itself turns warm with it.
+      glow(ctx, els, { color: "--k-warn" }).on(tl);
       // The start values equal the look at load, so rendering them at load changes nothing on screen.
-      tl.fromTo(els, { color: fg }, { color: warm, duration: 0.5 });
-      tl.fromTo(
-        els,
-        { filter: `drop-shadow(0 0 0px ${warm})` },
-        { filter: `drop-shadow(0 0 22px ${warm})`, duration: 0.6, ease: "power2.out" },
-        "<",
-      );
+      tl.fromTo(els, { color: fg }, { color: warm, duration: 0.5 }, "<");
     },
   };
 }

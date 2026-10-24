@@ -246,7 +246,7 @@ steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")],
 | Handle | Step |
 | --- | --- |
 | `draw` | every stroke draws on, one after another (`drawOn`) |
-| `glow(tl, selector)` | the matching parts turn amber (`--k-warn`) and glow; no match is the deck problem `lineArt glow: nothing matches '<selector>'` |
+| `glow(tl, selector)` | the matching parts turn amber (`--k-warn`) and glow, with the shared [`glow`](elements/attention.md); no match is the deck problem `lineArt glow: nothing matches '<selector>'` |
 
 ### Limits
 
