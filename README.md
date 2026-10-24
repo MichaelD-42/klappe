@@ -23,7 +23,7 @@ Every step is a label on a GSAP timeline, and an effect only adds tweens to it. 
 
 A deck is a folder of Markdown and TypeScript in git, so it diffs, reviews and merges like code. It is also easy for an AI agent to write: klappe ships a Claude Code skill and builder and reviewer agents that know the deck format and its rules.
 
-It is not a WYSIWYG editor, and it does not export PowerPoint files. PDF export is planned.
+It is not a WYSIWYG editor, and it does not export PowerPoint files. It does export a PDF, one page per step.
 
 ## What you write
 
@@ -85,11 +85,11 @@ git init && git commit --allow-empty -m init
 git subtree add --prefix klappe https://github.com/MichaelD-42/klappe.git main --squash
 node klappe/bin/klappe.mjs init --deck my-talk     # decks/my-talk/, package.json, Claude agents
 npm i
-npx playwright install chromium                    # once per machine, for the tests
+npx playwright install chromium                    # once per machine, for the tests and the PDF
 npm run dev                                        # http://localhost:5173
 ```
 
-`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/`; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/`; `npm run pdf` writes `dist/my-talk.pdf`, one page per step at 1920x1080, each step as it ends; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 

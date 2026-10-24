@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `klappe pdf` (`npm run pdf`): the deck as `dist/<id>.pdf`, one 1920x1080 page per step, each step as it ends, with no UI on top. Deck problems are listed but do not stop it; a page error fails it.
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion; README section on presenting.
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.

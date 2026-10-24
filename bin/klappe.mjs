@@ -14,8 +14,8 @@ if (cmd === '--version' || cmd === '-v') {
   process.exit(0)
 }
 
-if (!['dev', 'build', 'test', 'init'].includes(cmd)) {
-  console.error('usage: klappe dev|build|test|init [--deck <id>] | --version')
+if (!['dev', 'build', 'test', 'pdf', 'init'].includes(cmd)) {
+  console.error('usage: klappe dev|build|test|pdf|init [--deck <id>] | --version')
   process.exit(1)
 }
 
@@ -59,6 +59,7 @@ if (cmd === 'init') {
     dev: 'node klappe/bin/klappe.mjs dev',
     build: 'node klappe/bin/klappe.mjs build',
     test: 'node klappe/bin/klappe.mjs test',
+    pdf: 'node klappe/bin/klappe.mjs pdf',
     'klappe:sync': 'node klappe/bin/sync-claude.mjs',
   }
   pkg.scripts ??= {}
@@ -133,6 +134,21 @@ const configFile = path.join(klappeDir, 'vite.config.ts')
 
 if (cmd === 'build') {
   await build({ configFile })
+} else if (cmd === 'pdf') {
+  // Deck problems do not stop the export, as with build; page errors fail it, as the pages may be wrong.
+  const { exportPdf } = await import('./pdf.mjs')
+  const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
+  await server.listen()
+  const out = path.join(process.cwd(), 'dist', `${id}.pdf`)
+  try {
+    const r = await exportPdf(server.resolvedUrls.local[0], out)
+    for (const p of r.problems) console.warn(`deck problem: ${p}`)
+    for (const e of r.errors) console.error(`page error: ${e}`)
+    console.log(`Wrote ${out}: ${r.pages} pages.`)
+    process.exitCode = r.errors.length ? 1 : 0
+  } finally {
+    await server.close()
+  }
 } else {
   const server = await createServer({ configFile })
   await server.listen()

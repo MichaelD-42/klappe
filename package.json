@@ -6,6 +6,7 @@
     "test": "vitest run",
     "dev": "node bin/klappe.mjs dev --deck demo",
     "build": "node bin/klappe.mjs build --deck demo",
+    "pdf": "node bin/klappe.mjs pdf --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e"
   },
