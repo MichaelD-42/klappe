@@ -546,7 +546,7 @@ From `decks/demo/sections/220-swarm/20-burst/scene.ts`:
 ```ts
 import { burst, type BurstHandle } from "klappe/fx";
 
-const b = burst(ctx, { at: { x: 960, y: 470 }, seed: 7 });
+const b = burst(ctx, { origin: { x: 960, y: 470 }, seed: 7 });
 steps: [(tl, { b, box }) => {
   tl.to(box, { autoAlpha: 1, scale: 1, duration: 0.5 });
   b.pop(tl, "<");
@@ -557,10 +557,10 @@ Build the burst first so the text you add after it paints above the canvas.
 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `at` | `{ x, y }` | required | where the pieces pop from, scene px |
+| `origin` | `{ x, y }` | required | where the pieces pop from, scene px |
 | `seed` | number | required | the same seed gives the same burst |
 | `count` | number | 150 | how many pieces |
-| `radius` | number | 360 | how far the pieces fly, scene px; the canvas is the square of this radius around `at` |
+| `radius` | number | 360 | how far the pieces fly, scene px; the canvas is the square of this radius around `origin` |
 | `duration` | number | 1.4 | seconds |
 
 `pop(tl, at?)` adds the pop: the pieces fly out, slow down, fall a little, spin, and fade out over the last 30%. `at` is a timeline position, for example `"<"` to pop with the tween before. The canvas is empty before and after the pop.

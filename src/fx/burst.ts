@@ -3,7 +3,7 @@ import { rand } from "./swarm";
 import type { Ctx } from "../types";
 
 export interface BurstOpts {
-  at: { x: number; y: number }; // where the pieces pop from, scene px
+  origin: { x: number; y: number }; // where the pieces pop from, scene px
   seed: number;
   count?: number; // default 150
   radius?: number; // how far the pieces fly, scene px; default 360
@@ -38,11 +38,11 @@ export function burstPoint(seed: number, i: number, p: number): { x: number; y: 
 // Reduced motion: no canvas and no tween; pair the pop with a visible change in the same step.
 export function burst(ctx: Ctx, opts: BurstOpts): BurstHandle {
   if (ctx.reducedMotion) return { pop: () => {} };
-  const { at, seed } = opts;
+  const { origin, seed } = opts;
   const count = opts.count ?? 150;
   const R = opts.radius ?? 360;
   const duration = opts.duration ?? 1.4;
-  const rect = { x: at.x - R, y: at.y - R, w: 2 * R, h: 2 * R };
+  const rect = { x: origin.x - R, y: origin.y - R, w: 2 * R, h: 2 * R };
   const canvas = document.createElement("canvas");
   canvas.setAttribute("data-k-ignore", "");
   canvas.setAttribute("data-k-burst", "");

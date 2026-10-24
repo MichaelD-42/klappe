@@ -15,8 +15,8 @@ function label(html: HTMLElement, text: string, x: number, y: number): HTMLEleme
 // The default burst from the centre, then a small one with its own count, radius, duration and seed.
 const pop: SceneModule = {
   build(ctx) {
-    const big = burst(ctx, { at: { x: 960, y: 500 }, seed: 1 });
-    const small = burst(ctx, { at: { x: 1500, y: 800 }, seed: 9, count: 40, radius: 200, duration: 0.8 });
+    const big = burst(ctx, { origin: { x: 960, y: 500 }, seed: 1 });
+    const small = burst(ctx, { origin: { x: 1500, y: 800 }, seed: 9, count: 40, radius: 200, duration: 0.8 });
     return { big, small, a: label(ctx.html, "Milestone reached", 960, 500), b: label(ctx.html, "And another", 1500, 800) };
   },
   steps: [
