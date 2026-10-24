@@ -11,7 +11,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 New effects, proposed 2026-10-24, not yet specified:
 
-- `path`: an element travels along an SVG path (a parcel, a figure walking a route). `flow().send()` does this along flow edges with GSAP's MotionPathPlugin already loaded; a free path is a small generalisation.
 - `video` options `autoplay` and `muted` for YouTube and Vimeo embeds: with `autoplay: true` the player starts when its step arrives (the URL's `autoplay=1` plus `allow="autoplay"` on the iframe); `muted` defaults to `true`. `muted: false` asks for sound, which a browser may still block; say what happens then. Default stays: the viewer starts the player. Local files already play on their step.
 - Chart types `funnel` and `sankey`: common in business decks, missing from `chart`.
 - `gauge`: a needle swings to a value; sits beside `kpi` and `progress`.
@@ -28,7 +27,7 @@ New transitions, proposed 2026-10-24:
 
 New camera moves, proposed 2026-10-24:
 
-- Follow: the camera tracks a moving element (a figure walking, a packet in a flow). Pairs with `path`.
+- Follow: the camera tracks a moving element (a figure walking, a packet in a flow). Pairs with `travel`.
 - Focus pull: all but the target blurs and dims, a depth-of-field cousin of `spotlight`. Mind the blur cost (perf notes).
 - Impact shake: a short jolt of the whole scene when something lands; the camera-level twin of `shake`.
 - Tilt: a slight 3D lean during a camera flight, so long flights feel less flat.

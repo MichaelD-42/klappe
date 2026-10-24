@@ -17,6 +17,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Nudge one element (a glow, a pulse, a shake): `glow`, `pulse`, `shake`. [attention](klappe/docs/reference/elements/attention.md)
 - Hold back an answer, then reveal it (question and answer, myth and fact): `flipCard`. [flipCard](klappe/docs/reference/elements/flipCard.md)
 - Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
+- Move something along a route (a parcel to a customer): `travel`. [travel](klappe/docs/reference/effects.md#travel)
 - Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
 - Show how a decision was made: `decisionTree`. [decisionTree](klappe/docs/reference/elements/decisionTree.md)

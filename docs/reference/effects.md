@@ -219,6 +219,41 @@ The path must be in the figure's coordinate space (`ctx.svg`, scene-local); a pa
 
 `limbAngle(progress, steps, swing = 25)` gives the limb angle in degrees at walk progress `progress` for `steps` strides: `swing * sin(progress * steps * 2π)`. Zero at progress 0 and 1, so a walk starts and ends upright. It is what `figure` writes from `onUpdate`.
 
+## `travel`
+
+Catalog: section `285-travel` (`#/travel/parcel/2`, `#/travel/parcel/3`). One step: an element travels along a path, a parcel to a customer or a reply back. The route can show or draw on behind it. For a figure that walks, use `figure().walk`: its legs stride.
+
+From `decks/demo/sections/285-travel/10-parcel/scene.ts`:
+
+```ts
+import { iconTile, travel } from "klappe/fx";
+
+build: (ctx) => {
+  const parcel = iconTile(ctx, "package", { x: 0, y: 0, size: 88, tone: "warn" });
+  return { parcel, ship: travel(ctx, parcel.el, { path: "M410 700 C 800 260, 1150 900, 1500 450", route: "draw", duration: 2.5 }) };
+},
+steps: [(tl, r) => r.parcel.draw(tl), (tl, r) => r.ship(tl)],
+```
+
+`travel(ctx, el, opts)` returns a step adder. `el` is an HTML element in `ctx.html` or an SVG element in `ctx.svg`. Call it in `build`: the element waits at the start of the path from load until its step.
+
+### Options
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `path` | string or SVG path element | required | an SVG `d` in scene units, or a path in `ctx.svg` whose `d` is read |
+| `duration` | number | 2 | seconds, with a soft start and stop (`power1.inOut`) |
+| `route` | `"show"` or `"draw"` | none | a string path only: the route is a `--k-line` line that shows from load (`"show"`), or that is hidden and draws on behind the element as it goes (`"draw"`). A path element you pass stays as you made it; draw it with `drawOn` |
+| `rotate` | boolean | false | the element turns to face along the path (its right side leads) |
+
+With reduced motion the element jumps to the end of the path and a `"draw"` route shows whole.
+
+### Limits
+
+- The path moves the element's origin: put an HTML element at `left: 0; top: 0` with its visual centred there (as `flow` does its packets), and an SVG one with its centre at `(0, 0)`, as `iconTile(ctx, name, { x: 0, y: 0, … })` makes it. Its own `x` and `y` are overwritten.
+- A path element under a transformed ancestor lands elsewhere: its `d` is read as scene units.
+- A path with no length reports `travel: path has no length` and the step only holds.
+
 ## `lineArt`
 
 Catalog: section `120-draw` (`#/draw/desk/1`). A line drawing from an SVG file, drawn stroke by stroke, with one part that can glow. It is for trusted, author-supplied SVG only: it strips scripts, styles, handlers, animations (`set`, `animate`), images and links to other files (an `href` must be `#id`), but is not a full sanitizer. Shapes inside `defs`, `clipPath`, `mask`, `pattern` and `marker` keep their own fill and are not drawn on.
