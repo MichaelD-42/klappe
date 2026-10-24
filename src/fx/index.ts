@@ -16,6 +16,7 @@ export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurn
 export * from "./motion";
 export * from "./sequence";
 export * from "./shatter";
+export * from "./scramble";
 export * from "./shout";
 export * from "./spotlight";
 export * from "./swarm";

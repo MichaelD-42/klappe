@@ -554,6 +554,21 @@ steps: [(tl, { down }) => down.run(tl)],
 
 `counter(ctx, { x, y, from, to, label })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use English thousands separators.
 
+## `scramble`
+
+Catalog: section `160-motion` (`#/motion/decode/1`). A line that decodes: random glyphs in `--k-accent` settle, about left to right, on the real text in `--k-fg`.
+
+```ts
+build: (ctx) => scramble(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 420, w: 1600 }),
+steps: [(tl, s) => s.run(tl)],
+```
+
+`scramble(ctx, { text, x, y, w?, size?, seed? })`: `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 72, weight 700); `seed` picks the glyphs and the order. `run(tl)` fades it in and decodes over 1.5 s, written from `onUpdate` as a pure function of progress. Each character is laid out from the start, so the line never reflows while it decodes. Screen readers get the real text. Reduced motion: it fades in already settled.
+
+## `scrambleGlyphs`
+
+`scrambleGlyphs(text, p, seed)` gives what each character shows at progress `p`: a glyph while it decodes, `null` once it has settled. Spaces are always `null`; all are `null` at `p = 1`.
+
 ## `counterText`
 
 `counterText(from, to, p)` gives the counter's text at progress `p`: `round(from + (to - from) * p)` with thousands separators. `counterText(0, 2000, 0.5)` is `"1,000"`.

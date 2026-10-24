@@ -10,6 +10,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
+- `scramble`: a line that decodes, random glyphs settling on the text left to right.
 - `wipe`: before and after, two pictures on one spot; the after picture sweeps in behind a divider, halfway or all the way.
 - `annotate`: a hand-drawn ring, underline, frame, strike-through or arrow on a target, drawn on in the accent colour.
 - `spotlight`: dims the scene but for a hole around a target; the next step moves the hole or lifts the dim.
