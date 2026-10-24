@@ -128,7 +128,6 @@ const scene: SceneModule = {
       // Only the table's outline dims: its fill stays solid and keeps hiding the legs behind it.
       tl.to(r.table, { strokeOpacity: 0.3, duration: 0.6 }, "<");
     },
-    (tl, r) => r.sh.hold(tl),
     (tl, r) => r.sh.fade(tl),
     (tl, r) => r.sh.answer(tl),
   ],

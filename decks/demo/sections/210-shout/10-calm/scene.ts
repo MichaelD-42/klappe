@@ -6,7 +6,6 @@ export default captioned('shout({ intensity: "calm" }) — a gentle dim, the que
   build: (ctx) => shout(ctx, { question: "Who owns the release?", answer: "The team that ships it.", intensity: "calm" }),
   steps: [
     (tl, s: ShoutHandle) => s.enter(tl),
-    (tl, s: ShoutHandle) => s.hold(tl),
     (tl, s: ShoutHandle) => s.fade(tl),
     (tl, s: ShoutHandle) => s.answer(tl),
   ],

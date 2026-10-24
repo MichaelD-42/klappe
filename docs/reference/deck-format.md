@@ -35,7 +35,7 @@ Frontmatter keys:
 - `## Title` names the scene. It is required.
 - Each list item is one step.
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
-- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
+- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 3 steps: enter, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
 - A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
@@ -158,9 +158,9 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A background, in a section.ts (or scene.ts) default export. Plain scene.md text shows on top.
 { background: { href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true } }
 
-// shout with its own intensity: the scene.md has the 4 steps of a shout-out (### Question? and an answer).
+// shout with its own intensity: the scene.md has the 3 steps of a shout-out (### Question? and an answer).
 { build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
-  steps: [(tl, s) => s.enter(tl), (tl, s) => s.hold(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
+  steps: [(tl, s) => s.enter(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
 
 // A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
 { transition: "zoom", zoomTarget: "hostSite" }

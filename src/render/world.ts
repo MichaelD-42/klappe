@@ -137,14 +137,14 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     if (fx.has(n)) return; // a later phase of a shout-out the effect plays
     if (s.kind === "shout-enter") {
       try {
-        const h = shout(ctx, { question: s.text, answer: scene.steps[i + 3]?.text ?? "", intensity: meta.intensity });
-        [h.enter, h.hold, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
+        const h = shout(ctx, { question: s.text, answer: scene.steps[i + 2]?.text ?? "", intensity: meta.intensity });
+        [h.enter, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
         return;
       } catch (e) {
         if (!notBuilt(e)) console.error(`${scene.source} step ${n}: shout: ${message(e)}`);
       }
     }
-    if (s.kind === "shout-hold" || s.kind === "shout-fade") return;
+    if (s.kind === "shout-fade") return;
     const pt = s.part;
     if (pt?.kind === "check" && list) {
       const k = checks.indexOf(s);
@@ -207,10 +207,9 @@ function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTML
   if (effect) return effect(tl);
   const at = (k: number) => html.querySelector<HTMLElement>(`[data-step="${k}"]`);
   const kind = scene.steps[n - 1].kind;
-  // M1 shout-out: question appears, holds, fades, then the answer appears. M2 adds the full effect.
-  if (kind === "shout-hold") tl.to({}, { duration: motion.step });
-  else if (kind === "shout-fade") {
-    const q = at(n - 2);
+  // M1 shout-out: question appears, fades, then the answer appears. M2 adds the full effect.
+  if (kind === "shout-fade") {
+    const q = at(n - 1);
     if (q) tl.to(q, { autoAlpha: 0, duration: motion.step });
   } else {
     const p = at(n);

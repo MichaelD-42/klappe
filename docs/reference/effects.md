@@ -381,7 +381,7 @@ The shards copy the target as it is at that point; build and show it before the 
 
 ## `shout`
 
-Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question holds, then the answer lands. In Markdown, `### Question?` and a paragraph make the same four steps with the deck's `intensity`.
+Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question holds, then the answer lands. In Markdown, `### Question?` and a paragraph make the same three steps with the deck's `intensity`.
 
 From `decks/demo/sections/210-shout/20-bold/scene.ts`:
 
@@ -391,7 +391,6 @@ import { shout, type ShoutHandle } from "klappe/fx";
 build: (ctx) => shout(ctx, { question: "Who owns the release?", answer: "The team that ships it.", intensity: "bold" }),
 steps: [
   (tl, s: ShoutHandle) => s.enter(tl),
-  (tl, s: ShoutHandle) => s.hold(tl),
   (tl, s: ShoutHandle) => s.fade(tl),
   (tl, s: ShoutHandle) => s.answer(tl),
 ],
@@ -401,16 +400,15 @@ steps: [
 | --- | --- | --- |
 | `question` | string | the big text; long text gets a smaller size to stay in the frame |
 | `answer` | string | shown in `--k-accent` at 70% of the question's size |
-| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
+| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard and further, keeps a trace of the question after the fade and pops the answer |
 
 | Handle | Step |
 | --- | --- |
-| `enter` | the dim and question come in (an earlier shout's answer leaves) |
-| `hold` | the question pushes in slowly (2 s calm, 2.5 s bold) |
+| `enter` | the dim and question come in and grow to full size: 1.04 calm, 1.12 bold (an earlier shout's answer leaves) |
 | `fade` | the question fades |
 | `answer` | the dim lifts and the answer builds in |
 
-Text is set with `textContent`, never as HTML. The four steps must be four entries in `steps` (or four Markdown steps).
+Text is set with `textContent`, never as HTML. The three steps must be three entries in `steps` (or three Markdown steps).
 
 ## `swarm`
 

@@ -15,7 +15,7 @@ export interface DeckMeta {
   sharedCanvas: string[][];
 }
 export type StepKind =
-  "step" | "shout-enter" | "shout-hold" | "shout-fade" | "shout-answer";
+  "step" | "shout-enter" | "shout-fade" | "shout-answer";
 // A step built from Markdown by an element: a code group, a console command, a task-list item, an agenda.
 export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups

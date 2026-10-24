@@ -9,16 +9,16 @@ export interface ShoutOpts {
 }
 export interface ShoutHandle {
   enter: StepAdder;
-  hold: StepAdder;
   fade: StepAdder;
   answer: StepAdder;
 }
 
-// Calm is board level: gentle. Bold is training: hard entry, heavy dim, vignette, slow push-in.
+// Calm is board level: gentle. Bold is training: hard entry, heavy dim, vignette. The question grows to its
+// full push-in on the enter step, so one click shows it at full size.
 // trace: how much of the question stays after the fade (bold keeps a trace so the beat is not a blank slide).
 const LOOK = {
-  calm: { dim: 0.3, vignette: 0, from: 0.92, push: 1.04, enter: motion.step * 1.5, ease: "power2.out", font: 120, hold: 2, trace: 0, fade: motion.step },
-  bold: { dim: 0.7, vignette: 1, from: 1.35, push: 1.12, enter: 0.22, ease: "power4.out", font: 156, hold: 2.5, trace: 0.12, fade: 0.3 },
+  calm: { dim: 0.3, vignette: 0, from: 0.92, push: 1.04, enter: motion.step * 1.5, ease: "power2.out", font: 120, trace: 0, fade: motion.step },
+  bold: { dim: 0.7, vignette: 1, from: 1.35, push: 1.12, enter: 0.22, ease: "power4.out", font: 156, trace: 0.12, fade: 0.3 },
 };
 
 function box(parent: HTMLElement, css: Partial<CSSStyleDeclaration>, role: string, text?: string): HTMLElement {
@@ -75,11 +75,9 @@ export function shout(ctx: Ctx, opts: ShoutOpts): ShoutHandle {
       if (earlier.length) tl.to(earlier, { autoAlpha: 0, duration: k.enter }); // an earlier shout's answer leaves
       tl.to(dim, { autoAlpha: k.dim, duration: k.enter }, earlier.length ? "<" : undefined);
       if (k.vignette) tl.to(vignette, { autoAlpha: k.vignette, duration: k.enter }, "<");
-      tl.to(q, { scale: 1, duration: k.enter, ease: k.ease }, "<");
+      tl.to(q, { scale: k.push, duration: k.enter, ease: k.ease }, "<");
       tl.to(row, { autoAlpha: 1, duration: k.enter }, "<");
     },
-    // The tension: the question stays and pushes in slowly while the speaker talks.
-    hold: (tl) => void tl.to(q, { scale: k.push, duration: k.hold, ease: "none" }),
     fade: (tl) => void tl.to(row, { autoAlpha: k.trace, duration: k.fade }),
     // Release: the dim, vignette and any trace lift as the answer builds in. Bold pops the answer.
     answer(tl) {

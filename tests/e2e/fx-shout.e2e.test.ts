@@ -34,7 +34,9 @@ async function look(fixture: string, step: number, scene: number, role: string, 
         const root = document.querySelectorAll('[data-k-shout="root"]')[s as number]
         const e = root.querySelectorAll<HTMLElement>(`[data-k-shout="${r}"]`)[n as number]
         const c = getComputedStyle(e)
-        return { opacity: Number(c.opacity), visibility: c.visibility }
+        const t = (e.firstElementChild && getComputedStyle(e.firstElementChild).transform) || 'none'
+        const scale = t === 'none' ? 1 : new DOMMatrix(t).a // the text box inside the row is the one that scales
+        return { opacity: Number(c.opacity), visibility: c.visibility, scale }
       },
       [scene, role, nth] as const,
     )
@@ -43,29 +45,35 @@ async function look(fixture: string, step: number, scene: number, role: string, 
   }
 }
 
-test('the dim is about 30 % in calm and 70 % in bold at the end of the hold', async () => {
-  expect((await look('fx-shout', 1, 0, 'dim')).opacity).toBeCloseTo(0.3, 1)
-  expect((await look('fx-shout-bold', 1, 0, 'dim')).opacity).toBeCloseTo(0.7, 1)
+test('the dim is about 30 % in calm and 70 % in bold once the question has entered', async () => {
+  expect((await look('fx-shout', 0, 0, 'dim')).opacity).toBeCloseTo(0.3, 1)
+  expect((await look('fx-shout-bold', 0, 0, 'dim')).opacity).toBeCloseTo(0.7, 1)
+})
+
+// One click: the enter step ends at the full push-in (1.04 calm, 1.12 bold); no second step grows it.
+test('the question reaches full size on the enter step', async () => {
+  expect((await look('fx-shout', 0, 0, 'question')).scale).toBeCloseTo(1.04, 2)
+  expect((await look('fx-shout-bold', 0, 0, 'question')).scale).toBeCloseTo(1.12, 2)
 })
 
 test('the vignette shows only in bold', async () => {
-  expect((await look('fx-shout', 1, 0, 'vignette')).visibility).toBe('hidden')
-  const v = await look('fx-shout-bold', 1, 0, 'vignette')
+  expect((await look('fx-shout', 0, 0, 'vignette')).visibility).toBe('hidden')
+  const v = await look('fx-shout-bold', 0, 0, 'vignette')
   expect(v.visibility).toBe('visible')
   expect(v.opacity).toBeCloseTo(1, 1)
 })
 
-// Scene 3 has two shout-outs (roots 2 and 3): steps 8-11 are the first, 12-15 the second.
+// A shout-out is three steps: enter, fade, answer. Scene 3 has two (roots 2 and 3): steps 6-8 are the first, 9-11 the second.
 for (const fixture of ['fx-shout', 'fx-shout-bold'])
   test(`${fixture}: the first answer is gone once the second question has entered`, async () => {
-    expect((await look(fixture, 11, 2, 'answer', 0)).visibility).toBe('visible')
-    expect((await look(fixture, 12, 2, 'answer', 0)).visibility).toBe('hidden')
-    expect((await look(fixture, 12, 3, 'question')).visibility).toBe('visible')
+    expect((await look(fixture, 8, 2, 'answer', 0)).visibility).toBe('visible')
+    expect((await look(fixture, 9, 2, 'answer', 0)).visibility).toBe('hidden')
+    expect((await look(fixture, 9, 3, 'question')).visibility).toBe('visible')
   })
 
 test('bold keeps a faint trace of the question after the fade; calm clears it', async () => {
-  const bold = await look('fx-shout-bold', 2, 0, 'question')
+  const bold = await look('fx-shout-bold', 1, 0, 'question')
   expect(bold.opacity).toBeGreaterThan(0.05)
   expect(bold.opacity).toBeLessThan(0.3)
-  expect((await look('fx-shout', 2, 0, 'question')).visibility).toBe('hidden')
+  expect((await look('fx-shout', 1, 0, 'question')).visibility).toBe('hidden')
 })
