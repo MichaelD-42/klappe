@@ -48,3 +48,10 @@ test('init refuses the klappe folder reached by another path', () => {
   expect(r.stderr).toContain('not in the klappe folder');
   expect(existsSync(join(fake, 'decks'))).toBe(false);
 });
+
+test('--version prints the version from package.json', () => {
+  const r = cli(mkdtempSync(join(tmpdir(), 'cli-')), '--version');
+  expect(r.status).toBe(0);
+  expect(r.stdout.trim()).toBe(JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf8')).version);
+  expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+});

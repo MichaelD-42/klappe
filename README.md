@@ -60,6 +60,10 @@ git subtree pull --prefix klappe https://github.com/MichaelD-42/klappe.git main 
 3. Run `npm i`.
 4. Run `npm run klappe:sync` to refresh the Claude agents.
 
+## Versions
+
+klappe uses semantic versioning; the version is in `klappe/package.json`, and `node klappe/bin/klappe.mjs --version` prints it. Before 1.0.0 a minor version may change the deck format or the API: read [CHANGELOG.md](CHANGELOG.md) before you update. Releases are git tags `vX.Y.Z` on `main`.
+
 ## Push a fix back
 
 1. Commit the fix to `klappe/` in its own commit. Touch no other folder in that commit.
