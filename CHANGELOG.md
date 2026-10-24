@@ -34,6 +34,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Self-test: text in a scaled group is checked at its real size; an empty result names its cause.
 - `lineArt` strips animations, images and links to other files, catches `javascript:` hidden by whitespace, and leaves shapes in `defs`, `clipPath` and `mask` alone.
 - `drawOn` returns where its draw starts; `icon()` no longer guesses it.
+- Video: `youtube-nocookie.com` (kept privacy-enhanced) and `music.youtube.com` links play; a video host link with no video id shows VIDEO MISSING and a deck problem instead of a broken box.
 - Design lint: named code fonts, `font: italic` and `oblique`, pills beyond buttons, protocol-relative URLs.
 
 ## 0.3.0 (2026-10-24)

@@ -89,3 +89,27 @@ test('long boot text shrinks to fit the screen', async () => {
   expect(r.inside).toBe(true)
   await page.close()
 })
+
+// A count line needs "label: number K ...": a bad one is a deck problem and still types as plain text.
+test('a count line without a number is reported and still types', async () => {
+  const page = await open('#/a/boot/1')
+  const r = await page.evaluate(async () => {
+    const { crt } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/crt.ts') // a string: vitest would rewrite import()
+    const html = document.body.appendChild(document.createElement('div'))
+    const problems: string[] = []
+    const h = crt({ html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, problem: (p: string) => problems.push(p) } as any, {
+      lines: [{ text: 'MEMORY TEST: lots', count: true }],
+    })
+    const Timeline = window.klappe.canvases[0].tl.constructor // the page's own GSAP
+    const tl = new Timeline({ paused: true })
+    h.powerOn(tl)
+    h.type(tl, 0)
+    tl.progress(1)
+    const text = html.textContent
+    html.remove()
+    return { problems, text }
+  })
+  expect(r.problems).toEqual(['crt: count line "MEMORY TEST: lots" needs a label and a number with K, like "MEMORY TEST: 640K OK"'])
+  expect(r.text).toContain('MEMORY TEST: lots')
+  await page.close()
+})

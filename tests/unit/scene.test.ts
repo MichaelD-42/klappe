@@ -74,7 +74,7 @@ describe("parseScene media", () => {
   it("detects video links", () => {
     for (const href of [
       "https://www.youtube.com/watch?v=x", "https://youtu.be/x", "https://vimeo.com/1",
-      "media/clip.mp4", "https://example.com/a.webm?t=3",
+      "media/clip.mp4", "https://example.com/a.webm?t=3", "https://www.youtube-nocookie.com/embed/x",
     ])
       expect(media(`[Demo](${href})`).media, href).toEqual({ kind: "video", href, alt: "Demo" });
   });

@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
-import { expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 // @ts-expect-error plain .mjs, no types
 import { FULL_FRAME, writeTodos } from '../../bin/todo.mjs';
-import { FULL_FRAME_PROMPT } from '../../src/fx/media';
+import { embed, FULL_FRAME_PROMPT } from '../../src/fx/media';
 
 const deck = () => {
   const d = mkdtempSync(join(tmpdir(), 'todo-'));
@@ -109,4 +109,22 @@ test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 promp
     '- [ ] media/sky.png — prompt: A sky, at dusk for a presentation scene about The plant, 16:9, 1920x1080, no text, no logos',
     '',
   ]);
+});
+
+describe('embed', () => {
+  test.each([
+    ['https://youtu.be/abc_1', 'https://www.youtube.com/embed/abc_1'],
+    ['https://www.youtube.com/watch?v=abc', 'https://www.youtube.com/embed/abc'],
+    ['https://music.youtube.com/watch?v=abc', 'https://www.youtube.com/embed/abc'],
+    ['https://www.youtube-nocookie.com/embed/abc', 'https://www.youtube-nocookie.com/embed/abc'],
+    ['https://vimeo.com/123', 'https://player.vimeo.com/video/123'],
+  ])('%s plays as %s', (href, url) => expect(embed(href)).toBe(url))
+
+  test.each([
+    'https://youtu.be/', // no id
+    'https://www.youtube.com/@channel',
+    'https://vimeo.com/channels/staff',
+    'https://example.com/watch?v=abc', // not a video host
+    'https://youtube.com.example.com/watch?v=abc',
+  ])('%s gives no embed', (href) => expect(embed(href)).toBeNull())
 });

@@ -55,10 +55,10 @@ Effect defects:
 
 - [x] Art: the `javascript:` filter misses entity and whitespace tricks and keeps `set`, `animate`, `use` and `image`; normalisation sets `fill: none` inside `defs`, `clipPath` and `mask`.
 - [x] Icons: the draw start is computed outside `drawOn` (fragile); the 0.5 cutoff is undocumented.
-- [ ] CRT: no test for the bad count-line problem.
-- [ ] Figure: the pose mapping has no unit test. Morph: no test of its play-time start values.
-- [ ] Full-frame picture: `show()` finds its step start through a label that `appendStep` moves.
-- [ ] Media: a `youtu.be` link with an empty id embeds `/embed/undefined`; `youtube-nocookie.com` and `music.youtube.com` are not matched; the embed allowlist has no negative test; the HTML media wrapper has no opaque backdrop.
+- [x] CRT: no test for the bad count-line problem.
+- [x] Figure: the pose mapping has no unit test. Morph: no test of its play-time start values.
+- [x] ~~Full-frame picture: `show()` finds its step start through a label that `appendStep` moves.~~ No change: the label is read only while a step is built, and step functions run only then; the code marks it as a shortcut.
+- [x] Media: a `youtu.be` link with an empty id; `youtube-nocookie.com` and `music.youtube.com` not matched; a video host link with no id played as a broken box; no negative test for the embed allowlist. The HTML wrapper's backdrop was already opaque.
 
 ## Waiting on a decision
 

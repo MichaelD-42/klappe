@@ -166,18 +166,25 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
 }
 
 // The iframe address of a YouTube or Vimeo link; null for anything else.
-function embed(href: string): string | null {
+const VIDEO_HOST = /(?:^|\.)(?:youtube(?:-nocookie)?\.com|youtu\.be|vimeo\.com)$/i;
+
+export function embed(href: string): string | null {
   let u: URL;
   try {
     u = new URL(href);
   } catch {
     return null;
   }
-  const host = u.hostname.replace(/^(www|m)\./, "");
-  if (host === "youtu.be") return `https://www.youtube.com/embed/${u.pathname.split("/")[1]}`;
-  if (host === "youtube.com") {
-    const id = u.searchParams.get("v") ?? /^\/(?:embed|shorts)\/([\w-]+)/.exec(u.pathname)?.[1];
-    return id ? `https://www.youtube.com/embed/${id}` : null;
+  const host = u.hostname.replace(/^(www|m|music)\./, "");
+  const id = (s: string | null | undefined) => (s && /^[\w-]+$/.test(s) ? s : null);
+  if (host === "youtu.be") {
+    const v = id(u.pathname.split("/")[1]);
+    return v && `https://www.youtube.com/embed/${v}`;
+  }
+  if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    const v = id(u.searchParams.get("v") ?? /^\/(?:embed|shorts)\/([\w-]+)/.exec(u.pathname)?.[1]);
+    // The privacy-enhanced host stays: the author chose it.
+    return v && `https://www.${host}/embed/${v}`;
   }
   const vi = host === "vimeo.com" ? /(\d+)\/?$/.exec(u.pathname) : null;
   return vi ? `https://player.vimeo.com/video/${vi[1]}` : null;
@@ -188,6 +195,10 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
   if (src === undefined) return fade(missing(ctx, fit(rect), t("videoMissing", LANG), `${key(href)} — ${title}`));
+  const frame = embed(href);
+  // A video host's page that is not one video (a channel, a playlist page) cannot play in a box.
+  if (online && !frame && VIDEO_HOST.test(new URL(href).hostname))
+    return fade(missing(ctx, fit(rect), t("videoMissing", LANG), `${href} has no video id; link one video — ${title}`));
   // A border and a caption, so the box reads as a video even when it cannot load (offline).
   const area = { ...rect, h: rect.h - CAPTION };
   const b = box(ctx, fit(area), "#000"); // black letterbox bars
@@ -207,7 +218,6 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     textOverflow: "ellipsis",
   });
   if (online) b.dataset.kNote = `${t("video", LANG)} "${title}" ${t("needsInternet", LANG)}`;
-  const frame = embed(href);
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;

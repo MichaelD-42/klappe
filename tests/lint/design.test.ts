@@ -110,6 +110,7 @@ describe('design lint catches each rule', () => {
     ['pill-button', 'src/styles.css', '.k-tag { border-radius: 999px; }'],
     ['pill-button', 'src/styles.css', '.k-btn { border-radius: 2em; }'],
     ['runtime-url', 'src/main.ts', 'import("//cdn.example.com/lib.js")'],
+    ['runtime-url', 'src/fx/chart.ts', 'const u = "https://www.youtube.com/embed/x"'], // the embed allowlist is media.ts and the fixtures only
   ])('%s in %s', (rule, file, text) => {
     expect(rulesOf(file, text)).toContain(rule)
   })

@@ -306,7 +306,7 @@ steps: [(tl, img) => img.show(tl)],
 
 ## `video`
 
-Catalog: section `190-media` (`#/media/youtube/1`). A video in a framed box with its title as a caption. In Markdown, a list item linking to YouTube, Vimeo, or a `.mp4` or `.webm` file shows one.
+Catalog: section `190-media` (`#/media/youtube/1`). A video in a framed box with its title as a caption. In Markdown, a list item linking to YouTube, Vimeo, or a `.mp4` or `.webm` file shows one. YouTube links can be `watch?v=`, `youtu.be`, `shorts`, `music.youtube.com` or `youtube-nocookie.com` (which stays privacy-enhanced). A video host link with no video id, such as a channel page, shows VIDEO MISSING and a deck problem.
 
 From the Markdown form, `decks/demo/sections/190-media/10-youtube/scene.md`:
 

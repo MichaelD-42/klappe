@@ -5,7 +5,7 @@ import { idFromFolder } from "./ids";
 
 // [label](href "title") or ![alt](href "title"), in a list item's raw inline Markdown.
 const LINK = /(!?)\[([^\]]*)\]\(\s*(\S+?)(?:\s+"([^"]*)")?\s*\)/g;
-const VIDEO = /^(?:https?:)?\/\/(?:[\w-]+\.)*(?:youtube\.com|youtu\.be|vimeo\.com)(?:[/?#]|$)|\.(?:mp4|webm)(?:[?#].*)?$/i;
+const VIDEO = /^(?:https?:)?\/\/(?:[\w-]+\.)*(?:youtube(?:-nocookie)?\.com|youtu\.be|vimeo\.com)(?:[/?#]|$)|\.(?:mp4|webm)(?:[?#].*)?$/i;
 const CHART = /^(?:\.\/)?data\/[^/?#]+\.(?:csv|json)$/i;
 const GROUPS = /^\{([\d,\- |]+)\}$/;
 const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
