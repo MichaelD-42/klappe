@@ -1,8 +1,7 @@
 ## The old way
 
-- Classic title slide: "Engineering Excellence 2026", logo, subtitle.
-- Cracks run across the slide.
-- The slide breaks into pieces and falls away.
-- The slide is gone; the dark, empty stage stays. Hold for a moment.
+- The usual title slide, the way every update starts.
+- It cracks.
+- It breaks and falls away; the empty stage stays.
 
 > Let it sit in silence for two seconds.

@@ -18,6 +18,7 @@ const CSS = `
 `;
 
 // A placeholder logo mark: a hexagon with a chevron.
+// TODO: replace with the organisation's logo (an inline SVG in theme tokens, or an image from media/).
 const LOGO = `<svg viewBox="0 0 120 120" aria-hidden="true">
   <path d="M60 8 L106 34 V86 L60 112 L14 86 V34 Z" fill="none" stroke="var(--k-accent)" stroke-width="6" stroke-linejoin="round"/>
   <path d="M34 74 L60 44 L86 74" fill="none" stroke="var(--k-fg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
@@ -53,8 +54,11 @@ const scene: SceneModule = {
       tl.to({}, { duration: CRACK_GAP });
       fx.crack2(tl);
     },
-    (tl, { fx }: Refs) => fx.fall(tl),
-    (tl) => void tl.to({}, { duration: HOLD }),
+    // The empty stage holds in the same step: silence needs no click.
+    (tl, { fx }: Refs) => {
+      fx.fall(tl);
+      tl.to({}, { duration: HOLD });
+    },
   ],
 };
 export default scene;
