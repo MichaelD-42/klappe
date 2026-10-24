@@ -56,16 +56,20 @@ export function morph(ctx: Ctx, opts: MorphOpts): { play: StepAdder } {
       const [a, b] = [from.getBoundingClientRect(), to.getBoundingClientRect()];
       const dx = (b.left + b.width / 2 - (a.left + a.width / 2)) / k;
       const dy = (b.top + b.height / 2 - (a.top + a.height / 2)) / k;
-      // One factor for both axes (the geometric mean of the size ratios): no stretched text mid-way.
-      const s = a.width && a.height && b.width && b.height ? Math.sqrt((b.width / a.width) * (b.height / a.height)) : 1;
+      // Uniform factors, so text is not stretched. The old shape grows by the smaller size ratio, so it ends inside
+      // the new one; the new one starts at the larger, so it starts inside the old one. Neither spills over the other.
+      const ok = a.width && a.height && b.width && b.height;
+      const [rw, rh] = ok ? [b.width / a.width, b.height / a.height] : [1, 1];
+      const [s, t] = [Math.min(rw, rh), Math.max(rw, rh)];
       const d = motion.step * 2;
       const move = { duration: d, ease: "power2.inOut", immediateRender: false };
-      // The crossfade runs over the middle 70% of the move: each shape shows alone at its end, half and half mid-way.
-      const fade = { duration: d * 0.7, ease: "none", immediateRender: false };
+      // The new shape fades in over the old one, which then fades out: one of them always shows strongly,
+      // never both at half (that washed the text out mid-way).
+      const fade = { duration: d * 0.45, ease: "none", immediateRender: false };
       tl.fromTo(from, p, { x: p.x + dx, y: p.y + dy, scaleX: p.scaleX * s, scaleY: p.scaleY * s, ...move });
-      tl.fromTo(to, { x: q.x - dx, y: q.y - dy, scaleX: q.scaleX / s, scaleY: q.scaleY / s }, { ...q, ...move }, "<");
-      tl.fromTo(from, { autoAlpha: 1 }, { autoAlpha: 0, ...fade }, `<${d * 0.15}`);
-      tl.fromTo(to, { autoAlpha: 0 }, { autoAlpha: 1, ...fade }, "<");
+      tl.fromTo(to, { x: q.x - dx, y: q.y - dy, scaleX: q.scaleX / t, scaleY: q.scaleY / t }, { ...q, ...move }, "<");
+      tl.fromTo(to, { autoAlpha: 0 }, { autoAlpha: 1, ...fade }, `<${d * 0.1}`);
+      tl.fromTo(from, { autoAlpha: 1 }, { autoAlpha: 0, ...fade }, `<${d * 0.35}`);
     },
   };
 }
