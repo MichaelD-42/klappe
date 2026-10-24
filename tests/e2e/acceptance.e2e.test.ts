@@ -99,7 +99,7 @@ describe.skipIf(!inject('IS_DEMO_DECK'))('acceptance on klappe decks/demo (skipp
 
       // Speaker to main: a click on Next, then a key press in the speaker window.
       await speaker.bringToFront()
-      await speaker.getByRole('button', { name: 'Next' }).click()
+      await speaker.getByRole('button', { name: 'Next', exact: true }).click()
       await expect.poll(mainIndex).toBe(2)
       await expect.poll(() => text.textContent()).toBe(await textAt(2))
       await speaker.keyboard.press('ArrowLeft')

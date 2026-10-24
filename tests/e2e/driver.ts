@@ -12,8 +12,9 @@ export async function runSelftest(
     await page.goto(url)
     const json = await page
       .locator('script#klappe-selftest')
-      .evaluate((el) => el.textContent, undefined, { timeout: 90_000 })
-    return JSON.parse(json ?? '') as SelftestResult
+      .evaluate((el) => el.textContent, undefined, { timeout: 110_000 }) // the ac worst case: 12 checks of 8 s; vitest allows 120 s
+    if (!json?.trim()) throw new Error(`the self-test wrote an empty result (${url})`)
+    return JSON.parse(json) as SelftestResult
   } finally {
     await browser.close()
   }

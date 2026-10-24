@@ -34,3 +34,12 @@ test('walk fails on a deck whose scene.ts and scene.md disagree', async () => {
   expect(r.problems.some((p) => p.includes('scene.ts'))).toBe(true)
   expect(r.steps).toBeGreaterThan(0)
 })
+
+// The size check takes every scale on the way to the screen, not only the camera's: a group scaled
+// down inside the scene, in HTML or in SVG, makes its text small too.
+test('walk flags text made small by a scaled group', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=small-in-group`, { w: 1366, h: 768 })
+  const detail = r.checks.filter((c) => !c.ok).map((c) => c.detail).join(' ')
+  expect(detail).toContain('Tiny html')
+  expect(detail).toContain('Tiny svg')
+})

@@ -11,3 +11,9 @@ test('driver reads the selftest result from a page', async () => {
 test('dev server is reachable', () => {
   expect(inject('BASE_URL')).toMatch(/^http:\/\//)
 })
+
+test('an empty result names the cause instead of a bare SyntaxError', async () => {
+  await expect(runSelftest(`data:text/html,<script id="klappe-selftest" type="application/json"></script>`)).rejects.toThrow(
+    'the self-test wrote an empty result',
+  )
+})

@@ -35,12 +35,12 @@ Navigation, autoplay, speaker:
 
 Self-test, lint and tests:
 
-- [ ] An empty self-test result gives a bare `SyntaxError` in the driver.
-- [ ] The `ac` self-test can run past the driver's 90 s wait (12 checks of up to 8 s), and a timed-out check keeps running.
-- [ ] The legibility check skips text on section layers (`data-section`) and takes the camera scale from the world only.
-- [ ] The design lint misses named monospace fonts (Consolas, Menlo, "… Mono"), `font: italic` shorthand and `oblique`, pill radii on other classes or in `var()`/`em`, and protocol-relative `//cdn` URLs.
-- [ ] The real-input test finds the speaker's Next button with a non-exact `getByRole`.
-- [ ] The production build ships the self-test and the test fixtures.
+- [x] An empty self-test result gives a bare `SyntaxError` in the driver.
+- [x] The `ac` self-test can run past the driver's 90 s wait (12 checks of up to 8 s): the driver waits 110 s. A timed-out check already stopped at its next step.
+- [x] The legibility check takes the camera scale only: it now measures the scale each text is drawn at, so a scaled group counts. Section layers were already checked.
+- [x] The design lint misses named monospace fonts, `font: italic` and `oblique`, pills beyond `.btn` and in `em`, and protocol-relative `//cdn` URLs. A `var()` radius stays unchecked: a lint cannot resolve it.
+- [x] The real-input test finds the speaker's Next button with a non-exact `getByRole`.
+- [x] The production build ships the self-test and the test fixtures.
 
 Engine API gaps:
 
@@ -63,7 +63,7 @@ Effect defects:
 ## Waiting on a decision
 
 - Shout-out takes two clicks to reach full size; it should take one (user, 2026-10-24). `enter` scales the question from `from` to 1, and `hold`, the next click, pushes it on to `push` (1.04 calm, 1.12 bold) over 2 to 2.5 s (`src/fx/shout.ts`). Fix: `enter` grows straight to `push`; then drop `hold` (three steps: enter, fade, answer) or keep a still hold. Dropping it changes the four-step contract in the parser (`shout-hold`), the renderer (`src/render/world.ts`), `effects.md`, `markdown.md` and every `scene.ts` that plays the four adders (the shout catalog section, value-stream clarification, the meeting scene).
-- Bundle size: every deck carries every effect, all Lucide icons, world-atlas and d3. Options: an `IconNode` input for `icon()`, lazy effect imports.
+- Bundle size: every deck carries every effect, all Lucide icons, world-atlas and d3 (1.8 MB of JS for the demo). Options: an `IconNode` input for `icon()`, lazy effect imports. The self-test and the test fixtures are about 3 % of it; loading them only when asked needs an async start.
 
 ## Milestones
 
