@@ -12,7 +12,7 @@ body {
   top: 0;
   width: 1920px;
   height: 1080px;
-  overflow: hidden;
+  overflow: clip; /* not hidden: scrollIntoView (the overview marker) scrolls a hidden box too, and left a band */
   background: var(--k-bg);
   color: var(--k-fg);
   font-family: var(--k-font);
