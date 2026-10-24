@@ -2,11 +2,11 @@
 
 A list of square boxes. Each step ticks the next box: the check draws on in `--k-ok` and the item text brightens from `--k-muted` to `--k-fg`.
 
-Gallery: section `210-checklist-agenda` (`#/checklist-agenda/checklist/1`).
+Catalog: section `310-checklist-agenda` (`#/checklist-agenda/checklist/1`).
 
 ## Markdown
 
-Task items in `scene.md`. The first step shows the list; each item is one step that ticks it. `[x]` items are ticked when the list shows. From `decks/gallery/sections/210-checklist-agenda/10-checklist/scene.md`:
+Task items in `scene.md`. The first step shows the list; each item is one step that ticks it. `[x]` items are ticked when the list shows. From `decks/demo/sections/310-checklist-agenda/10-checklist/scene.md`:
 
 ```md
 - [x] Backup verified

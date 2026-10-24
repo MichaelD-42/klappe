@@ -2,11 +2,11 @@
 
 Points at a part of a scene: a leader line draws from the target to a label box, then the label's text fades in. Works on code lines, any HTML or SVG element, or a plain point.
 
-Gallery: section `160-callout` (`#/callout/code/2` and `#/callout/point/1`).
+Catalog: section `260-callout` (`#/callout/code/2` and `#/callout/point/1`).
 
 ## `callout`
 
-Only in `scene.ts`. From `decks/gallery/sections/160-callout/10-code/scene.ts`:
+Only in `scene.ts`. From `decks/demo/sections/260-callout/10-code/scene.ts`:
 
 ```ts
 import { callout, code, type CalloutHandle, type CodeHandle } from "klappe/fx";

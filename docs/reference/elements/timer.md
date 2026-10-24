@@ -2,11 +2,11 @@
 
 A countdown for an exercise in a training. It counts real minutes on the wall clock, not timeline time: the one element where seek does not equal play. In the last 20% it turns `--k-warn`; at zero it turns `--k-bad` and shows "Time's up".
 
-Gallery: section `220-timer` (`#/timer/exercise/1`, `#/timer/styles/1`).
+Catalog: section `320-timer` (`#/timer/countdown/1`, `#/timer/styles/1`).
 
 ## `timer`
 
-In `scene.ts`: `timer(ctx, { minutes, style, x, y, size, label })` returns `{ show }`. From `decks/gallery/sections/220-timer/10-exercise/scene.ts`:
+In `scene.ts`: `timer(ctx, { minutes, style, x, y, size, label })` returns `{ show }`. From `decks/demo/sections/320-timer/10-countdown/scene.ts`:
 
 ```ts
 build: (ctx) => ({ t: timer(ctx, { minutes: 10, style: "ring", x: 700, y: 260, size: 520, label: "Exercise 1: map the process" }) }),

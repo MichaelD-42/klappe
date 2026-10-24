@@ -2,11 +2,11 @@
 
 Boxes on a grid joined by orthogonal arrows. Boxes and arrows fade in, a box can be ringed in the accent colour, and packets (dots) travel the arrows with each box pulsing on arrival. Packets are timeline tweens, so they seek like everything else.
 
-Gallery: section `170-flow` (`#/flow/pipeline/1`, `#/flow/send/2`, `#/flow/callout/2`, `#/flow/long/1`).
+Catalog: section `270-flow` (`#/flow/pipeline/1`, `#/flow/send/2`, `#/flow/callout/2`, `#/flow/long/1`).
 
 ## `flow`
 
-Only in `scene.ts`. From `decks/gallery/sections/170-flow/10-pipeline/scene.ts`:
+Only in `scene.ts`. From `decks/demo/sections/270-flow/10-pipeline/scene.ts`:
 
 ```ts
 import { flow, type FlowHandle } from "klappe/fx";

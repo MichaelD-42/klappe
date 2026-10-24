@@ -2,11 +2,11 @@
 
 Actors in even columns, each a head with a dashed lifeline. Each message is an arrow between two lifelines at its own row; the label fades in above it once the arrow has arrived.
 
-Gallery: section `180-sequence` (`#/sequence/order/1`, `#/sequence/twelve/1`).
+Catalog: section `280-sequence` (`#/sequence/order/1`, `#/sequence/twelve/1`).
 
 ## `sequence`
 
-Only in `scene.ts`. From `decks/gallery/sections/180-sequence/10-order/scene.ts`:
+Only in `scene.ts`. From `decks/demo/sections/280-sequence/10-order/scene.ts`:
 
 ```ts
 import { sequence, type SequenceHandle } from "klappe/fx";

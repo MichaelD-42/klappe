@@ -2,11 +2,11 @@
 
 A top-down tree of boxes joined by labelled lines (yes/no and the like). `path` lights the route a decision took and dims the rest.
 
-Gallery: section `200-tree` (`#/tree/route/1`, `#/tree/route/3`, `#/tree/levels/2`).
+Catalog: section `300-tree` (`#/tree/route/1`, `#/tree/route/3`, `#/tree/levels/2`).
 
 ## `decisionTree`
 
-Only in `scene.ts`. From `decks/gallery/sections/200-tree/10-route/scene.ts`:
+Only in `scene.ts`. From `decks/demo/sections/300-tree/10-route/scene.ts`:
 
 ```ts
 import { decisionTree, type TreeHandle } from "klappe/fx";
