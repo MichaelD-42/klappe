@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `roadmap`: a time axis with month ticks, milestones that appear one per step in `--k-accent`, and a "today" marker that moves step by step. The deck gives "today" (never the wall clock); dates are written in the deck language.
 - `annotate` kind `highlight`: a marker band sweeps in behind a phrase, one per line when it wraps, in a translucent `--k-accent` so the text stays readable.
 - `glow`, `pulse` and `shake`: one-step nudges on any element. A glow behind it (on, a slow breathe for "live", off), a ring that pulses out once, a two-cycle shake for "this failed". `lineArt().glow` now uses the shared glow, a blurred copy of the part instead of a tweened `drop-shadow`.
 - `figure`, `timer` and `checklist` handles expose `el`; a `worldMap` site's `label` is optional (no label, no text).
