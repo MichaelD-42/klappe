@@ -332,7 +332,8 @@ export function renderWorld(
   root: HTMLElement,
   // still: videos and auroras in backgrounds do not move (reduced motion, the self-test).
   // svg: the text of animated background .svg files, by media key (svgBackgrounds).
-  opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string> } = {},
+  // onProblem: also told of each ctx.problem, so one raised after load reaches the on-screen list.
+  opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string>; onProblem?: (msg: string) => void } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
   const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
@@ -392,7 +393,7 @@ export function renderWorld(
         camera,
         files,
         onStep: (fn) => stepListeners.push(fn),
-        problem: (msg) => problems.push(msg),
+        problem: (msg) => (problems.push(msg), opts.onProblem?.(msg)),
         reducedMotion: opts.reducedMotion,
         deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
       };

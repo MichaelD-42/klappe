@@ -93,7 +93,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
 - `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
-- `ctx.problem(msg)` reports a deck problem. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
+- `ctx.problem(msg)` reports a deck problem. One reported after load (once a web font is in, or while a step plays) joins the on-screen list too. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
 
 ### Examples
 
