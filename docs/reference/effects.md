@@ -398,7 +398,7 @@ steps: [
 | --- | --- | --- |
 | `question` | string | the big text; long text gets a smaller size to stay in the frame |
 | `answer` | string | shown in `--k-accent` at 70% of the question's size |
-| `intensity` | `"calm"` or `"bold"` | required. Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
+| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
 
 | Handle | Step |
 | --- | --- |

@@ -172,3 +172,23 @@ test('the first step after a blackout waits for the blackout to end', async () =
   expect(r.after).toBe('rgba(0, 0, 0, 0)')
   await page.close()
 })
+
+// Scenes read their own text and the deck's language and intensity from ctx, instead of copying them.
+test('ctx carries the scene text and the deck language and intensity', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=ctx-deck#/a/b/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(() => ({
+    problems: [...window.klappe.problems],
+    probe: document.querySelector('[data-k-probe]')!.textContent,
+    count: document.querySelector('[data-k-text]')!.textContent,
+    vignette: getComputedStyle(document.querySelector('[data-k-shout="vignette"]')!).opacity,
+  }))
+  expect(r.problems).toEqual([])
+  expect(r.probe).toBe('Aus der Datei|Zählen.,Rufen.')
+  expect(r.count).toBe('2.000')
+  expect(Number(r.vignette)).toBe(1) // bold: the vignette is up; calm has none
+  await browser.close()
+}, 30_000)

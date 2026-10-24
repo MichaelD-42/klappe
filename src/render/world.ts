@@ -320,6 +320,7 @@ export function renderWorld(
         onStep: (fn) => stepListeners.push(fn),
         problem: (msg) => problems.push(msg),
         reducedMotion: opts.reducedMotion,
+        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
       };
     };
 
@@ -332,7 +333,7 @@ export function renderWorld(
     const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id };
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);

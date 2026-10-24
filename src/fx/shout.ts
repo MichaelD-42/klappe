@@ -5,7 +5,7 @@ import type { Ctx, StepAdder } from "../types";
 export interface ShoutOpts {
   question: string;
   answer: string;
-  intensity: "calm" | "bold";
+  intensity?: "calm" | "bold"; // default: the deck's (deck.md `intensity`)
 }
 export interface ShoutHandle {
   enter: StepAdder;
@@ -36,8 +36,9 @@ const fit = (px: number, text: string) => `${Math.round(px * Math.min(1, 1.6 / M
 const answers = new WeakMap<HTMLElement, HTMLElement[]>();
 
 export function shout(ctx: Ctx, opts: ShoutOpts): ShoutHandle {
-  const k = LOOK[opts.intensity];
-  const bold = opts.intensity === "bold";
+  const intensity = opts.intensity ?? ctx.deck.intensity;
+  const k = LOOK[intensity];
+  const bold = intensity === "bold";
   const root = box(ctx.html, { zIndex: "5", pointerEvents: "none" }, "root");
   const dim = box(root, { background: "var(--k-blackout)" }, "dim");
   const vignette = box(root, { background: "radial-gradient(ellipse at center, transparent 35%, var(--k-blackout) 100%)" }, "vignette");

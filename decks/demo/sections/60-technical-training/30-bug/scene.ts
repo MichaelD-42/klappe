@@ -12,7 +12,7 @@ interface Refs {
 // The same code in the same place as the walkthrough; the callout points left, into the free column.
 const scene: SceneModule = {
   build(ctx): Refs {
-    const h = title(ctx, "The bug");
+    const h = title(ctx, ctx.doc!.title);
     const bug = icon(ctx, "bug", { x: 580, y: 194, size: 80, color: "var(--k-accent)" });
     const c = code(ctx, { src: RETRY, lang: "js", ...SLOT });
     return { h, bug, c, note: callout(ctx, { target: c.line(BUG_LINE), text: "<= makes one attempt too many", side: "left" }) };

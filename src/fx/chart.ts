@@ -99,7 +99,6 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 }
 
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
-const LANG = "en";
 const PALETTE = [1, 2, 3, 4].map((n) => `var(--k-series-${n})`);
 const UP = "var(--k-phosphor)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
@@ -188,24 +187,24 @@ function load(ctx: Ctx, opts: ChartOpts): { rows: unknown[]; source?: string } |
 export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const type = opts.type ?? "bar";
   const loaded = load(ctx, opts);
-  if (loaded === null) return placeholder(ctx, opts, t("dataMissing", LANG), "");
-  if (typeof loaded === "string") return placeholder(ctx, opts, t("dataError", LANG), loaded);
-  if (!loaded.rows.length) return placeholder(ctx, opts, t("dataMissing", LANG), "no rows");
+  if (loaded === null) return placeholder(ctx, opts, t("dataMissing", ctx.deck.lang), "");
+  if (typeof loaded === "string") return placeholder(ctx, opts, t("dataError", ctx.deck.lang), loaded);
+  if (!loaded.rows.length) return placeholder(ctx, opts, t("dataMissing", ctx.deck.lang), "no rows");
   const why = dataError(loaded.rows, type);
-  if (why) return placeholder(ctx, opts, t("dataError", LANG), why);
+  if (why) return placeholder(ctx, opts, t("dataError", ctx.deck.lang), why);
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
   const keys = type === "stacked" || type === "line" ? series : [series[0]];
   const names = data.map((r) => String(r[label]));
-  if (type === "waterfall") names.push(t("total", LANG));
+  if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
   const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
   const legend =
     type === "waterfall"
       ? [
-          { name: t("increase", LANG), fill: UP },
-          { name: t("decrease", LANG), fill: DOWN },
+          { name: t("increase", ctx.deck.lang), fill: UP },
+          { name: t("decrease", ctx.deck.lang), fill: DOWN },
         ]
       : keys.length > 1
         ? keys.map((k, i) => ({ name: k, fill: color(i) }))
@@ -225,12 +224,12 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const root = svg(ctx.svg, "g", {
     "data-k-src": opts.src,
     "data-k-chart": type,
-    "data-k-note": `${t("source", LANG)}: ${opts.src} — ${loaded.source || t("originNotStated", LANG)}`,
+    "data-k-note": `${t("source", ctx.deck.lang)}: ${opts.src} — ${loaded.source || t("originNotStated", ctx.deck.lang)}`,
   });
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
-    const s = text(root, t("sampleData", LANG), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
+    const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
     s.style.fill = "var(--k-phosphor-amber)";
     head.push(s);
   }
@@ -327,7 +326,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         data.forEach((r, i) => {
           const net = keys.some((k) => num(r, k) < 0);
           const pos = d3.sum(keys, (k) => Math.max(0, num(r, k)));
-          barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `${t("net", LANG)} ${fmt(n)}` : fmt);
+          barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `${t("net", ctx.deck.lang)} ${fmt(n)}` : fmt);
         });
       } else if (type === "waterfall") {
         const signed = d3.format(`+,.${dec}f`);

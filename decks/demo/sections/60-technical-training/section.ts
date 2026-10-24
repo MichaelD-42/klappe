@@ -26,27 +26,24 @@ export function centre(el: HTMLElement, scale = 1): void {
   el.style.top = `${AXIS / scale - el.offsetHeight / 2}px`;
 }
 
-const ROW = /^- (\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/gm;
-
-// An agenda scene from its scene.md: the title and the time rows are read from there, the rows centred on AXIS.
-// A scene.ts scene gets no Markdown rendering; this keeps the Markdown the one source of the rows.
-export function agendaScene(md: string): SceneModule {
-  const rows = [...md.matchAll(ROW)].map(([, from, to, t, cur]) => ({ from, to, title: t, current: !!cur }));
-  return {
-    build(ctx) {
-      const h = title(ctx, /^## (.+)$/m.exec(md)![1]);
-      const a = agenda(ctx, { rows, x: 160, y: 0, w: 1600 });
-      centre(ctx.html.lastElementChild as HTMLElement); // agenda() appends its block last
-      return { h, a };
+// An agenda scene: the title and the time rows come from its scene.md through ctx.doc, the rows centred on AXIS.
+// A scene.ts scene gets no Markdown rendering; ctx.doc keeps the Markdown the one source of the rows.
+export const agendaScene: SceneModule = {
+  build(ctx) {
+    const part = ctx.doc!.steps.find((s) => s.part?.kind === "agenda")?.part;
+    const rows = part?.kind === "agenda" ? part.rows : [];
+    const h = title(ctx, ctx.doc!.title);
+    const a = agenda(ctx, { rows, x: 160, y: 0, w: 1600 });
+    centre(ctx.html.lastElementChild as HTMLElement); // agenda() appends its block last
+    return { h, a };
+  },
+  steps: [
+    (tl, r: { h: HTMLElement; a: AgendaHandle }) => {
+      tl.to(r.h, { autoAlpha: 1, duration: 0.6 });
+      r.a.show(tl);
     },
-    steps: [
-      (tl, r: { h: HTMLElement; a: AgendaHandle }) => {
-        tl.to(r.h, { autoAlpha: 1, duration: 0.6 });
-        r.a.show(tl);
-      },
-    ],
-  };
-}
+  ],
+};
 
 // The slide before is the meeting room; the training breaks it open.
 const section: SectionModule = { transition: "shatter" };

@@ -20,7 +20,7 @@ const scene: SceneModule = {
   // place() is the scene's home frame: the engine flies there on entry. camera.to is for moves within a scene.
   place: () => stageFrame("clarification"),
   build(ctx) {
-    const title = heading(ctx, "Clarification");
+    const title = heading(ctx, ctx.doc!.title);
     const person = figure(ctx, { x: PERSON, y: FLOOR, color: "var(--k-fg)" });
     const customer = figure(ctx, { x: CUSTOMER, y: FLOOR, color: "var(--k-accent)" });
     const figures = [...ctx.svg.querySelectorAll("[data-k-figure]")];
@@ -56,8 +56,8 @@ const scene: SceneModule = {
     const reply = bubble(ctx, { x: CUSTOMER + 40, y: FLOOR - 205, text: "[Answer]", side: "right" });
     const open = counter(ctx, { x: (MEET + CUSTOMER) / 2, y: 330, from: CARDS, to: 0, label: "Open questions" });
     const count = ctx.html.lastElementChild; // counter() appends its box last; the shout clears it
-    // Last, so it sits above the scene. Text as in scene.md; "calm" as in deck.md.
-    const out = shout(ctx, { question: "What is still left for humans to do?", answer: "The conversations that build trust.", intensity: "calm" });
+    // Last, so it sits above the scene. Question, answer and intensity come from scene.md and deck.md.
+    const out = shout(ctx, { question: ctx.doc!.steps.find((s) => s.kind === "shout-enter")!.text, answer: ctx.doc!.steps.find((s) => s.kind === "shout-answer")!.text });
     return { title, person, customer, name, figures, stack, cards, pulse, ask, reply, open, count, out };
   },
   steps: [

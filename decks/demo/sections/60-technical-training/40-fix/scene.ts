@@ -10,7 +10,7 @@ interface Refs {
 
 const scene: SceneModule = {
   build(ctx): Refs {
-    const h = title(ctx, "The fix");
+    const h = title(ctx, ctx.doc!.title);
     // Under the title, in the free left column: what the diff changes.
     const says = ctx.html.appendChild(document.createElement("p"));
     says.textContent = "One character: <= becomes <.";

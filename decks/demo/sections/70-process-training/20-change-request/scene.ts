@@ -9,7 +9,7 @@ interface Refs {
 
 const scene: SceneModule = {
   build: (ctx): Refs => ({
-    h: title(ctx, "A change request"),
+    h: title(ctx, ctx.doc!.title),
     s: swimlanes(ctx, {
       x: 160, y: 290, w: 1600, h: 690,
       lanes: [

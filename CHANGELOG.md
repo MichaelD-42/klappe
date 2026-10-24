@@ -8,6 +8,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion; README section on presenting.
 - `klappe --version`.
+- `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
 
 ### Changed
@@ -20,6 +21,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - A `shared-canvas` list that mixes ids and groups is a deck problem instead of being flattened.
 - The demo: the charts leave the story; the catalog keeps them.
 - The single-file build is dropped (see DECISIONS).
+- `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
 
 ### Fixed
 

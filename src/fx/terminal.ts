@@ -36,7 +36,6 @@ const PAD_Y = 24;
 const CPS = 34; // typing speed, characters per second (as crt)
 const GAP = 0.08; // between output lines
 const CURSOR = "█";
-const LANG = "en"; // shortcut: the deck language is not on ctx; pass meta.lang once ctx has it.
 
 // Monospace is allowed under .k-term: a terminal is code, not a label.
 const CSS = `
@@ -98,7 +97,7 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
     const m = row(vis);
     m.style.visibility = "visible";
     m.className = "k-term-more";
-    m.textContent = `+${total - vis} ${t("moreLines", LANG)}`;
+    m.textContent = `+${total - vis} ${t("moreLines", ctx.deck.lang)}`;
     m.style.paddingLeft = `${PAD_X}px`;
   }
   gsap.set(panel, { autoAlpha: 0 });

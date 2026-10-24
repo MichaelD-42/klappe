@@ -61,7 +61,6 @@ function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
 }
 
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
-const LANG = "en";
 
 // The visible stand-in, at rect, for a file that is not in the deck's media/ folder.
 function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: string): HTMLElement {
@@ -130,7 +129,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   if (url === undefined) {
     // A prompt for an image generator, for a cover picture with alt text.
     const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
-    const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", LANG), text, prompt);
+    const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", ctx.deck.lang), text, prompt);
     const f = fade(b, fadeTime, fadeEase);
     return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
@@ -194,11 +193,11 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   const { href, title, rect } = opts;
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
-  if (src === undefined) return fade(missing(ctx, fit(rect), t("videoMissing", LANG), `${key(href)} — ${title}`));
+  if (src === undefined) return fade(missing(ctx, fit(rect), t("videoMissing", ctx.deck.lang), `${key(href)} — ${title}`));
   const frame = embed(href);
   // A video host's page that is not one video (a channel, a playlist page) cannot play in a box.
   if (online && !frame && VIDEO_HOST.test(new URL(href).hostname))
-    return fade(missing(ctx, fit(rect), t("videoMissing", LANG), `${href} has no video id; link one video — ${title}`));
+    return fade(missing(ctx, fit(rect), t("videoMissing", ctx.deck.lang), `${href} has no video id; link one video — ${title}`));
   // A border and a caption, so the box reads as a video even when it cannot load (offline).
   const area = { ...rect, h: rect.h - CAPTION };
   const b = box(ctx, fit(area), "#000"); // black letterbox bars
@@ -217,7 +216,7 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     overflow: "hidden",
     textOverflow: "ellipsis",
   });
-  if (online) b.dataset.kNote = `${t("video", LANG)} "${title}" ${t("needsInternet", LANG)}`;
+  if (online) b.dataset.kNote = `${t("video", ctx.deck.lang)} "${title}" ${t("needsInternet", ctx.deck.lang)}`;
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;

@@ -23,12 +23,9 @@ export interface CounterOpts {
 const TAIL = 24; // bubble tail size in scene units
 const LINE = 3; // bubble stroke width
 
-// shortcut: the deck language is not on ctx, so numbers use English grouping; pass meta.lang in once ctx has it.
-const numbers = new Intl.NumberFormat("en");
-
-// The counter's text at progress p: round(lerp(from, to, p)) with thousands separators.
-export function counterText(from: number, to: number, p: number): string {
-  return numbers.format(Math.round(from + (to - from) * p));
+// The counter's text at progress p: round(lerp(from, to, p)) with the deck language's thousands separators.
+export function counterText(from: number, to: number, p: number, lang = "en"): string {
+  return new Intl.NumberFormat(lang).format(Math.round(from + (to - from) * p));
 }
 
 type Pose = { x: number; y: number; scaleX: number; scaleY: number };
@@ -130,7 +127,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder } {
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
   const num = document.createElement("div");
   num.dataset.kText = "";
-  num.textContent = counterText(from, to, 0);
+  num.textContent = counterText(from, to, 0, ctx.deck.lang);
   Object.assign(num.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", fontVariantNumeric: "tabular-nums" });
   const cap = document.createElement("div");
   cap.textContent = label;
@@ -145,7 +142,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder } {
         duration: motion.step * 3,
         ease: "none",
         onUpdate(this: gsap.core.Tween) {
-          num.textContent = counterText(from, to, this.progress());
+          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang);
         },
       });
     },

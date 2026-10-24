@@ -30,7 +30,7 @@ const scene: SceneModule = {
   place: () => stageFrame("analysis"),
   build(ctx) {
     const docs = swarm(ctx, { rect: { x: 0, y: 0, w: 1920, h: 1080 }, from: FROM, to: HEAP, seed: 7 }); // first: the cards sit above it
-    const title = heading(ctx, "Analysis");
+    const title = heading(ctx, ctx.doc!.title);
     const agent = iconTile(ctx, "bot", { x: AGENT.x, y: AGENT.y, size: 140, tone: "accent" });
     // The agent's scan line sweeps across the heap.
     const beam = svgEl("rect", { x: HEAP.x - 6, y: HEAP.y - 30, width: 12, height: HEAP.h + 30, rx: 6 });

@@ -9,7 +9,7 @@ interface Refs {
 }
 
 const scene: SceneModule = {
-  build: (ctx): Refs => ({ h: title(ctx, "Your turn"), art: lineArt(ctx, { src: desk, x: 460, y: 300, w: 1000 }) }),
+  build: (ctx): Refs => ({ h: title(ctx, ctx.doc!.title), art: lineArt(ctx, { src: desk, x: 460, y: 300, w: 1000 }) }),
   steps: [
     (tl, r: Refs) => {
       tl.to(r.h, { autoAlpha: 1, duration: 0.6 });

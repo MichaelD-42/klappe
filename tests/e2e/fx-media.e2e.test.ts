@@ -131,7 +131,7 @@ test('a video host link without a video id is a deck problem with a placeholder'
     const { video } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/media.ts') // a string: vitest would rewrite import()
     const html = document.body.appendChild(document.createElement('div'))
     const problems: string[] = []
-    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { media: {}, data: {} }, problem: (p: string) => problems.push(p) }
+    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { media: {}, data: {} }, deck: { lang: 'en', intensity: 'calm' }, problem: (p: string) => problems.push(p) }
     video(ctx as any, { href: 'https://www.youtube.com/@channel', title: 'Our channel', rect: { x: 0, y: 0, w: 800, h: 450 } })
     const out = { problems, frames: html.querySelectorAll('iframe, video').length, text: html.textContent }
     html.remove()

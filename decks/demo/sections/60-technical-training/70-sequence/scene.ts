@@ -9,7 +9,7 @@ interface Refs {
 
 const scene: SceneModule = {
   build: (ctx): Refs => ({
-    h: title(ctx, "The same request, in time"),
+    h: title(ctx, ctx.doc!.title),
     s: sequence(ctx, {
       x: 160, y: 290, w: 1600, h: 720,
       actors: [
