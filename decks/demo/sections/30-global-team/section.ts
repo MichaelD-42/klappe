@@ -87,6 +87,7 @@ function build(ctx: Ctx) {
     for (const [k, v] of Object.entries({ d: `M ${sx} ${sy} ${curve([sx, sy], host, s.lift)}`, pathLength: 1, "stroke-dasharray": 1, "stroke-dashoffset": 1 }))
       arc.setAttribute(k, String(v));
     Object.assign(arc.style, { fill: "none", stroke: "var(--k-accent)", strokeWidth: String(ARC.world) });
+    gsap.set(arc, { opacity: 1 }); // written at load, as a seek back before the zoom leaves it
     const members = Array.from({ length: PER_SITE }, (_, k) => {
       const side = k ? 1 : -1;
       const home: [number, number] = [sx + 16 * side, sy + 62];
