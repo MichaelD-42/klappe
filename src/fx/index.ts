@@ -2,6 +2,8 @@
 export * from "./agenda";
 export * from "./annotate";
 export * from "./attention";
+// Not burstPoint: math for its unit test.
+export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./callout";
 export * from "./chart";
 export * from "./checklist";
@@ -24,7 +26,8 @@ export * from "./scramble";
 export * from "./shout";
 export * from "./stats";
 export * from "./spotlight";
-export * from "./swarm";
+// Not rand: the seeded hash swarm and burst share.
+export { swarm, swarmPoint, type SwarmHandle, type SwarmOpts } from "./swarm";
 export * from "./swimlanes";
 export * from "./terminal";
 export * from "./timer";

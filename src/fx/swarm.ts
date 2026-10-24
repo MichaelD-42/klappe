@@ -17,8 +17,8 @@ const UNIT: Rect = { x: 0, y: 0, w: 1, h: 1 };
 const FLIGHT = 0.4; // each object flies for this share of the stream; start times spread over the rest
 const MAX_BACKING = 2560; // canvas side limit in device pixels
 
-// A seeded number in [0, 1) for object i, draw k. Integer hash, no state.
-function rand(seed: number, i: number, k: number): number {
+// A seeded number in [0, 1) for object i, draw k. Integer hash, no state. Also used by burst.
+export function rand(seed: number, i: number, k: number): number {
   let h = Math.imul(seed | 0, 0x9e3779b1) ^ Math.imul(i | 0, 0x85ebca77) ^ Math.imul(k + 1, 0xc2b2ae3d);
   h = Math.imul(h ^ (h >>> 16), 0x7feb352d);
   h = Math.imul(h ^ (h >>> 15), 0x846ca68b);
