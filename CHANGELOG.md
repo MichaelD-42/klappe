@@ -11,6 +11,17 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
 - `worldMap` handle: `point(id)`, `arcPath(from, to)`, and an `at` position on `arc()`. `figure()`: a `strokeWidth` option and an `at` position on `appear()`.
+- `mesh3d`: a 3D dot mesh that turns by itself, with moods (`calm`, `curious`, `careful`, `insight`, `celebrating`), `collapse`, `start: "dot"`, and `dot` and `minAlpha` for a white frame. Reference page and catalog section `340-mesh3d`.
+- `crt`: a `color` option (`green`, `amber`, `teal` or any CSS colour), `settle(tl)`, `prompts` typed with `prompt(tl, i)`, `cursorAt()`, `dim(tl, { to, at })`, and the handle's `root`. The `crt` transition takes the same `color` in `transitionOptions`. Catalog scene `180-crt/20-teal-prompt`.
+- `bubble`: `side` (vertical tails) and `maxWidth`; `show(tl, at?)` takes a position.
+- `timer`: `until: "HH:MM"` counts to a wall-clock time today; `cycle` restarts the timer with one T after Time's up; `show(tl, at?)` takes a position. Catalog scene `320-timer/30-until`.
+- `SceneModule.auto`: per-step auto advance after N seconds.
+- `SceneModule.overviewLabel` and `SectionModule.overviewLabel`; a scene title that repeats in the deck shows as `<section> · <title>` in the overview.
+- An optional `decks/<id>/deck.css` (fonts and component classes), loaded after the theme.
+- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load when their scene becomes current.
+- `agenda`: `move(tl, toRow, at)` slides the marker and the colours to another row; `slide: false`; the handle has `el` and `rows`.
+- `terminal`: a `wrap` option for long lines; `show(tl, at?)`.
+- Handles expose their elements: `iconTile` and `icon` (`el`), `counter` (`el`, `caption`), `image` (`el`), `chart` (`bars`, the bar rects in data order).
 
 ### Changed
 
@@ -24,6 +35,11 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - The single-file build is dropped (see DECISIONS).
 - A timeline chart reads its start and end columns by name (`start`/`from`/`begin`, `end`/`to`/`until`) when they are named, else the first two number columns as before.
 - `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
+- The `fade` transition fades the old canvas out before the new one fades in (0.4 s in all), so two titles at the same spot do not overlap.
+- The built page's title is the deck title.
+- The self-test walk plays at 50x, and the test driver waits 110 s plus 200 ms per step, so a big deck's walk fits.
+- The chart's "Sample data" label uses `--k-warn` and ends inside the chart rect.
+- Self-running helpers (`mesh3d`) draw only while their canvas is the active one and their scene is the current scene.
 
 ### Fixed
 
@@ -40,6 +56,12 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `drawOn` returns where its draw starts; `icon()` no longer guesses it.
 - Video: `youtube-nocookie.com` (kept privacy-enhanced) and `music.youtube.com` links play; a video host link with no video id shows VIDEO MISSING and a deck problem instead of a broken box.
 - Design lint: named code fonts, `font: italic` and `oblique`, pills beyond buttons, protocol-relative URLs.
+- `drawOn` ends a dashed stroke on its own dash and `pathLength` instead of a solid line.
+- The stage offset is rounded to whole pixels: no 1 px sliver at the edge.
+- `flow` highlight with an empty `on` or `off` list, and a terminal command without output, no longer log a GSAP warning.
+- The self-test waits for web fonts and counts `ctx.problem` calls made before it ends.
+- A panel (overview, section list) cancels a pending `auto` advance.
+- Vitest runs without its fs module cache, which kept a stale fixture list.
 
 ## 0.3.0 (2026-10-24)
 
