@@ -15,6 +15,7 @@ export default captioned('annotate(ctx, target, { kind: "circle" | "underline" |
     const p = ctx.html.appendChild(document.createElement("p"));
     Object.assign(p.style, { position: "absolute", left: "160px", top: "420px", width: "1600px", margin: "0", font: "600 72px/1.3 var(--k-font)", color: "var(--k-fg)" });
     const spans = PARTS.map((t) => p.appendChild(Object.assign(document.createElement("span"), { textContent: t })));
+    spans[4].style.margin = "0 48px"; // room for the ring, so it touches neither the highlight nor "the"
     if (p.textContent !== ctx.doc!.steps[0].text) ctx.problem("annotate scene: the sentence in scene.ts no longer matches step 1 of scene.md");
     gsap.set(p, { autoAlpha: 0 });
     return {
