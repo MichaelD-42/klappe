@@ -18,10 +18,6 @@ Not on this list, because they exist: code morph (`code().diff()`) and packets a
 - M4: deck template and agents.
 - Demo: a local `media/sample.mp4` for the Markdown video scene; the catalog's YouTube scene needs a network too.
 
-## After M3
-
-- The bold look review was a manual pass over the last step of each scene; the `klappe-review-look` agent did not run. Mid-step states (shatter fall, swarm stream) were not looked at in bold.
-
 ## Look and motion polish
 
 Effects:
