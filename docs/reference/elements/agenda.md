@@ -2,11 +2,11 @@
 
 A list of time ranges with the current row marked. Past rows are `--k-muted`, the current row `--k-accent` with a marker bar, future rows `--k-fg`.
 
-Gallery: section `210-checklist-agenda` (`#/checklist-agenda/agenda/1`).
+Catalog: section `310-checklist-agenda` (`#/checklist-agenda/day-agenda/1`).
 
 ## Markdown
 
-A list of `HH:MM–HH:MM title` items in `scene.md`; the arrow `←` marks the current row. The step fades the rows in, then the marker slides down from the first row to the current one. Without an arrow there is no marker. From `decks/gallery/sections/210-checklist-agenda/20-agenda/scene.md`:
+A list of `HH:MM–HH:MM title` items in `scene.md`; the arrow `←` marks the current row. The step fades the rows in, then the marker slides down from the first row to the current one. Without an arrow there is no marker. From `decks/demo/sections/310-checklist-agenda/20-day-agenda/scene.md`:
 
 ```md
 - 09:00–09:45 Basics

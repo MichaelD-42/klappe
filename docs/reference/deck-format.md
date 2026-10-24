@@ -25,7 +25,7 @@ Frontmatter keys:
 
 - `title`: required.
 - `lang`: default `en`.
-- `theme`: `calm` or `bold`. Default `calm`.
+- `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
@@ -73,7 +73,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in 1920x1080 units.
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
-- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`.
+- Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`. Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
 - Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
 - Shout-out intensity: `intensity` in `deck.md` sets every shout-out. To set it for one shout-out, call `shout(ctx, { question, answer, intensity })` in that scene's `scene.ts` and play its 4 steps yourself (see the example below).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
@@ -188,6 +188,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?reducedmotion=1`: camera moves become cuts, and pictures leave out the Ken Burns push.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
+- `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?selftest=walk` or `?selftest=ac`: run the self-test.
 
 ## Deep links

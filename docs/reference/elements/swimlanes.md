@@ -2,11 +2,11 @@
 
 Horizontal lanes with their label on the left, tasks as boxes in their lane and arrows between them, including across lanes. A token walks the process one task per step: the active lane brightens and the others dim.
 
-Gallery: section `190-swimlanes` (`#/swimlanes/process/1`, `#/swimlanes/direct/2`).
+Catalog: section `290-swimlanes` (`#/swimlanes/process/1`, `#/swimlanes/direct/2`).
 
 ## `swimlanes`
 
-Only in `scene.ts`. From `decks/gallery/sections/190-swimlanes/10-process/scene.ts`:
+Only in `scene.ts`. From `decks/demo/sections/290-swimlanes/10-process/scene.ts`:
 
 ```ts
 import { swimlanes, type SwimlanesHandle } from "klappe/fx";

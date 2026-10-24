@@ -2,11 +2,11 @@
 
 Replays a terminal session: each step types one command and fades in its output lines. No CRT effects: a plain panel with an accent prompt.
 
-Gallery: section `150-terminal` (`#/terminal/replay/1` and `#/terminal/prompt/1`).
+Catalog: section `250-terminal` (`#/terminal/replay/1` and `#/terminal/prompt/1`).
 
 ## Markdown
 
-A `console` fence in `scene.md`. Lines starting with `$ ` are commands, the lines after them their output; each list item after the block is one command's step, in order. From `decks/gallery/sections/150-terminal/10-replay/scene.md`:
+A `console` fence in `scene.md`. Lines starting with `$ ` are commands, the lines after them their output; each list item after the block is one command's step, in order. From `decks/demo/sections/250-terminal/10-replay/scene.md`:
 
 ````md
 ```console
@@ -23,7 +23,7 @@ done in 2.1 s
 
 ## scene.ts
 
-From `decks/gallery/sections/150-terminal/20-prompt/scene.ts`:
+From `decks/demo/sections/250-terminal/20-prompt/scene.ts`:
 
 ```ts
 import { terminal, type TerminalHandle } from "klappe/fx";

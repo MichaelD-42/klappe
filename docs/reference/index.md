@@ -2,4 +2,18 @@
 
 - [Deck format](deck-format.md): folders, `deck.md`, `scene.md` and its Markdown forms, `scene.ts`, `section.ts`, the effects, keys, URL flags and deep links.
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
-- Elements: one page per element in `elements/`, added with the element.
+- [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
+- [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
+- Elements, one page each in `elements/`:
+  - [code](elements/code.md): code walkthrough and diff.
+  - [terminal](elements/terminal.md): a console session that types itself.
+  - [callout](elements/callout.md): a label with a leader line to a target.
+  - [flow](elements/flow.md): boxes and arrows with travelling packets.
+  - [sequence](elements/sequence.md): messages between lifelines.
+  - [swimlanes](elements/swimlanes.md): who does what, in lanes.
+  - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [checklist](elements/checklist.md): boxes that tick.
+  - [agenda](elements/agenda.md): time ranges with the current row marked.
+  - [timer](elements/timer.md): a countdown on the wall clock.
+- [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

@@ -2,6 +2,10 @@
 
 # klappe
 
+[![CI](https://github.com/MichaelD-42/klappe/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelD-42/klappe/actions/workflows/ci.yml)
+
+CI runs the typecheck, the lint tests and the unit and browser tests on every pull request and push to `main`; a green `main` deploys the demo deck to [GitHub Pages](https://michaeld-42.github.io/klappe/).
+
 klappe is a framework for presentations. It uses Vite, TypeScript and GSAP.
 A deck repo holds your decks and includes klappe as a git subtree in the `klappe/` folder.
 

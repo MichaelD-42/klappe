@@ -23,7 +23,7 @@ test('an unknown node id in edges throws', () => {
   expect(() => flow(ctx, { nodes: [{ id: 'a', label: 'A', col: 0, row: 0 }], edges: [{ from: 'a', to: 'zz' }], grid })).toThrow('flow: unknown node "zz"')
 })
 
-// The gallery and fixture's edge set: one straight edge, one bend down, one bend up into a shared target, one skip.
+// The demo catalog's and fixture's edge set: one straight edge, one bend down, one bend up into a shared target, one skip.
 const nodes = [
   { id: 'web', label: 'Web app', col: 0, row: 0 },
   { id: 'api', label: 'API', col: 1, row: 0 },

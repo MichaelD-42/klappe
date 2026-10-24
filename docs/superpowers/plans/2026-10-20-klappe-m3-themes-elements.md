@@ -318,3 +318,17 @@
 - [ ] Look review: the reviewer pages through the gallery and the demo with `?theme=bold` and writes screenshots to `<scratchpad>/m3-bold/`.
 - [ ] Copy the deferred review findings into `docs/backlog.md` under "After M3".
 - [ ] Commit with the message `chore: M3 close-out`.
+
+### Task 15: GitHub Actions CI (added by the user, 2026-10-21)
+
+**Files:**
+- Create: `.github/workflows/ci.yml`
+- Modify: `README.md` (one CI badge line under the title, plus one sentence saying CI runs the tests)
+
+- Trigger on `pull_request` and on `push` to `main`.
+- One job on `ubuntu-latest`: checkout, `actions/setup-node` with the Node version the repo needs (read `package.json` engines or `@types/node`; pin a major), `cache: npm`, `npm ci`, `npx playwright install --with-deps chromium-headless-shell` (cache `~/.cache/ms-playwright` keyed on the Playwright version from the lockfile), `npx tsc --noEmit`, `npm test`.
+- Pin every action to a full release tag (for example `actions/checkout@v4`), never a branch.
+- On failure, upload `test-results/` if it exists as an artifact.
+- No deploy, no secrets, no Pages.
+- [ ] Verify the YAML locally with `npx --yes yaml-lint` or an equivalent parse, and confirm every command in it runs green locally in the same order.
+- [ ] Commit `ci: GitHub Actions workflow for typecheck and tests`. The run itself is checked on the follow-up PR.

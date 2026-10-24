@@ -2,11 +2,11 @@
 
 Shows a block of syntax-highlighted code and walks through it step by step: each step focuses some lines and dims the rest, and a diff morphs the code into a new version.
 
-Gallery: section `140-code` (`#/code/walkthrough/1` and `#/code/diff/1`).
+Catalog: section `240-code` (`#/code/walkthrough/1` and `#/code/diff/1`).
 
 ## Markdown
 
-A fenced block with a language in `scene.md`. Highlight groups after the language, in the reveal.js and Slidev convention, make one step each; the list items after the block are those steps' text, in order. From `decks/gallery/sections/140-code/10-walkthrough/scene.md`:
+A fenced block with a language in `scene.md`. Highlight groups after the language, in the reveal.js and Slidev convention, make one step each; the list items after the block are those steps' text, in order. From `decks/demo/sections/240-code/10-walkthrough/scene.md`:
 
 ````md
 ```js {1-2|3-5|6}
@@ -28,7 +28,7 @@ A group is a comma list of lines and ranges: `{1,3-5|8}`. A block without groups
 
 ## scene.ts
 
-From `decks/gallery/sections/140-code/20-diff/scene.ts`:
+From `decks/demo/sections/240-code/20-diff/scene.ts`:
 
 ```ts
 import { code, type CodeHandle } from "klappe/fx";
