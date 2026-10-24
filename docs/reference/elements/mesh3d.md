@@ -6,7 +6,7 @@ Catalog: section `340-mesh3d` (`#/mesh3d/avatar/1`). Story: `#/process-training/
 
 ## `mesh3d`
 
-In `scene.ts`: `mesh3d(ctx, { x, y, size, mood, speed, density, seed, start, dot, minAlpha })` returns `{ show, hide, mood, collapse, destroy }`. From `decks/demo/sections/340-mesh3d/10-avatar/scene.ts`:
+In `scene.ts`: `mesh3d(ctx, { x, y, size, mood, speed, density, seed, start, dot, minAlpha, brightness })` returns `{ show, hide, mood, collapse, destroy }`. From `decks/demo/sections/340-mesh3d/10-avatar/scene.ts`:
 
 ```ts
 build: (ctx) => ({ m: mesh3d(ctx, { x: 960, y: 400, size: 640, seed: 1 }) }),
@@ -26,6 +26,7 @@ steps: [(tl, { m }) => m.show(tl, undefined, { from: { x: 200, y: 160 } }), (tl,
 | `start` | `"mesh" \| "dot"` | `mesh` | `dot`: one pulsing dot shows from load, with no step, and `show` grows the mesh out of it |
 | `dot` | number | 1 | a dot size factor. Larger dots read better on a white frame |
 | `minAlpha` | number | 0.35 | the opacity of the farthest dot, 0 to 1. Near dots stay at full opacity |
+| `brightness` | number | 1 | lightens or darkens every mood colour: above 1 mixes it toward white (2 is white), below toward black. Use it on a dark frame instead of a CSS filter; the hue stays |
 
 ### Step adders
 

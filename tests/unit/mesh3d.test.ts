@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MOODS, project, rng, rotate, shade } from "../../src/fx/mesh3d";
+import { MOODS, project, rng, rotate, shade, tint } from "../../src/fx/mesh3d";
 
 describe("project", () => {
   it("divides by depth: x' = x·f/(f+z)", () => {
@@ -55,5 +55,15 @@ describe("shade", () => {
     expect(shade(1, 0, 0.8)).toBeCloseTo(0.8);
     expect(shade(0.5, 0, 0.8)).toBeCloseTo(0.4);
     expect(shade(1, 0.5, 1)).toBe(1);
+  });
+});
+
+describe("tint", () => {
+  it("keeps the colour at 1, mixes toward white above 1 and toward black below", () => {
+    expect(tint("#009A9B", 1)).toEqual([0, 154, 155]);
+    expect(tint("#009A9B", 2)).toEqual([255, 255, 255]);
+    expect(tint("#009A9B", 1.5)).toEqual([127.5, 204.5, 205]);
+    expect(tint("#009A9B", 0.5)).toEqual([0, 77, 77.5]);
+    expect(tint("#009A9B", 0)).toEqual([0, 0, 0]);
   });
 });

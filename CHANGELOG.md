@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `mesh3d`: `brightness` lightens or darkens the mood colours, for a dark frame, without a CSS filter.
 - `timer`: `hide(tl, at?)` fades it out and stops it; the label carries `data-k-timer-label` for a deck's `deck.css`.
 - `terminal` `wrap` also breaks after a `/`, so a long path splits between its parts; `wrapBreaks` is the helper.
 - `counter`: `decimals`, how many places it shows while it counts.
