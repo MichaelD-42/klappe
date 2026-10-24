@@ -9,7 +9,7 @@ import * as fx from '../../src/fx'
 const ALLOW = [
   'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'waffleCells', 'scribble', 'MARKER_MIX', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText', 'bubbleLayout', 'wrapBreaks', 'crtColor', 'cursorCentre',
   'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'matrixLayout', 'lineDiff', 'loadHighlighter',
-  'parseCsv', 'parseGroups', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
+  'parseCsv', 'parseGroups', 'roadmapLayout', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
   'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.
   'loadTransitions', 'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',

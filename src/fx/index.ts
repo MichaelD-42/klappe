@@ -16,6 +16,7 @@ export * from "./icons";
 export * from "./map";
 export * from "./matrix";
 export * from "./qr";
+export * from "./roadmap";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
 export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
 // Not MOODS, rng, rotate, project or shade: data and math for its unit test.

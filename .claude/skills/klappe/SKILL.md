@@ -22,6 +22,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Show how a decision was made: `decisionTree`. [decisionTree](klappe/docs/reference/elements/decisionTree.md)
 - Sort things on two axes (effort against impact) and move one when the view changes: `matrix`. [matrix](klappe/docs/reference/elements/matrix.md)
 - Tick off items, or show the day: task list, time-range rows. [checklist](klappe/docs/reference/elements/checklist.md), [agenda](klappe/docs/reference/elements/agenda.md)
+- Show a plan over months, with where we are now: `roadmap`. [roadmap](klappe/docs/reference/elements/roadmap.md)
 - Time an exercise: `timer` with `minutes`; count to a clock time (end of a break): `timer` with `until`. [timer](klappe/docs/reference/elements/timer.md)
 - An 80s computer screen that boots and types: `crt`. [crt](klappe/docs/reference/elements/crt.md) A character who speaks: `bubble`. [bubble](klappe/docs/reference/elements/bubble.md) A quiet companion with moods that runs by itself: `mesh3d`. [mesh3d](klappe/docs/reference/elements/mesh3d.md)
 - Compare numbers: `chart` from a `data/` file. Show where: `worldMap`. A person moving: `figure`.
