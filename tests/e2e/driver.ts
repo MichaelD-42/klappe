@@ -18,7 +18,10 @@ export async function runSelftest(
     // The browser logs some errors itself (an SVG attribute it cannot parse): they never pass through
     // console.error in the page, so klappe.errors misses them. Collected here, they fail the walk too.
     const browserErrors: string[] = []
-    page.on('console', (m) => m.type() === 'error' && browserErrors.push(m.text()))
+    // A message logged by a third-party frame (a YouTube embed's permission notices) is not the deck's error.
+    const ownOrigin = new URL(url).origin
+    const fromDeck = (src: string) => !src || src.startsWith(ownOrigin) || src.startsWith('data:')
+    page.on('console', (m) => m.type() === 'error' && fromDeck(m.location().url) && browserErrors.push(m.text()))
     page.on('pageerror', (e) => browserErrors.push(e.message))
     await page.goto(url)
     // main publishes the steps before the self-test starts; a page without klappe gets the base wait.
