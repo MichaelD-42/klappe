@@ -19,11 +19,11 @@ Markdown and deck parsing:
 
 CLI and sync:
 
-- [ ] `klappe dev --deck --foo` takes `--foo` as the deck id.
-- [ ] The guard against running `init` in the klappe folder compares paths as plain strings (case on Windows).
-- [ ] `init` moves `devDependencies.klappe` to `dependencies` without saying so.
-- [ ] `klappe:sync` never removes files that left `skills/klappe/`.
-- [ ] `package.json` keeps npm-init leftovers (`main`, `directories`) and has no `bin`.
+- [x] `klappe dev --deck --foo` takes `--foo` as the deck id.
+- [x] The guard against running `init` in the klappe folder compares paths as plain strings (case on Windows).
+- [x] `init` moves `devDependencies.klappe` to `dependencies` without saying so.
+- [x] `klappe:sync` never removes files that left `skills/klappe/`.
+- [x] `package.json` keeps npm-init leftovers (`main`, `directories`) and has no `bin`.
 
 Navigation, autoplay, speaker:
 

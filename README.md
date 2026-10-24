@@ -76,7 +76,7 @@ git subtree push --prefix klappe https://github.com/MichaelD-42/klappe.git my-fi
 klappe ships agents and the `klappe` skill in `klappe/.claude/`.
 Claude Code does not find a `.claude` folder nested in a subfolder.
 So `klappe init` and `npm run klappe:sync` copy the `klappe*` agents (and any `klappe*` skills) to `.claude/` in the deck repo root.
-Run `npm run klappe:sync` after every klappe update. It overwrites the copied files. It never deletes. Remove stale `klappe*` files in `.claude/` by hand.
+Run `npm run klappe:sync` after every klappe update. It replaces each copied `klappe*` agent and skill, so files that left klappe leave your repo too; your own agents and skills stay. An entry klappe drops entirely stays: delete it by hand.
 
 ## Presenting
 

@@ -15,7 +15,7 @@ if (!['dev', 'build', 'test', 'init'].includes(cmd)) {
 }
 
 let id = i >= 0 ? rest[i + 1] : undefined
-if (i >= 0 && !id) {
+if (i >= 0 && (!id || id.startsWith('-'))) {
   console.error('--deck needs an id')
   process.exit(1)
 }
@@ -25,7 +25,7 @@ if (cmd === 'init') {
     console.error('usage: klappe init --deck <id>  (letters, digits, dashes)')
     process.exit(1)
   }
-  if (process.cwd() === klappeDir) {
+  if (path.relative(process.cwd(), klappeDir) === '') { // not ===: Windows paths differ in case
     console.error('Run init in the deck repo root, not in the klappe folder.')
     process.exit(1)
   }
@@ -45,7 +45,10 @@ if (cmd === 'init') {
       process.exit(1)
     }
   }
-  delete pkg.devDependencies?.klappe
+  if (pkg.devDependencies?.klappe !== undefined) {
+    delete pkg.devDependencies.klappe
+    console.log('Moved klappe from devDependencies to dependencies.')
+  }
   pkg.dependencies = { ...pkg.dependencies, klappe: 'file:./klappe' }
   const wanted = {
     dev: 'node klappe/bin/klappe.mjs dev',
