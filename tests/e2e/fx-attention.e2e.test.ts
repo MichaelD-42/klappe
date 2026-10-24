@@ -30,7 +30,8 @@ async function open(hash: string, query = ''): Promise<Page> {
 }
 
 // Box 1's glow: whether its steady and its breathing layer show, how many wall-clock loops run (not paused)
-// on the breathing leaf, and whether the glow box frames the box with a margin.
+// on the breathing leaf, its loop time (0 when paused: a walk and a deep link leave the same frame), and whether
+// the glow box frames the box with a margin.
 const glowOf = (page: Page) =>
   page.evaluate(() => {
     const scene = document.querySelector('div[data-scene="boxes"]')!
@@ -40,10 +41,12 @@ const glowOf = (page: Page) =>
     const box = el.getBoundingClientRect()
     const g = wrap.getBoundingClientRect()
     const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+    const anims = live.querySelector('[data-k-ignore]')!.getAnimations()
     return {
       steady: shows(steady),
       live: shows(live),
-      loops: live.querySelector('[data-k-ignore]')!.getAnimations().filter((a) => a.playState === 'running').length,
+      loops: anims.filter((a) => a.playState === 'running').length,
+      t: anims.filter((a) => a.playState !== 'running').map((a) => a.currentTime),
       behind: wrap.nextElementSibling === el, // earlier in the DOM, so it paints under the box
       frames: g.x < box.x && g.y < box.y && g.right > box.right && g.bottom > box.bottom && box.x - g.x < 30,
     }
@@ -51,7 +54,7 @@ const glowOf = (page: Page) =>
 
 test('glow comes on behind the box, breathes on its own loop, then goes off', async () => {
   let page = await open('#/a/boxes/1')
-  expect(await glowOf(page)).toEqual({ steady: true, live: false, loops: 0, behind: true, frames: true })
+  expect(await glowOf(page)).toEqual({ steady: true, live: false, loops: 0, t: [0], behind: true, frames: true })
   await page.close()
   page = await open('#/a/boxes/2')
   expect(await glowOf(page)).toMatchObject({ steady: false, live: true, loops: 1 })
@@ -68,11 +71,11 @@ test('the breathe loop pauses on another canvas and before its step', async () =
   const go = (i: number) => page.evaluate((i) => window.klappe.stepper.goto(i, 'cut'), i)
   expect(await glowOf(page)).toMatchObject({ live: true, loops: 1 })
   await go(7) // section b: its canvas hides box 1's, so only the loop count tells
-  expect(await glowOf(page)).toMatchObject({ loops: 0 })
+  expect(await glowOf(page)).toMatchObject({ loops: 0, t: [0] })
   await go(1)
   expect(await glowOf(page)).toMatchObject({ live: true, loops: 1 })
   await go(0)
-  expect(await glowOf(page)).toMatchObject({ live: false, loops: 0 })
+  expect(await glowOf(page)).toMatchObject({ live: false, loops: 0, t: [0] })
   await go(5) // after off
   expect(await glowOf(page)).toMatchObject({ live: false, loops: 0 })
   await go(1)

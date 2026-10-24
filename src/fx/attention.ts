@@ -84,7 +84,8 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
   let loops: Animation[] | null = null;
   let shows = false;
   let here = true;
-  const sync = () => loops?.forEach((a) => (shows && here ? a.play() : a.pause()));
+  // A paused loop goes back to its start, so a walk and a deep link leave the same frame.
+  const sync = () => loops?.forEach((a) => (shows && here ? a.play() : (a.pause(), (a.currentTime = 0))));
   const breathes = () => {
     if (loops || ctx.reducedMotion) return;
     loops = leaves.map((l) => l.animate([{ opacity: 1 }, { opacity: 0.3 }], { duration: BREATH_MS, iterations: Infinity, direction: "alternate", easing: "ease-in-out" }));
