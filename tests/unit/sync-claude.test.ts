@@ -27,3 +27,20 @@ test('copies klappe* entries, overwrites them, leaves others', () => {
   expect(syncClaude(src, src)).toBeNull();
   expect(readFileSync(join(dest, '.claude/skills/klappe/SKILL.md'), 'utf8')).toBe('skill');
 });
+
+test('a file that left skills/klappe/ in klappe leaves the deck repo too; the deck\'s own skills stay', () => {
+  const src = mkdtempSync(join(tmpdir(), 'src-'));
+  const dest = mkdtempSync(join(tmpdir(), 'dest-'));
+  mkdirSync(join(src, '.claude/skills/klappe'), { recursive: true });
+  writeFileSync(join(src, '.claude/skills/klappe/SKILL.md'), 'new');
+  mkdirSync(join(dest, '.claude/skills/klappe'), { recursive: true });
+  mkdirSync(join(dest, '.claude/skills/mine'), { recursive: true });
+  writeFileSync(join(dest, '.claude/skills/klappe/old-page.md'), 'stale');
+  writeFileSync(join(dest, '.claude/skills/mine/SKILL.md'), 'keep');
+
+  syncClaude(src, dest);
+
+  expect(existsSync(join(dest, '.claude/skills/klappe/old-page.md'))).toBe(false);
+  expect(readFileSync(join(dest, '.claude/skills/klappe/SKILL.md'), 'utf8')).toBe('new');
+  expect(readFileSync(join(dest, '.claude/skills/mine/SKILL.md'), 'utf8')).toBe('keep');
+});

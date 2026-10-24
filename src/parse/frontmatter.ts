@@ -5,11 +5,14 @@ import type { DeckMeta } from "../types";
 function splitTop(s: string): string[] {
   const parts: string[] = [];
   let depth = 0;
+  let quote = ""; // the open quote character, while inside a quoted item
   let cur = "";
   for (const c of s) {
-    if (c === "[") depth++;
-    if (c === "]") depth--;
-    if (c === "," && depth === 0) {
+    if (quote) quote = c === quote ? "" : quote;
+    else if (c === '"' || c === "'") quote = c;
+    else if (c === "[") depth++;
+    else if (c === "]") depth--;
+    if (c === "," && depth === 0 && !quote) {
       parts.push(cur);
       cur = "";
     } else cur += c;
@@ -48,7 +51,9 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   const theme = typeof data.theme === "string" && data.theme ? data.theme : "calm";
   const intensity = data.intensity === "bold" || data.intensity === "calm" ? data.intensity : theme === "bold" ? "bold" : "calm";
   const sc = Array.isArray(data["shared-canvas"]) ? (data["shared-canvas"] as unknown[]) : [];
-  const sharedCanvas = (sc.every(Array.isArray) ? sc : sc.length ? [sc] : []).map((g) =>
+  const mixed = sc.some(Array.isArray) && !sc.every(Array.isArray);
+  if (mixed) problems.push("deck.md: shared-canvas mixes ids and lists; use [a, b] or [[a, b], [c, d]]");
+  const sharedCanvas = (mixed ? [] : sc.every(Array.isArray) ? sc : sc.length ? [sc] : []).map((g) =>
     (g as unknown[]).map(String),
   );
   return {

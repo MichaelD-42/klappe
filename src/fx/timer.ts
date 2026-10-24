@@ -15,7 +15,6 @@ export interface TimerHandle {
 }
 
 const SVG = "http://www.w3.org/2000/svg";
-const LANG = "en"; // shortcut: the deck language is not on ctx; pass meta.lang once ctx has it.
 const PHASE = { run: "var(--k-accent)", warn: "var(--k-warn)", done: "var(--k-bad)" };
 
 // The countdown at elapsedMs: the last 20% warns, zero is done. Seconds round up, so 0:00 shows only at the end.
@@ -102,7 +101,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
     clock.style.color = colour;
     if (fill) fill.style[style === "bar" ? "fill" : "stroke"] = colour;
     setFrac(s.remainingMs / total);
-    hint.textContent = s.phase === "done" ? t("timesUp", LANG) : !raf && !elapsed ? t("pressT", LANG) : "";
+    hint.textContent = s.phase === "done" ? t("timesUp", ctx.deck.lang) : !raf && !elapsed ? t("pressT", ctx.deck.lang) : "";
     hint.style.color = s.phase === "done" ? "var(--k-bad)" : "var(--k-muted)";
     return s;
   };

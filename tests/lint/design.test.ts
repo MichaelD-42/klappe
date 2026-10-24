@@ -16,8 +16,12 @@ const LABEL_NUM = /(?<![\d.:-])\b0[1-9]\b(?![.:-]\d)/
 
 // Keeps "https://..." intact: a // comment needs no ':' right before it.
 const stripComments = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
-const isPill = (radius: string) =>
-  [...radius.matchAll(/(\d+(?:\.\d+)?)(px|%)/g)].some(([, n, u]) => (u === 'px' ? +n >= 999 : +n >= 50))
+// On a button, 50 % or 1 em and up rounds it into a pill. 999 px is a pill on anything: a circle uses 50 %.
+// A radius from var() cannot be resolved here and is not checked.
+const isPill = (radius: string, button: boolean) =>
+  [...radius.matchAll(/(\d+(?:\.\d+)?)(px|%|r?em)(?!\w)/g)].some(([, n, u]) => (u === 'px' ? +n >= 999 : button && +n >= (u === '%' ? 50 : 1)))
+// Code fonts by name as well as the generic family.
+const MONO = /monospace|\b(?:consolas|menlo|monaco|courier)\b|\bmono\b/i
 const cssRules = (css: string) => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, sel, body]) => ({ sel: sel.trim(), body }))
 const stringLiterals = (ts: string) =>
   [...ts.replace(/\bfrom\s+["'][^"']*["']/g, '').matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((m) => m[2])
@@ -31,7 +35,8 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   const ext = path.extname(file)
   const text = ext === '.md' ? raw : stripComments(raw)
 
-  for (const m of text.matchAll(/font-?style["']?\s*[:=]\s*["']?italic/gi)) hit('italic', m[0])
+  for (const m of text.matchAll(/font-?style["']?\s*[:=]\s*["']?(?:italic|oblique)/gi)) hit('italic', m[0])
+  for (const m of text.matchAll(/\bfont["']?\s*:\s*["']?[^;\n{}]*\b(?:italic|oblique)\b/gi)) hit('italic', m[0])
   for (const m of text.matchAll(/<h([1-6])\b[^>]*>(?:(?!<\/h\1>)[\s\S])*?<(?:em|i)\b/gi)) hit('italic', m[0])
   if (ext === '.md')
     for (const [line, title] of mdBody(text).matchAll(/^#{1,6}\s+(.*)$/gm))
@@ -40,15 +45,15 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   if (ext === '.css') {
     for (const { sel, body } of cssRules(text)) {
       // --k-font-code is the code font token; it is only applied under .k-code and .k-term.
-      if (/monospace/i.test(body.replace(/--k-font-code\s*:[^;]*;?/g, '')) && !/\.k-(?:retro|code|term)\b/.test(sel)) hit('monospace', sel)
+      if (MONO.test(body.replace(/--k-font-code\s*:[^;]*;?/g, '')) && !/\.k-(?:retro|code|term)\b/.test(sel)) hit('monospace', sel)
       const radius = body.match(/border-radius\s*:\s*([^;]+)/i)
-      if (radius && /button|btn/i.test(sel) && isPill(radius[1])) hit('pill-button', `${sel} { ${radius[0]} }`)
+      if (radius && isPill(radius[1], /button|btn/i.test(sel))) hit('pill-button', `${sel} { ${radius[0]} }`)
     }
   } else
     for (const line of text.split('\n')) {
-      if (/monospace/i.test(line) && !/k-(?:retro|code|term)\b/.test(line)) hit('monospace', line)
+      if (MONO.test(line) && !/k-(?:retro|code|term)\b/.test(line)) hit('monospace', line)
       const radius = line.match(/border-?radius["']?\s*:\s*([^,;}\n]+)/i)
-      if (radius && /button|btn/i.test(line) && isPill(radius[1])) hit('pill-button', line)
+      if (radius && isPill(radius[1], /button|btn/i.test(line))) hit('pill-button', line)
     }
 
   const labels = ext === '.md' ? [mdBody(text)] : ext === '.ts' && isLabelCode(file) ? stringLiterals(text) : []
@@ -58,8 +63,11 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
 
   // Deck-authored video embeds loaded by the viewer, not runtime CDN code.
   const EMBED_OK = file === 'src/fx/media.ts' || file.startsWith('src/deck/fixtures/')
-  if (file.startsWith('src/') && !EMBED_OK)
+  if (file.startsWith('src/') && !EMBED_OK) {
     for (const [url] of text.matchAll(/https?:\/\/[^\s"'`)]*/g)) if (!XMLNS.has(url)) hit('runtime-url', url)
+    // Protocol-relative: read from the raw text, since stripComments takes "//" for a comment.
+    for (const [, url] of raw.matchAll(/["'`](\/\/[\w-]+\.[\w.-]+[^"'`\s]*)/g)) hit('runtime-url', url)
+  }
   // Effects take every colour from a --k-* token; crt.ts (light layers) and media.ts (letterbox) are the exceptions.
   if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media)\.ts$/.test(file))
     for (const m of text.matchAll(/#[\da-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi)) hit('colour-literal', m[0])
@@ -93,6 +101,16 @@ describe('design lint catches each rule', () => {
     ['cream-background', 'decks/d/themes/x.css', ':root { --k-bg: #faf3e0; }'],
     ['runtime-url', 'src/main.ts', 'import("https://cdn.example.com/lib.js")'],
     ['runtime-url', 'src/render/x.ts', 'const s = "http://example.com/a.svg" // fetched at run time'],
+    // Gaps from the M1 review: named code fonts, the font shorthand and oblique, pills beyond .btn, protocol-relative URLs.
+    ['monospace', 'src/styles.css', '.k-x { font-family: Consolas, sans-serif; }'],
+    ['monospace', 'src/styles.css', '.k-x { font-family: "JetBrains Mono", sans-serif; }'],
+    ['monospace', 'decks/d/scene.ts', 'html.style.fontFamily = "Menlo"'],
+    ['italic', 'src/styles.css', '.k-x { font: italic 24px sans-serif; }'],
+    ['italic', 'src/styles.css', '.k-x { font-style: oblique; }'],
+    ['pill-button', 'src/styles.css', '.k-tag { border-radius: 999px; }'],
+    ['pill-button', 'src/styles.css', '.k-btn { border-radius: 2em; }'],
+    ['runtime-url', 'src/main.ts', 'import("//cdn.example.com/lib.js")'],
+    ['runtime-url', 'src/fx/chart.ts', 'const u = "https://www.youtube.com/embed/x"'], // the embed allowlist is media.ts and the fixtures only
   ])('%s in %s', (rule, file, text) => {
     expect(rulesOf(file, text)).toContain(rule)
   })
@@ -110,6 +128,8 @@ describe('design lint catches each rule', () => {
       ['src/fx/crt.ts', 'const glow = "rgba(0,0,0,0.4)"'],
       ['src/fx/media.ts', 'const bar = "#000"'],
       ['tests/unit/x.test.ts', 'expect(hash).toBe("#/a/b/01")'],
+      ['src/styles.css', '.k-x { font: 600 24px var(--k-font); }\n.k-avatar { border-radius: 50%; }\n.k-btn { border-radius: 0.4em; }'],
+      ['src/parse/x.ts', 'const VIDEO = /^(?:https?:)?\\/\\/youtube/ // a regex, not a URL'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
   })

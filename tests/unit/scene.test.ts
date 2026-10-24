@@ -74,7 +74,7 @@ describe("parseScene media", () => {
   it("detects video links", () => {
     for (const href of [
       "https://www.youtube.com/watch?v=x", "https://youtu.be/x", "https://vimeo.com/1",
-      "media/clip.mp4", "https://example.com/a.webm?t=3",
+      "media/clip.mp4", "https://example.com/a.webm?t=3", "https://www.youtube-nocookie.com/embed/x",
     ])
       expect(media(`[Demo](${href})`).media, href).toEqual({ kind: "video", href, alt: "Demo" });
   });
@@ -97,5 +97,21 @@ describe("question followed by a note", () => {
     const { problems, scene } = parseScene("## T\n\n### Why?\n\n> a note\n\nThe answer.\n", "10-t");
     expect(problems).toEqual([expect.stringContaining("10-t/scene.md: a note sits between '### Why?'")]);
     expect(scene.steps.at(-1)?.text).toBe("");
+  });
+});
+
+describe("notes, edge cases", () => {
+  it("keeps every note of a step, in order", () => {
+    expect(parseScene("## A\n\n- one\n\n> first\n\n> second\n", "10-a").scene.steps[0].notes).toBe("first\n\nsecond");
+    expect(parseSection("# S\n\n> first\n\n> second\n", "10-s").section.notes).toBe("first\n\nsecond");
+  });
+  it("takes a quote nested in a list item as that step's note", () => {
+    const { steps } = parseScene("## A\n\n- one\n\n  > say this\n- two\n", "10-a").scene;
+    expect(steps.map((s) => [s.text, s.notes])).toEqual([["one", "say this"], ["two", ""]]);
+  });
+  it("keeps the paragraphs of a note apart", () => {
+    expect(parseScene("## A\n\n- one\n\n> first line\n>\n> second paragraph\n", "10-a").scene.steps[0].notes).toBe(
+      "first line\n\nsecond paragraph",
+    );
   });
 });

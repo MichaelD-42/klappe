@@ -51,3 +51,41 @@ test('a same-tick burst of 3 presses lands exactly 3 steps on', async () => {
   expect(ms).toBeLessThan(1200) // queued moves are fast-forwarded; only the last one plays
   await page.close()
 })
+
+// The speaker view, browser history and autoplay move the stage without a key: an open panel must not stay over it.
+test('a step from outside the panels closes the overview and the section list', async () => {
+  const page = await open()
+  const after = await page.evaluate(async () => {
+    const { stepper, overview, selector } = window.klappe
+    const out: boolean[] = []
+    for (const p of [overview, selector]) {
+      p.open()
+      await stepper.next() // what a speaker "next" command and autoplay call
+      out.push(p.isOpen)
+    }
+    selector.open()
+    history.back() // the router's popstate jump
+    await new Promise((r) => setTimeout(r, 500))
+    out.push(selector.isOpen)
+    return out
+  })
+  expect(after).toEqual([false, false, false])
+  await page.close()
+})
+
+// Autoplay switched on mid-play holds after the play ends, and does not cut the playing step short.
+test('autoplay started mid-play holds from the end of the play', async () => {
+  const page = await open()
+  const ms = await page.evaluate(async () => {
+    const { stepper, autoplay } = window.klappe
+    const t0 = performance.now()
+    stepper.next() // step 2 plays for 0.6 s
+    await new Promise((r) => setTimeout(r, 150))
+    autoplay.start()
+    await new Promise<void>((r) => stepper.on('step', (a: any) => a.index === 2 && r()))
+    autoplay.stop()
+    return performance.now() - t0
+  })
+  expect(ms).toBeGreaterThan(600 + 2500 - 100) // the play, then the full hold
+  await page.close()
+}, 30_000)

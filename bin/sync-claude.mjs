@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Copies klappe/.claude/{agents,skills} klappe* entries into <deckRepo>/.claude/, overwriting them.
-import { cpSync, mkdirSync, readdirSync, existsSync } from 'node:fs';
+// Copies klappe/.claude/{agents,skills} klappe* entries into <deckRepo>/.claude/, replacing them, so files
+// that left klappe leave the deck repo too. The deck's own entries stay.
+import { cpSync, mkdirSync, readdirSync, existsSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,7 +14,8 @@ export function syncClaude(srcRoot, destRoot) {
     const dest = join(destRoot, '.claude', kind);
     mkdirSync(dest, { recursive: true });
     for (const name of readdirSync(src).filter((n) => n === 'klappe' || n.startsWith('klappe-'))) {
-      cpSync(join(src, name), join(dest, name), { recursive: true, force: true });
+      rmSync(join(dest, name), { recursive: true, force: true });
+      cpSync(join(src, name), join(dest, name), { recursive: true });
       copied.push(`${kind}/${name}`);
     }
   }

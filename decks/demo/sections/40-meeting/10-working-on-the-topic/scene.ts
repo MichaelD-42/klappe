@@ -44,7 +44,7 @@ const box = (parent: HTMLElement, css: Partial<CSSStyleDeclaration>, text = "") 
 const scene: SceneModule = {
   build(ctx) {
     const title = ctx.html.appendChild(document.createElement("h2"));
-    title.textContent = "Working on the topic";
+    title.textContent = ctx.doc!.title;
     const bodies: Element[] = [];
     const figures = SEATS.map(([x, y]) => {
       const f = figure(ctx, { x, y, scale: SCALE, color: "var(--k-fg)" });
@@ -85,8 +85,8 @@ const scene: SceneModule = {
     );
     gsap.set([title, table, topic, ...notes.map((n) => n.el), ...themes], { autoAlpha: 0 });
 
-    // deck.md sets intensity calm; a scene-built shout cannot read it, so it is set here too.
-    const sh = shout(ctx, { question: "What can we only do together?", answer: "Decide.", intensity: "calm" });
+    // Question, answer and intensity come from scene.md and deck.md.
+    const sh = shout(ctx, { question: ctx.doc!.steps.find((s) => s.kind === "shout-enter")!.text, answer: ctx.doc!.steps.find((s) => s.kind === "shout-answer")!.text });
     return { title, figures, bodies, table, topic, notes, themes, sh };
   },
   steps: [

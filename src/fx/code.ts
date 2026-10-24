@@ -98,7 +98,6 @@ const BAR = 8; // the focus bar's width
 // A dimmed line: its tokens blend fully to --k-muted (at least 4.5:1 on --k-surface by the theme rules)
 // at 0.7 opacity, which keeps it above 3:1 on a projector.
 const DIM = 0.7;
-const LANG = "en"; // shortcut: the deck language is not on ctx; pass meta.lang once ctx has it.
 
 // Monospace is allowed under .k-code: code is not a label.
 const CSS = `
@@ -166,7 +165,7 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   const more = (n: number) => {
     if (n <= rows) return null;
     const e = body.appendChild(Object.assign(document.createElement("div"), { className: "k-code-more" }));
-    e.textContent = `+${n - vis(n)} ${t("moreLines", LANG)}`;
+    e.textContent = `+${n - vis(n)} ${t("moreLines", ctx.deck.lang)}`;
     gsap.set(e, { y: (rows - 1) * lh, autoAlpha: 1 });
     return e;
   };

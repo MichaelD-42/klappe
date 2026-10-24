@@ -9,9 +9,11 @@ export interface FigureOpts {
   y: number;
   scale?: number; // default 1
   color: string;
+  strokeWidth?: number; // in figure units, before scale; default 4
 }
 export interface FigureHandle {
-  appear: StepAdder;
+  // `at` is the position on the timeline, as in tl.to.
+  appear(tl: gsap.core.Timeline, at?: gsap.Position): void;
   /**
    * Walks the feet along the path. The path's coordinates must be in the same space as the
    * figure's parent (ctx.svg, scene-local); a path under a transformed ancestor lands elsewhere.
@@ -50,7 +52,7 @@ const deg = (a: number) => Math.round(a * 100) / 100 || 0;
 // A front-facing figure about 230 units tall, feet at (x, y). Coordinates are scene-local.
 export function figure(ctx: Ctx, opts: FigureOpts): FigureHandle {
   const root = shape(ctx.svg, "g", { "data-k-figure": "" }) as SVGGElement;
-  Object.assign(root.style, { stroke: opts.color, fill: "none", strokeWidth: "4", strokeLinecap: "round", strokeLinejoin: "round" });
+  Object.assign(root.style, { stroke: opts.color, fill: "none", strokeWidth: String(opts.strokeWidth ?? 4), strokeLinecap: "round", strokeLinejoin: "round" });
 
   // A joint is a group at a pivot; the pose rewrites its transform attribute, so it is in the snapshot.
   const joint = (parent: SVGGElement, px: number, py: number, d: string) => {
@@ -104,7 +106,7 @@ export function figure(ctx: Ctx, opts: FigureOpts): FigureHandle {
   };
 
   return {
-    appear: (tl) => void tl.to(root, { autoAlpha: 1, duration: 0.5 }),
+    appear: (tl, at) => void tl.to(root, { autoAlpha: 1, duration: 0.5 }, at),
     walk(tl, path, { duration, at }) {
       tl.to(root, { motionPath: { path }, duration, ease: "none", onUpdate: stride(duration) }, at);
     },

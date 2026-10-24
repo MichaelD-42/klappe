@@ -32,8 +32,9 @@ One master GSAP timeline per canvas; seek must equal play.
 - Create all DOM in `build(ctx)`, hidden. A step never creates, removes or edits DOM.
 - A step function only adds tweens to `tl`. Use `fromTo`, never `from`.
 - `onUpdate` may write the DOM only as a pure function of the tween's progress, on an element marked `data-k-text` or `data-k-progress`.
-- Never start a step with `"<"` or `"-="`.
+- Never start a step with `"<"` or `"-="`: it is a deck problem.
 - `steps` lines up with the list items in `scene.md`; the walk fails if the counts differ.
+- Read the scene's text from `ctx.doc` (title, steps, notes) and the deck's `lang` and `intensity` from `ctx.deck`; never copy text from `scene.md` into `scene.ts`.
 
 ## Design rules
 

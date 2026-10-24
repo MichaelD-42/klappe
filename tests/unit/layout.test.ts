@@ -61,3 +61,23 @@ describe("buildStepList", () => {
     expect(buildStepList(d, layoutDeck(d).canvases).map((s) => s.canvas)).toEqual([0, 0, 1]);
   });
 });
+
+describe("a section listed twice in one shared group", () => {
+  it("is on its canvas once", () => {
+    const d = deck([section("a", [scene("s1", "a")]), section("b", [scene("s2", "b")])], [["a", "a", "b"]]);
+    const { canvases, problems } = layoutDeck(d);
+    expect(problems).toEqual([]);
+    expect(canvases.map((c) => c.sectionIds)).toEqual([["a", "b"]]);
+  });
+});
+
+describe("place() that gives no usable rect", () => {
+  it("reports it and uses the next free frame", () => {
+    for (const bad of [undefined, { x: 1 }, { x: 0, y: 0, w: Number.NaN, h: 1080 }]) {
+      const { canvases, problems } = layoutDeck(two([], () => bad as unknown as Rect));
+      expect(problems).toEqual(["a2: place() returned no rect {x, y, w, h}; using the next free frame"]);
+      expect(canvases[0].rects.a2).toEqual({ x: 1920, y: 0, w: 1920, h: 1080 });
+      expect(canvases[0].size).toEqual({ w: 3840, h: 1080 });
+    }
+  });
+});

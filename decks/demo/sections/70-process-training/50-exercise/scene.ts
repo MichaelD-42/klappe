@@ -18,7 +18,7 @@ interface Refs {
 // The list on the left, the ring on the right, both centred on one horizontal line.
 const scene: SceneModule = {
   build(ctx): Refs {
-    const h = title(ctx, "Exercise: review a change");
+    const h = title(ctx, ctx.doc!.title);
     const big = ctx.html.appendChild(document.createElement("div"));
     Object.assign(big.style, { position: "absolute", left: "0", top: "0", transform: `scale(${SCALE})`, transformOrigin: "0 0" });
     const list = checklist({ ...ctx, html: big }, { items: ITEMS, x: 160 / SCALE, y: 0, w: 780 });

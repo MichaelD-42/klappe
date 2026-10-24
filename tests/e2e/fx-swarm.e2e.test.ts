@@ -108,3 +108,26 @@ test('frame-time report: stream at 2000 points', async () => {
   expect(r.frames).toBeGreaterThan(10)
   await page.close()
 })
+
+// Play starts from where the shape sits: the first frames of a morph do not jump.
+test('a morph starts from the shape as it stands', async () => {
+  const page = await open('?fixture=fx-motion#/a/chain/1')
+  const moves = await page.evaluate(async () => {
+    const doc = [...document.querySelectorAll<HTMLElement>('[data-scene="chain"] div')].find((e) => e.textContent === 'Doc')!
+    const centre = () => {
+      const r = doc.getBoundingClientRect()
+      return [r.left + r.width / 2, r.top + r.height / 2]
+    }
+    const [x0, y0] = centre()
+    window.klappe.stepper.next()
+    const out: number[] = []
+    for (let k = 0; k < 3; k++) {
+      await new Promise(requestAnimationFrame)
+      const [x, y] = centre()
+      out.push(Math.hypot(x - x0, y - y0))
+    }
+    return out
+  })
+  expect(moves[0]).toBeLessThan(2) // power2.inOut: the first frame barely moves
+  await page.close()
+})

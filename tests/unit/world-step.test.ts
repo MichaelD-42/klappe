@@ -22,3 +22,14 @@ describe("appendStep", () => {
     expect(tl.labels["e:2"]).toBeGreaterThan(tl.labels["e:1"]);
   });
 });
+
+describe("a step that reaches back", () => {
+  it("counts the tweens that start before the step does", () => {
+    const o = { v: 0 };
+    const tl = gsap.timeline({ paused: true });
+    expect(appendStep(tl, "e:0", (t) => t.to(o, { v: 1, duration: 1 }))).toBe(0);
+    expect(appendStep(tl, "e:1", (t) => t.to(o, { v: 2, duration: 1 }, "-=0.5"))).toBe(1);
+    expect(appendStep(tl, "e:2", (t) => t.to(o, { v: 3, duration: 1 }, "<"))).toBe(1);
+    expect(appendStep(tl, "e:3", (t) => (t.to(o, { v: 4, duration: 1 }), t.to(o, { v: 5, duration: 1 }, "<")))).toBe(0); // "<" after its own tween
+  });
+});

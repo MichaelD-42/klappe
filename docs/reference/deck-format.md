@@ -34,7 +34,7 @@ Frontmatter keys:
 
 - `## Title` names the scene. It is required.
 - Each list item is one step.
-- A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene.
+- A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
@@ -75,7 +75,9 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`. Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
 - Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
-- Shout-out intensity: `intensity` in `deck.md` sets every shout-out. To set it for one shout-out, call `shout(ctx, { question, answer, intensity })` in that scene's `scene.ts` and play its 4 steps yourself (see the example below).
+- Shout-out intensity: `intensity` in `deck.md` sets every shout-out, including one a `scene.ts` builds with `shout(ctx, { question, answer })`. Pass `intensity` to set it for one shout-out (see the example below).
+- `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
+- `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
 - `ctx.problem(msg)` reports a deck problem. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
 
@@ -185,7 +187,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 ## URL flags
 
 - `?instant=1`: every play becomes a seek.
-- `?reducedmotion=1`: camera moves become cuts, and pictures leave out the Ken Burns push. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
+- `?reducedmotion=1`: camera moves become cuts, pictures leave out the Ken Burns push, and the `zoom`, `crt` and `shatter` transitions play a fade. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion, for a presenter laptop with animations off.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.

@@ -34,10 +34,10 @@ const scene: SceneModule = {
       kenBurns: true,
       scrim: 0.6,
     });
-    const title = heading(ctx, "Overview");
+    const title = heading(ctx, ctx.doc!.title);
     // The same heading for the pulled-back view, sized so it reads like every other scene title, and a caption.
     const { s, title: at, caption: under } = rest(ctx.canvas.refs.stream);
-    const big = heading(ctx, "Overview");
+    const big = heading(ctx, ctx.doc!.title);
     const caption = heading(ctx, CAPTION);
     const place = (e: HTMLElement, p: { x: number; y: number }, px: number) =>
       Object.assign(e.style, {

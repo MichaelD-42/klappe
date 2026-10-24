@@ -121,3 +121,24 @@ test('a click into an embedded player leaves the arrow keys working', async () =
   await page.waitForFunction((i) => window.klappe.stepper.index === i + 1, before, { timeout: 5_000 })
   await page.close()
 })
+
+// A YouTube or Vimeo address without a video id cannot play: say so, instead of a broken box.
+test('a video host link without a video id is a deck problem with a placeholder', async () => {
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-media`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const { video } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/media.ts') // a string: vitest would rewrite import()
+    const html = document.body.appendChild(document.createElement('div'))
+    const problems: string[] = []
+    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { media: {}, data: {} }, deck: { lang: 'en', intensity: 'calm' }, problem: (p: string) => problems.push(p) }
+    video(ctx as any, { href: 'https://www.youtube.com/@channel', title: 'Our channel', rect: { x: 0, y: 0, w: 800, h: 450 } })
+    const out = { problems, frames: html.querySelectorAll('iframe, video').length, text: html.textContent }
+    html.remove()
+    return out
+  })
+  expect(r.problems).toEqual(['VIDEO MISSING: https://www.youtube.com/@channel has no video id; link one video — Our channel'])
+  expect(r.frames).toBe(0)
+  expect(r.text).toContain('VIDEO MISSING')
+  await page.close()
+})

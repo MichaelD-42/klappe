@@ -22,7 +22,12 @@ export interface WorldMapOpts {
 export interface WorldMapHandle {
   draw: StepAdder;
   site(tl: gsap.core.Timeline, id: string): void;
-  arc(tl: gsap.core.Timeline, fromId: string, toId: string): void;
+  // `at` is the position on the timeline, as in tl.to.
+  arc(tl: gsap.core.Timeline, fromId: string, toId: string, at?: gsap.Position): void;
+  // A site's position, scene-local: where its dot sits. Undefined (and a deck problem) for an unknown id.
+  point(id: string): [number, number] | undefined;
+  // The path of the map's arc from one site to another, for your own drawing or a figure's walk.
+  arcPath(fromId: string, toId: string): string | undefined;
   zoomTo(tl: gsap.core.Timeline, id: string): void;
   // Back to the whole map: labels fade out, the camera frames the scene again.
   world: StepAdder;
@@ -37,11 +42,11 @@ const LABEL_SIZE = 8;
 // Stroke widths in map units at world zoom (scale 1) and at zoom (scale 4): about 1.75 and 3.4 px at 1920.
 const STROKE = { world: { land: 1.75, arc: 1.5 }, zoom: { land: 0.85, arc: 0.75 } };
 
-// Public helper: decks use it for site positions until the worldMap handle exposes them. The whole globe (the sphere) fitted into rect.
+// The whole globe (the sphere) fitted into rect. In a deck, prefer the handle's point().
 export const fitProjection = (r: Rect) =>
   geoNaturalEarth1().fitExtent([[r.x, r.y], [r.x + r.w, r.y + r.h]], { type: "Sphere" });
 
-// Public helper: decks use it for arcs until the worldMap handle exposes them. A quadratic curve from a to b that bows upward by a quarter of its length.
+// A quadratic curve from a to b that bows upward by a quarter of its length. In a deck, prefer the handle's arcPath().
 export function arcPath([ax, ay]: [number, number], [bx, by]: [number, number]): string {
   const lift = Math.hypot(bx - ax, by - ay) / 4;
   return `M ${ax} ${ay} Q ${(ax + bx) / 2} ${(ay + by) / 2 - lift} ${bx} ${by}`;
@@ -120,11 +125,16 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       if (s)
         tl.fromTo(s.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)" });
     },
-    arc(tl, fromId, toId) {
+    arc(tl, fromId, toId, at) {
       // An arc not declared in opts.arcs is created here, while the timeline is built at load,
       // hidden by its dash, so seek(0) still shows nothing. Declare arcs to keep step functions tween-only.
       const p = arcs.get(`${fromId}>${toId}`) ?? makeArc(fromId, toId);
-      if (p) tl.fromTo(p, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" });
+      if (p) tl.fromTo(p, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, at);
+    },
+    point: (id) => get(id)?.at,
+    arcPath(fromId, toId) {
+      const [a, b] = [get(fromId), get(toId)];
+      return a && b ? arcPath(a.at, b.at) : undefined;
     },
     zoomTo(tl, id) {
       const s = get(id);

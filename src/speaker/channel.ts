@@ -28,10 +28,14 @@ export function parseWire(wire: unknown, name: string, seen: Set<string>): Msg |
   return msg;
 }
 
+// The deck's path is in the name: two decks with one title on one origin (two folders on one web server)
+// must not drive each other. The speaker window opens the same path, so it joins the same channel.
+export const channelName = (deckTitle: string, path: string) => `klappe:${path}:${deckTitle}`;
+
 // BroadcastChannel, plus postMessage to the opener and to any window that has written to us.
 // Every message goes out on both, so each carries an id and the receiver drops repeats.
 export function openChannel(deckTitle: string): Channel {
-  const name = `klappe:${deckTitle}`;
+  const name = channelName(deckTitle, location.pathname);
   const fns: ((msg: Msg) => void)[] = [];
   const peers = new Set<Window>();
   const seen = new Set<string>();

@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads two (start, end) per row |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -102,7 +102,9 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | --- | --- |
 | `draw` | the land draws on (2.4 s) |
 | `site(tl, id)` | the site's dot pops in |
-| `arc(tl, from, to)` | the arc draws on. An arc not in `arcs` is created on the spot; declare arcs to keep step functions tween-only |
+| `arc(tl, from, to, at?)` | the arc draws on, at `at` on the timeline (default: the end). An arc not in `arcs` is created on the spot; declare arcs to keep step functions tween-only |
+| `point(id)` | the site's `[x, y]`, scene-local, where its dot sits: place your own figures, labels and routes with it. Unknown id: `undefined` and a deck problem |
+| `arcPath(from, to)` | the path data of the map's arc between two sites, for a figure's `walk` or your own drawing |
 | `zoomTo(tl, id)` | the camera flies to the site; only that site's label shows; strokes thin to keep their weight |
 | `world` | labels fade out, the camera frames the whole scene again |
 
@@ -113,11 +115,11 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 
 ## `fitProjection`
 
-`fitProjection(rect)` gives the d3 projection `worldMap` uses, with the globe fitted into `rect`. `fitProjection(rect)([lon, lat])` is the `[x, y]` of a place, for your own marks on the map.
+`fitProjection(rect)` gives the d3 projection `worldMap` uses, with the globe fitted into `rect`. `fitProjection(rect)([lon, lat])` is the `[x, y]` of a place that is not a site. For a site, use the handle's `point(id)`.
 
 ## `arcPath`
 
-`arcPath([ax, ay], [bx, by])` gives the SVG path data of the arc `worldMap` draws: a quadratic curve that bows upward by a quarter of its length.
+`arcPath([ax, ay], [bx, by])` gives the SVG path data of the arc `worldMap` draws: a quadratic curve that bows upward by a quarter of its length. Between two sites, the handle's `arcPath(from, to)` gives the same.
 
 ## `figure`
 
@@ -139,12 +141,13 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `x`, `y` | number | required | where the feet stand |
 | `color` | string | required | stroke colour, a token such as `"var(--k-fg)"` |
 | `scale` | number | 1 | size; scaling is about the feet |
+| `strokeWidth` | number | 4 | line weight in figure units, before `scale`: raise it for a small figure |
 
 ### Step adders
 
 | Handle | Step |
 | --- | --- |
-| `appear` | fades in (0.5 s) |
+| `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
 
@@ -158,7 +161,7 @@ The path must be in the figure's coordinate space (`ctx.svg`, scene-local); a pa
 
 ## `lineArt`
 
-Catalog: section `120-draw` (`#/draw/desk/1`). A line drawing from an SVG file, drawn stroke by stroke, with one part that can glow. It is for trusted, author-supplied SVG only: it strips scripts, styles and handlers, but is not a sanitizer.
+Catalog: section `120-draw` (`#/draw/desk/1`). A line drawing from an SVG file, drawn stroke by stroke, with one part that can glow. It is for trusted, author-supplied SVG only: it strips scripts, styles, handlers, animations (`set`, `animate`), images and links to other files (an `href` must be `#id`), but is not a full sanitizer. Shapes inside `defs`, `clipPath`, `mask`, `pattern` and `marker` keep their own fill and are not drawn on.
 
 From `decks/demo/sections/120-draw/10-desk/scene.ts`:
 
@@ -191,7 +194,7 @@ A source that is not an SVG with a viewBox shows `lineArt: the source is not an 
 
 ## `drawOn`
 
-Catalog: section `120-draw` (`#/draw/shapes/1`). Draws any stroked SVG shapes from start to end, one after another, and ends on a plain stroke. It returns a step adder: call it with the timeline.
+Catalog: section `120-draw` (`#/draw/shapes/1`). Draws any stroked SVG shapes from start to end, one after another, and ends on a plain stroke. It returns a step adder: call it with the timeline; it returns the time the draw starts. A stroke shorter than 0.5 units (an icon's dot) has nothing to draw and fades in at its turn instead. Shapes in `text`, `defs`, `clipPath`, `mask`, `pattern` and `marker` are left out.
 
 From `decks/demo/sections/120-draw/30-shapes/scene.ts`:
 
@@ -306,7 +309,7 @@ steps: [(tl, img) => img.show(tl)],
 
 ## `video`
 
-Catalog: section `190-media` (`#/media/youtube/1`). A video in a framed box with its title as a caption. In Markdown, a list item linking to YouTube, Vimeo, or a `.mp4` or `.webm` file shows one.
+Catalog: section `190-media` (`#/media/youtube/1`). A video in a framed box with its title as a caption. In Markdown, a list item linking to YouTube, Vimeo, or a `.mp4` or `.webm` file shows one. YouTube links can be `watch?v=`, `youtu.be`, `shorts`, `music.youtube.com` or `youtube-nocookie.com` (which stays privacy-enhanced). A video host link with no video id, such as a channel page, shows VIDEO MISSING and a deck problem.
 
 From the Markdown form, `decks/demo/sections/190-media/10-youtube/scene.md`:
 
@@ -398,7 +401,7 @@ steps: [
 | --- | --- | --- |
 | `question` | string | the big text; long text gets a smaller size to stay in the frame |
 | `answer` | string | shown in `--k-accent` at 70% of the question's size |
-| `intensity` | `"calm"` or `"bold"` | required. Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
+| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
 
 | Handle | Step |
 | --- | --- |
@@ -537,7 +540,7 @@ steps: [(tl, { down }) => down.run(tl)],
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt` and `shatter` play a fade.
 
 ## `registry`
 

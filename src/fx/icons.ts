@@ -73,9 +73,7 @@ function glyph(ctx: Ctx, parent: Element, name: string, x: number, y: number, si
   return {
     draw(tl, at) {
       drawn = true;
-      drawOn(inner, { at, duration: DRAW, each: EACH })(tl);
-      // drawOn ends on its plain-stroke set, so ">" is the end of the strokes; the start is before it.
-      const start = (tl.recent() as gsap.core.Tween).startTime() - ((inner.querySelectorAll(SHAPES).length - 1) * EACH + DRAW);
+      const start = drawOn(inner, { at, duration: DRAW, each: EACH })(tl);
       if (tinted.length) tl.fromTo(tinted, { fillOpacity: 0 }, { fillOpacity: 0.2, duration: 0.4 }, ">-0.3");
       mark(tl, start);
     },

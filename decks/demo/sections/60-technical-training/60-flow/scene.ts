@@ -10,7 +10,7 @@ interface Refs {
 
 const scene: SceneModule = {
   build(ctx): Refs {
-    const h = title(ctx, "Where retry runs");
+    const h = title(ctx, ctx.doc!.title);
     const f = flow(ctx, {
       grid: { x: 160, y: 320, w: 1600, h: 340, cols: 4, rows: 1 },
       nodes: [

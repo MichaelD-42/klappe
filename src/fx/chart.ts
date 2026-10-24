@@ -6,7 +6,8 @@ import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
 // must be a number in every row (only all-text columns are text). bar and waterfall use the first series;
-// stacked and line use all of them; timeline reads two series per row: start, then end (for example years).
+// stacked and line use all of them; timeline reads a start and an end per row (for example years): the
+// columns named start/from/begin and end/to/until, else the first two number columns.
 export type Row = Record<string, string | number>;
 export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline";
 export interface ChartOpts {
@@ -56,6 +57,12 @@ function columns(rows: Row[]) {
   return { label, series: rest.filter((k) => rows.some((r) => typeof r[k] === "number")) };
 }
 const num = (r: Row, k: string) => r[k] as number;
+// A timeline's start and end columns: named ones (start/from/begin, end/to/until) win, else the first two.
+function span(series: string[]): [string, string] {
+  const find = (re: RegExp) => series.find((k) => re.test(k));
+  const [s, e] = [find(/^(start|from|begin)$/i), find(/^(end|to|until)$/i)];
+  return s && e ? [s, e] : [series[0], series[1]];
+}
 
 // Why rows cannot be drawn as this type, or "". Never plot around a bad cell: that would invent numbers.
 export function dataError(rows: unknown[], type: ChartType): string {
@@ -68,7 +75,7 @@ export function dataError(rows: unknown[], type: ChartType): string {
   for (const [i, r] of data.entries())
     for (const k of series) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
   if (type === "timeline") {
-    const [a, b] = series;
+    const [a, b] = span(series);
     const i = data.findIndex((r) => num(r, b) < num(r, a));
     if (i >= 0) return `row ${i + 1}, ${b} before ${a}`;
   }
@@ -84,9 +91,12 @@ export function waterfallSteps(deltas: number[]): [number, number][] {
 // The value axis range before nice(): zero is always in it, except for a timeline.
 export function chartDomain(rows: Row[], type: ChartType): [number, number] {
   const { series } = columns(rows);
-  const [a, b] = series;
+  const [a] = series;
   let vs: number[];
-  if (type === "timeline") return [d3.min(rows, (r) => num(r, a)) ?? 0, d3.max(rows, (r) => num(r, b)) ?? 0];
+  if (type === "timeline") {
+    const [s, e] = span(series);
+    return [d3.min(rows, (r) => num(r, s)) ?? 0, d3.max(rows, (r) => num(r, e)) ?? 0];
+  }
   if (type === "waterfall") vs = waterfallSteps(rows.map((r) => num(r, a))).flat();
   else if (type === "stacked")
     vs = rows.flatMap((r) => {
@@ -99,7 +109,6 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 }
 
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
-const LANG = "en";
 const PALETTE = [1, 2, 3, 4].map((n) => `var(--k-series-${n})`);
 const UP = "var(--k-phosphor)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
@@ -188,24 +197,24 @@ function load(ctx: Ctx, opts: ChartOpts): { rows: unknown[]; source?: string } |
 export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const type = opts.type ?? "bar";
   const loaded = load(ctx, opts);
-  if (loaded === null) return placeholder(ctx, opts, t("dataMissing", LANG), "");
-  if (typeof loaded === "string") return placeholder(ctx, opts, t("dataError", LANG), loaded);
-  if (!loaded.rows.length) return placeholder(ctx, opts, t("dataMissing", LANG), "no rows");
+  if (loaded === null) return placeholder(ctx, opts, t("dataMissing", ctx.deck.lang), "");
+  if (typeof loaded === "string") return placeholder(ctx, opts, t("dataError", ctx.deck.lang), loaded);
+  if (!loaded.rows.length) return placeholder(ctx, opts, t("dataMissing", ctx.deck.lang), "no rows");
   const why = dataError(loaded.rows, type);
-  if (why) return placeholder(ctx, opts, t("dataError", LANG), why);
+  if (why) return placeholder(ctx, opts, t("dataError", ctx.deck.lang), why);
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
   const keys = type === "stacked" || type === "line" ? series : [series[0]];
   const names = data.map((r) => String(r[label]));
-  if (type === "waterfall") names.push(t("total", LANG));
+  if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
   const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
   const legend =
     type === "waterfall"
       ? [
-          { name: t("increase", LANG), fill: UP },
-          { name: t("decrease", LANG), fill: DOWN },
+          { name: t("increase", ctx.deck.lang), fill: UP },
+          { name: t("decrease", ctx.deck.lang), fill: DOWN },
         ]
       : keys.length > 1
         ? keys.map((k, i) => ({ name: k, fill: color(i) }))
@@ -225,12 +234,12 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const root = svg(ctx.svg, "g", {
     "data-k-src": opts.src,
     "data-k-chart": type,
-    "data-k-note": `${t("source", LANG)}: ${opts.src} — ${loaded.source || t("originNotStated", LANG)}`,
+    "data-k-note": `${t("source", ctx.deck.lang)}: ${opts.src} — ${loaded.source || t("originNotStated", ctx.deck.lang)}`,
   });
   const head: SVGElement[] = [];
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
-    const s = text(root, t("sampleData", LANG), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
+    const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
     s.style.fill = "var(--k-phosphor-amber)";
     head.push(s);
   }
@@ -267,7 +276,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   let xAxis: d3.Axis<any>;
   let yAxis: d3.Axis<any>;
   if (type === "timeline") {
-    const [a, b] = series;
+    const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
     const y = d3.scaleBand().domain(band).range([P.y, P.y + P.h]).padding(0.35);
     const tdec = decimals(data.flatMap((r) => [num(r, a), num(r, b)]));
@@ -327,7 +336,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         data.forEach((r, i) => {
           const net = keys.some((k) => num(r, k) < 0);
           const pos = d3.sum(keys, (k) => Math.max(0, num(r, k)));
-          barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `${t("net", LANG)} ${fmt(n)}` : fmt);
+          barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `${t("net", ctx.deck.lang)} ${fmt(n)}` : fmt);
         });
       } else if (type === "waterfall") {
         const signed = d3.format(`+,.${dec}f`);

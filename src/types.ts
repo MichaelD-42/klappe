@@ -69,6 +69,11 @@ export interface Ctx {
   reducedMotion?: boolean;
   // The scene id, on a scene's ctx only.
   scene?: string;
+  // The scene's parsed scene.md (title, notes, steps with their text), on a scene's ctx only:
+  // read text from here instead of copying it into scene.ts.
+  doc?: SceneDoc;
+  // From deck.md: the language for effect words and number formats, and the shout-out intensity.
+  deck: { lang: string; intensity: "calm" | "bold" };
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;

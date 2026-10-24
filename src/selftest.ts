@@ -79,8 +79,12 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
       if (!e || seen.has(e) || !t.textContent?.trim()) continue;
       seen.add(e);
       if (!e.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
-      const px = parseFloat(getComputedStyle(e).fontSize) * cam * fit;
       const r = e.getBoundingClientRect();
+      // The scale the text is drawn at: its box on screen against its own layout size, so every scale
+      // on the way counts (camera, stage fit, and any group in between). Camera times fit is the fallback.
+      const n: Element = e; // parentElement is typed HTMLElement, but text in SVG has an SVG parent
+      const own = n instanceof HTMLElement ? n.offsetHeight : n instanceof SVGGraphicsElement ? n.getBBox().height : 0;
+      const px = parseFloat(getComputedStyle(e).fontSize) * (own > 0 ? r.height / own : cam * fit);
       const outside = r.left < box.left - 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.bottom > box.bottom + 1;
       const offStage = r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom;
       if (section && offStage) continue;
@@ -130,7 +134,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
 
 const AC_SPEED = 50;
 const AC_HOLD_MS = 50;
-const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 90 s
+const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 110 s
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Polls, so it also covers state no engine event reports (the speaker iframe's text).

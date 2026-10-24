@@ -10,7 +10,7 @@ Each canvas has one master GSAP timeline. The engine owns it. Playing a step and
 - A step function only adds tweens to `tl`. It does not change the DOM or call anything with side effects.
 - Use `tl.fromTo`, not `tl.from`. A `from` tween reads the element's state while the timeline is built, and a seek back then lands somewhere else.
 - A callback may write the DOM only as a pure function of a tween's progress: `onUpdate` that sets text or a canvas from `this.progress()`. Mark that element `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it. `counter` and `crt` do this.
-- Position `"<"` is fine after a tween this step added. Never start a step with `"<"` or `"-="`: a step starts at its own label, and an offset before it can pull the tween into the previous step.
+- Position `"<"` is fine after a tween this step added. Never start a step with `"<"` or `"-="`: a step starts at its own label, and an offset before it can pull the tween into the previous step. A step that does this shows a deck problem.
 - Camera moves inside a scene are `ctx.camera.to(tl, rect, { duration, at })`, after the scene's entry.
 
 ## Step functions

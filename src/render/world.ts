@@ -221,14 +221,20 @@ function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTML
 // A step always takes time on both sides of its content, so a zero-duration tween (or none)
 // never lands on a label and leaks into the previous step on seek or play.
 const PAD = 0.001;
-export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): void {
+// Returns how many of the step's tweens start before the step does ("-=" or "<" first): they reach into the
+// previous step, so playing it no longer matches a seek to it.
+export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): number {
   tl.to({}, { duration: PAD });
   // shortcut: one label, moved every step, tells a helper where the current step starts (image() uses it);
   // read it only while the step is built. Upgrade to a step-start argument if more helpers need it.
   tl.addLabel(STEP_LABEL);
+  const start = tl.duration();
+  const before = new Set(tl.getChildren(false));
   add(tl);
+  const early = tl.getChildren(false).filter((c) => !before.has(c) && c.startTime() < start - 1e-6).length;
   tl.to({}, { duration: PAD });
   tl.addLabel(label);
+  return early;
 }
 
 // A background pinned to the screen: one cover image in the canvas's pinned layer, under the world, so the
@@ -249,6 +255,8 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   gsap.set(d, { autoAlpha: 0 });
   return { el: d, push: bg.kenBurns ? img : undefined };
 }
+
+const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter"];
 
 export function renderWorld(
   deck: Deck,
@@ -312,6 +320,7 @@ export function renderWorld(
         onStep: (fn) => stepListeners.push(fn),
         problem: (msg) => problems.push(msg),
         reducedMotion: opts.reducedMotion,
+        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
       };
     };
 
@@ -324,7 +333,7 @@ export function renderWorld(
     const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id };
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);
@@ -347,7 +356,9 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        return [s.id, { kind: m?.transition ?? "fade", opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
+        // Reduced motion: the dive, the CRT flash and the shatter fade instead.
+        const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
+        return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
     return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems };
@@ -360,8 +371,8 @@ export function renderWorld(
     if (!rt) continue;
     for (const sc of s.scenes) {
       const { ctx, refs, title, fx, bg } = perScene.get(sc)!;
-      sc.steps.forEach((_, i) =>
-        appendStep(rt.tl, `e:${index++}`, (tl) => {
+      sc.steps.forEach((_, i) => {
+        const early = appendStep(rt.tl, `e:${index++}`, (tl) => {
           const start = tl.duration();
           if (i === 0) {
             ctx.camera.to(tl, ctx.rect);
@@ -383,8 +394,9 @@ export function renderWorld(
             bg?.push?.move(tl, { duration: KEN_BURNS }, start);
             if (bg) bg.push = undefined;
           }
-        }),
-      );
+        });
+        if (early) ctx.problem(`${sc.source} step ${i + 1}: ${early} tween(s) start before the step; do not begin a step with "<" or "-="`);
+      });
     }
   }
   return runtimes;

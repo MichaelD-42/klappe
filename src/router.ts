@@ -23,7 +23,7 @@ export function resolveHash(hash: string, steps: StepAddr[]): { index: number; e
 }
 
 export class Router {
-  private navigating = false;
+  private navigating = 0; // a count: back pressed twice runs two navigations at once
 
   constructor(
     private steps: StepAddr[],
@@ -31,11 +31,15 @@ export class Router {
   ) {
     window.addEventListener("popstate", async () => {
       if (!this.steps.length) return;
-      this.navigating = true;
+      const { index, exact } = resolveHash(location.hash, this.steps);
+      if (!exact) history.replaceState(null, "", formatHash(this.steps[index]));
+      this.navigating++;
       try {
-        await this.onNavigate(resolveHash(location.hash, this.steps).index);
+        await this.onNavigate(index);
+      } catch (e) {
+        console.error(`navigation to ${location.hash}: ${e instanceof Error ? e.message : e}`);
       } finally {
-        this.navigating = false;
+        this.navigating--;
       }
     });
   }

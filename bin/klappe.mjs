@@ -9,13 +9,18 @@ const [cmd, ...rest] = process.argv.slice(2)
 const i = rest.lastIndexOf('--deck') // the last one wins, so `npm run dev -- --deck x` overrides the script's
 const decksDir = path.join(process.cwd(), 'decks')
 
+if (cmd === '--version' || cmd === '-v') {
+  console.log(JSON.parse(fs.readFileSync(path.join(klappeDir, 'package.json'), 'utf8')).version)
+  process.exit(0)
+}
+
 if (!['dev', 'build', 'test', 'init'].includes(cmd)) {
-  console.error('usage: klappe dev|build|test|init [--deck <id>]')
+  console.error('usage: klappe dev|build|test|init [--deck <id>] | --version')
   process.exit(1)
 }
 
 let id = i >= 0 ? rest[i + 1] : undefined
-if (i >= 0 && !id) {
+if (i >= 0 && (!id || id.startsWith('-'))) {
   console.error('--deck needs an id')
   process.exit(1)
 }
@@ -25,7 +30,7 @@ if (cmd === 'init') {
     console.error('usage: klappe init --deck <id>  (letters, digits, dashes)')
     process.exit(1)
   }
-  if (process.cwd() === klappeDir) {
+  if (path.relative(process.cwd(), klappeDir) === '') { // not ===: Windows paths differ in case
     console.error('Run init in the deck repo root, not in the klappe folder.')
     process.exit(1)
   }
@@ -45,7 +50,10 @@ if (cmd === 'init') {
       process.exit(1)
     }
   }
-  delete pkg.devDependencies?.klappe
+  if (pkg.devDependencies?.klappe !== undefined) {
+    delete pkg.devDependencies.klappe
+    console.log('Moved klappe from devDependencies to dependencies.')
+  }
   pkg.dependencies = { ...pkg.dependencies, klappe: 'file:./klappe' }
   const wanted = {
     dev: 'node klappe/bin/klappe.mjs dev',

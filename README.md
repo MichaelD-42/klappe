@@ -60,6 +60,10 @@ git subtree pull --prefix klappe https://github.com/MichaelD-42/klappe.git main 
 3. Run `npm i`.
 4. Run `npm run klappe:sync` to refresh the Claude agents.
 
+## Versions
+
+klappe uses semantic versioning; the version is in `klappe/package.json`, and `node klappe/bin/klappe.mjs --version` prints it. Before 1.0.0 a minor version may change the deck format or the API: read [CHANGELOG.md](CHANGELOG.md) before you update. Releases are git tags `vX.Y.Z` on `main`.
+
 ## Push a fix back
 
 1. Commit the fix to `klappe/` in its own commit. Touch no other folder in that commit.
@@ -76,7 +80,7 @@ git subtree push --prefix klappe https://github.com/MichaelD-42/klappe.git my-fi
 klappe ships agents and the `klappe` skill in `klappe/.claude/`.
 Claude Code does not find a `.claude` folder nested in a subfolder.
 So `klappe init` and `npm run klappe:sync` copy the `klappe*` agents (and any `klappe*` skills) to `.claude/` in the deck repo root.
-Run `npm run klappe:sync` after every klappe update. It overwrites the copied files. It never deletes. Remove stale `klappe*` files in `.claude/` by hand.
+Run `npm run klappe:sync` after every klappe update. It replaces each copied `klappe*` agent and skill, so files that left klappe leave your repo too; your own agents and skills stay. An entry klappe drops entirely stays: delete it by hand.
 
 ## Presenting
 

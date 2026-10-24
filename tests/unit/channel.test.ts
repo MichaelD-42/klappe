@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { isMsg, parseWire } from "../../src/speaker/channel";
+import { channelName, isMsg, parseWire } from "../../src/speaker/channel";
 import { Stepper } from "../../src/stepper";
 
 describe("isMsg", () => {
@@ -48,5 +48,12 @@ describe("Stepper listeners", () => {
     expect(second).toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith("stepper 'end' listener: boom");
     log.mockRestore();
+  });
+});
+
+describe("channelName", () => {
+  it("keeps two decks with one title apart when they are served from different paths", () => {
+    expect(channelName("Demo", "/klappe/a/")).not.toBe(channelName("Demo", "/klappe/b/"));
+    expect(channelName("Demo", "/klappe/a/")).toBe(channelName("Demo", "/klappe/a/"));
   });
 });

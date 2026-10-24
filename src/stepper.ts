@@ -34,6 +34,11 @@ export class Stepper {
     return this.i;
   }
 
+  // Resolves when every queued move, its play included, has finished.
+  get idle(): Promise<void> {
+    return this.queue;
+  }
+
   // Back to "nothing shown yet", like a fresh page load. Call only when no move is queued.
   reset(): void {
     this.i = -1;
