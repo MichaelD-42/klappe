@@ -126,7 +126,7 @@ test('icon and counter return their element as el', async () => {
     const svg = document.body.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'))
     const html = document.body.appendChild(document.createElement('div'))
     const problems: string[] = []
-    const ctx = { svg, html, problem: (m: string) => problems.push(m) }
+    const ctx = { svg, html, deck: { lang: 'en', intensity: 'calm' }, problem: (m: string) => problems.push(m) }
     const i = (window as any).__icon(ctx, 'cpu', { x: 100, y: 100 })
     const n = (window as any).__counter(ctx, { x: 100, y: 100, from: 0, to: 5, label: 'n' })
     const out = {

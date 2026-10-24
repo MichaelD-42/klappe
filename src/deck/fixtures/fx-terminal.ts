@@ -4,7 +4,7 @@ import type { SceneModule } from "../../types";
 
 // The terminal replay: a Markdown console fence (two commands with output), a scene.ts with a custom prompt and
 // every handle method, a 30-line block that does not fit (the problem the fixture means to cause), and a wrapped
-// 143-character command with no output, shown at a position.
+// 143-character command with no output, shown at a position (relative: a step must not start before its label).
 const f = "```";
 
 const api: SceneModule = {
@@ -29,7 +29,7 @@ const LONG_CMD =
   "irm https://example.com/training/setup.ps1 -OutFile setup.ps1; ./setup.ps1 -Workspace C:/workspace/training -Proxy http://127.0.0.1:3128 -Quiet";
 const wrap: SceneModule = {
   build: (ctx) => terminal(ctx, { lines: [`$ ${LONG_CMD}`, "$ ls", "setup.ps1"], x: 160, y: 200, w: 1200, h: 500, wrap: true }),
-  steps: [(tl, h: TerminalHandle) => (h.show(tl, 0), h.run(0)(tl)), (tl, h: TerminalHandle) => h.run(1)(tl)],
+  steps: [(tl, h: TerminalHandle) => (h.show(tl, "+=0.2"), h.run(0)(tl)), (tl, h: TerminalHandle) => h.run(1)(tl)],
 };
 
 export default () =>

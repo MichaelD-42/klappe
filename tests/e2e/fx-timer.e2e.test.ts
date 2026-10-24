@@ -170,7 +170,7 @@ test('timer show takes a position; the start follows it', async () => {
     const html = document.body.appendChild(document.createElement('div'))
     const make = () => {
       let listener: any
-      const ctx = { html, scene: 's', problem: () => {}, onStep: (fn: any) => (listener = fn) }
+      const ctx = { html, scene: 's', deck: { lang: 'en', intensity: 'calm' }, problem: () => {}, onStep: (fn: any) => (listener = fn) }
       const h = (window as any).__timer(ctx, { minutes: 1, style: 'text', x: 0, y: 0, size: 300 })
       const hint = html.lastElementChild!.querySelector('[data-k-timer-hint]')!
       return { h, step: (e: any) => listener(e), hint: () => hint.textContent }
