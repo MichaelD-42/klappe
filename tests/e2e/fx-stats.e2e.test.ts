@@ -53,12 +53,17 @@ test('a number and its unit stay on one line, and the waffle share too', async (
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-stats#/a/all/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   await page.waitForTimeout(500)
-  // Each number's line, in lines of its own font size: 1 when nothing wraps.
+  // Each number is one line box, and a KPI's unit sits on the number's line. A label may wrap: how far
+  // depends on the font (CI's is wider), so only the numbers are checked.
+  // The number's own height in its own line heights (a flex item is one box however its text wraps).
   const lines = await page.evaluate(() => {
     const k = document.querySelector('.k-stage')!.getBoundingClientRect().width / 1920
-    return [...document.querySelectorAll<HTMLElement>('[data-k-kpi] [data-k-text], [data-k-waffle] [data-k-text]')].map((e) =>
-      Math.round(e.parentElement!.getBoundingClientRect().height / (parseFloat(getComputedStyle(e).fontSize) * 1.25 * k)),
-    )
+    return [...document.querySelectorAll<HTMLElement>('[data-k-kpi] [data-k-text], [data-k-waffle] [data-k-text]')].map((e) => {
+      const n = e.getBoundingClientRect()
+      const unit = e.closest('[data-k-kpi]') ? e.nextElementSibling?.getBoundingClientRect() : undefined
+      const sameLine = !unit || (unit.top >= n.top - 1 && unit.bottom <= n.bottom + 1)
+      return sameLine ? Math.round(n.height / (parseFloat(getComputedStyle(e).lineHeight) * k)) : 2
+    })
   })
   expect(lines).toEqual([1, 1, 1])
   await page.close()

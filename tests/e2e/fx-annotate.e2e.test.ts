@@ -59,8 +59,9 @@ test('an underline on a wrapped phrase draws one stroke per line, each as wide a
       line: lines.map((q) => ({ left: q.left, right: q.right })),
     }
   })
-  expect(r.lines).toBe(2)
-  expect(r.paths).toHaveLength(2)
+  // How many lines depends on the font (CI's is wider): one stroke per line, whatever the count.
+  expect(r.lines).toBeGreaterThanOrEqual(2)
+  expect(r.paths).toHaveLength(r.lines)
   // Each stroke spans no more than its own line's text, plus the pad on each side.
   const widest = Math.max(...r.line.map((q) => q.right - q.left))
   for (const p of r.paths) expect(p.right - p.left).toBeLessThan(widest + 40)
