@@ -1,0 +1,36 @@
+/* sorbet: Dark, with soft pastels: peach, lilac, mint and butter on aubergine. Playful but calm. */
+:root {
+  --k-bg: #1e1b2e;
+  --k-fg: #f6f2ff;
+  --k-muted: #c4bddf;
+  --k-surface: #2a2640;
+  --k-line: #7d74a8;
+  --k-accent: #ffa58c;
+  --k-accent-2: #5fdcae;
+  --k-ok: #7be3a8;
+  --k-warn: #ffd966;
+  --k-bad: #ff7f8f;
+  --k-series-1: #7fa7ff;
+  --k-series-2: #ffb38f;
+  --k-series-3: #ff6f91;
+  --k-series-4: #e7f7a0;
+  --k-series-5: #5fdcae;
+  --k-series-6: #c4a6ff;
+  --k-font: "Space Grotesk Variable", "Trebuchet MS", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --k-font-code: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  --k-code-foreground: #f6f2ff;
+  --k-code-background: #17152a;
+  --k-code-token-constant: #ffd966;
+  --k-code-token-string: #5fdcae;
+  --k-code-token-comment: #9c94bd;
+  --k-code-token-keyword: #ff8fbf;
+  --k-code-token-parameter: #ffa58c;
+  --k-code-token-function: #86c3ff;
+  --k-code-token-string-expression: #5fdcae;
+  --k-code-token-punctuation: #c4bddf;
+  --k-code-token-link: #86c3ff;
+  --k-phosphor: #7dffa0;
+  --k-phosphor-amber: #ffb547;
+  --k-blackout: #000;
+  --k-scrim: #000;
+}

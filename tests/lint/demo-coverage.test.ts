@@ -7,10 +7,10 @@ import * as fx from '../../src/fx'
 // The demo deck shows every effect and element a deck author can call, and every transition kind.
 // Not called by deck authors: pure helpers (layout, parsing, maths) and engine-only parts.
 const ALLOW = [
-  'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'waffleCells', 'scribble', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText',
+  'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'waffleCells', 'scribble', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText', 'bubbleLayout', 'crtColor', 'cursorCentre',
   'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'lineDiff', 'loadHighlighter',
   'parseCsv', 'parseGroups', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
-  'timerState', 'treeLayout', 'treeRoute', 'typed', 'waterfallSteps',
+  'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.
   'loadTransitions', 'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
 ]

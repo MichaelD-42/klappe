@@ -56,7 +56,7 @@ export const fenceProblem = (lang: string) =>
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
-  if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
+  if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect, fallback: m.fallback }).show;
   const c = fxPart("chart")(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
     c.axes(tl);
@@ -317,7 +317,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   }
   if (loop && bg.scrim) {
     const s = d.appendChild(el("div", ""));
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(bg.scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(bg.scrim) });
   }
   if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });

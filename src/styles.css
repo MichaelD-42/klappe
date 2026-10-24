@@ -8,15 +8,16 @@ body {
 
 .k-stage {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: 0;
+  top: 0;
   width: 1920px;
   height: 1080px;
-  overflow: hidden;
+  overflow: clip; /* not hidden: scrollIntoView (the overview marker) scrolls a hidden box too, and left a band */
   background: var(--k-bg);
   color: var(--k-fg);
   font-family: var(--k-font);
-  transform-origin: 50% 50%;
+  font-variant-numeric: tabular-nums; /* counters, timers and scrambles do not jitter */
+  transform-origin: 0 0;
 }
 
 .k-worlds,

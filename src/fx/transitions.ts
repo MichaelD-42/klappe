@@ -19,11 +19,12 @@ const cut: Transition = (from, to) => {
   return gsap.timeline();
 };
 
+// Out, then in, each over half of FADE: two section titles at the same spot never show on top of each other.
 const fade: Transition = (from, to) =>
   gsap
     .timeline()
-    .to(from.el, { autoAlpha: 0, duration: FADE }, 0)
-    .fromTo(to.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: FADE }, 0);
+    .to(from.el, { autoAlpha: 0, duration: FADE / 2 }, 0)
+    .fromTo(to.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: FADE / 2 }, FADE / 2);
 
 // The layer behind both canvases turns black while neither shows.
 const blackout: Transition = (from, to) => {

@@ -15,8 +15,8 @@
   --k-series-4: #5cc8ff;
   --k-series-5: #ff8a3d;
   --k-series-6: #b88cff;
-  --k-font: "Trebuchet MS", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --k-font-code: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  --k-font: "Space Grotesk Variable", "Trebuchet MS", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --k-font-code: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
   --k-code-foreground: #f4efff;
   --k-code-background: #13062a;
   --k-code-token-constant: #ffd23f;
@@ -31,4 +31,5 @@
   --k-phosphor: #7dffa0;
   --k-phosphor-amber: #ffb547;
   --k-blackout: #000;
+  --k-scrim: #000;
 }

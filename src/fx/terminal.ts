@@ -11,9 +11,10 @@ export interface TerminalOpts {
   w: number;
   h: number;
   prompt?: string;
+  wrap?: boolean; // long lines wrap onto rows indented by 2 characters, instead of clipping
 }
 export interface TerminalHandle {
-  show: StepAdder;
+  show(tl: gsap.core.Timeline, at?: gsap.Position): void;
   run(command: number): StepAdder;
 }
 
@@ -36,15 +37,31 @@ const PAD_Y = 24;
 const CPS = 34; // typing speed, characters per second (as crt)
 const GAP = 0.08; // between output lines
 const CURSOR = "█";
+const INDENT = 2; // characters before a wrapped continuation row
 
 // Monospace is allowed under .k-term: a terminal is code, not a label.
 const CSS = `
 .k-term { position: absolute; box-sizing: border-box; overflow: hidden; border-radius: 12px;
-  background: var(--k-surface); color: var(--k-fg); font-family: var(--k-font-code); }
+  background: var(--k-surface); color: var(--k-fg); font-family: var(--k-font-code); font-variant-ligatures: none; }
 .k-term > div { position: absolute; left: 0; right: 0; top: 0; padding-left: ${PAD_X}px; white-space: pre; overflow: hidden; }
 .k-term .k-term-prompt { color: var(--k-accent); }
 .k-term .k-term-more { color: var(--k-muted); font-family: var(--k-font); }
 `;
+
+// Where s breaks into rows of at most width characters (continuation rows lose INDENT): after the last space
+// that fits, else mid-word.
+function breaks(s: string, width: number): number[] {
+  const out: number[] = [];
+  for (let start = 0, room = width; s.length - start > room; room = Math.max(1, width - INDENT)) {
+    const sp = s.lastIndexOf(" ", start + room - 1);
+    start = sp >= start ? sp + 1 : start + room;
+    out.push(start);
+  }
+  return out;
+}
+// The first n characters of s with a newline and the indent at each break before n.
+const wrapped = (s: string, br: number[], n = s.length) =>
+  [0, ...br.filter((b) => b > 0 && b < n)].map((b, i, a) => s.slice(b, a[i + 1] ?? n)).join("\n" + " ".repeat(INDENT));
 
 function addStyle() {
   if (document.getElementById("k-term-style")) return;
@@ -58,18 +75,27 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
   addStyle();
   const cmds = splitConsole(opts.lines);
   const prompt = (opts.prompt ?? "$") + " ";
-  const total = cmds.reduce((n, c) => n + 1 + c.out.length, 0);
-  const cols = Math.max(1, ...cmds.flatMap((c) => [prompt.length + c.cmd.length, ...c.out.map((o) => o.length)]));
-  const size = Math.max(
+  const texts = cmds.flatMap((c) => [prompt + c.cmd, ...c.out]);
+  const cols = Math.max(1, ...texts.map((l) => l.length));
+  const widthAt = (size: number) => Math.max(1, Math.floor((opts.w - PAD_X - PAD_Y) / (size * CHAR_W)));
+  const breaksAt = (size: number) => texts.map((l) => (opts.wrap ? breaks(l, widthAt(size)) : []));
+  const rowsAt = (size: number) => breaksAt(size).reduce((n, b) => n + 1 + b.length, 0);
+  let size = Math.max(
     MIN_FONT,
-    Math.floor(Math.min(MAX_FONT, (opts.h - 2 * PAD_Y) / (total * LINE_H), (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
+    Math.floor(Math.min(MAX_FONT, (opts.h - 2 * PAD_Y) / (texts.length * LINE_H), opts.wrap ? MAX_FONT : (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
   );
+  while (opts.wrap && size > MIN_FONT && rowsAt(size) * size * LINE_H > opts.h - 2 * PAD_Y) size--;
   const lh = size * LINE_H;
   const rows = Math.floor((opts.h - 2 * PAD_Y) / lh);
-  const width = Math.floor((opts.w - PAD_X - PAD_Y) / (size * CHAR_W));
+  const width = widthAt(size);
+  const brk = breaksAt(size);
+  const total = rowsAt(size); // screen rows: a wrapped line takes several
   if (total > rows) ctx.problem(`terminal: ${total} lines do not fit; max ${rows}`);
-  if (cols > width) ctx.problem(`terminal: lines longer than ${width} characters are clipped`);
-  const vis = total > rows ? rows - 1 : total; // clipped output gives its last row to the marker
+  if (!opts.wrap && cols > width) ctx.problem(`terminal: lines longer than ${width} characters are clipped`);
+  // The first screen row of each line, and how many lines show: clipped output gives its last row to the marker.
+  const starts = brk.map((_, i) => brk.slice(0, i).reduce((n, b) => n + 1 + b.length, 0));
+  const room = total > rows ? rows - 1 : rows;
+  const vis = brk.filter((b, i) => starts[i] + 1 + b.length <= room).length;
 
   const panel = ctx.html.appendChild(Object.assign(document.createElement("div"), { className: "k-term" }));
   Object.assign(panel.style, {
@@ -78,7 +104,7 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
   });
   const row = (i: number) => {
     const e = panel.appendChild(document.createElement("div"));
-    Object.assign(e.style, { top: `${PAD_Y + i * lh}px`, height: `${lh}px` });
+    Object.assign(e.style, { top: `${PAD_Y + starts[i] * lh}px`, height: `${(1 + brk[i].length) * lh}px` });
     if (i >= vis) e.style.visibility = "hidden";
     return e;
   };
@@ -88,22 +114,24 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
     head.append(Object.assign(document.createElement("span"), { className: "k-term-prompt", textContent: prompt }));
     const text = head.appendChild(document.createElement("span"));
     text.dataset.kText = "";
-    const out = c.out.map((o) => Object.assign(row(i++), { textContent: o }));
+    const br = brk[i - 1].map((b) => b - prompt.length); // the breaks in the command, after its prompt
+    const out = c.out.map((o) => Object.assign(row(i), { textContent: wrapped(o, brk[i++]) }));
     const shown = out.filter((e) => e.style.visibility !== "hidden"); // before autoAlpha hides them all
-    gsap.set(shown, { autoAlpha: 0 });
-    return { cmd: c.cmd, text, out: shown };
+    if (shown.length) gsap.set(shown, { autoAlpha: 0 }); // an empty target logs "GSAP target not found"
+    return { cmd: c.cmd, br, text, out: shown };
   });
-  if (total > vis) {
+  if (vis < texts.length) {
     const m = row(vis);
+    m.style.height = `${lh}px`;
     m.style.visibility = "visible";
     m.className = "k-term-more";
-    m.textContent = `+${total - vis} ${t("moreLines", ctx.deck.lang)}`;
+    m.textContent = `+${texts.length - vis} ${t("moreLines", ctx.deck.lang)}`;
     m.style.paddingLeft = `${PAD_X}px`;
   }
   gsap.set(panel, { autoAlpha: 0 });
 
   return {
-    show: (tl) => tl.to(panel, { autoAlpha: 1, duration: motion.step }),
+    show: (tl, at) => void tl.to(panel, { autoAlpha: 1, duration: motion.step }, at),
     run(k) {
       const c = built[k];
       if (!c) throw new Error(`terminal: no command ${k} (${built.length} commands)`);
@@ -113,7 +141,7 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
           ease: "none",
           onUpdate(this: gsap.core.Tween) {
             const p = this.progress();
-            c.text.textContent = typed(c.cmd, p) + (p > 0 && p < 1 ? CURSOR : "");
+            c.text.textContent = wrapped(c.cmd, c.br, typed(c.cmd, p).length) + (p > 0 && p < 1 ? CURSOR : "");
           },
         });
         if (c.out.length) tl.to(c.out, { autoAlpha: 1, duration: motion.step, stagger: GAP });

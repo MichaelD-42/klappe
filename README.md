@@ -23,7 +23,7 @@ Every step is a label on a GSAP timeline, and an effect only adds tweens to it. 
 
 A deck is a folder of Markdown and TypeScript in git, so it diffs, reviews and merges like code. It is also easy for an AI agent to write: klappe ships a Claude Code skill and builder and reviewer agents that know the deck format and its rules.
 
-It is not a WYSIWYG editor, and it does not export PowerPoint files. PDF export is planned.
+It is not a WYSIWYG editor, and it does not export PowerPoint files. It does export a PDF, one page per step.
 
 ## What you write
 
@@ -72,7 +72,7 @@ export default scene;
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
 - **Presenting:** speaker view, overview, section list, autoplay, exercise timers, deep links, and reduced motion respected (with a `?reducedmotion=0` override).
 - **Checks:** a missing picture or data file shows a placeholder on stage and a line in `media/TODO.md`; the self-test and a design lint run in CI.
-- **Themes:** `calm` and `bold`, built from `--k-*` tokens; a deck can bring its own.
+- **Themes:** seven built in (`calm`, `bold`, `sorbet`, `lavender`, `daylight`, `forest`, `ink`; dark, light and pastel), built from `--k-*` tokens with bundled fonts; a deck can bring its own.
 
 Every effect has a scene in the demo deck's catalog, the sections after the story. Open the [live demo](https://michaeld-42.github.io/klappe/) and press `S` for the list.
 
@@ -85,11 +85,11 @@ git init && git commit --allow-empty -m init
 git subtree add --prefix klappe https://github.com/MichaelD-42/klappe.git main --squash
 node klappe/bin/klappe.mjs init --deck my-talk     # decks/my-talk/, package.json, Claude agents
 npm i
-npx playwright install chromium                    # once per machine, for the tests
+npx playwright install chromium                    # once per machine, for the tests and the PDF
 npm run dev                                        # http://localhost:5173
 ```
 
-`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/`; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/` with relative asset paths, so it works from any folder of a web server (not from `file://`, where browsers block its modules); `npm run pdf` writes `dist/my-talk.pdf`, one page per step at 1920x1080, each step as it ends; `npm test` runs the checks. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 

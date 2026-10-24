@@ -16,9 +16,10 @@ export interface ImageOpts {
   fit?: "contain" | "cover"; // cover fills the rect and crops; default contain
   // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses. Reduced motion leaves it out.
   kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
-  scrim?: number; // 0..1: a dark layer over the picture, for text on top
+  scrim?: number; // 0..1: a --k-scrim layer over the picture, for text on top
 }
 export interface ImageHandle {
+  el: HTMLElement; // the picture's box (or the IMAGE MISSING stand-in), last in ctx.html
   // A full-frame picture (fit cover, no rect) shows from its step's start, so it is there while the camera flies in.
   show(tl: gsap.core.Timeline, at?: number | string): void;
   hide(tl: gsap.core.Timeline, at?: number | string): void;
@@ -29,6 +30,7 @@ export interface VideoOpts {
   href: string; // a local "media/x.mp4", a direct link, or a YouTube or Vimeo link
   title: string;
   rect?: Rect; // default: the full scene frame, cropped to cover, with no frame or caption
+  fallback?: string; // an image href in media/, shown instead of an online video when there is no network
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -150,7 +152,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", ctx.deck.lang), text, prompt);
     const f = fade(b, fadeTime, fadeEase);
-    return { show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
+    return { el: b, show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };
   }
   const b = box(ctx, rect);
   const img = document.createElement("img");
@@ -160,7 +162,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   b.append(img);
   if (scrim) {
     const s = document.createElement("div");
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(scrim) });
     b.append(s);
   }
   const kb = kenBurns === true ? {} : kenBurns;
@@ -173,6 +175,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   };
   const f = fade(b, fadeTime, fadeEase);
   return {
+    el: b,
     show(tl, at) {
       f.show(tl, at0(tl, at));
       // After the fade: under the slow fade-in of a full frame the push would play mostly unseen.
@@ -239,6 +242,20 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     textOverflow: "ellipsis",
   });
   if (online) b.dataset.kNote = `${t("video", ctx.deck.lang)} "${title}" ${t("needsInternet", ctx.deck.lang)}`;
+  // Read here, not at module load: unit tests import this file in node. No load timeout for embeds:
+  // a cross-origin iframe fires load for the browser's own error page too, so "not loaded" cannot be seen.
+  const offline = online && (!navigator.onLine || new URLSearchParams(location.search).get("offline") === "1");
+  const still = online && opts.fallback ? ctx.files.media[key(opts.fallback)] : undefined;
+  if (offline && still !== undefined) {
+    const img = document.createElement("img");
+    img.src = still;
+    img.alt = title;
+    Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" });
+    caption.textContent = t("videoOffline", ctx.deck.lang);
+    b.append(img, caption);
+    return fade(b);
+  }
+  if (offline) ctx.problem(`${t("videoOffline", ctx.deck.lang)}: ${title}` + (opts.fallback ? ` (${t("imageMissing", ctx.deck.lang)}: ${key(opts.fallback)})` : ""));
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;
@@ -249,6 +266,19 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     el.allow = "fullscreen; picture-in-picture";
     el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
+    // The fallback still (or an empty box) holds the player's place; the player replaces it, so the caption
+    // keeps its index and the self-test's element paths match before and after.
+    const poster = document.createElement(still !== undefined ? "img" : "div");
+    if (poster instanceof HTMLImageElement) Object.assign(poster, { src: still, alt: title });
+    Object.assign(poster.style, { width: "100%", height: "100%", objectFit: "contain" });
+    poster.setAttribute("data-k-ignore", "");
+    b.append(poster);
+    if (!full) b.append(caption);
+    // The player loads when its scene becomes current, not at deck load: a deck with many embeds
+    // otherwise loads every player on start, also on a deep link to another scene.
+    const load = () => !el.isConnected && poster.replaceWith(el);
+    if (ctx.scene) ctx.onStep(({ scene }) => void (scene === ctx.scene && load()));
+    else load();
   } else {
     el.src = src;
     el.preload = "auto";
@@ -262,8 +292,8 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
       Object.assign(b.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     });
   }
-  b.append(el);
-  if (!full) b.append(caption);
+  if (!frame) b.append(el);
+  if (!frame && !full) b.append(caption);
 
   return {
     show(tl) {

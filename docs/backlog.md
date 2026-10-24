@@ -1,41 +1,25 @@
 # Backlog
 
-One ranked list, rebuilt from the M1 and M2 review findings on 2026-10-24; git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
+Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-## Defects and gaps from M1 and M2
+## Effects
 
-Done on branch `backlog-m1-m2` (2026-10-24): every entry is fixed, or was found stale by its test. CHANGELOG.md, under Unreleased, lists what changed.
-
-## Done on branch `ccr-01ec298b-ee1qc5` (2026-10-24)
-
-- Shout-out: one click to full size; the `hold` step is gone (user decision: drop it).
-- Bundle size (user decision: all three): only the Lucide icons a deck names are bundled, `icon()` takes an `IconNode`, and an async start loads effects, Shiki, transitions, the self-test and the fixtures only when needed. Numbers in `docs/perf-m3.md`.
-- M3 Task 14: `docs/perf-m3.md`; the look review with `?theme=bold` (76 scenes at 1920 and 1366, no deck problems) found the stale shout caption, now fixed.
-
-## Effects, M4 (user decision 2026-10-24)
-
-Done on branch `effects-m4` (2026-10-24), each with a catalog scene, a reference entry and tests: animated backgrounds (a looping `.mp4`/`.webm` or `animate: "aurora"`), full-screen `video()` with no `rect`, `spotlight`, `annotate`, `wipe`, `scramble`, `parallax: true` on a background, `qr`. CHANGELOG.md, under Unreleased, lists them. Also fixed: the speaker view's timer button is disabled on a scene without a timer.
-
-Open:
-
-- Mesh3d and decorative loop elements (an animated character, an avatar): the user has both in another repo and brings them over. Mesh3d brings its own loop; check it against the background loop rules (under `data-k-ignore`, still with reduced motion and in the self-test, paused off screen).
+- Decorative loop elements (an animated character, an avatar): the user has them in another repo and brings them over. Check them against the background loop rules (under `data-k-ignore`, still with reduced motion and in the self-test, paused off screen), as `mesh3d` does.
 - The demo has no local video file, so the video background has a fixture and a reference entry but no catalog scene; the catalog shows the aurora. A real `media/` clip would let it show both.
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-- Dev server: the first code deck loaded after starting it (with a fresh `node_modules/.vite`) logs `code: syntax highlighting failed to load` and shows code plain: the import of a Shiki grammar bundle 404s on a stale `?v=` hash. It came with the lazy Shiki load on branch `ccr-01ec298b-ee1qc5` (reproduced there with `fx-code.e2e.test.ts`). `optimizeDeps.include` for Shiki, and for every lazily loaded dependency, did not fix it. Builds are not affected; no test fails on it, as the e2e tests that check code do not check console errors.
+Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): a softer crt power-on flash; a `mesh3d` colour or brightness option (the deck uses a CSS filter on dark frames); `counter` decimals; `timer` label font and colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` calls in the on-screen problems list; lazy embeds one step early.
 
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 
 ## Milestones
 
-- PDF export and offline fonts (the single-file build is dropped; see DECISIONS).
 - M4: deck template and agents.
 - Demo: a local `media/sample.mp4` for the Markdown video scene; the catalog's YouTube scene needs a network too.
 
 ## After M3
 
-- Shiki loads all nine grammars (600 KB) whenever a deck shows code. Load only the languages the deck uses: `scene.md` fences name theirs; `code()` in a `scene.ts` needs its `lang` found by the build scan (`bin/scan-plugin.mjs`).
 - The bold look review was a manual pass over the last step of each scene; the `klappe-review-look` agent did not run. Mid-step states (shatter fall, swarm stream) were not looked at in bold.
 
 ## Look and motion polish
@@ -52,7 +36,6 @@ Effects:
 
 Engine and panels:
 
-- A 1 px subpixel edge at 1366.
 - The step title fades in 0.6 s after a camera move ends.
 - Speaker view: the current step as the largest text, larger notes, type that scales with the window, an "N / M" progress, the next preview clamped to 2 lines.
 - Overview thumbnails show no backgrounds (clone `c.el` and clear the world transform); the selector marks the current section only with its focus ring.
@@ -61,6 +44,7 @@ Demo story:
 
 - Opening: the black hold is its own click; the power-on flash is a flat mint card; no cursor at power-on; old-way step 1 reads as a slide description; the placeholder logo is not in a TODO.
 - Value stream: the overview band is modest with a left-aligned caption; the carried stack overlaps the right hand; analysis step 1 is mostly empty; the clarification-2 label sits about 10 px from the bottom edge; the clarification box sits about 20 % from the left.
+- Light themes: the title's small footer text sits on a dark photo, and the icon catalog asks for the CRT tones (`phosphor`, `phosphor-amber`) by name, which are pale on a light stage.
 - Global team and meeting: the "Decide." shout dims differently from the question steps; coastlines cut site-name digits; arcs cross arriving figures in the zoomed host shot; meeting figures are dimmed by reaching into the figure DOM; map labels are turned off through empty text.
 
 ## Housekeeping

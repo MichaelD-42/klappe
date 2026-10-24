@@ -13,3 +13,18 @@ for (const vp of [
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual(['flow: label of "x" too long'])
   })
+
+test('a first highlight (nothing to turn off) logs no GSAP warning', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    const logs: string[] = []
+    page.on('console', (m) => logs.push(m.text()))
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-flow#/a/parts/3`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    expect(logs.filter((l) => l.includes('GSAP target'))).toEqual([])
+  } finally {
+    await browser.close()
+  }
+})

@@ -15,16 +15,21 @@ export interface SelftestCtx {
   errors: string[];
 }
 
-const PLAY_SPEED = 20;
+const PLAY_SPEED = 50; // as the ac self-test; play time is the deck's animation time over this
 const MIN_PX_1366 = 14;
 
 const round = (s: string) => s.replace(/-?\d*\.?\d+(?:e-?\d+)?/g, (n) => String(Math.round(+n * 100) / 100 || 0));
 
-function path(e: Element, root: Element): string {
-  const parts: string[] = [];
-  for (let n = e; n !== root && n.parentElement; n = n.parentElement)
-    parts.unshift(`${n.tagName.toLowerCase()}:${[...n.parentElement.children].indexOf(n)}`);
-  return parts.join(">");
+// memo holds the paths of one snapshot: siblings and ancestors share their prefix.
+function path(e: Element, root: Element, memo?: Map<Element, string>): string {
+  if (e === root || !e.parentElement) return "";
+  let p = memo?.get(e);
+  if (p === undefined) {
+    const up = path(e.parentElement, root, memo);
+    p = `${up && `${up}>`}${e.tagName.toLowerCase()}:${Array.prototype.indexOf.call(e.parentElement.children, e)}`;
+    memo?.set(e, p);
+  }
+  return p;
 }
 
 // One line per element: the world camera pose, then every inline-styled or SVG-transformed element
@@ -36,6 +41,7 @@ function path(e: Element, root: Element): string {
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.world, p)}`).join(" ");
   const lines = [`world|${round(pose)}`];
+  const memo = new Map<Element, string>();
   for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
     if (e.closest("[data-k-ignore]")) continue;
     const s = e.style;
@@ -43,7 +49,7 @@ export function snapshot(c: CanvasRuntime): string {
     const attr = e.getAttribute("transform") ?? "";
     const progress = e.getAttribute("data-k-progress") ?? "";
     const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
-    lines.push(`${path(e, c.el)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}`)}${text}`);
+    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}`)}${text}`);
   }
   return lines.join("\n");
 }
@@ -134,7 +140,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
 
 const AC_SPEED = 50;
 const AC_HOLD_MS = 50;
-const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 110 s
+const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 110 s plus 200 ms per step
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Polls, so it also covers state no engine event reports (the speaker iframe's text).
@@ -450,7 +456,12 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
   const mode = new URLSearchParams(location.search).get("selftest");
   if (!mode) return;
   const checks: SelftestCheck[] = [];
+  // main copied each canvas's problems once; later ctx.problem calls (after a web font loads, during
+  // the walk) land in the canvas arrays, so collect any that main has not, until the test ends. Not from
+  // a count taken here: a problem raised between main's copy and this start would be lost.
   try {
+    await document.fonts.ready; // helpers measure text once the web font loads
+    await new Promise(requestAnimationFrame);
     if (mode === "walk") await walk(ctx, checks);
     else if (mode === "ac") {
       await ctx.stepper.goto(0, "cut"); // let main's first move land
@@ -465,6 +476,7 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
   } catch (e) {
     ctx.errors.push(`selftest: ${e instanceof Error ? e.message : e}`);
   }
+  for (const c of ctx.canvases) for (const p of c.problems) if (!ctx.problems.includes(p)) ctx.problems.push(p);
   // Always write a result, so a failure reads as a failure and not as a driver timeout.
   const result: SelftestResult = {
     mode,

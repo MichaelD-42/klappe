@@ -6,6 +6,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Five built-in themes: `sorbet` (dark pastel), `lavender` (light pastel), `daylight` (light, crisp), `forest` (dark green and gold) and `ink` (black and lime). Each passes the contrast floors and a colour-blind check of its chart series.
+- `--k-scrim`: the colour a picture's `scrim` lays over it; white in a light theme, so dark text stays readable over a picture.
+- Bundled fonts (SIL OFL, from npm, offline): Inter in calm, Space Grotesk in bold, JetBrains Mono for code and terminal in both. They load before the deck renders, so text measures the same on every machine and in the PDF. Digits are fixed-width on the stage; code has no ligatures.
+- `klappe pdf` (`npm run pdf`): the deck as `dist/<id>.pdf`, one 1920x1080 page per step, each step as it ends, with no UI on top. Deck problems are listed but do not stop it; a page error fails it.
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion; README section on presenting.
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
@@ -24,9 +28,23 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Animated backgrounds: a `.mp4` or `.webm` `href` in `background` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. Only the background on screen moves; reduced motion and the self-test keep them still.
 - `icon()`, `iconTile()` and flow nodes take a Lucide icon itself as well as a name: `import { Rocket } from "klappe/fx/lucide"`.
 - `worldMap` handle: `point(id)`, `arcPath(from, to)`, and an `at` position on `arc()`. `figure()`: a `strokeWidth` option and an `at` position on `appear()`.
+- `mesh3d`: a 3D dot mesh that turns by itself, with moods (`calm`, `curious`, `careful`, `insight`, `celebrating`), `collapse`, `start: "dot"`, and `dot` and `minAlpha` for a white frame. Reference page and catalog section `340-mesh3d`.
+- `crt`: a `color` option (`green`, `amber`, `teal` or any CSS colour), `settle(tl)`, `prompts` typed with `prompt(tl, i)`, `cursorAt()`, `dim(tl, { to, at })`, and the handle's `root`. The `crt` transition takes the same `color` in `transitionOptions`. Catalog scene `180-crt/20-teal-prompt`.
+- `bubble`: `side` (vertical tails) and `maxWidth`; `show(tl, at?)` takes a position.
+- `timer`: `until: "HH:MM"` counts to a wall-clock time today; `cycle` restarts the timer with one T after Time's up; `show(tl, at?)` takes a position. Catalog scene `320-timer/30-until`.
+- `SceneModule.auto`: per-step auto advance after N seconds.
+- `SceneModule.overviewLabel` and `SectionModule.overviewLabel`; a scene title that repeats in the deck shows as `<section> · <title>` in the overview.
+- An optional `decks/<id>/deck.css` (fonts and component classes), loaded after the theme.
+- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load when their scene becomes current.
+- `agenda`: `move(tl, toRow, at)` slides the marker and the colours to another row; `slide: false`; the handle has `el` and `rows`.
+- `terminal`: a `wrap` option for long lines; `show(tl, at?)`.
+- Handles expose their elements: `iconTile` and `icon` (`el`), `counter` (`el`, `caption`), `image` (`el`), `chart` (`bars`, the bar rects in data order).
 
 ### Changed
 
+- Charts draw rising slope lines and waterfall increases in `--k-ok`, and the Sample data label and DATA MISSING box in `--k-warn`; `lineArt` glow turns `--k-warn`. They used the CRT's `--k-phosphor` tokens, which are too pale on a light theme. In calm, `--k-warn` is the same amber; `--k-ok` is a deeper green.
+- The calm and bold themes use the bundled fonts instead of the system font: text widths, and so wrapping, change a little.
+- Shiki loads only the grammars a deck uses: the languages of its code fences, and the `lang` values its `scene.ts` code passes to `code()`. Write `lang` as a string literal: a computed one shows plain and reports a deck problem. The demo fetches one grammar instead of nine (about 600 KB).
 - Reduced motion also turns the `zoom`, `crt` and `shatter` transitions into a fade.
 - The Ken Burns push starts when the picture's fade-in ends, so the step lasts the fade plus 6 s.
 - `klappe:sync` replaces each `klappe*` agent and skill, so files that left klappe leave the deck repo too.
@@ -40,6 +58,11 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - The engine loads Markdown-part effects, Shiki, the `zoom`/`shatter`/`crt` transitions, the self-test and the test fixtures only when a deck needs them. A Markdown-only deck loads 218 KB of JS at start instead of 674 KB. `code()` in a `scene.ts` needs `code` imported by name from `"klappe/fx"`, so the build sees it.
 - A shout-out is three steps: enter, fade, answer. `enter` grows the question straight to its full size (1.04 calm, 1.12 bold); the `hold` step and `ShoutHandle.hold` are gone. A `scene.ts` that plays a shout drops its `hold` step, and a `### Question?` in `scene.md` makes three steps.
 - `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
+- The `fade` transition fades the old canvas out before the new one fades in (0.4 s in all), so two titles at the same spot do not overlap.
+- The built page's title is the deck title.
+- The self-test walk plays at 50x, and the test driver waits 110 s plus 200 ms per step, so a big deck's walk fits.
+- The chart's "Sample data" label uses `--k-warn` and ends inside the chart rect.
+- Self-running helpers (`mesh3d`) draw only while their canvas is the active one and their scene is the current scene.
 
 ### Fixed
 
@@ -57,6 +80,15 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `drawOn` returns where its draw starts; `icon()` no longer guesses it.
 - Video: `youtube-nocookie.com` (kept privacy-enhanced) and `music.youtube.com` links play; a video host link with no video id shows VIDEO MISSING and a deck problem instead of a broken box.
 - Design lint: named code fonts, `font: italic` and `oblique`, pills beyond buttons, protocol-relative URLs.
+- `drawOn` ends a dashed stroke on its own dash and `pathLength` instead of a solid line.
+- The stage offset is rounded to whole pixels: no 1 px sliver at the edge.
+- `flow` highlight with an empty `on` or `off` list, and a terminal command without output, no longer log a GSAP warning.
+- The self-test waits for web fonts and counts `ctx.problem` calls made before it ends.
+- A panel (overview, section list) cancels a pending `auto` advance.
+- Vitest runs without its fs module cache, which kept a stale fixture list.
+- `drawOn` never leaves an empty `pathLength` (GSAP wrote back an unrecorded attribute on revert).
+- The overview no longer scrolls the stage; a band no longer shows after it closes.
+- Self-test walks fail on errors the browser logs itself (not via `console.error`), except messages from third-party frames.
 
 ## 0.3.0 (2026-10-24)
 

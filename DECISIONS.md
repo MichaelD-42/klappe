@@ -135,6 +135,67 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - 0.x while the deck format, the `scene.ts` API and the CLI still change; a minor version may break, and says so under **Changed**. 1.0.0 with the deck template (M4).
   - Back-filled: 0.1.0 = M0 and M1, 0.2.0 = M2, 0.3.0 = M3 (`main` on 2026-10-24).
   - Release steps: move **Unreleased** under the new version and date, bump `package.json` (and the lockfile), merge, tag the merge commit, push the tag.
+## 2026-10-20 (mesh3d)
+
+- **A helper that runs by itself (`mesh3d`) draws on its own `gsap.ticker` loop and pauses when hidden. There is no scene-leave hook.**
+  - Why: klappe has no event for "the scene is left", and a deep link or jump can skip any step that would stop the loop. So each frame first reads the computed `visibility` and `opacity` of the root. A hidden root, or a hidden canvas above it, costs one style read and no drawing. A mesh not yet shown draws nothing.
+  - The step state (form, colour, speed, collapse) is a plain object that only the timeline tweens, with `fromTo`. The loop reads it when it draws, so a seek lands on the right look. The turn angle and the random life live on the loop and are not seekable; the root has `data-k-ignore`, so the self-test skips them.
+  - `destroy()` removes the loop and the canvas, for a deck that wants to clean up. A scene-leave hook in the engine would replace the visibility check; that is a decision for the klappe owner.
+
+## 2026-10-20 (crt prompt lines)
+
+- **`crt` prompt lines are declared up front: `crt(ctx, { lines, prompts })`, then `prompt(tl, index, { cps, at })`.** Each prompt row and the row after the last prompt has its own cursor block; `prompt()` hides one row's cursor and shows the next one's, so no element moves or changes `display`.
+  - Why: `build()` creates all DOM, hidden (scene.ts rule). A `prompt(tl, text)` adder would have to create DOM at step time. `fitFont` counts the prompt rows, so 7 boot lines, READY., 2 prompts and the cursor row keep 46 px.
+- **`cursorAt()` is arithmetic from the layout constants, not a DOM measure: the block's centre on the row after the last prompt.**
+  - Why: another helper reads it in `build()`, before any prompt has typed. The gallery check measured 2 px from the rendered block.
+- **`settle(tl)` shows the root and the screen and plays only `powerOn`'s 1.1 s brightness settle.** `powerOn` and `settle` share one tween.
+  - Why: after the `crt` transition flashed the line, a second beam from `powerOn` repeats it. Decks no longer set `.k-retro` and `.k-crt-screen` themselves.
+
+## 2026-10-20 (deck.css)
+
+- **A deck may bring `decks/<id>/deck.css`. `src/deck/load.ts` imports it with `import.meta.glob("@deck/deck.css", { query: "?inline", eager: true })` and appends it as a `<style>` after the klappe styles. Fixture decks skip it.**
+  - Why: `?inline` runs the file through Vite, so `url()` resolves against the deck folder and the build bundles fonts and images. A plain CSS import would also apply to `?fixture=` decks, so a corporate `--k-font` or `--k-fg` could break klappe's e2e checks in a deck repo. No deck.css means an empty glob: nothing changes.
+  - The design lint now scans `.css` under `decks/`. klappe has no single-file build yet; when it comes, it must inline these assets too (raise `build.assetsInlineLimit`).
+
+## 2026-10-20 (auto advance)
+
+- **`SceneModule.auto` holds one number of seconds or `null` per step. After a live forward play of that step, the stepper waits that long and calls `next()` itself.** `buildStepList` copies the value onto `StepAddr.auto`; the stepper arms one timer after the step's animations (and a canvas transition) end.
+  - Why: the stepper is the only place that knows the move was a live play (not a seek), that it has finished, and that no press is queued. A deep link, jump, back move, overview or selector pick, history move and `?instant=1` are seeks, so they never arm the timer. A chained advance is a normal `next()`, so the router, the speaker view and the transition behave as on a press.
+  - Every move (`next`, `prev`, `goto`) clears the timer first, so a press during the wait advances exactly one step. Opening a panel does not clear it.
+  - Reduced motion does not stop it: the advance is flow, not decoration.
+- **Autoplay owns the advance while it runs. It holds a step for its `auto` time when the step has one, else for `autoHoldMs`, and clears the stepper's timer each round.**
+  - Why: two timers would advance twice.
+
+## 2026-10-20 (countdown)
+
+- **`countdown` runs on `gsap.ticker` like `mesh3d`: root `data-k-ignore`, no update while hidden, `destroy()`. A `minutes` count starts on the first visible frame.**
+  - Why: the time left depends on the wall clock, not on the timeline, so play and seek cannot agree on it. There is no step-enter hook, so the first visible frame stands in for "the step showed it". A hidden countdown does not start.
+  - `remaining(nowMs, target)` is a pure function for the unit test. It rounds a part second up, so `0:00` shows only when the time is over, then holds there.
+
+## 2026-10-20 (bubble layout, mesh3d idle, panels stop auto)
+
+- **`bubble` takes `maxWidth` and the vertical sides `top` and `bottom`. `left` and `right` keep their old meaning (where the bubble sits). `top` and `bottom` name the edge with the tail, so `top` puts the bubble below the point.**
+  - Why: the deck plan asks for "side top: the tail on the top edge", and old callers must keep working. The mixed meaning is the cost; `bubbleLayout` holds the table.
+- **`mesh3d` reads no computed style per frame. A `visible` flag, set from the progress of the `show` and `hide` tweens, and `form` gate the draw.**
+  - Why: a style read each frame on every mesh cost layout work while idle. The flag follows seeks, because it comes from tween progress.
+- **Opening the overview or the section list cancels a pending `auto` advance.**
+  - Why: the deck must not move under an open panel. The stepper sets the timer after the play ends, so `cancelAuto` bumps a counter; a move that was queued or playing at a cancel sets no timer.
+- **The stepper marks the active canvas root (`.k-canvas`) with `data-k-active`. Self-running helpers (`mesh3d`, `countdown`) find that root once at build and draw only while it has the attribute.**
+  - Why: Day 1 has about 15 mesh scenes, and a shown mesh on another canvas kept drawing. One attribute read per frame is cheaper than a computed-style read and covers every hidden canvas. The new canvas gets the mark when the move starts (it draws during its transition in); the old one loses it when the move ends. The countdown dropped its 200 ms computed-style throttle for the same mark plus a show/hide flag.
+
+## 2026-10-21 (replayed deck helpers onto M3; countdown folded into timer)
+
+- **The 11 deck-helper commits of `feat/deck-helpers` were cherry-picked (`-x`) onto M3 `main` as `feat/deck-helpers-m3`.** 701d3b6 and 8dfe718 are one commit: only 701d3b6's own files, without its accidental revert of the video fallback.
+  - Why: main's history was rewritten, so the old branch shares no commit with it. The README hunks of the old commits went to `docs/reference/` instead (deck-format.md, `elements/crt.md`, `elements/bubble.md`, `elements/mesh3d.md`).
+- **`countdown` is gone. `timer` takes `until: "HH:MM"` as the other choice to `minutes` (user decision).** An `until` timer runs whenever its step is in view, `T` does nothing to it (a click on it steps the deck, as anywhere), it never goes negative, and at zero it shows "Time's up" in `--k-bad`. Its ring and warn phase measure from the time left when the step comes into view. `minutes` works as before.
+  - Why: two wall-clock elements would duplicate the clock, the styles and the done state. The 2026-10-20 countdown entry above describes the old helper.
+  - Lost from countdown: `h:mm:ss` over an hour (the timer shows `m:ss`, for example `75:00`) and the "careful" orange at zero.
+  - A bad option (both, neither, or an `until` that is not `HH:MM`) is a deck problem, not a throw, as for the other elements.
+- **`decks/<id>/deck.css` stays. A theme holds tokens only; deck.css holds fonts and component classes, and it may override tokens.** `applyTheme` moves the deck.css `<style>` after the theme's, before the contrast check reads the tokens.
+  - Why: the theme loads after `loadDeck()`, so without the move the theme won over deck.css at equal specificity.
+- **`mesh3d` mood colours stay fixed hex. The design lint exempts `mesh3d.ts` from the colour-literal rule, like `crt.ts` and `media.ts`.**
+  - Why: a mood is part of the story (calm, curious, careful), not of the look, so a theme must not change it. `bubble` already takes `--k-accent`, `--k-bg` and `--k-fg`. The `crt` preset `teal` (#009A9B) stays a named preset; no teal token exists, and `color` takes any CSS colour.
+- **The demo deck shows `mesh3d` in "Your turn" (process training), for the coverage lint.** Gallery `140-mesh3d` became `230-mesh3d`, because M3 uses 140 for code.
 
 ## 2026-10-24 (bundle size)
 
@@ -145,3 +206,10 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: build stays synchronous (the timeline rule: DOM and SVG exist at load), so loading has to finish before it. Deck code still imports effects statically; the bundler drops the ones it never imports.
   - Shiki is needed for a code fence or when deck code imports `code`; the build scans for that import (`virtual:klappe-fx`), because a call cannot be seen before build runs.
   - Result: a Markdown-only deck loads 218 KB of JS at start instead of 674 KB; the demo, which uses every effect, loads 537 KB at start plus Shiki.
+
+## 2026-10-24 (bundled fonts)
+
+- **klappe bundles its theme fonts: Inter (calm), Space Grotesk (bold) and JetBrains Mono (code and terminal, both), as `@fontsource-variable` npm packages.**
+  - Why: effects measure text while they build, so the system font made layout differ between the presenter's laptop, CI and the PDF export. Bundled, the deck needs no font CDN and works offline.
+  - Variable fonts, so a deck can tween the weight; all three have fixed-width digits, set on the stage, so counters, timers and scrambles do not jitter. Code has ligatures off: `<=` reads as typed.
+  - `main.ts` awaits `document.fonts.load` for the faces `--k-font` and `--k-font-code` name before the world renders; only the subsets the text uses download.

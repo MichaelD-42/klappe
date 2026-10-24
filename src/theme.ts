@@ -53,7 +53,19 @@ const CHECKS: [string, string, number][] = [
   ["--k-line", "--k-bg", 3],
 ];
 
-/** Injects calm, then the chosen theme (after it, so missing tokens fall back), and returns problems. */
+// Loads the faces the theme's --k-font and --k-font-code name: effects measure text while they build.
+// A font that is not installed or declared falls back as CSS does; a bad token value is a deck problem.
+export async function loadFonts(): Promise<string[]> {
+  const root = getComputedStyle(document.documentElement);
+  try {
+    await Promise.all(["--k-font", "--k-font-code"].map((v) => document.fonts.load(`16px ${root.getPropertyValue(v)}`)));
+    return [];
+  } catch (e) {
+    return [`theme: fonts did not load (${e instanceof Error ? e.message : e})`];
+  }
+}
+
+/** Injects calm, then the chosen theme (after it, so missing tokens fall back), then moves deck.css last; returns problems. */
 export function applyTheme(deck: Deck, override?: string | null): string[] {
   const name = override || deck.meta.theme;
   const { css, problem } = resolveTheme(name, deck.themes ?? {});
@@ -64,6 +76,8 @@ export function applyTheme(deck: Deck, override?: string | null): string[] {
     s.textContent = text;
     document.head.append(s);
   }
+  // A deck's deck.css (fonts, classes, token overrides) loads after the theme, and the contrast check sees it.
+  document.head.append(...document.querySelectorAll("style[data-k-deck-css]"));
   const problems = problem ? [problem] : [];
   const probe = document.body.appendChild(document.createElement("div"));
   const read = (v: string, prop: "color" | "backgroundColor") => {

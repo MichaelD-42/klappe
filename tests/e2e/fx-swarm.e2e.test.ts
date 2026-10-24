@@ -50,6 +50,96 @@ test('each counter shows from before its step and to after it', async () => {
   await page.close()
 })
 
+test('bubble maxWidth wraps the text; side top puts the tail on the top edge', async () => {
+  const page = await open('?fixture=fx-motion#/a/wrap/3')
+  const r = await page.evaluate(() => {
+    const find = (t: string) => [...document.querySelectorAll<HTMLElement>('div')].find((d) => d.firstChild?.textContent?.startsWith(t))!
+    const beside = find('A wrapped').getBoundingClientRect()
+    const below = find('A bubble below')
+    const b = below.getBoundingClientRect()
+    const t = below.firstElementChild!.getBoundingClientRect()
+    return { w: beside.width, h: beside.height, tailY: t.top + t.height / 2 - b.top, tailX: t.left + t.width / 2 - (b.left + b.width / 2) }
+  })
+  expect(r.w).toBeLessThanOrEqual(400)
+  expect(r.h).toBeGreaterThan(120) // wrapped onto more than one line
+  expect(Math.abs(r.tailY)).toBeLessThan(3)
+  expect(Math.abs(r.tailX)).toBeLessThan(3)
+  await page.close()
+})
+
+test('a shown mesh3d does not read computed style per frame', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const gcs = window.getComputedStyle
+    ;(window as any).canvasReads = 0
+    window.getComputedStyle = function (e: Element, p?: string | null) {
+      if (e instanceof HTMLCanvasElement) (window as any).canvasReads++
+      return gcs.call(window, e, p)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.waitForTimeout(300)
+  await page.evaluate(() => ((window as any).canvasReads = 0))
+  await page.waitForTimeout(500)
+  expect(await page.evaluate(() => (window as any).canvasReads)).toBe(0)
+  await page.close()
+})
+
+test('a shown mesh3d stops drawing when another canvas is active', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect
+    ;(window as any).draws = 0
+    CanvasRenderingContext2D.prototype.clearRect = function (...a: [number, number, number, number]) {
+      ;(window as any).draws++
+      return clear.apply(this, a)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const draws = () => page.evaluate(() => (window as any).draws as number)
+  const d0 = await draws()
+  await page.waitForTimeout(300)
+  expect(await draws()).toBeGreaterThan(d0) // drawing on its own canvas
+  await page.evaluate(() => {
+    const k = window.klappe
+    return k.stepper.goto(k.steps.findIndex((s: { section: string }) => s.section === 'b'), 'cut')
+  })
+  await page.waitForTimeout(100)
+  const d1 = await draws()
+  await page.waitForTimeout(500)
+  expect(await draws()).toBe(d1)
+  await page.close()
+})
+
+test('a shown mesh3d stops drawing on the next scene of its canvas and resumes on return', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect
+    ;(window as any).draws = 0
+    CanvasRenderingContext2D.prototype.clearRect = function (...a: [number, number, number, number]) {
+      ;(window as any).draws++
+      return clear.apply(this, a)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/3`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const draws = () => page.evaluate(() => (window as any).draws as number)
+  const d0 = await draws()
+  await page.waitForTimeout(300)
+  expect(await draws()).toBeGreaterThan(d0) // the mesh draws on its own scene
+  await page.evaluate(() => window.klappe.stepper.next()) // a/after: the same canvas
+  await page.waitForTimeout(100)
+  const d1 = await draws()
+  await page.waitForTimeout(500)
+  expect(await draws()).toBe(d1)
+  await page.evaluate(() => window.klappe.stepper.prev()) // back on wrap
+  await page.waitForTimeout(300)
+  expect(await draws()).toBeGreaterThan(d1)
+  await page.close()
+})
+
 test('morph keeps a transform the author set', async () => {
   const page = await open('?fixture=fx-motion#/a/shapes/1')
   const placed = () => page.evaluate(() => document.querySelector('rect')!.getBoundingClientRect().toJSON())
@@ -129,5 +219,27 @@ test('a morph starts from the shape as it stands', async () => {
     return out
   })
   expect(moves[0]).toBeLessThan(2) // power2.inOut: the first frame barely moves
+  await page.close()
+})
+
+// Runs in the page with a bare ctx: show(tl, "<") pops a bubble in together with the one before; show(tl) appends.
+test('bubble show takes a position, like hide', async () => {
+  const page = await open('?fixture=fx-motion#/a/talk/1')
+  // A string, so neither vitest nor tsc rewrites the import: the page loads the module from Vite.
+  await page.evaluate("import('/src/fx/motion.ts').then((m) => { window.__bubble = m.bubble })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    const bubble = (window as any).__bubble
+    const [a, b, c] = ['A', 'B', 'C'].map((text) => bubble({ html }, { x: 100, y: 100, text }))
+    const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+    a.show(tl)
+    b.show(tl, '<')
+    c.show(tl)
+    const starts = tl.getChildren().map((t: any) => t.startTime())
+    html.remove()
+    return starts
+  })
+  expect(r[1]).toBe(r[0])
+  expect(r[2]).toBeGreaterThan(r[1])
   await page.close()
 })

@@ -58,8 +58,12 @@ describe('codeLines', () => {
   test('a trailing newline gives the same line count on the plain and the highlighted path', async () => {
     const counts = () => [codeLines('a;\nb;', 'ts').length, codeLines('a;\nb;\n', 'ts').length]
     expect(counts()).toEqual([2, 2])
-    await loadHighlighter()
+    await loadHighlighter(['ts'])
     expect(codeLines('a;', 'ts')[0][0].color).toMatch(/^var\(--k-code-/)
     expect(counts()).toEqual([2, 2])
+  })
+  // Only the grammars asked for load: another bundled language shows plain.
+  test('a language that was not loaded shows plain', () => {
+    expect(codeLines('x = 1', 'python')).toEqual([[{ content: 'x = 1' }]])
   })
 })

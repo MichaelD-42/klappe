@@ -1,0 +1,36 @@
+/* forest: Dark and quiet: deep green with a warm gold accent. */
+:root {
+  --k-bg: #0f1f1a;
+  --k-fg: #eef6f1;
+  --k-muted: #a9c7b8;
+  --k-surface: #183029;
+  --k-line: #4f8a72;
+  --k-accent: #f2c14e;
+  --k-accent-2: #5fd6a8;
+  --k-ok: #5fd6a8;
+  --k-warn: #ffa94d;
+  --k-bad: #ff7f6e;
+  --k-series-1: #f2c14e;
+  --k-series-2: #6f9bff;
+  --k-series-3: #ff7a8a;
+  --k-series-4: #a8f0c8;
+  --k-series-5: #c9a2ff;
+  --k-series-6: #ffb38a;
+  --k-font: "Inter Variable", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --k-font-code: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  --k-code-foreground: #eef6f1;
+  --k-code-background: #0b1814;
+  --k-code-token-constant: #f2c14e;
+  --k-code-token-string: #9be0a8;
+  --k-code-token-comment: #86a698;
+  --k-code-token-keyword: #f08dc8;
+  --k-code-token-parameter: #ffb38a;
+  --k-code-token-function: #7fb8ff;
+  --k-code-token-string-expression: #9be0a8;
+  --k-code-token-punctuation: #b9d3c6;
+  --k-code-token-link: #7fb8ff;
+  --k-phosphor: #7dffa0;
+  --k-phosphor-amber: #ffb547;
+  --k-blackout: #000;
+  --k-scrim: #000;
+}

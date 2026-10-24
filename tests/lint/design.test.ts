@@ -51,7 +51,8 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
     }
   } else
     for (const line of text.split('\n')) {
-      if (MONO.test(line) && !/k-(?:retro|code|term)\b/.test(line)) hit('monospace', line)
+      // A bare import names a module, not a font in use (the bundled code font's package).
+      if (MONO.test(line) && !/k-(?:retro|code|term)\b/.test(line) && !/^\s*import\s+["']/.test(line)) hit('monospace', line)
       const radius = line.match(/border-?radius["']?\s*:\s*([^,;}\n]+)/i)
       if (radius && isPill(radius[1], /button|btn/i.test(line))) hit('pill-button', line)
     }
@@ -68,8 +69,8 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
     // Protocol-relative: read from the raw text, since stripComments takes "//" for a comment.
     for (const [, url] of raw.matchAll(/["'`](\/\/[\w-]+\.[\w.-]+[^"'`\s]*)/g)) hit('runtime-url', url)
   }
-  // Effects take every colour from a --k-* token; crt.ts (light layers) and media.ts (letterbox) are the exceptions.
-  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media)\.ts$/.test(file))
+  // Effects take every colour from a --k-* token; crt.ts (light layers), media.ts (letterbox) and mesh3d.ts (mood colours) are the exceptions.
+  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media|mesh3d)\.ts$/.test(file))
     for (const m of text.matchAll(/#[\da-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi)) hit('colour-literal', m[0])
   return hits
 }
@@ -130,6 +131,7 @@ describe('design lint catches each rule', () => {
       ['tests/unit/x.test.ts', 'expect(hash).toBe("#/a/b/01")'],
       ['src/styles.css', '.k-x { font: 600 24px var(--k-font); }\n.k-avatar { border-radius: 50%; }\n.k-btn { border-radius: 0.4em; }'],
       ['src/parse/x.ts', 'const VIDEO = /^(?:https?:)?\\/\\/youtube/ // a regex, not a URL'],
+      ['src/main.ts', 'import "@fontsource-variable/jetbrains-mono";'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
   })
@@ -149,7 +151,7 @@ describe('design lint over the repo', () => {
     ...scan(klappeDir, 'src', ['.css', '.ts']),
     ...scan(process.cwd(), 'decks', ['.ts', '.md']),
     ...scan(process.cwd(), 'themes', ['.css']),
-    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/')),
+    ...scan(process.cwd(), 'decks', ['.css']).filter((f) => f.file.includes('/themes/') || f.file.endsWith('/deck.css')),
   ]
 
   test('finds the files to check', () => {

@@ -82,3 +82,26 @@ test('the problems overlay stays readable under a low-contrast theme', async () 
   expect(ratio).toBeGreaterThanOrEqual(4.5)
   await page.close()
 })
+
+// Effects measure text while they build, so the theme's fonts must be loaded before the first scene is in the page.
+test('the theme fonts are loaded before the deck renders', async () => {
+  for (const [theme, font] of [
+    ['calm', 'Inter Variable'],
+    ['bold', 'Space Grotesk Variable'],
+  ]) {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+    await page.addInitScript((font) => {
+      new MutationObserver((_, obs) => {
+        if (!document.querySelector('.k-worlds > *')) return
+        obs.disconnect()
+        // fonts.check() is true for a font with no face at all, so look for a loaded face by name.
+        const loaded = [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, ''))
+        ;(window as any).fontsAtRender = [font, 'JetBrains Mono Variable'].map((f) => loaded.includes(f))
+      }).observe(document, { childList: true, subtree: true })
+    }, font)
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-code&theme=${theme}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    expect(await page.evaluate(() => (window as any).fontsAtRender)).toEqual([true, true])
+    await page.close()
+  }
+})

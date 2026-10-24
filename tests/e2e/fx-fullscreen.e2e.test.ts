@@ -122,13 +122,15 @@ test('a full-frame cover fades in while the camera flies into its scene, not aft
 // WCAG contrast of two relative luminances.
 const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 
-// The pictures behind both have white dots under the text: the worst case for a flat scrim.
+// The pictures behind both have white dots under the text: the worst case for a flat scrim. A light theme
+// has dark text, so the darkest pixel is its worst case: the text must hold against both.
+for (const theme of ['calm', 'daylight'])
 for (const [hash, sel] of [
   ['#/a/scrim/1', '[data-scene$="scrim"] h2, [data-scene$="scrim"] p'],
   ['#/b/first/1', '[data-scene$="first"] h2, [data-scene$="first"] p[data-step="1"]'],
 ])
-test(`text over the scrim at ${hash} is at least 14 px at 1366 and keeps 4.5:1 against the brightest pixel behind it`, async () => {
-  const page = await open(hash)
+test(`text over the scrim at ${hash} in ${theme} is at least 14 px at 1366 and keeps 4.5:1 against the brightest and darkest pixel behind it`, async () => {
+  const page = await open(hash, undefined, `&theme=${theme}`)
   const boxes = await page.$$eval(sel, (es) =>
     es.map((e) => {
       const r = e.getBoundingClientRect()
@@ -142,7 +144,7 @@ test(`text over the scrim at ${hash} is at least 14 px at 1366 and keeps 4.5:1 a
   for (const b of boxes) {
     expect(b.px).toBeGreaterThanOrEqual(14)
     const png = (await page.screenshot({ clip: { x: b.x, y: b.y, width: b.width, height: b.height } })).toString('base64')
-    const [bg, fg] = await page.evaluate(
+    const [hi, lo, fg] = await page.evaluate(
       async ([png, color]) => {
         const lum = (r: number, g: number, b: number) => {
           const f = (c: number) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
@@ -152,14 +154,17 @@ test(`text over the scrim at ${hash} is at least 14 px at 1366 and keeps 4.5:1 a
         const c = new OffscreenCanvas(img.width, img.height).getContext('2d')!
         c.drawImage(img, 0, 0)
         const d = c.getImageData(0, 0, img.width, img.height).data
-        let max = 0
-        for (let i = 0; i < d.length; i += 4) max = Math.max(max, lum(d[i], d[i + 1], d[i + 2]))
+        let [max, min] = [0, 1]
+        for (let i = 0; i < d.length; i += 4) {
+          const l = lum(d[i], d[i + 1], d[i + 2])
+          ;[max, min] = [Math.max(max, l), Math.min(min, l)]
+        }
         const [r, g, b] = color.match(/\d+/g)!.map(Number)
-        return [max, lum(r, g, b)]
+        return [max, min, lum(r, g, b)]
       },
       [png, b.color] as const,
     )
-    expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5)
+    expect(Math.min(ratio(fg, hi), ratio(fg, lo))).toBeGreaterThanOrEqual(4.5)
   }
   await page.close()
 }, 30_000)
