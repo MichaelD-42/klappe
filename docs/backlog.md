@@ -36,7 +36,6 @@ Effects:
 
 Engine and panels:
 
-- Speaker view: the current step as the largest text, larger notes, type that scales with the window, an "N / M" progress, the next preview clamped to 2 lines.
 - Overview thumbnails show no backgrounds (clone `c.el` and clear the world transform); the selector marks the current section only with its focus ring.
 
 Demo story:
@@ -48,6 +47,6 @@ Demo story:
 
 ## Housekeeping
 
-- `OverlayPanel` and `button` live in `ui/selector.ts`; a `ui/panel.ts` would fit. The speaker view looks its scene up twice. Speaker CSS sits in `styles.css`. The types could be consolidated.
+- `OverlayPanel` and `button` live in `ui/selector.ts`; a `ui/panel.ts` would fit. The types could be consolidated.
 - The shout effect finds its answer with a DOM query; the WeakMap it already keeps would do.
 - `src/fx/transitions.ts` and `src/render/parts.ts` each keep a small lazy-loader table; one helper could serve both.
