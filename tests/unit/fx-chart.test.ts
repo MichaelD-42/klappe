@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, dataError, parseCsv, showsSample, waterfallSteps } from "../../src/fx/chart";
+import { chartDomain, dataError, donutSlices, parseCsv, raceRanks, showsSample, spread, waterfallSteps } from "../../src/fx/chart";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -140,5 +140,48 @@ describe("timeline columns by name", () => {
   });
   test("takes from and to as well", () => {
     expect(chartDomain([{ p: "A", n: 1, to: 2024, from: 2022 }], "timeline")).toEqual([2022, 2024]);
+  });
+});
+
+describe("donut", () => {
+  const rows = [{ k: "A", n: 50 }, { k: "B", n: 30 }, { k: "C", n: 20 }];
+  test("slices share the turn in row order, from 12 o'clock", () => {
+    const s = donutSlices([50, 30, 20]);
+    expect(s.map((x) => x.share)).toEqual([0.5, 0.3, 0.2]);
+    expect(s[0].start).toBe(0);
+    expect(s[2].end).toBeCloseTo(1);
+    expect(s[1].start).toBe(s[0].end);
+  });
+  test("good rows: no error; a negative or an all-zero total is an error; more than six slices is an error", () => {
+    expect(dataError(rows, "donut")).toBe("");
+    expect(dataError([{ k: "A", n: 5 }, { k: "B", n: -1 }], "donut")).toBe("row 2, n below zero");
+    expect(dataError([{ k: "A", n: 0 }], "donut")).toBe("the values add up to zero");
+    const many = Array.from({ length: 7 }, (_, i) => ({ k: `S${i}`, n: 1 }));
+    expect(dataError(many, "donut")).toBe("7 slices; a donut reads up to 6: merge the small ones into Other");
+  });
+});
+
+describe("slope", () => {
+  test("needs a before and an after column", () => {
+    expect(dataError([{ k: "A", before: 1 }], "slope")).toBe("needs a before and an after column");
+    expect(dataError([{ k: "A", before: 1, after: 2 }], "slope")).toBe("");
+  });
+  test("its value axis spans the data, not zero", () => {
+    expect(chartDomain([{ k: "A", a: 40, b: 60 }, { k: "B", a: 55, b: 45 }], "slope")).toEqual([40, 60]);
+  });
+  test("spread keeps labels a gap apart, in order, and leaves well-spaced ones alone", () => {
+    expect(spread([100, 300, 500], 30)).toEqual([100, 300, 500]);
+    const s = spread([100, 105, 110, 400], 30);
+    for (let i = 1; i < s.length; i++) expect(s[i] - s[i - 1]).toBeGreaterThanOrEqual(30 - 1e-9);
+    expect(s[3]).toBe(400);
+    // The bunch stays centred on where it was.
+    expect((s[0] + s[1] + s[2]) / 3).toBeCloseTo(105);
+  });
+});
+
+describe("raceRanks", () => {
+  test("ranks by value, largest first; ties keep column order", () => {
+    expect(raceRanks([10, 30, 20])).toEqual([2, 0, 1]);
+    expect(raceRanks([5, 5, 9])).toEqual([1, 2, 0]);
   });
 });

@@ -49,7 +49,9 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const next = el("p", "k-sp-next");
   const send = (cmd: "next" | "prev" | "goto" | "timer", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
-  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), button(t("timer", lang), () => send("timer")));
+  // Disabled on a scene without a timer, where T does nothing.
+  const timerButton = button(t("timer", lang), () => send("timer"));
+  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), timerButton);
   side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, el("h2", "k-sp-label", t("upNext", lang)), next, buttons);
   view.append(now, side);
   root.append(view);
@@ -57,6 +59,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   channel.on((m) => {
     if (m.t !== "state" || m.index >= steps.length) return;
     index = m.index;
+    timerButton.disabled = !m.timer;
     const a = steps[index];
     const sc = deck.sections.find((s) => s.id === a.section)?.scenes.find((s) => s.id === a.scene);
     const step = sc?.steps[a.step - 1];

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
+import { klappeScan } from './bin/scan-plugin.mjs'
 
 const src = (p: string) => fileURLToPath(new URL(`./src/${p}`, import.meta.url))
 
@@ -9,6 +10,8 @@ export default defineConfig({
       {
         // Same aliases as vite.config.ts, so fixtures can import "klappe/fx" in unit tests.
         resolve: { alias: { 'klappe/fx': src('fx'), 'klappe/types': src('types') } },
+        // The unit tests name icons too (fx-icons.test.ts).
+        plugins: [klappeScan({ klappeDir: fileURLToPath(new URL('.', import.meta.url)), deckDir: src('deck/fixtures'), extraDirs: [fileURLToPath(new URL('./tests/unit', import.meta.url))] })],
         test: {
           name: 'unit',
           css: { include: /src\/themes\/.*\.css/ }, // theme tests read the real token files

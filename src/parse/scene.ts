@@ -72,7 +72,7 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
         problems.push(`${folder}/scene.md: a note sits between '### ${b.text}' and its answer; the answer is dropped`);
       const answer = bs[i + 1]?.type === "paragraph" ? bs[++i].text : "";
       const q = (kind: StepDoc["kind"], text: string): StepDoc => ({ text, notes: "", kind });
-      steps.push(q("shout-enter", b.text), q("shout-hold", b.text), q("shout-fade", b.text), q("shout-answer", answer));
+      steps.push(q("shout-enter", b.text), q("shout-fade", b.text), q("shout-answer", answer));
     } else if (b.type === "quote") {
       const add = (n: string) => (n ? `${n}\n\n${b.text}` : b.text); // several notes on one step stay, in order
       if (steps.length) steps[steps.length - 1].notes = add(steps[steps.length - 1].notes);

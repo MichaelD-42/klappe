@@ -108,7 +108,6 @@ const scene: SceneModule = {
       tl.to([...r.figures, r.name, r.count], { autoAlpha: 0, duration: 0.5 });
       r.out.enter(tl);
     },
-    (tl, r) => r.out.hold(tl),
     (tl, r) => r.out.fade(tl),
     (tl, r) => r.out.answer(tl),
   ],

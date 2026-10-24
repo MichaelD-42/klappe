@@ -4,11 +4,11 @@ import { Stepper } from "../../src/stepper";
 
 describe("isMsg", () => {
   it("accepts the three message kinds", () => {
-    for (const m of [{ t: "hello" }, { t: "state", index: 0 }, { t: "cmd", cmd: "next" }, { t: "cmd", cmd: "goto", index: 3 }])
+    for (const m of [{ t: "hello" }, { t: "state", index: 0 }, { t: "state", index: 0, timer: true }, { t: "cmd", cmd: "next" }, { t: "cmd", cmd: "goto", index: 3 }])
       expect(isMsg(m)).toBe(true);
   });
   it("rejects a wrong shape", () => {
-    for (const m of [null, "hello", { t: "other" }, { t: "state" }, { t: "cmd", cmd: "jump" }, { t: "cmd", cmd: "goto" }])
+    for (const m of [null, "hello", { t: "other" }, { t: "state" }, { t: "state", index: 0, timer: "yes" }, { t: "cmd", cmd: "jump" }, { t: "cmd", cmd: "goto" }])
       expect(isMsg(m)).toBe(false);
   });
   it("rejects a negative or non-integer index", () => {

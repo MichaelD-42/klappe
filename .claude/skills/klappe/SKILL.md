@@ -13,7 +13,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 
 - Show code, one part at a time: a fenced block with `{1-2|4}` groups in `scene.md`. Code changing: `code` with `diff`. [code](klappe/docs/reference/elements/code.md)
 - Show a command and its output: a ```` ```console ```` fence. [terminal](klappe/docs/reference/elements/terminal.md)
-- Point at one thing: `callout`. [callout](klappe/docs/reference/elements/callout.md)
+- Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`. Mark words as a pen would: `annotate`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md), [annotate](klappe/docs/reference/elements/annotate.md)
 - Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
 - Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
@@ -21,7 +21,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Tick off items, or show the day: task list, time-range rows. [checklist](klappe/docs/reference/elements/checklist.md), [agenda](klappe/docs/reference/elements/agenda.md)
 - Time an exercise: `timer`. [timer](klappe/docs/reference/elements/timer.md)
 - Compare numbers: `chart` from a `data/` file. Show where: `worldMap`. A person moving: `figure`.
-- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A picture: `image`; a background: `section.ts`. [effects](klappe/docs/reference/effects.md)
+- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. Before and after: `wipe`. One line that lands: `scramble`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
 - Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
 - What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys: [deck-format](klappe/docs/reference/deck-format.md).
 

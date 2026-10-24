@@ -15,7 +15,7 @@ export interface DeckMeta {
   sharedCanvas: string[][];
 }
 export type StepKind =
-  "step" | "shout-enter" | "shout-hold" | "shout-fade" | "shout-answer";
+  "step" | "shout-enter" | "shout-fade" | "shout-answer";
 // A step built from Markdown by an element: a code group, a console command, a task-list item, an agenda.
 export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups
@@ -78,10 +78,15 @@ export interface Ctx {
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
 export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
-// A full-frame picture from media/ behind the scene content. scrim: 0..1 dark layer for text on top.
-// Pinned to the screen, under the content the camera moves. kenBurns: a slow push, once, from the first scene that shows it.
+// A full-frame picture or video from media/, or a generated drift, behind the scene content. scrim: 0..1 dark
+// layer for text on top. Pinned to the screen, under the content the camera moves. kenBurns: a slow push, once,
+// from the first scene that shows it (pictures only).
 export interface Background {
-  href: string;
+  href?: string; // a picture, or a .mp4 or .webm video that plays muted in a loop
+  // Instead of href: "aurora", a slow drift of light in the theme's colours; or a function that draws into el
+  // (the full stage, 1920x1080) and returns play and pause, for a background the deck makes itself.
+  animate?: "aurora" | ((el: HTMLElement) => { play(): void; pause(): void });
+  parallax?: boolean; // drifts a little with each camera flight, as a far layer does
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
   kenBurns?: boolean;

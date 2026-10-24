@@ -1,5 +1,4 @@
 import { assembleDeck, toDeckRelative } from "./assemble";
-import { loadFixture } from "./fixtures";
 
 const rekey = <T>(o: Record<string, T>, root?: string) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [toDeckRelative(k, root), v]));
@@ -18,8 +17,10 @@ function themesOf() {
   ]);
 }
 
-export function loadDeck() {
-  const fixture = loadFixture(new URLSearchParams(location.search).get("fixture"));
+// The test fixtures load only for ?fixture=, so a deck never carries them.
+export async function loadDeck() {
+  const name = new URLSearchParams(location.search).get("fixture");
+  const fixture = name === null ? undefined : (await import("./fixtures")).loadFixture(name);
   if (fixture) {
     fixture.deck.themes = { ...themesOf(), ...fixture.deck.themes };
     return fixture;

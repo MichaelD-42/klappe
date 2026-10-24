@@ -4,9 +4,9 @@ import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
 import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
-import { loadHighlighter } from "./fx/code";
-import { renderWorld } from "./render/world";
-import { runSelftestIfAsked } from "./selftest";
+import { loadTransitions } from "./fx/transitions";
+import { loadParts } from "./render/parts";
+import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { Stepper } from "./stepper";
 import { applyTheme, motion } from "./theme";
@@ -19,7 +19,7 @@ import { Selector } from "./ui/selector";
 import type { StepAddr } from "./types";
 
 const errors = installErrorCapture();
-const { deck, problems } = loadDeck();
+const { deck, problems } = await loadDeck();
 const layout = layoutDeck(deck);
 problems.push(...layout.problems);
 const steps = buildStepList(deck, layout.canvases);
@@ -32,18 +32,24 @@ if (query.get("speaker") === "1") {
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
 } else {
-  await loadHighlighter(); // code() highlights synchronously at build time
-  startDeck();
+  // Effects build synchronously at load: the ones the deck may not use load first (Markdown parts, Shiki,
+  // transitions), and the text of animated background SVG files.
+  const [, , svg] = await Promise.all([
+    loadParts(deck, query.has("fixture")),
+    loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
+    svgBackgrounds(deck),
+  ]);
+  startDeck(svg);
 }
 
-function startDeck() {
+function startDeck(svg: Record<string, string>) {
   const { stage, ui, worlds } = mountStage(document.body);
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
   // ?reducedmotion=0 overrides the system setting: a presenter laptop with animations off still plays the deck in full.
   const flag = query.get("reducedmotion");
   const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
-  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
+  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
@@ -73,9 +79,11 @@ function startDeck() {
   bindInput(stepper, { overview, selector, speaker, autoplay, timer }, stage, steps.length - 1);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
-  stepper.on("step", (a: StepAddr) => channel.send({ t: "state", index: a.index }));
+  const state = (i: number) =>
+    channel.send({ t: "state", index: i, timer: !!document.querySelector(`[data-scene="${CSS.escape(steps[i].scene)}"] [data-k-timer]`) });
+  stepper.on("step", (a: StepAddr) => state(a.index));
   channel.on((m) => {
-    if (m.t === "hello" && stepper.index >= 0) channel.send({ t: "state", index: stepper.index });
+    if (m.t === "hello" && stepper.index >= 0) state(stepper.index);
     if (m.t !== "cmd") return;
     if (m.cmd === "timer") return timer();
     autoplay.stop();
@@ -88,5 +96,8 @@ function startDeck() {
   showProblems(ui, problems, deck.meta.lang);
   const first = stepper.goto(router.start(), "cut");
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
-  runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors });
+  // The self-test loads only when asked.
+  if (query.get("selftest")) import("./selftest")
+      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors }))
+      .catch((e) => console.error(`selftest: ${e instanceof Error ? e.message : e}`));
 }

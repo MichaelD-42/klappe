@@ -29,7 +29,7 @@ steps: [(tl, r: { f: FlowHandle }) => r.f.show()(tl), (tl, r) => r.f.highlight([
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `grid` | `{ x, y, w, h, cols, rows }` | required | the area, split into `cols` x `rows` cells; a node's `col` and `row` pick a cell (from 0) and the box fills 70% of it, centred |
-| `nodes` | `{ id, label, col, row, icon? }[]` | required | boxes (`--k-surface` fill, 3px `--k-line` border); `icon` is a Lucide name |
+| `nodes` | `{ id, label, col, row, icon? }[]` | required | boxes (`--k-surface` fill, 3px `--k-line` border); `icon` is a Lucide name or the icon itself ([icon](../effects.md#icon)) |
 | `edges` | `{ from, to, label? }[]` | required | arrows between node ids; an unknown id throws `flow: unknown node "<id>"` |
 
 ### Step adders

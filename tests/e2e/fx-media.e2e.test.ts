@@ -142,3 +142,36 @@ test('a video host link without a video id is a deck problem with a placeholder'
   expect(r.text).toContain('VIDEO MISSING')
   await page.close()
 })
+
+// video() with no rect: the clip fills the scene frame, cropped to cover, with no frame or caption.
+for (const [hash, scene] of [['#/a/full-video/1', 'full-video'], ['#/a/full-youtube/1', 'full-youtube']])
+  test(`a full-frame video covers the stage with no frame or caption (${scene})`, async () => {
+    const page = await open(`?fixture=fx-media${hash}`)
+    const r = await page.evaluate((scene) => {
+      const v = document.querySelector<HTMLElement>(`[data-scene="${scene}"] [data-k-video]`)!
+      const b = v.parentElement!
+      const box = b.getBoundingClientRect()
+      const stage = document.querySelector('.k-stage')!.getBoundingClientRect()
+      return {
+        covers: Math.abs(box.width - stage.width) < 1 && Math.abs(box.height - stage.height) < 1,
+        border: getComputedStyle(b).borderTopWidth,
+        children: b.children.length,
+        fit: getComputedStyle(v).objectFit,
+        title: v.getAttribute('title'),
+      }
+    }, scene)
+    expect(r).toMatchObject({ covers: true, border: '0px', children: 1 })
+    expect(r.title).toMatch(/^A full-frame/)
+    if (scene === 'full-video') expect(r.fit).toBe('cover')
+    await page.close()
+  })
+
+test('a full-frame video plays on its step and pauses on leave', async () => {
+  const page = await open('?fixture=fx-media#/a/vimeo/3')
+  const paused = () => page.evaluate(() => document.querySelector<HTMLVideoElement>('[data-scene="full-video"] video')!.paused)
+  await page.evaluate(() => window.klappe.stepper.next())
+  await page.waitForFunction(() => !document.querySelector<HTMLVideoElement>('[data-scene="full-video"] video')!.paused, undefined, { timeout: 10_000 })
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect(await paused()).toBe(true)
+  await page.close()
+})

@@ -35,7 +35,7 @@ Frontmatter keys:
 - `## Title` names the scene. It is required.
 - Each list item is one step.
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
-- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 4 steps: enter, hold, fade, answer. A `> note` after it attaches to the answer step.
+- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 3 steps: enter, fade, answer. A `> note` after it attaches to the answer step.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
 - A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
@@ -64,6 +64,8 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) darkens it for text on top; use 0.6 or more, so theme text keeps 4.5:1 contrast even over white. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
+- An animated background: an `href` to a `.mp4` or `.webm` file in `media/` plays muted in a loop and covers the stage (`kenBurns` is for pictures only); `{ animate: "aurora" }` instead of `href` draws a slow drift of light in the theme's accent colours, with no file. `scrim` works for both. They move on the wall clock, not with the steps: under `data-k-ignore`, so the self-test leaves them out. Only the background on screen moves; the one the camera leaves stops once the flight has landed. With reduced motion and in the self-test they stay still. Two more kinds move the same way. An `.svg` `href` whose file animates itself (CSS keyframes or SMIL) is inlined, sanitised as `lineArt` is but with its animations kept, in a shadow root, so its styles and ids stay its own; its `<style>` can use the theme tokens (`stroke: var(--k-line)`). A still `.svg` stays a picture. And `animate` takes a function, `(el) => ({ play, pause })`: it draws into `el` (the whole stage) and returns how to play and pause its loop, which it starts paused; klappe calls them. Catalog: `#/fullscreen/svg-loop/1`, `#/fullscreen/own-loop/1`. A missing video shows VIDEO MISSING and a deck problem; a background with neither `href` nor `animate` reports `background: needs an href or animate`. Catalog: `#/fullscreen/aurora/1`.
+- `parallax: true` makes a background drift a little with each camera flight, the way the content moves: up to 40 px from rest at either end of the canvas, so it reads as a far layer. It is scaled up 7 % so its edges never show. A deep link lands it where the flights would have; with reduced motion it moves at once, as the camera does. Catalog: `#/parallax/near/1`.
 
 ## Effects
 
@@ -157,10 +159,13 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // A background, in a section.ts (or scene.ts) default export. Plain scene.md text shows on top.
 { background: { href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true } }
+// An animated background: a looping video, or an aurora with no file.
+{ background: { href: "media/waves.mp4", scrim: 0.6 } }
+{ background: { animate: "aurora" } }
 
-// shout with its own intensity: the scene.md has the 4 steps of a shout-out (### Question? and an answer).
+// shout with its own intensity: the scene.md has the 3 steps of a shout-out (### Question? and an answer).
 { build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
-  steps: [(tl, s) => s.enter(tl), (tl, s) => s.hold(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
+  steps: [(tl, s) => s.enter(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
 
 // A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
 { transition: "zoom", zoomTarget: "hostSite" }

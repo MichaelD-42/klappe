@@ -121,3 +121,28 @@ test('autoplay over the timer step starts it on play', async () => {
   expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
   await page.close()
 })
+
+// The speaker view's Timer button: main and speaker as two pages of one context, on the real clock.
+// It is disabled on a scene without a timer, where it would do nothing.
+test('the speaker view timer button starts the timer, and is disabled on a scene without one', async () => {
+  const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } })
+  const main = await context.newPage()
+  await main.goto(`${inject('BASE_URL')}/?fixture=fx-timer#/a/intro/1`)
+  await main.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const speaker = await context.newPage()
+  await speaker.goto(`${inject('BASE_URL')}/?fixture=fx-timer&speaker=1`)
+  const button = speaker.getByRole('button', { name: 'Timer', exact: true })
+  await expect.poll(() => speaker.locator('.k-sp-scene').textContent()).toBe('Intro')
+  expect(await button.isDisabled()).toBe(true)
+  await speaker.getByRole('button', { name: 'Next', exact: true }).click()
+  await expect.poll(() => speaker.locator('.k-sp-scene').textContent()).toBe('Ring')
+  expect(await button.isDisabled()).toBe(false)
+  await expect.poll(async () => (await ring(main)).hint, { timeout: 5000 }).toBe('') // the play started it
+  await button.click() // pauses
+  const paused = (await ring(main)).text
+  await new Promise((r) => setTimeout(r, 2000))
+  expect((await ring(main)).text).toBe(paused)
+  await button.click() // resumes
+  await expect.poll(async () => (await ring(main)).text, { timeout: 5000 }).not.toBe(paused)
+  await context.close()
+}, 60_000)

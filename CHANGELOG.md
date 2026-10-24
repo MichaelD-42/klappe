@@ -10,6 +10,19 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
+- Board numbers: `kpi` (a tile with the change against last period, coloured by which way is good, and a sparkline), `waffle` (a share as 100 cells) and `progress` (a ring to a target).
+- `barRace`: ranked bars that reorder period by period, one step per period, on a fixed value axis.
+- Charts: `type: "donut"` (parts of a whole, up to 6, the total in the centre) and `type: "slope"` (before and after, one line per group).
+- `qr`: a QR code the room can scan, dark on light with a quiet zone.
+- `scramble`: a line that decodes, random glyphs settling on the text left to right.
+- `wipe`: before and after, two pictures on one spot; the after picture sweeps in behind a divider, halfway or all the way.
+- `annotate`: a hand-drawn ring, underline, frame, strike-through or arrow on a target, drawn on in the accent colour.
+- `spotlight`: dims the scene but for a hole around a target; the next step moves the hole or lifts the dim.
+- Full-screen video: `video()` with no `rect` fills the scene frame, cropped to cover, with no border or caption.
+- `parallax: true` on a background: it drifts a little with each camera flight, as a far layer does.
+- Animated backgrounds from an `.svg` file that animates itself (inlined, sanitised, in a shadow root; it can use the theme tokens), and from a function the deck writes: `animate: (el) => ({ play, pause })`.
+- Animated backgrounds: a `.mp4` or `.webm` `href` in `background` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. Only the background on screen moves; reduced motion and the self-test keep them still.
+- `icon()`, `iconTile()` and flow nodes take a Lucide icon itself as well as a name: `import { Rocket } from "klappe/fx/lucide"`.
 - `worldMap` handle: `point(id)`, `arcPath(from, to)`, and an `at` position on `arc()`. `figure()`: a `strokeWidth` option and an `at` position on `appear()`.
 
 ### Changed
@@ -23,6 +36,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - The demo: the charts leave the story; the catalog keeps them.
 - The single-file build is dropped (see DECISIONS).
 - A timeline chart reads its start and end columns by name (`start`/`from`/`begin`, `end`/`to`/`until`) when they are named, else the first two number columns as before.
+- Only the Lucide icons a deck names are bundled (the demo's JS drops from 1.19 MB to 0.77 MB). A name is found when it stands in the deck's code as a string literal; a name built at run time reports `icon: unknown Lucide name` and needs the icon itself.
+- The engine loads Markdown-part effects, Shiki, the `zoom`/`shatter`/`crt` transitions, the self-test and the test fixtures only when a deck needs them. A Markdown-only deck loads 218 KB of JS at start instead of 674 KB. `code()` in a `scene.ts` needs `code` imported by name from `"klappe/fx"`, so the build sees it.
+- A shout-out is three steps: enter, fade, answer. `enter` grows the question straight to its full size (1.04 calm, 1.12 bold); the `hold` step and `ShoutHandle.hold` are gone. A `scene.ts` that plays a shout drops its `hold` step, and a `### Question?` in `scene.md` makes three steps.
 - `shout()` takes the deck's intensity when `intensity` is left out. Effect words and counter numbers follow the deck's `lang`.
 
 ### Fixed
@@ -33,6 +49,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Router: overlapping back presses, a failed navigation, a stale hash after back.
 - Autoplay started mid-play holds from the end of the play; a failing step stops it with an error.
 - The speaker channel is keyed by the deck's path too, so two decks with one title stay apart.
+- The speaker view's timer button is disabled on a scene without a timer, where it did nothing.
 - Frontmatter: commas inside quoted list items.
 - CLI: `--deck` followed by a flag; the `init` guard on Windows; `init` says when it moves klappe to `dependencies`.
 - Self-test: text in a scaled group is checked at its real size; an empty result names its cause.

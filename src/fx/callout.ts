@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn } from "./draw";
+import { measure } from "./measure";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -35,20 +36,13 @@ export function labelPos(to: { x: number; y: number }, side: CalloutOpts["side"]
 }
 
 // A leader line from the target to a label box; the line draws on, then the box and its text fade in.
-// The target is measured when the step is added (the timeline is built after layout), as a ratio of
-// rects under the same stage and camera transform, so the camera does not matter.
+// The target is measured when the step is added (see measure).
 export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
   return {
     show(tl) {
       const { target, text, side } = opts;
-      let box: Rect;
-      if (target instanceof Element) {
-        const hr = ctx.html.getBoundingClientRect();
-        const tr = target.getBoundingClientRect();
-        const s = hr.width / ctx.rect.w;
-        if (!(s > 0) || !(tr.width > 0 || tr.height > 0)) return ctx.problem(`callout: target of "${text}" has no size to measure`);
-        box = { x: (tr.left - hr.left) / s, y: (tr.top - hr.top) / s, w: tr.width / s, h: tr.height / s };
-      } else box = { x: target.x, y: target.y, w: 0, h: 0 };
+      const box: Rect | undefined = target instanceof Element ? measure(ctx, target) : { x: target.x, y: target.y, w: 0, h: 0 };
+      if (!box) return ctx.problem(`callout: target of "${text}" has no size to measure`);
       const { from, to } = anchor(box, side, opts.offset);
 
       const label = document.createElement("div");

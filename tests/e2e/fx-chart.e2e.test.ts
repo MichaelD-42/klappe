@@ -30,7 +30,7 @@ for (const vp of [
       'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
       'chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(26)
+    expect(r.steps).toBe(32)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -110,5 +110,48 @@ test('a Markdown chart link draws a bar chart in the media slot', async () => {
   console.log(`slot chart: smallest text ${r.smallest.toFixed(1)} px at 1366`)
   expect(r.bars).toBe(4)
   expect(r.smallest).toBeGreaterThanOrEqual(14)
+  await page.close()
+})
+
+test('a donut draws every slice whole, and its legend gives each value and share', async () => {
+  const page = await open('/a/donut/3')
+  await page.waitForTimeout(1500)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-k-chart="donut"]')!
+    const arcs = [...g.querySelectorAll<SVGCircleElement>('circle')]
+    const texts = [...g.querySelectorAll('text')].map((t) => t.textContent)
+    return {
+      arcs: arcs.length,
+      drawn: arcs.every((a) => Math.abs(parseFloat(getComputedStyle(a).strokeDashoffset)) < 1e-3),
+      total: arcs.reduce((s, a) => s + parseFloat(getComputedStyle(a).strokeDasharray), 0),
+      texts,
+    }
+  })
+  expect(r.arcs).toBe(4)
+  expect(r.drawn).toBe(true)
+  expect(r.total).toBeCloseTo(1, 1) // the whole turn, less hairline gaps
+  expect(r.texts).toEqual(expect.arrayContaining(['100', 'Build', '50', '50 %', '20', '20 %', '25', '25 %', '5', '5 %']))
+  await page.close()
+})
+
+test('a slope draws rising lines apart from falling ones and keeps close labels apart', async () => {
+  const page = await open('/a/slope/3')
+  await page.waitForTimeout(1500)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-k-chart="slope"]')!
+    const lines = [...g.querySelectorAll<SVGPathElement>('path')].filter((p) => p.getAttribute('d')?.startsWith('M'))
+    const strokes = lines.map((l) => getComputedStyle(l).stroke)
+    // The right-hand values: text-anchor start, right of the plot.
+    const right = [...g.querySelectorAll<SVGTextElement>('text[data-k-text]')].filter((t) => !t.getAttribute('text-anchor') && t.getBBox().x > 900)
+    const ys = right.map((t) => t.getBBox()).sort((a, b) => a.y - b.y)
+    let overlap = false
+    for (let i = 1; i < ys.length; i++) if (ys[i].y < ys[i - 1].y + ys[i - 1].height) overlap = true
+    return { strokes, overlap, values: right.map((t) => t.textContent) }
+  })
+  // North, South, East fall; West rises.
+  expect(new Set(r.strokes.slice(0, 3)).size).toBe(1)
+  expect(r.strokes[3]).not.toBe(r.strokes[0])
+  expect(r.overlap).toBe(false)
+  expect(r.values).toEqual(['12.0', '13.0', '12.5', '18.0']) // one decimal for all, as every chart does
   await page.close()
 })

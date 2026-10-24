@@ -1,10 +1,12 @@
 import { gsap } from "gsap";
-import { addCameraMove, frame } from "../camera";
-import { agenda, chart, checklist, code, image, shout, terminal, video } from "../fx";
-import { LANGS } from "../fx/code";
-import { KEN_BURNS, STEP_LABEL, type ImageHandle } from "../fx/media";
+import { addCameraMove, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
+import { code, LANGS } from "../fx/code";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
+import { cleanSvg } from "../fx/draw";
+import { aurora } from "./aurora";
+import { part as fxPart } from "./parts";
 import { motion } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
@@ -55,7 +57,7 @@ export const fenceProblem = (lang: string) =>
 function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
   if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect }).show;
-  const c = chart(ctx, { src: m.href.replace(/^\.\//, ""), rect });
+  const c = fxPart("chart")(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
     c.axes(tl);
     c.grow(tl);
@@ -120,13 +122,13 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const term = fence?.lang === "console";
   const fenceN = firstOf(term ? "console" : "code");
   const codeFx = fence && fenceN && !term ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
-  const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => terminal(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
+  const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => fxPart("terminal")(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
   // One checklist from all check items; one agenda per agenda step.
   const checks = scene.steps.filter((s) => s.part?.kind === "check");
   const checkN = firstOf("check");
   const list = checkN
     ? part(checkN, "checklist", lists, (c) =>
-        checklist(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
+        fxPart("checklist")(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
       )
     : undefined;
   const title = add(col, el("h2", "", scene.title));
@@ -137,14 +139,14 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     if (fx.has(n)) return; // a later phase of a shout-out the effect plays
     if (s.kind === "shout-enter") {
       try {
-        const h = shout(ctx, { question: s.text, answer: scene.steps[i + 3]?.text ?? "", intensity: meta.intensity });
-        [h.enter, h.hold, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
+        const h = fxPart("shout")(ctx, { question: s.text, answer: scene.steps[i + 2]?.text ?? "", intensity: meta.intensity });
+        [h.enter, h.fade, h.answer].forEach((f, k) => fx.set(n + k, f));
         return;
       } catch (e) {
         if (!notBuilt(e)) console.error(`${scene.source} step ${n}: shout: ${message(e)}`);
       }
     }
-    if (s.kind === "shout-hold" || s.kind === "shout-fade") return;
+    if (s.kind === "shout-fade") return;
     const pt = s.part;
     if (pt?.kind === "check" && list) {
       const k = checks.indexOf(s);
@@ -155,7 +157,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     }
     if (pt?.kind === "agenda") {
       const current = pt.rows.find((r) => r.current)?.title;
-      const a = part(n, "agenda", lists, (c) => agenda(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
+      const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
       return fx.set(n, (a.h?.show ?? a.miss)!);
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
@@ -207,10 +209,9 @@ function defaultStep(tl: gsap.core.Timeline, scene: Scene, n: number, html: HTML
   if (effect) return effect(tl);
   const at = (k: number) => html.querySelector<HTMLElement>(`[data-step="${k}"]`);
   const kind = scene.steps[n - 1].kind;
-  // M1 shout-out: question appears, holds, fades, then the answer appears. M2 adds the full effect.
-  if (kind === "shout-hold") tl.to({}, { duration: motion.step });
-  else if (kind === "shout-fade") {
-    const q = at(n - 2);
+  // M1 shout-out: question appears, fades, then the answer appears. M2 adds the full effect.
+  if (kind === "shout-fade") {
+    const q = at(n - 1);
     if (q) tl.to(q, { autoAlpha: 0, duration: motion.step });
   } else {
     const p = at(n);
@@ -225,7 +226,7 @@ const PAD = 0.001;
 // previous step, so playing it no longer matches a seek to it.
 export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap.core.Timeline) => void): number {
   tl.to({}, { duration: PAD });
-  // shortcut: one label, moved every step, tells a helper where the current step starts (image() uses it);
+  // shortcut: one label, moved every step, tells a helper where the current step starts (image() and video() use it);
   // read it only while the step is built. Upgrade to a step-start argument if more helpers need it.
   tl.addLabel(STEP_LABEL);
   const start = tl.duration();
@@ -237,23 +238,90 @@ export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap
   return early;
 }
 
-// A background pinned to the screen: one cover image in the canvas's pinned layer, under the world, so the
-// camera moves the content over a still picture. The timeline fades it in and out as scenes take turns.
+// A background pinned to the screen: one cover picture, a looping video or an aurora in the canvas's pinned
+// layer, under the world, so the camera moves the content over it. The timeline fades it in and out as scenes
+// take turns. A video or an aurora moves on the wall clock: renderWorld plays it only while it is on screen.
 interface Pinned {
   el: HTMLElement;
   push?: ImageHandle; // set while its Ken Burns push has not been put on the timeline yet
+  loop?: { play(): void; pause(): void };
 }
-function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string): Pinned {
+// An SVG file with its own animation: SMIL elements or CSS keyframes. A still one stays an <img>.
+const ANIMATED_SVG = /<(?:animate|animateTransform|animateMotion|set)\b|@keyframes|\banimation\s*:/;
+
+// The text of every background .svg file in the deck, by media key, for those that animate. The build is
+// synchronous, so main.ts awaits this before the world renders; a file that fails to load stays an <img>.
+export async function svgBackgrounds(deck: Deck): Promise<Record<string, string>> {
+  const media = deck.files?.media ?? {};
+  const hrefs = deck.sections.flatMap((s) => [s.module?.background, ...s.scenes.map((sc) => sc.module?.background)]).flatMap((b) =>
+    b?.href && /\.svg$/i.test(b.href) ? [b.href.replace(/^\.\//, "")] : [],
+  );
+  const texts = await Promise.all(
+    [...new Set(hrefs)].map(async (k) => [k, media[k] ? await fetch(media[k]).then((r) => r.text()).catch(() => "") : ""] as const),
+  );
+  return Object.fromEntries(texts.filter(([, t]) => ANIMATED_SVG.test(t)));
+}
+
+// An animated SVG file, sanitised (cleanSvg) and inlined in a shadow root, so its styles and ids stay its own.
+// It covers the stage and starts paused: SMIL through pauseAnimations, CSS through a style that holds it.
+function svgLoop(parent: HTMLElement, text: string): Pinned["loop"] | undefined {
+  const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+  const svg = doc.documentElement as unknown as SVGSVGElement;
+  if (svg.localName !== "svg" || doc.querySelector("parsererror")) return;
+  cleanSvg(svg, true);
+  const host = parent.appendChild(document.createElement("div"));
+  host.setAttribute("data-k-svg-loop", "");
+  host.setAttribute("data-k-ignore", "");
+  Object.assign(host.style, { position: "absolute", inset: "0" });
+  const root = host.attachShadow({ mode: "open" });
+  const hold = root.appendChild(document.createElement("style"));
+  hold.textContent = "* { animation-play-state: paused !important; }";
+  const live = root.appendChild(document.importNode(svg, true));
+  for (const [k, v] of Object.entries({ width: "100%", height: "100%", preserveAspectRatio: "xMidYMid slice" })) live.setAttribute(k, v);
+  live.pauseAnimations();
+  return {
+    play: () => ((hold.disabled = true), live.unpauseAnimations()),
+    pause: () => ((hold.disabled = false), live.pauseAnimations()),
+  };
+}
+
+function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string, svgText?: string): Pinned {
   const d = pinned.appendChild(el("div", "k-layer"));
   d.dataset.kBackground = id;
   Object.assign(d.style, { width: "1920px", height: "1080px" });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
-  const img = safe(`${source}: background`, () =>
-    image({ ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem }, { href: bg.href, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }),
-  );
-  gsap.set(d.children, { autoAlpha: 1 });
+  const full = { ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem };
+  let img: ImageHandle | undefined;
+  let loop: Pinned["loop"];
+  if (typeof bg.animate === "function") {
+    const own = d.appendChild(el("div", "k-layer"));
+    own.setAttribute("data-k-ignore", "");
+    Object.assign(own.style, { width: "1920px", height: "1080px", overflow: "hidden" });
+    const animate = bg.animate;
+    loop = safe(`${source}: background`, () => animate(own));
+  } else if (bg.animate !== undefined) {
+    if (bg.animate === "aurora") loop = aurora(d);
+    else problem(`unknown animate "${bg.animate}"; use "aurora" or a function`);
+  } else if (!bg.href) problem("needs an href or animate");
+  else {
+    if (svgText) {
+      loop = svgLoop(d, svgText);
+      if (!loop) problem(`${bg.href} animates but is not valid SVG; shown as a still picture`);
+    }
+    if (loop) {
+      // an animated SVG file, inlined
+    } else if (LOOP_VIDEO.test(bg.href)) {
+      const v = safe(`${source}: background`, () => loopVideo(full, { href: bg.href!, alt: bg.alt }));
+      if (v) loop = { play: () => void v.play().catch(() => {}), pause: () => v.pause() }; // a blocked play keeps the first frame
+    } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }));
+  }
+  if (loop && bg.scrim) {
+    const s = d.appendChild(el("div", ""));
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(bg.scrim) });
+  }
+  if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });
-  return { el: d, push: bg.kenBurns ? img : undefined };
+  return { el: d, push: bg.kenBurns ? img : undefined, loop };
 }
 
 const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter"];
@@ -262,7 +330,9 @@ export function renderWorld(
   deck: Deck,
   canvases: CanvasLayout[],
   root: HTMLElement,
-  opts: { reducedMotion?: boolean } = {},
+  // still: videos and auroras in backgrounds do not move (reduced motion, the self-test).
+  // svg: the text of animated background .svg files, by media key (svgBackgrounds).
+  opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string> } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
   const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
@@ -293,11 +363,15 @@ export function renderWorld(
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
     const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
     let cam = first;
+    const far: HTMLElement[] = []; // parallax backgrounds on this canvas
     const camera: Ctx["camera"] = {
       to(t, target, o) {
         if (["x", "y", "w", "h"].every((k) => cam[k as keyof Rect] === target[k as keyof Rect])) return; // already there
         // Reduced motion: camera flights become cuts (spec §7); the step padding keeps them off the labels.
         addCameraMove(t, world, cam, target, { ...o, instant: opts.reducedMotion });
+        // Parallax backgrounds drift with the flight, from its start; a cut moves them at once.
+        const pose = parallaxPose(target, layout.size);
+        if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
         cam = target;
       },
     };
@@ -339,7 +413,13 @@ export function renderWorld(
         let pin = bg && pins.get(bg);
         if (bg && !pin) {
           const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
-          pins.set(bg, (pin = background(ctx, pinned, bg, source, own ? sc.id : s.id)));
+          const svgText = bg.href ? opts.svg?.[bg.href.replace(/^\.\//, "")] : undefined;
+          pins.set(bg, (pin = background(ctx, pinned, bg, source, own ? sc.id : s.id, svgText)));
+          if (bg.parallax) {
+            // Scaled up so its edges stay out of view at full drift; at rest where the canvas opens.
+            gsap.set(pin.el, { scale: PARALLAX_SCALE, ...parallaxPose(first, layout.size) });
+            far.push(pin.el);
+          }
         }
         const build = sc.module?.build;
         perScene.set(sc, {
@@ -347,6 +427,21 @@ export function renderWorld(
           bg: pin,
         });
       }
+    // Only the background on screen moves. The one left behind stops once the camera has landed: it is
+    // still fading out until then. A cut stops it at once.
+    const loops = [...pins.values()].filter((p) => p.loop);
+    if (loops.length && !opts.still) {
+      const bgOf = new Map(sections.flatMap((s) => s.scenes).map((sc) => [sc.id, perScene.get(sc)?.bg]));
+      let stop: gsap.core.Tween | undefined;
+      stepListeners.push(({ play, scene }) => {
+        const on = scene === null ? undefined : bgOf.get(scene); // undefined for a scene on another canvas
+        stop?.kill();
+        on?.loop?.play();
+        const off = () => loops.forEach((p) => p !== on && p.loop!.pause());
+        if (play) stop = gsap.delayedCall(motion.camera, off);
+        else off();
+      });
+    }
     // The first scene's background shows from load, so it fades in with its canvas.
     const bg0 = perScene.get(sections.flatMap((s) => s.scenes)[0])?.bg;
     if (bg0) gsap.set(bg0.el, { autoAlpha: 1 });

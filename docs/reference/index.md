@@ -4,11 +4,13 @@
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
-- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `qr`, `kpi`, `waffle`, `progress`, `barRace`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, `scramble`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
+  - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
+  - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike or arrow on a target.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.

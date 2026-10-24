@@ -73,6 +73,26 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
 // The value of a theme token, for tweens: GSAP cannot tween to a var() string.
 const token = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
 
+// Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
+// links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
+// whitespace and control characters inside a URL scheme, so they are dropped before the match.
+// animated: keep <style> (the caller scopes it in a shadow root) without @import or outside url(), and the
+// SMIL animations, but none that animates a link or a handler.
+export function cleanSvg(svg: Element, animated: boolean): void {
+  const drop = animated ? "script, foreignObject, image" : "script, style, foreignObject, set, animate, animateMotion, animateTransform, image";
+  for (const e of svg.querySelectorAll(drop)) e.remove();
+  for (const e of svg.querySelectorAll("set, animate, animateMotion, animateTransform"))
+    if (/href$|^on/i.test(e.getAttribute("attributeName") ?? "")) e.remove();
+  for (const s of svg.querySelectorAll("style"))
+    s.textContent = (s.textContent ?? "").replace(/@import[^;]*;?/gi, "").replace(/url\(\s*(?!["']?#)[^)]*\)/gi, "none");
+  for (const e of [svg, ...svg.querySelectorAll("*")])
+    for (const a of [...e.attributes]) {
+      const link = a.localName === "href" || a.localName === "src";
+      const value = a.value.replace(/[\s\u0000-\u001f]/g, "");
+      if (/^on/i.test(a.name) || /javascript:/i.test(value) || (link && !value.startsWith("#"))) e.removeAttributeNode(a);
+    }
+}
+
 // A line drawing from an SVG file: its viewBox maps to w wide at (x, y), scene-local.
 // Strokes take the theme's foreground colour (currentColor) with round caps and joins.
 export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
@@ -87,17 +107,7 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
     const k = opts.w / vb[2];
     g.setAttribute("transform", `translate(${opts.x - vb[0] * k} ${opts.y - vb[1] * k}) scale(${k})`);
     g.setAttribute("stroke-width", svg.getAttribute("stroke-width") ?? "4");
-    // Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
-    // links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
-    // whitespace and control characters inside a URL scheme, so they are dropped before the match.
-    for (const e of svg.querySelectorAll("script, style, foreignObject, set, animate, animateMotion, animateTransform, image"))
-      e.remove();
-    for (const e of [svg, ...svg.querySelectorAll("*")])
-      for (const a of [...e.attributes]) {
-        const link = a.localName === "href" || a.localName === "src";
-        const value = a.value.replace(/[\s\u0000-\u001f]/g, "");
-        if (/^on/i.test(a.name) || /javascript:/i.test(value) || (link && !value.startsWith("#"))) e.removeAttributeNode(a);
-      }
+    cleanSvg(svg, false);
     g.append(...[...svg.childNodes].map((n) => document.importNode(n, true)));
   }
   Object.assign(g.style, { color: "var(--k-fg)" });

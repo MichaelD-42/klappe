@@ -6,7 +6,7 @@ Every example below is a scene from the demo deck's catalog (the sections after 
 
 ## `chart`
 
-Catalog: section `110-chart` (`#/chart/bars/1`). A bar, stacked, line, waterfall or timeline chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
+Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/slope/1`). A bar, stacked, line, waterfall, timeline, donut or slope chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
 
 From `decks/demo/sections/110-chart/10-bars/scene.ts`:
 
@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-phosphor`, falling ones muted, with a legend; labels that would touch are moved apart |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -35,13 +35,63 @@ The first column labels the rows; every later column with a number in any row is
 | Handle | Step |
 | --- | --- |
 | `axes` | title, legend and axes fade in |
-| `grow` | bars, segments, lines or waterfall steps grow in, staggered |
+| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right |
 | `values` | the value labels fade in and count up |
 
 ### Limits
 
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
+
+## `kpi`, `waffle`, `progress`
+
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show }`: it fades in and its number counts up from 0, written from `onUpdate` as a pure function of progress.
+
+```ts
+kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
+waffle(ctx, { x: 200, y: 160, size: 520, value: 37, label: "of releases needed a rollback" })
+progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Services moved" })
+```
+
+| Element | Options | Shows |
+| --- | --- | --- |
+| `kpi` | `x`, `y`, `w` (480), `value`, `label`, `unit?`, `previous?`, `better?` (`"up"`), `spark?`, `source?` | a `--k-surface` tile: the label, the number (112 px, its unit smaller on the same line), the change against `previous` (`▲ 12 %`, in `--k-ok` when it goes the `better` way, else `--k-bad`; against 0 it is in units), and a sparkline of `spark` (oldest first) that draws on, its last point in `--k-accent` |
+| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label |
+| `progress` | `x`, `y`, `size`, `value`, `target`, `label?`, `source?` | a ring that closes to `value / target` in `--k-accent` (full and `--k-ok` at or past the target); the share in % and "of <target>" in its centre, the label under it |
+
+## `kpiDelta`
+
+`kpiDelta(value, previous, better?)` gives the change's text (`▲ 12 %`) and whether it is good: `better` `"down"` makes a fall good. Against a previous value of 0 the change is in units.
+
+## `waffleCells`
+
+`waffleCells(value, of)` gives the waffle's filled cells: one per percent of `of`, rounded, 0 to 100.
+
+## `barRace`
+
+Catalog: section `110-chart` (`#/chart/race/1`). Ranked bars that reorder from one period to the next: who led, who climbed. The data file has one row per period (the first column names it: a year, a quarter) and one number column per contender.
+
+```ts
+build: (ctx) => barRace(ctx, { src: "data/teams.csv", rect: { x: 160, y: 80, w: 1600, h: 840 }, title: "Deployments a week", top: 6 }),
+steps: [(tl, r) => r.show(tl), (tl, r) => r.to(1)(tl), (tl, r) => r.to("2023")(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `src`, `data`, `rect`, `title`, `sample` | | | as for `chart` |
+| `top` | number | 8 | how many bars show; the others wait below the frame and climb in when they rank |
+
+| Handle | Step |
+| --- | --- |
+| `show` | the title, the value axis (on top) and the first period's bars fade in; the period stands large in the corner |
+| `to(period)` | the bars move to that period, by index or by name: they change rank and length together over 1.2 s, the values count, and a numeric period (a year) counts too. Call it once per step, or several times in one step for a run of periods |
+| `periods` | not a step: the period names, in order |
+
+The value axis is fixed over all periods, so a bar's length compares across time. Each contender keeps its colour, from the theme's six series colours; past six they repeat, and the names label every bar. A period that does not exist reports `barRace: no period "2030"; the periods are …`. The data is checked as for `chart`; it needs at least two contender columns.
+
+## `raceRanks`
+
+`raceRanks(values)` gives each value's place, 0 for the largest; ties keep column order.
 
 ## `parseCsv`
 
@@ -54,6 +104,14 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `dataError`
 
 `dataError(rows, type)` returns why the rows cannot be drawn as that chart type (`"row 3, Q2 not a number"`, `"needs a start and an end column"`, `"row 2, end before start"`), or `""`. `chart` calls it; call it yourself to check data before you pass it as `data`.
+
+## `donutSlices`
+
+`donutSlices(values)` gives each value's slice as `{ start, end, share }`, fractions of a turn from 12 o'clock, clockwise, in row order.
+
+## `spread`
+
+`spread(ys, gap)` moves label positions apart until each is at least `gap` from the next, keeping their order; a bunch that has to move stays centred on where it was, and labels already far enough apart stay put. The slope chart uses it for its labels.
 
 ## `waterfallSteps`
 
@@ -214,6 +272,10 @@ steps: [(tl, r) => drawOn(r.plain)(tl), (tl, r) => drawOn(r.thin.children, { dur
 
 A shape with `vector-effect="non-scaling-stroke"` is measured when the step is added, so do not tween an SVG ancestor's transform before the draw. A zero-length stroke fades in instead.
 
+## `cleanSvg`
+
+`cleanSvg(svg, animated)` strips what an exported SVG must not bring into the deck: scripts, `foreignObject`, images, handlers (`on…`), `javascript:` and links to other files (only `#id` stays). `lineArt` calls it with `animated` false, which also drops `<style>` and every animation. An animated background calls it with `animated` true: `<style>` stays (scoped in a shadow root) without `@import` or outside `url()`, and SMIL animations stay, except any that animates a link or a handler.
+
 ## `icon`
 
 Catalog: section `140-icons` (`#/icons/icons/1`). Any Lucide icon, drawn on and lit.
@@ -230,7 +292,9 @@ build: (ctx) => [
 steps: [(tl, icons) => icons.forEach((i, n) => i.draw(tl, n ? "<" : undefined)), (tl, icons) => icons.forEach((i, n) => i.light(tl, n ? "<" : undefined))],
 ```
 
-`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+
+Only the icons a deck uses are bundled. The build finds a name when it stands in the deck's code as a string literal (`"rocket"`, also inside an array or a flow node). A name built at run time (`"ro" + "cket"`, or read from a file) is not found and reports the unknown-name problem: pass the icon itself instead. The same holds for `iconTile` and the `icon` of a `flow` node.
 
 | Handle | Step |
 | --- | --- |
@@ -301,7 +365,7 @@ steps: [(tl, img) => img.show(tl)],
 
 - A missing file shows IMAGE MISSING over the picture's area and a deck problem; a `cover` image with alt text also shows a prompt for an image generator. `klappe test` writes it to `media/TODO.md`.
 - For a sharp push at 1920 wide use a source of at least about 2080x1170 px.
-- A background for a whole section is `background: { href, alt, scrim, kenBurns }` in `section.ts`, see [deck format](deck-format.md).
+- A background for a whole section is `background: { href, alt, scrim, kenBurns }` in `section.ts`, see [deck format](deck-format.md). A `.mp4` or `.webm` `href` or `animate: "aurora"` makes it move.
 
 ## `KEN_BURNS`
 
@@ -327,10 +391,41 @@ steps: [(tl, v) => v.show(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `href` | string | required | a local `"media/x.mp4"`, a direct link, or a YouTube or Vimeo link |
-| `title` | string | required | the caption under the box |
-| `rect` | `{ x, y, w, h }` | required | the area; the box is the largest 16:9 (later the clip's own ratio) inside it |
+| `title` | string | required | the caption under the box; the player's title in a full frame |
+| `rect` | `{ x, y, w, h }` | the full scene frame | the area; the box is the largest 16:9 (later the clip's own ratio) inside it. Without `rect` the video fills the scene frame, cropped to cover, with no border or caption, and fades in over the camera flight like a full-frame picture (catalog `#/media/full-frame/1`) |
 
 `show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer, and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
+
+## `wipe`
+
+Catalog: section `230-fullscreen` (`#/fullscreen/wipe/2`). Before and after: two pictures from `media/` on one spot, cropped to cover it. The after picture is revealed from the left behind an `--k-accent` divider.
+
+```ts
+build: (ctx) => wipe(ctx, { before: { href: "media/old.png", alt: "…" }, after: { href: "media/new.png", alt: "…" } }),
+steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `before`, `after` | `{ href, alt }` | required | the two pictures; a missing one shows IMAGE MISSING and a deck problem, as `image` does |
+| `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
+| `scrim` | number | none | 0 to 1, a dark layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
+
+| Handle | Step |
+| --- | --- |
+| `show` | both pictures and the divider fade in; only the before picture shows |
+| `to(f)` | the divider sweeps to `f` (0 to 1) of the width and the after picture shows left of it: `to(0.5)` half, `to(1)` all, `to(0)` back to before |
+
+## `qr`
+
+Catalog: section `190-media` (`#/media/qr/1`). A QR code the room can scan, usually for a link.
+
+```ts
+build: (ctx) => qr(ctx, { text: "https://example.com/talk", x: 735, y: 180, size: 450, label: "Slides and notes" }),
+steps: [(tl, h) => h.show(tl)],
+```
+
+`qr(ctx, { text, x, y, size, label? })`: `x`, `y` the top-left corner, `size` the code's width and height in scene units, `label` a line under it. Dark modules (`--k-bg`) on a light tile (`--k-fg`) with the standard 4-module quiet zone, because not every phone camera reads an inverted code. Error correction M: it still reads with 15 % of it covered. `show` fades it in. Text too long for any QR code reports `qr: the text is too long for a QR code (N characters)` and shows nothing. Keep `size` at 400 or more for a link, so the room can scan it from the back.
 
 ## `shatter`
 
@@ -381,7 +476,7 @@ The shards copy the target as it is at that point; build and show it before the 
 
 ## `shout`
 
-Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question holds, then the answer lands. In Markdown, `### Question?` and a paragraph make the same four steps with the deck's `intensity`.
+Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make the same three steps with the deck's `intensity`.
 
 From `decks/demo/sections/210-shout/20-bold/scene.ts`:
 
@@ -391,7 +486,6 @@ import { shout, type ShoutHandle } from "klappe/fx";
 build: (ctx) => shout(ctx, { question: "Who owns the release?", answer: "The team that ships it.", intensity: "bold" }),
 steps: [
   (tl, s: ShoutHandle) => s.enter(tl),
-  (tl, s: ShoutHandle) => s.hold(tl),
   (tl, s: ShoutHandle) => s.fade(tl),
   (tl, s: ShoutHandle) => s.answer(tl),
 ],
@@ -401,16 +495,15 @@ steps: [
 | --- | --- | --- |
 | `question` | string | the big text; long text gets a smaller size to stay in the frame |
 | `answer` | string | shown in `--k-accent` at 70% of the question's size |
-| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard, pushes in more, keeps a trace of the question after the fade and pops the answer |
+| `intensity` | `"calm"` or `"bold"` | the deck's (`deck.md`). Calm dims 30% and eases in; bold dims 70%, adds a vignette, enters hard and further, keeps a trace of the question after the fade and pops the answer |
 
 | Handle | Step |
 | --- | --- |
-| `enter` | the dim and question come in (an earlier shout's answer leaves) |
-| `hold` | the question pushes in slowly (2 s calm, 2.5 s bold) |
+| `enter` | the dim and question come in and grow to full size: 1.04 calm, 1.12 bold (an earlier shout's answer leaves) |
 | `fade` | the question fades |
 | `answer` | the dim lifts and the answer builds in |
 
-Text is set with `textContent`, never as HTML. The four steps must be four entries in `steps` (or four Markdown steps).
+Text is set with `textContent`, never as HTML. The three steps must be three entries in `steps` (or three Markdown steps).
 
 ## `swarm`
 
@@ -534,6 +627,21 @@ steps: [(tl, { down }) => down.run(tl)],
 
 `counter(ctx, { x, y, from, to, label })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use English thousands separators.
 
+## `scramble`
+
+Catalog: section `160-motion` (`#/motion/decode/1`). A line that decodes: random glyphs in `--k-accent` settle, about left to right, on the real text in `--k-fg`.
+
+```ts
+build: (ctx) => scramble(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 420, w: 1600 }),
+steps: [(tl, s) => s.run(tl)],
+```
+
+`scramble(ctx, { text, x, y, w?, size?, seed? })`: `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 72, weight 700); `seed` picks the glyphs and the order. `run(tl)` fades it in and decodes over 1.5 s, written from `onUpdate` as a pure function of progress. Each character is laid out from the start, so the line never reflows while it decodes. Screen readers get the real text. Reduced motion: it fades in already settled.
+
+## `scrambleGlyphs`
+
+`scrambleGlyphs(text, p, seed)` gives what each character shows at progress `p`: a glyph while it decodes, `null` once it has settled. Spaces are always `null`; all are `null` at `p = 1`.
+
 ## `counterText`
 
 `counterText(from, to, p)` gives the counter's text at progress `p`: `round(from + (to - from) * p)` with thousands separators. `counterText(0, 2000, 0.5)` is `"1,000"`.
@@ -549,6 +657,10 @@ Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the c
 ## `playTransition`
 
 `playTransition(kind, from, to, opts)` runs `registry[kind]` and returns `{ kind, tl }`. A transition that throws logs `transition '<kind>': <error>; playing fade` and plays `fade`, so the move still lands.
+
+## `loadTransitions`
+
+`loadTransitions(kinds)` loads the code of `zoom`, `shatter` and `crt` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
 
 ## `transitionZoom`
 

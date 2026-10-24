@@ -1,4 +1,9 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { importedFx, klappeScan } from "../../bin/scan-plugin.mjs";
+import { Rocket } from "../../src/fx/lucide";
 import { iconGlyph } from "../../src/fx/icons";
 
 describe("iconGlyph", () => {
@@ -15,6 +20,43 @@ describe("iconGlyph", () => {
       const problem = vi.fn();
       expect(iconGlyph(name, problem)).toBe('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8l8 8M16 8l-8 8"/>');
       expect(problem).toHaveBeenCalledWith(`icon: unknown Lucide name '${name}'`);
+    }
+  });
+});
+
+describe("iconGlyph with an IconNode", () => {
+  it("draws the icon it is given, with no lookup", () => {
+    const problem = vi.fn();
+    expect(iconGlyph(Rocket, problem)).toBe(iconGlyph("rocket", problem));
+    expect(problem).not.toHaveBeenCalled();
+  });
+});
+
+describe("the scan plugin", () => {
+  it("bundles the Lucide names that stand as string literals in the deck code, and only those", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-icons-"));
+    try {
+      fs.mkdirSync(path.join(dir, "sections", "node_modules"), { recursive: true });
+      fs.writeFileSync(path.join(dir, "sections", "a.ts"), `icon(ctx, "shield-check", o); const n = ['Cpu', "no-such-icon"]; icon(ctx, "ro" + "cket", o);`);
+      fs.writeFileSync(path.join(dir, "sections", "node_modules", "b.ts"), `icon(ctx, "bug", o)`);
+      fs.writeFileSync(path.join(dir, "notes.md"), `"database"`);
+      const plugin = klappeScan({ klappeDir: process.cwd(), deckDir: dir });
+      const src = (plugin.load as (id: string) => string).call({}, "\0virtual:klappe-icons");
+      expect(src.match(/"\w+": i\d+/g)).toEqual(['"Cpu": i0', '"ShieldCheck": i1']);
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+  it("lists the effects deck code imports from klappe/fx, by name", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-fx-"));
+    try {
+      fs.writeFileSync(path.join(dir, "a.ts"), `import { icon, code as c, type CodeHandle } from "klappe/fx";\nimport type { ShoutHandle } from "klappe/fx";`);
+      fs.writeFileSync(path.join(dir, "b.ts"), `import { Rocket } from "klappe/fx/lucide";`);
+      expect(importedFx([dir])).toEqual(["code", "icon"]);
+      fs.writeFileSync(path.join(dir, "c.ts"), `import * as fx from "klappe/fx";`);
+      expect(importedFx([dir])).toContain("*");
+    } finally {
+      fs.rmSync(dir, { recursive: true });
     }
   });
 });
