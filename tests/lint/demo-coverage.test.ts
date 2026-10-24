@@ -8,7 +8,7 @@ import * as fx from '../../src/fx'
 // Not called by deck authors: pure helpers (layout, parsing, maths) and engine-only parts.
 const ALLOW = [
   'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'waffleCells', 'scribble', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText', 'bubbleLayout', 'wrapBreaks', 'crtColor', 'cursorCentre',
-  'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'lineDiff', 'loadHighlighter',
+  'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'matrixLayout', 'lineDiff', 'loadHighlighter',
   'parseCsv', 'parseGroups', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
   'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.

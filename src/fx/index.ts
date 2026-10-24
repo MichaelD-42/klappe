@@ -12,6 +12,7 @@ export * from "./figure";
 export * from "./flow";
 export * from "./icons";
 export * from "./map";
+export * from "./matrix";
 export * from "./qr";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
 export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
