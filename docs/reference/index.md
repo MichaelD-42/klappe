@@ -12,6 +12,7 @@
   - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike or arrow on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
+  - [flipCard](elements/flipCard.md): a card that turns over to show its back.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
