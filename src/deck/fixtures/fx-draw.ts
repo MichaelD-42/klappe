@@ -12,13 +12,13 @@ const art = (src: string, part: string): SceneModule => ({
   steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, part)],
 });
 
-// drawOn on plain shapes: default timing, then custom timing on a scaled group with non-scaling strokes.
+// drawOn on plain shapes without a pathLength (lines and circles too): default timing, then custom timing on a scaled group with non-scaling strokes.
 const shapes: SceneModule = {
   build(ctx) {
     const group = (transform: string, nonScaling: boolean) => {
       const g = document.createElementNS(SVG, "g");
       g.setAttribute("transform", transform);
-      g.innerHTML = '<path d="M0 0 H100 V60 H0 Z"/><circle cx="50" cy="30" r="20"/><path d="M0 80 Q50 120 100 80"/>';
+      g.innerHTML = '<path d="M0 0 H100 V60 H0 Z"/><circle cx="50" cy="30" r="20"/><path d="M0 80 Q50 120 100 80"/><line x1="0" y1="140" x2="100" y2="140"/>';
       for (const s of g.children) {
         if (nonScaling) s.setAttribute("vector-effect", "non-scaling-stroke");
         Object.assign((s as SVGElement).style, { fill: "none", stroke: "var(--k-fg)", strokeWidth: "6", strokeLinecap: "round" });

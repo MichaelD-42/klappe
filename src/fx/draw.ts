@@ -56,6 +56,9 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
       const m = s.getCTM();
       return (m && Math.hypot(m.a, m.b)) || 1;
     });
+    // GSAP records each attribute before the fromTo and writes it back on a revert: a missing pathLength comes
+    // back as "", which the browser rejects with a console error. own.len looks the same as no pathLength.
+    list.forEach((s, i) => s.hasAttribute("pathLength") || s.setAttribute("pathLength", own[i].len));
     const dash = (i: number) => `${1.01 * ks[i]} ${2 * ks[i]}`;
     // autoRound off: GSAP rounds px to whole pixels, and the dash is in units of the path length.
     tl.fromTo(

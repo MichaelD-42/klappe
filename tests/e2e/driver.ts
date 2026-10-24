@@ -15,6 +15,11 @@ export async function runSelftest(
   const browser = await chromium.launch()
   try {
     const page = await browser.newPage({ viewport: { width: viewport.w, height: viewport.h } })
+    // The browser logs some errors itself (an SVG attribute it cannot parse): they never pass through
+    // console.error in the page, so klappe.errors misses them. Collected here, they fail the walk too.
+    const browserErrors: string[] = []
+    page.on('console', (m) => m.type() === 'error' && browserErrors.push(m.text()))
+    page.on('pageerror', (e) => browserErrors.push(e.message))
     await page.goto(url)
     // main publishes the steps before the self-test starts; a page without klappe gets the base wait.
     await page
@@ -25,7 +30,11 @@ export async function runSelftest(
       .locator('script#klappe-selftest')
       .evaluate((el) => el.textContent, undefined, { timeout: selftestTimeout(steps) })
     if (!json?.trim()) throw new Error(`the self-test wrote an empty result (${url})`)
-    return JSON.parse(json) as SelftestResult
+    const r = JSON.parse(json) as SelftestResult
+    // klappe.errors already holds console.error calls and page errors; add only what the browser logged on its own.
+    r.errors.push(...browserErrors.filter((e) => !r.errors.some((k) => k.includes(e) || e.includes(k))))
+    if (r.errors.length) r.ok = false
+    return r
   } finally {
     await browser.close()
   }
