@@ -25,6 +25,7 @@ export const strings = {
     originNotStated: "origin not stated",
     net: "net",
     total: "Total",
+    of: "of",
     increase: "Increase",
     decrease: "Decrease",
     timesUp: "Time's up",

@@ -43,6 +43,30 @@ The first column labels the rows; every later column with a number in any row is
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
 
+## `kpi`, `waffle`, `progress`
+
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show }`: it fades in and its number counts up from 0, written from `onUpdate` as a pure function of progress.
+
+```ts
+kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
+waffle(ctx, { x: 200, y: 160, size: 520, value: 37, label: "of releases needed a rollback" })
+progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Services moved" })
+```
+
+| Element | Options | Shows |
+| --- | --- | --- |
+| `kpi` | `x`, `y`, `w` (480), `value`, `label`, `unit?`, `previous?`, `better?` (`"up"`), `spark?`, `source?` | a `--k-surface` tile: the label, the number (112 px, its unit smaller on the same line), the change against `previous` (`▲ 12 %`, in `--k-ok` when it goes the `better` way, else `--k-bad`; against 0 it is in units), and a sparkline of `spark` (oldest first) that draws on, its last point in `--k-accent` |
+| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label |
+| `progress` | `x`, `y`, `size`, `value`, `target`, `label?`, `source?` | a ring that closes to `value / target` in `--k-accent` (full and `--k-ok` at or past the target); the share in % and "of <target>" in its centre, the label under it |
+
+## `kpiDelta`
+
+`kpiDelta(value, previous, better?)` gives the change's text (`▲ 12 %`) and whether it is good: `better` `"down"` makes a fall good. Against a previous value of 0 the change is in units.
+
+## `waffleCells`
+
+`waffleCells(value, of)` gives the waffle's filled cells: one per percent of `of`, rounded, 0 to 100.
+
 ## `parseCsv`
 
 `parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. Use it to read a `data/` file for an effect that is not a chart:

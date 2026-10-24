@@ -19,6 +19,7 @@ export * from "./sequence";
 export * from "./shatter";
 export * from "./scramble";
 export * from "./shout";
+export * from "./stats";
 export * from "./spotlight";
 export * from "./swarm";
 export * from "./swimlanes";
