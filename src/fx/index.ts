@@ -20,6 +20,8 @@ export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurn
 // Not MOODS, rng, rotate, project or shade: data and math for its unit test.
 export { mesh3d, type Mesh3dHandle, type Mesh3dOpts, type Mood } from "./mesh3d";
 export * from "./motion";
+// Not revealUnits: the split, for its unit test.
+export { reveal, type RevealHandle, type RevealOpts } from "./reveal";
 export * from "./sequence";
 export * from "./shatter";
 export * from "./scramble";

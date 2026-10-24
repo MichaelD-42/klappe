@@ -25,7 +25,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Time an exercise: `timer` with `minutes`; count to a clock time (end of a break): `timer` with `until`. [timer](klappe/docs/reference/elements/timer.md)
 - An 80s computer screen that boots and types: `crt`. [crt](klappe/docs/reference/elements/crt.md) A character who speaks: `bubble`. [bubble](klappe/docs/reference/elements/bubble.md) A quiet companion with moods that runs by itself: `mesh3d`. [mesh3d](klappe/docs/reference/elements/mesh3d.md)
 - Compare numbers: `chart` from a `data/` file. Show where: `worldMap`. A person moving: `figure`.
-- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. Before and after: `wipe`. One line that lands: `scramble`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
+- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. Before and after: `wipe`. One line that lands: `scramble`. A statement or a quote, line by line or word by word: `reveal`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
 - Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
 - What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys: [deck-format](klappe/docs/reference/deck-format.md).
 

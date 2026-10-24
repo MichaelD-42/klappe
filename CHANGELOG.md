@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `reveal`: a statement or a quote whose lines, or words, rise in one after another. The lines are the source lines (a list item's line breaks, or a list of strings), never the lines the font wraps to. Reduced motion: the text fades in.
 - `matrix`: a 2×2 with axis titles and quadrant names; `place(id, quadrant)` puts an item in a quadrant, and placing it again moves it there, in the accent colour for its step.
 - `flipCard`: a card turns over in 3D to show its back (a question, then the answer; a myth, then the fact). Each `flip` turns it again; with reduced motion, and so in the PDF export, the sides crossfade.
 - `annotate` kind `highlight`: a marker band with leaning ends sweeps in behind a phrase, one per line when it wraps, in a translucent `--k-accent` so the text stays readable.
