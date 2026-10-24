@@ -12,7 +12,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 New effects, proposed 2026-10-24, not yet specified:
 
 - `path`: an element travels along an SVG path (a parcel, a figure walking a route). `flow().send()` does this along flow edges with GSAP's MotionPathPlugin already loaded; a free path is a small generalisation.
-- `burst`: confetti or a particle pop for a milestone reached. `swarm` has the canvas; a one-shot burst from a point may fit as a swarm mode rather than a new effect. Decorative, so under `data-k-ignore` and off with reduced motion.
 - `video` options `autoplay` and `muted` for YouTube and Vimeo embeds: with `autoplay: true` the player starts when its step arrives (the URL's `autoplay=1` plus `allow="autoplay"` on the iframe); `muted` defaults to `true`. `muted: false` asks for sound, which a browser may still block; say what happens then. Default stays: the viewer starts the player. Local files already play on their step.
 - Chart types `funnel` and `sankey`: common in business decks, missing from `chart`.
 - `gauge`: a needle swings to a value; sits beside `kpi` and `progress`.

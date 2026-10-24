@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `burst`: seeded confetti pops once from a point, for a milestone reached, in the theme's series colours. Decoration under `data-k-ignore`; reduced motion leaves it out.
 - `roadmap`: a time axis with month ticks, milestones that appear one per step in `--k-accent`, and a "today" marker that moves step by step. The deck gives "today" (never the wall clock); dates are written in the deck language.
 - `reveal`: a statement or a quote whose lines, or words, rise in one after another. The lines are the source lines (a list item's line breaks, or a list of strings), never the lines the font wraps to. `delay` holds it for a first step that plays under the section fade. Reduced motion: the text fades in.
 - `matrix`: a 2×2 with axis titles and quadrant names; `place(id, quadrant)` puts an item in a quadrant, and placing it again moves it there, in the accent colour for its step.

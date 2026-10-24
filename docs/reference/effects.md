@@ -537,6 +537,36 @@ with `FULL = { x: 0, y: 0, w: 1920, h: 1080 }`, `FROM = { x: 160, y: 380, w: 400
 
 `swarmPoint(seed, i, p, from?, to?)` gives `{ x, y }` of document `i` at progress `p` (0 to 1). Pure: it starts at a seeded spot in `from`, leaves at a seeded time and lands on a heap at the bottom of `to`, on a curve inside the bounding box of the two. Without rects both are the unit square.
 
+## `burst`
+
+Catalog: section `220-swarm` (`#/swarm/burst/1`). Seeded confetti pops once from a point, for a milestone reached, drawn on a canvas in the theme's `--k-series-1` to `--k-series-6` (`--k-accent` if the theme has none).
+
+From `decks/demo/sections/220-swarm/20-burst/scene.ts`:
+
+```ts
+import { burst, type BurstHandle } from "klappe/fx";
+
+const b = burst(ctx, { origin: { x: 960, y: 470 }, seed: 7 });
+steps: [(tl, { b, box }) => {
+  tl.to(box, { autoAlpha: 1, scale: 1, duration: 0.5 });
+  b.pop(tl, "<");
+}],
+```
+
+Build the burst first so the text you add after it paints above the canvas.
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `origin` | `{ x, y }` | required | where the pieces pop from, scene px |
+| `seed` | number | required | the same seed gives the same burst |
+| `count` | number | 150 | how many pieces |
+| `radius` | number | 360 | how far the pieces fly, scene px; the canvas is the square of this radius around `origin` |
+| `duration` | number | 1.4 | seconds |
+
+`pop(tl, at?)` adds the pop: the pieces fly out, slow down, fall a little, spin, and fade out over the last 30%. `at` is a timeline position, for example `"<"` to pop with the tween before. The canvas is empty before and after the pop.
+
+It is decoration: the canvas sits under `data-k-ignore`, so the self-test snapshot leaves it out. The picture is still a pure function of progress (seeded, no `Math.random`), so a seek matches play; `tests/e2e/fx-burst.e2e.test.ts` checks that. With reduced motion `burst` makes no canvas and `pop` adds nothing, so pair it with a visible change in the same step (the demo fades in the number), and add that change first so `"<"` has a tween to join.
+
 ## `crt`
 
 Catalog: section `180-crt` (`#/crt/power-on/1`). A retro terminal that powers on, types its lines one step at a time, and shows `READY.`.
