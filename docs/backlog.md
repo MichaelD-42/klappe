@@ -11,7 +11,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 New effects, proposed 2026-10-24, not yet specified:
 
-- Text reveal by word or line: the lines of a paragraph rise in one after another. `typed` and `scramble` go by character; a calm reveal for a statement or a quote is missing. Must not depend on wrapping (CI fonts).
 - `flipCard`: a card turns over to show its back (a question, then the answer; a myth, then the fact). A 3D `rotationY` with `backface-visibility`; check the PDF export shows the side the step leaves.
 - `matrix`: a 2×2 with axis labels, items placed and moved between quadrants step by step. A common business-deck diagram no effect covers.
 - `roadmap`: a time axis with milestones and a "today" marker that moves. `agenda` covers a day's time slots, `sequence` messages between actors; neither is a roadmap.
