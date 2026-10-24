@@ -6,17 +6,22 @@ One ranked list, rebuilt from the M1 and M2 review findings on 2026-10-24; git h
 
 Done on branch `backlog-m1-m2` (2026-10-24): every entry is fixed, or was found stale by its test. CHANGELOG.md, under Unreleased, lists what changed.
 
-## Waiting on a decision
+## Done on branch `ccr-01ec298b-ee1qc5` (2026-10-24)
 
-- Shout-out takes two clicks to reach full size; it should take one (user, 2026-10-24). `enter` scales the question from `from` to 1, and `hold`, the next click, pushes it on to `push` (1.04 calm, 1.12 bold) over 2 to 2.5 s (`src/fx/shout.ts`). Fix: `enter` grows straight to `push`; then drop `hold` (three steps: enter, fade, answer) or keep a still hold. Dropping it changes the four-step contract in the parser (`shout-hold`), the renderer (`src/render/world.ts`), `effects.md`, `markdown.md` and every `scene.ts` that plays the four adders (the shout catalog section, value-stream clarification, the meeting scene).
-- Bundle size: every deck carries every effect, all Lucide icons, world-atlas and d3 (1.8 MB of JS for the demo). Options: an `IconNode` input for `icon()`, lazy effect imports. The self-test and the test fixtures are about 3 % of it; loading them only when asked needs an async start.
+- Shout-out: one click to full size; the `hold` step is gone (user decision: drop it).
+- Bundle size (user decision: all three): only the Lucide icons a deck names are bundled, `icon()` takes an `IconNode`, and an async start loads effects, Shiki, transitions, the self-test and the fixtures only when needed. Numbers in `docs/perf-m3.md`.
+- M3 Task 14: `docs/perf-m3.md`; the look review with `?theme=bold` (76 scenes at 1920 and 1366, no deck problems) found the stale shout caption, now fixed.
 
 ## Milestones
 
-- M3 Task 14, close-out: perf numbers in `docs/perf-m3.md` and the look review with `?theme=bold`.
 - PDF export and offline fonts (the single-file build is dropped; see DECISIONS).
 - M4: deck template and agents.
 - Demo: a local `media/sample.mp4` for the Markdown video scene; the catalog's YouTube scene needs a network too.
+
+## After M3
+
+- Shiki loads all nine grammars (600 KB) whenever a deck shows code. Load only the languages the deck uses: `scene.md` fences name theirs; `code()` in a `scene.ts` needs its `lang` found by the build scan (`bin/scan-plugin.mjs`).
+- The bold look review was a manual pass over the last step of each scene; the `klappe-review-look` agent did not run. Mid-step states (shatter fall, swarm stream) were not looked at in bold.
 
 ## Look and motion polish
 
@@ -24,7 +29,7 @@ Effects:
 
 - Shatter: a black backdrop strip shows at the top mid-fall; the box is measured at the crack but the copy is taken at the fall; the black gaps layer (`src/fx/shatter.ts`) holds a black rectangle until a 0.4 s fade at the end.
 - CRT: bloom edges slightly olive-grey; amber READY cursor not captured in a shot (blink phase); long-text floor at about 14 px. The CRT transition's bright phase is a flat `#dadada`; `brightness(3)` washes out the phosphor tint, so calm decks get an off-white flash.
-- Shout: the `back.out` overshoot is not checked visually.
+- Shout: the `back.out` overshoot is not checked visually; the new one-click enter (straight to 1.04 calm, 1.12 bold) is not checked at full speed.
 - Figure: clearer arm swing (10 to 15 degrees); the seated figure needs a chair and arms; standing figures closer and the group larger at 1366.
 - Swarm and morph: dots cross the Inbox label mid-flight; the landed pile is a uniform grey; morph text has low contrast mid-frame, and morph scales the text with the box, so "Key fact" overflows its card; the swarm canvas is not re-rasterised on a deeper zoom.
 - Full-frame pictures: a flat 0.6 scrim darkens the whole picture; a gradient scrim, dark only under the text, keeps more of it.
@@ -47,3 +52,4 @@ Demo story:
 
 - `OverlayPanel` and `button` live in `ui/selector.ts`; a `ui/panel.ts` would fit. The speaker view looks its scene up twice. Speaker CSS sits in `styles.css`. The types could be consolidated.
 - The shout effect finds its answer with a DOM query; the WeakMap it already keeps would do.
+- `src/fx/transitions.ts` and `src/render/parts.ts` each keep a small lazy-loader table; one helper could serve both.

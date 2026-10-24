@@ -383,7 +383,7 @@ The shards copy the target as it is at that point; build and show it before the 
 
 ## `shout`
 
-Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question holds, then the answer lands. In Markdown, `### Question?` and a paragraph make the same three steps with the deck's `intensity`.
+Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make the same three steps with the deck's `intensity`.
 
 From `decks/demo/sections/210-shout/20-bold/scene.ts`:
 
