@@ -1,7 +1,7 @@
 import type { CanvasRuntime } from "../render/world";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
-import { button, OverlayPanel } from "./selector";
+import { button, OverlayPanel } from "./panel";
 
 // Scene card thumbnail, in stage px.
 const THUMB = { w: 288, h: 162 };

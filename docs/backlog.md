@@ -38,6 +38,4 @@ Demo story:
 
 ## Housekeeping
 
-- `OverlayPanel` and `button` live in `ui/selector.ts`; a `ui/panel.ts` would fit. The types could be consolidated.
-- The shout effect finds its answer with a DOM query; the WeakMap it already keeps would do.
-- `src/fx/transitions.ts` and `src/render/parts.ts` each keep a small lazy-loader table; one helper could serve both.
+- The types could be consolidated (`src/types.ts` and the effect option types).

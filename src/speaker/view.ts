@@ -2,7 +2,7 @@ import "./speaker.css";
 import { keyAction } from "../input";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
-import { button } from "../ui/selector";
+import { button } from "../ui/panel";
 import type { Channel } from "./channel";
 
 function el(tag: string, cls: string, text = ""): HTMLElement {

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import type { TransitionKind } from "../types";
+import { lazyTable } from "../lazy";
 
 // What a section gives its entry transition: its transitionOptions plus target from zoomTarget.
 export interface TransitionOpts {
@@ -38,18 +39,12 @@ const blackout: Transition = (from, to) => {
 };
 
 // zoom, shatter and crt load only when a section asks for them: main.ts awaits loadTransitions first.
-const loaders = {
-  zoom: () => import("./zoom").then((m) => m.transitionZoom),
-  shatter: () => import("./shatter").then((m) => m.transitionShatter),
-  crt: () => import("./crt").then((m) => m.transitionCrt),
-} satisfies Partial<Record<TransitionKind, () => Promise<Transition>>>;
-type Lazy = keyof typeof loaders;
-const loaded: Partial<Record<Lazy, Transition>> = {};
-const lazy = (kind: Lazy): Transition => (from, to, opts) => {
-  const f = loaded[kind];
-  if (!f) throw new Error(`${kind}: not loaded`);
-  return f(from, to, opts);
-};
+const table = lazyTable({
+  zoom: () => import("./zoom").then((m) => m.transitionZoom as Transition),
+  shatter: () => import("./shatter").then((m) => m.transitionShatter as Transition),
+  crt: () => import("./crt").then((m) => m.transitionCrt as Transition),
+});
+const lazy = (kind: "zoom" | "shatter" | "crt"): Transition => (from, to, opts) => table.get(kind)(from, to, opts);
 
 export const registry = {
   cut,
@@ -61,9 +56,7 @@ export const registry = {
 } satisfies Record<TransitionKind, Transition>;
 
 export async function loadTransitions(kinds: Iterable<TransitionKind>): Promise<void> {
-  await Promise.all(
-    [...new Set(kinds)].filter((k): k is Lazy => k in loaders).map(async (k) => void (loaded[k] = await loaders[k]())),
-  );
+  await table.load([...kinds].filter(table.has));
 }
 
 // A transition that throws (an effect not built yet, or a bug) falls back to fade, so the move still lands.
