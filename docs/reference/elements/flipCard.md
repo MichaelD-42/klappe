@@ -4,6 +4,8 @@ A card that turns over to show its back: a question, then the answer; a myth, th
 
 Catalog: section `275-flipcard` (`#/flipcard/cards/2`).
 
+## `flipCard`
+
 Only in `scene.ts`. From `decks/demo/sections/275-flipcard/10-cards/scene.ts`:
 
 ```ts
@@ -23,7 +25,7 @@ steps: [
 
 Call `flipCard` in `build`, so the card exists at load; the steps only use what it returns.
 
-## Options
+### Options
 
 | Name     | Type   | Default      | Meaning                                 |
 | -------- | ------ | ------------ | --------------------------------------- |
@@ -32,14 +34,14 @@ Call `flipCard` in `build`, so the card exists at load; the steps only use what 
 | `front`  | string | (required)   | the text on the front                   |
 | `back`   | string | (required)   | the text on the back                    |
 
-## Step adders
+### Step adders
 
-| Handle | Step                                                                                  |
-| ------ | ------------------------------------------------------------------------------------- |
-| `show` | the card fades in, front up                                                           |
-| `flip` | the card turns over to its other side. Each `flip` turns it again: front, back, front |
+| Handle | Step |
+| --- | --- |
+| `show` | the card fades in, front up, 0.6 s |
+| `flip` | the card turns over to its other side, 0.9 s, `power2.inOut`. Each `flip` turns it again: front, back, front. With reduced motion the sides crossfade, 0.6 s |
 
-## Limits
+### Limits
 
 - With reduced motion the two sides crossfade in place; the card does not turn. The PDF export uses reduced motion, so each page shows the side its step leaves.
-- The text is not shrunk to fit. Keep each side to a few words; at 40 px a default card holds about three short lines.
+- The text is not shrunk to fit. Keep each side to a few words; at 40 px a default card holds about six short lines.

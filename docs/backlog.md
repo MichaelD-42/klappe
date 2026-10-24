@@ -18,7 +18,7 @@ New effects, proposed 2026-10-24, not yet specified:
 - Chart types `funnel` and `sankey`: common in business decks, missing from `chart`.
 - `gauge`: a needle swings to a value; sits beside `kpi` and `progress`.
 - Sticky notes: notes appear, then move into groups (an affinity map), for workshop decks.
-- Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with the text reveal.
+- Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with `reveal`.
 - Word cloud: words sized by weight from a `data/` file, placed without overlap, revealed step by step. Placement must be deterministic (seek equals play, same picture in CI).
 
 New transitions, proposed 2026-10-24:
