@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, dataError, donutSlices, parseCsv, showsSample, spread, waterfallSteps } from "../../src/fx/chart";
+import { chartDomain, dataError, donutSlices, parseCsv, raceRanks, showsSample, spread, waterfallSteps } from "../../src/fx/chart";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -176,5 +176,12 @@ describe("slope", () => {
     expect(s[3]).toBe(400);
     // The bunch stays centred on where it was.
     expect((s[0] + s[1] + s[2]) / 3).toBeCloseTo(105);
+  });
+});
+
+describe("raceRanks", () => {
+  test("ranks by value, largest first; ties keep column order", () => {
+    expect(raceRanks([10, 30, 20])).toEqual([2, 0, 1]);
+    expect(raceRanks([5, 5, 9])).toEqual([1, 2, 0]);
   });
 });

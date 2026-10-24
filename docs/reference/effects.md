@@ -67,6 +67,32 @@ progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Serv
 
 `waffleCells(value, of)` gives the waffle's filled cells: one per percent of `of`, rounded, 0 to 100.
 
+## `barRace`
+
+Catalog: section `110-chart` (`#/chart/race/1`). Ranked bars that reorder from one period to the next: who led, who climbed. The data file has one row per period (the first column names it: a year, a quarter) and one number column per contender.
+
+```ts
+build: (ctx) => barRace(ctx, { src: "data/teams.csv", rect: { x: 160, y: 80, w: 1600, h: 840 }, title: "Deployments a week", top: 6 }),
+steps: [(tl, r) => r.show(tl), (tl, r) => r.to(1)(tl), (tl, r) => r.to("2023")(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `src`, `data`, `rect`, `title`, `sample` | | | as for `chart` |
+| `top` | number | 8 | how many bars show; the others wait below the frame and climb in when they rank |
+
+| Handle | Step |
+| --- | --- |
+| `show` | the title, the value axis (on top) and the first period's bars fade in; the period stands large in the corner |
+| `to(period)` | the bars move to that period, by index or by name: they change rank and length together over 1.2 s, the values count, and a numeric period (a year) counts too. Call it once per step, or several times in one step for a run of periods |
+| `periods` | not a step: the period names, in order |
+
+The value axis is fixed over all periods, so a bar's length compares across time. Each contender keeps its colour, from the theme's six series colours; past six they repeat, and the names label every bar. A period that does not exist reports `barRace: no period "2030"; the periods are …`. The data is checked as for `chart`; it needs at least two contender columns.
+
+## `raceRanks`
+
+`raceRanks(values)` gives each value's place, 0 for the largest; ties keep column order.
+
 ## `parseCsv`
 
 `parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. Use it to read a `data/` file for an effect that is not a chart:

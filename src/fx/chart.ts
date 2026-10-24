@@ -522,3 +522,133 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     },
   };
 }
+
+// Each contender's place, 0 for the largest, ties in column order. Pure, for tests.
+export function raceRanks(values: number[]): number[] {
+  const order = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v || a.i - b.i);
+  const ranks = new Array<number>(values.length);
+  order.forEach(({ i }, r) => (ranks[i] = r));
+  return ranks;
+}
+
+export interface BarRaceOpts {
+  src: string; // one row per period (the first column names it), one number column per contender
+  data?: Row[] | null;
+  rect: Rect;
+  title?: string;
+  top?: number; // how many bars show; default 8. The rest wait below the frame.
+  sample?: boolean;
+}
+export interface BarRaceHandle {
+  show: StepAdder; // title, axis and the first period's bars
+  to(period: number | string): StepAdder; // the bars move to that period: by index, or by its name
+  periods: string[];
+}
+
+// Ranked bars that reorder from one period to the next. The value axis is fixed over all periods, so a bar's
+// length compares across time. The period sits large in the corner; numeric periods (years) count.
+export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
+  const fail = (h: ChartHandle): BarRaceHandle => ({ show: h.axes, to: () => () => {}, periods: [] });
+  const asChart = { ...opts, type: "bar" as const };
+  const loaded = load(ctx, asChart);
+  if (loaded === null) return fail(placeholder(ctx, asChart, t("dataMissing", ctx.deck.lang), ""));
+  if (typeof loaded === "string") return fail(placeholder(ctx, asChart, t("dataError", ctx.deck.lang), loaded));
+  if (!loaded.rows.length) return fail(placeholder(ctx, asChart, t("dataMissing", ctx.deck.lang), "no rows"));
+  const why = dataError(loaded.rows, "bar") || (columns(loaded.rows as Row[]).series.length < 2 ? "needs two or more contender columns" : "");
+  if (why) return fail(placeholder(ctx, asChart, t("dataError", ctx.deck.lang), why));
+  const data = loaded.rows as Row[];
+  const { label, series } = columns(data);
+  const periods = data.map((r) => String(r[label]));
+  const top = Math.min(opts.top ?? 8, series.length);
+  const R = opts.rect;
+  const longest = d3.max(series, (s) => s.length) ?? 0;
+  const P = { x: R.x + Math.min(R.w * 0.3, 24 + longest * 13), y: R.y + 120, w: 0, h: R.h - 120 - 24 };
+  P.w = R.x + R.w - 140 - P.x; // room for the value after the longest bar
+  const slot = P.h / top;
+  const x = d3.scaleLinear().domain([0, d3.max(data, (r) => d3.max(series, (k) => num(r, k)))!]).nice().range([0, P.w]);
+  const dec = decimals(data.flatMap((r) => series.map((k) => num(r, k))));
+  const fmt = d3.format(`,.${dec}f`);
+  const numeric = periods.every((p) => Number.isFinite(+p));
+
+  const root = svg(ctx.svg, "g", {
+    "data-k-src": opts.src,
+    "data-k-chart": "race",
+    "data-k-note": `${t("source", ctx.deck.lang)}: ${opts.src} — ${loaded.source || t("originNotStated", ctx.deck.lang)}`,
+  });
+  const head: SVGElement[] = [];
+  if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
+  if (showsSample(opts.sample, loaded.source)) {
+    const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
+    s.style.fill = "var(--k-phosphor-amber)";
+    head.push(s);
+  }
+  const axis = svg(root, "g", { transform: `translate(${P.x} ${P.y - 12})` });
+  d3.select(axis).call(d3.axisTop(x).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"))).attr("font-size", FONT).attr("font-family", null);
+  axis.style.color = "var(--k-fg)";
+  head.push(axis);
+  const period = text(root, "", { x: R.x + R.w, y: R.y + R.h - 24, "text-anchor": "end", "font-weight": 700 }, 96);
+  period.style.fill = "var(--k-muted)";
+  period.setAttribute("data-k-text", "");
+  period.textContent = periods[0];
+  head.push(period);
+
+  // One bar per contender: a group moved up and down by its rank, its rect and value sized by its value.
+  const h = slot * 0.72;
+  const bars = series.map((k, i) => {
+    const g = svg(root, "g", { "data-k-contender": k });
+    const rect = svg(g, "rect", { x: P.x, y: (slot - h) / 2, width: 0, height: h, rx: 4 });
+    rect.style.fill = SLICES[i % SLICES.length];
+    text(g, k, { x: P.x - 14, y: slot / 2 + FONT * 0.35, "text-anchor": "end" });
+    const value = text(g, "", { x: P.x + 10, y: slot / 2 + FONT * 0.35 });
+    value.setAttribute("data-k-text", "");
+    return { g, rect, value };
+  });
+  // A contender's pose in period p: its row (below the frame and hidden past top), its bar and value.
+  const pose = (p: number) => {
+    const ranks = raceRanks(series.map((k) => num(data[p], k)));
+    return series.map((k, i) => ({ y: P.y + Math.min(ranks[i], top) * slot, alpha: ranks[i] < top ? 1 : 0, v: num(data[p], k) }));
+  };
+  const place = (p: number) =>
+    pose(p).forEach(({ y, alpha, v }, i) => {
+      gsap.set(bars[i].g, { y, autoAlpha: alpha });
+      bars[i].rect.setAttribute("width", String(x(v)));
+      bars[i].value.setAttribute("x", String(P.x + x(v) + 10));
+      bars[i].value.textContent = fmt(v);
+    });
+  place(0);
+  gsap.set([...head, ...bars.map((b) => b.g)], { autoAlpha: 0 });
+
+  let at = 0; // the period the steps added so far end on
+  const index = (p: number | string) => (typeof p === "number" ? p : periods.indexOf(p));
+  return {
+    periods,
+    show(tl) {
+      tl.to(head, { autoAlpha: 1, duration: motion.step, stagger: 0.1 });
+      const first = pose(0);
+      // The first period's bars fade in where they stand.
+      tl.fromTo(bars.map((b) => b.g), { autoAlpha: 0 }, { autoAlpha: (i: number) => first[i].alpha, duration: motion.step, immediateRender: false }, "<");
+    },
+    to: (p) => (tl) => {
+      const to = index(p);
+      if (!(to >= 0 && to < periods.length)) return ctx.problem(`barRace: no period ${JSON.stringify(p)}; the periods are ${periods.join(", ")}`);
+      const [a, b] = [pose(at), pose(to)];
+      const [from, d] = [at, { duration: motion.step * 2, ease: "power1.inOut", immediateRender: false }];
+      bars.forEach((bar, i) => {
+        tl.fromTo(bar.g, { y: a[i].y, autoAlpha: a[i].alpha }, { y: b[i].y, autoAlpha: b[i].alpha, ...d }, i ? "<" : undefined);
+        tl.fromTo(bar.rect, { attr: { width: x(a[i].v) } }, { attr: { width: x(b[i].v) }, ...d }, "<");
+        tl.fromTo(bar.value, { attr: { x: P.x + x(a[i].v) + 10 } }, { attr: { x: P.x + x(b[i].v) + 10 }, ...d }, "<");
+      });
+      // The values and the period count as a pure function of progress; a named period switches halfway.
+      tl.to({}, {
+        duration: d.duration,
+        ease: d.ease,
+        onUpdate(this: gsap.core.Tween) {
+          const q = this.ratio;
+          bars.forEach((bar, i) => (bar.value.textContent = fmt(a[i].v + (b[i].v - a[i].v) * q)));
+          period.textContent = numeric ? String(Math.round(+periods[from] + (+periods[to] - +periods[from]) * q)) : periods[q < 0.5 ? from : to];
+        },
+      }, "<");
+      at = to;
+    },
+  };
+}
