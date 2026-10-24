@@ -6,6 +6,7 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 
 You build one klappe task. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo.
 Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
+Element choice, the timeline rule and the design rules are in the `klappe` skill; every option of every effect and element is in `klappe/docs/reference/` (start at `index.md`). Look names up there, never guess.
 
 Rules:
 

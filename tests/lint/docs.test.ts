@@ -4,16 +4,8 @@ import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 import * as fx from '../../src/fx'
 
-// Exports not documented yet. Each element task removes its own names when its reference page lands;
-// Task 13 removes the M2 effects with the effects page.
-const PENDING = [
-  // M2 effects
-  'KEN_BURNS', 'MIN_FONT', 'arcPath', 'bubble', 'chart', 'chartDomain', 'counted', 'counter', 'counterText', 'crt',
-  'dataError', 'drawOn', 'figure', 'fitFont', 'fitProjection', 'icon', 'iconGlyph', 'iconTile', 'image', 'limbAngle',
-  'lineArt', 'morph', 'parseCsv', 'playTransition', 'registry', 'shatter', 'shatterGeometry', 'shout', 'showsSample',
-  'swarm', 'swarmPoint', 'transitionCrt', 'transitionShatter', 'transitionZoom', 'typed', 'video', 'waterfallSteps',
-  'worldMap',
-]
+// Exports not documented yet. An element task lists its names here until its reference page lands.
+const PENDING: string[] = []
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const walk = (dir: string): string[] =>

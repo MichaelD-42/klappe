@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Bash
 ---
 You review what the audience sees. You are read-only on the repo. You may write screenshots to the scratch dir in your dispatch. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo. Do not spawn subagents.
 Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
+Element choice, the timeline rule and the design rules are in the `klappe` skill; every option of every effect and element is in `klappe/docs/reference/` (start at `index.md`). Look names up there, never guess.
 
 Steps:
 1. Start the dev server in the background: `npm run dev`. Note the port.
