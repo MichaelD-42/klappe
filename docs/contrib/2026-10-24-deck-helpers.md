@@ -33,3 +33,7 @@ A large real deck (a 3-day technical training plus follow-up, ~650 steps over ~7
 4. The built `dist/*/index.html` still has `<title>klappe</title>`; the deck title is set at runtime.
 5. Wanted by the deck, not built: a softer crt power-on flash option; a `mesh3d` colour/brightness option (the deck uses a CSS filter for dark frames); `counter` decimals; `timer` label font/colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` also in the on-screen problems list; lazy embeds one step early.
 6. Split as you like: the commits are in feature order with `-x` references to the original branch.
+
+## Base is behind `origin/main`
+
+While this branch was prepared, `origin/main` moved from 8ec5809 to ecf92b4 (PR #5, effects-m4: spotlight, annotate, wipe, scramble, qr, kpi/waffle/progress, donut/slope, barRace, animated/parallax/aurora/video backgrounds, async start that loads only used effects, Lucide icons bundled per deck, `video()` without rect fills the frame, and the breaking `shout` change: one click to full size, no hold step). This branch was **not** rebased onto it. Expect conflicts in: `src/fx/shout.ts` users and our reveal-related tests, `src/fx/icons.ts` (our `el` on `icon`/`iconTile` vs IconNode input), `src/fx/media.ts` (our offline fallback and lazy embeds vs the no-rect video), the effect registry/async loading (our `mesh3d`, `timer` options, `terminal` wrap must register like the new effects), the speaker timer button, the README rework, and the test fixtures.
