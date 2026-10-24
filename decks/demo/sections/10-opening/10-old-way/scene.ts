@@ -8,13 +8,13 @@ const CSS = `
 .k-oldway-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-family: var(--k-font); color: var(--k-fg);
   background: radial-gradient(900px 520px at 50% 46%, color-mix(in srgb, var(--k-accent) 18%, transparent), transparent 70%),
-    linear-gradient(140deg, color-mix(in srgb, var(--k-accent) 22%, var(--k-bg)), color-mix(in srgb, var(--k-bg) 55%, var(--k-blackout))); }
+    linear-gradient(140deg, color-mix(in srgb, var(--k-accent) 22%, var(--k-bg)), color-mix(in srgb, var(--k-bg) 55%, var(--k-scrim))); } /* deeper, away from the text: darker in a dark theme, lighter in a light one */
 .k-oldway-slide svg { width: 170px; height: 170px; margin-bottom: 48px; }
 .k-oldway-slide h1 { margin: 0; font-size: 112px; font-weight: 700; letter-spacing: -1px; line-height: 1.1; }
 .k-oldway-rule { width: 160px; height: 6px; background: var(--k-accent); margin: 44px 0 36px; }
 .k-oldway-slide .k-oldway-sub { margin: 0; max-width: none; line-height: 1.35; font-size: 46px; font-weight: 400; color: color-mix(in srgb, var(--k-fg) 70%, var(--k-bg)); }
 .k-oldway-foot { position: absolute; left: 120px; right: 120px; bottom: 70px; display: flex; justify-content: space-between;
-  font-size: 26px; color: color-mix(in srgb, var(--k-fg) 45%, var(--k-bg)); }
+  font-size: 26px; color: var(--k-muted); }
 `;
 
 // A placeholder logo mark: a hexagon with a chevron.

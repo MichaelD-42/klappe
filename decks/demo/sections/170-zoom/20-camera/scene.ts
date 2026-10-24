@@ -5,7 +5,7 @@ import { captioned, captionOf } from "../../../caption";
 export default captioned("ctx.camera.to(tl, rect) — the camera zooms into part of the scene and back", {
   build: (ctx) => [
     iconTile(ctx, "search", { x: 480, y: 480, size: 200, tone: "accent" }),
-    iconTile(ctx, "lightbulb", { x: 960, y: 480, size: 200, tone: "phosphor-amber" }),
+    iconTile(ctx, "lightbulb", { x: 960, y: 480, size: 200, tone: "warn" }),
     iconTile(ctx, "rocket", { x: 1440, y: 480, size: 200, tone: "accent" }),
   ],
   steps: [

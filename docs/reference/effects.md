@@ -316,7 +316,7 @@ build: (ctx) => iconTile(ctx, "lightbulb", { x: 300, y: 500, tone: "accent" }),
 steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 ```
 
-`iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, `"accent"`, `"phosphor"`, `"phosphor-amber"` or a full `"--k-accent"`; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
+`iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, short (`"accent"`, `"ok"`, `"warn"`) or full (`"--k-accent"`). Prefer the colour tokens: the CRT ones (`"phosphor"`, `"phosphor-amber"`) stay bright in every theme and wash out on a light stage; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
 
 ## `iconGlyph`
 

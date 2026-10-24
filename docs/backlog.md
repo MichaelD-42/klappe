@@ -35,7 +35,6 @@ Demo story:
 
 - Opening: the black hold is its own click; the power-on flash is a flat mint card; no cursor at power-on; old-way step 1 reads as a slide description; the placeholder logo is not in a TODO.
 - Value stream: the overview band is modest with a left-aligned caption; the carried stack overlaps the right hand; analysis step 1 is mostly empty; the clarification-2 label sits about 10 px from the bottom edge; the clarification box sits about 20 % from the left.
-- Light themes: the title's small footer text sits on a dark photo, and the icon catalog asks for the CRT tones (`phosphor`, `phosphor-amber`) by name, which are pale on a light stage.
 - Global team and meeting: the "Decide." shout dims differently from the question steps; coastlines cut site-name digits; arcs cross arriving figures in the zoomed host shot; meeting figures are dimmed by reaching into the figure DOM; map labels are turned off through empty text.
 
 ## Housekeeping
