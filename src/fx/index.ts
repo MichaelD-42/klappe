@@ -9,6 +9,7 @@ export * from "./code";
 export * from "./crt";
 export * from "./draw";
 export * from "./figure";
+export * from "./flipcard";
 export * from "./flow";
 export * from "./icons";
 export * from "./map";
