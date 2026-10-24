@@ -52,6 +52,27 @@ test('Ken Burns pushes in while the step plays and lands where a seek lands', as
   await page.close()
 }, 30_000)
 
+// The fade-in over the flight is slow and faint at first: a push that ran under it would play mostly unseen.
+test('Ken Burns waits for the picture to be fully in before it pushes', async () => {
+  const page = await open('#/a/ken-burns/1')
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index - 1, 'cut'))
+  const samples = await page.evaluate(async () => {
+    const img = document.querySelector<HTMLElement>('[data-scene$="ken-burns"] img')!
+    const out: [number, number][] = []
+    let done = false
+    window.klappe.stepper.next().then(() => (done = true))
+    while (!done) {
+      out.push([Number(getComputedStyle(img.parentElement!).opacity), new DOMMatrix(getComputedStyle(img).transform).a])
+      await new Promise(requestAnimationFrame)
+    }
+    return out
+  })
+  expect(samples.filter(([o, s]) => o < 1 && s > 1.0001)).toEqual([])
+  expect(samples.some(([o]) => o < 1)).toBe(true)
+  expect(samples.some(([o, s]) => o === 1 && s > 1 && s < 1.02)).toBe(true) // the start of the push is on screen
+  await page.close()
+}, 30_000)
+
 test('reduced motion leaves the Ken Burns push out', async () => {
   const page = await open('#/a/ken-burns/1', undefined, '&reducedmotion=1')
   expect((await scale(page)).scale).toBe(1)

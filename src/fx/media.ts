@@ -105,7 +105,7 @@ export const STEP_LABEL = "step";
 // tests/unit/fx-media.test.ts checks the two match.
 export const FULL_FRAME_PROMPT = ", 16:9, 1920x1080, no text, no logos";
 
-export const KEN_BURNS = 6; // seconds: the default push; show() with kenBurns makes its step this long
+export const KEN_BURNS = 6; // seconds: the default push; show() with kenBurns plays it after the fade-in
 const STILL: KenBurnsPose = { scale: 1, x: 0, y: 0 };
 const PUSH: KenBurnsPose = { scale: 1.08, x: -24, y: -12 }; // 4 % overscan per side covers the drift
 
@@ -157,7 +157,8 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   return {
     show(tl, at) {
       f.show(tl, at0(tl, at));
-      if (kb) move(tl, { duration: KEN_BURNS }, "<");
+      // After the fade: under the slow fade-in of a full frame the push would play mostly unseen.
+      if (kb) move(tl, { duration: KEN_BURNS }, ">");
     },
     hide: f.hide,
     move,

@@ -138,7 +138,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A full-frame picture: fit "cover" with no rect fills the whole scene frame and crops to keep the aspect.
 // Its show() starts with the step and fades in over the camera flight (`motion.camera`), slowly at first, so the
 // picture is there while the camera flies in, but its hard photo edge crosses the frame faint. hide() fades out quickly.
-// kenBurns: true adds a slow push (1.0 to 1.08 with a slight drift) to show(), and the step then lasts 6 s.
+// kenBurns: true adds a slow push (1.0 to 1.08 with a slight drift) to show(), after the fade-in; the step lasts the fade plus 6 s.
 // Pass { from, to } poses ({ scale, x, y }) for your own; a drift stays inside the push's overscan.
 // move(tl, { duration }) plays the push on its own. hide(tl) fades the picture out. Reduced motion leaves the push out.
 // For a sharp push at 1920 wide, use a source of at least about 2080x1170 px (1.08 times the frame).

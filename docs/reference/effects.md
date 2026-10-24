@@ -290,7 +290,7 @@ steps: [(tl, img) => img.show(tl)],
 
 | Handle | Step |
 | --- | --- |
-| `show(tl, at?)` | fades the picture in. A full-frame picture (`cover`, no `rect`) starts with the step and fades in over the camera flight, slowly at first. With `kenBurns` the step lasts `KEN_BURNS` seconds |
+| `show(tl, at?)` | fades the picture in. A full-frame picture (`cover`, no `rect`) starts with the step and fades in over the camera flight, slowly at first. With `kenBurns` the push starts when the fade-in ends and runs `KEN_BURNS` seconds |
 | `hide(tl, at?)` | fades it out quickly |
 | `move(tl, { duration }, at?)` | the push on its own, for `show`, `move`, `hide` on three steps (`decks/demo/sections/230-fullscreen/50-steps`). Do not set `kenBurns` and also call `move`: the push would start twice |
 
@@ -302,7 +302,7 @@ steps: [(tl, img) => img.show(tl)],
 
 ## `KEN_BURNS`
 
-`KEN_BURNS` is 6, the seconds of the default push. `show()` with `kenBurns` makes its step this long.
+`KEN_BURNS` is 6, the seconds of the default push. `show()` with `kenBurns` plays it after the fade-in, so the step lasts the fade plus this.
 
 ## `video`
 
