@@ -158,7 +158,7 @@ The path must be in the figure's coordinate space (`ctx.svg`, scene-local); a pa
 
 ## `lineArt`
 
-Catalog: section `120-draw` (`#/draw/desk/1`). A line drawing from an SVG file, drawn stroke by stroke, with one part that can glow. It is for trusted, author-supplied SVG only: it strips scripts, styles and handlers, but is not a sanitizer.
+Catalog: section `120-draw` (`#/draw/desk/1`). A line drawing from an SVG file, drawn stroke by stroke, with one part that can glow. It is for trusted, author-supplied SVG only: it strips scripts, styles, handlers, animations (`set`, `animate`), images and links to other files (an `href` must be `#id`), but is not a full sanitizer. Shapes inside `defs`, `clipPath`, `mask`, `pattern` and `marker` keep their own fill and are not drawn on.
 
 From `decks/demo/sections/120-draw/10-desk/scene.ts`:
 
@@ -191,7 +191,7 @@ A source that is not an SVG with a viewBox shows `lineArt: the source is not an 
 
 ## `drawOn`
 
-Catalog: section `120-draw` (`#/draw/shapes/1`). Draws any stroked SVG shapes from start to end, one after another, and ends on a plain stroke. It returns a step adder: call it with the timeline.
+Catalog: section `120-draw` (`#/draw/shapes/1`). Draws any stroked SVG shapes from start to end, one after another, and ends on a plain stroke. It returns a step adder: call it with the timeline; it returns the time the draw starts. A stroke shorter than 0.5 units (an icon's dot) has nothing to draw and fades in at its turn instead. Shapes in `text`, `defs`, `clipPath`, `mask`, `pattern` and `marker` are left out.
 
 From `decks/demo/sections/120-draw/30-shapes/scene.ts`:
 

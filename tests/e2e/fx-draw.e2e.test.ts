@@ -149,3 +149,42 @@ test('klappe/fx/art/*.svg?raw resolves through the Vite config', async () => {
     await server.close()
   }
 })
+
+// Author art is trusted, but an exported SVG must not run code or fetch anything once it is in the deck.
+test('lineArt strips tricks that run code or fetch, and leaves defs, clip paths and masks alone', async () => {
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-draw`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const { lineArt } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/draw.ts') // a string: vitest would rewrite import()
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    document.body.append(svg)
+    const src = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100">
+      <defs><clipPath id="c"><rect width="50" height="50"/></clipPath><mask id="m"><circle r="9" fill="white"/></mask></defs>
+      <a href="java&#9;script:alert(1)"><path d="M0 0L9 9"/></a>
+      <a xlink:href=" jav&#x0A;ascript:alert(2)"><line x1="0" y1="0" x2="5" y2="5"/></a>
+      <set attributeName="onclick" to="alert(3)"/><animate attributeName="href" to="javascript:alert(4)"/>
+      <use href="https://example.com/x.svg#a"/><use href="#c"/><image href="https://example.com/x.png"/>
+      <path d="M0 0L5 5" clip-path="url(#c)"/></svg>`
+    const problems: string[] = []
+    lineArt({ svg, html: document.body, problem: (p: string) => problems.push(p) } as any, { src, x: 0, y: 0, w: 100 })
+    const g = svg.lastElementChild!
+    const hrefs = [...g.querySelectorAll('*')].flatMap((e) => [...e.attributes].filter((a) => /href$/.test(a.name)).map((a) => a.value))
+    svg.remove()
+    return {
+      problems,
+      hrefs,
+      left: [...g.querySelectorAll('set, animate, image')].length,
+      clipFill: (g.querySelector('clipPath rect') as SVGElement).style.fill,
+      maskFill: (g.querySelector('mask circle') as SVGElement).style.fill,
+      drawnFill: (g.querySelector('path') as SVGElement).style.fill,
+    }
+  })
+  expect(r.problems).toEqual([])
+  expect(r.hrefs).toEqual(['#c']) // only the in-file reference stays
+  expect(r.left).toBe(0)
+  expect(r.clipFill).toBe('')
+  expect(r.maskFill).toBe('')
+  expect(r.drawnFill).toBe('none')
+  await page.close()
+})

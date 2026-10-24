@@ -53,8 +53,8 @@ Engine API gaps:
 
 Effect defects:
 
-- [ ] Art: the `javascript:` filter misses entity and whitespace tricks and keeps `set`, `animate`, `use` and `image`; normalisation sets `fill: none` inside `defs`, `clipPath` and `mask`.
-- [ ] Icons: the draw start is computed outside `drawOn` (fragile); the 0.5 cutoff is undocumented.
+- [x] Art: the `javascript:` filter misses entity and whitespace tricks and keeps `set`, `animate`, `use` and `image`; normalisation sets `fill: none` inside `defs`, `clipPath` and `mask`.
+- [x] Icons: the draw start is computed outside `drawOn` (fragile); the 0.5 cutoff is undocumented.
 - [ ] CRT: no test for the bad count-line problem.
 - [ ] Figure: the pose mapping has no unit test. Morph: no test of its play-time start values.
 - [ ] Full-frame picture: `show()` finds its step start through a label that `appendStep` moves.

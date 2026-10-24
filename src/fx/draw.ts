@@ -19,22 +19,25 @@ export interface LineArtHandle {
 
 const SVG = "http://www.w3.org/2000/svg";
 const SHAPES = "path,line,polyline,polygon,circle,rect,ellipse";
+// Shapes in here are not drawn: they clip, mask or fill others.
+const UNDRAWN = "defs, clipPath, mask, pattern, marker";
 
 // The shapes in els and under them, in document order; text is left out.
 function shapes(els: Element | ArrayLike<Element>): SVGGeometryElement[] {
   const out: SVGGeometryElement[] = [];
   for (const el of els instanceof Element ? [els] : Array.from(els))
     for (const s of [...(el.matches(SHAPES) ? [el] : []), ...el.querySelectorAll(SHAPES)])
-      if (!s.closest("text")) out.push(s as SVGGeometryElement);
+      if (!s.closest("text") && !s.closest(UNDRAWN)) out.push(s as SVGGeometryElement);
   return out;
 }
 
 // Draws each shape from start to end, one after the other, and ends on a plain stroke.
-export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {}): StepAdder {
+// The adder returns where the draw starts on the timeline (the end, with nothing to draw).
+export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {}): (tl: gsap.core.Timeline) => number {
   const { duration = 0.9, each = 0.06, at } = opts;
   const list = shapes(els);
   return (tl) => {
-    if (!list.length) return;
+    if (!list.length) return tl.duration();
     // With vector-effect non-scaling-stroke, Chromium applies the pathLength-normalised dash in
     // host units, so 1 is not the whole path: scale the dash by the shape's CTM scale k.
     // Dash 1.01k, gap 2k, offset 1.3k -> 0: hidden at the start, whole at the end. The advisor's 1.03k
@@ -63,6 +66,7 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
         tl.fromTo(s, { strokeOpacity: 0 }, { strokeOpacity: 1, duration: duration / 4 }, start + i * each);
     });
     tl.set(list, { strokeDasharray: "none" }, start + (list.length - 1) * each + duration);
+    return start;
   };
 }
 
@@ -83,17 +87,24 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
     const k = opts.w / vb[2];
     g.setAttribute("transform", `translate(${opts.x - vb[0] * k} ${opts.y - vb[1] * k}) scale(${k})`);
     g.setAttribute("stroke-width", svg.getAttribute("stroke-width") ?? "4");
-    // Exported SVGs can carry scripts, page-wide styles and handlers: keep drawing content only.
-    for (const e of svg.querySelectorAll("script, style, foreignObject")) e.remove();
+    // Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
+    // links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
+    // whitespace and control characters inside a URL scheme, so they are dropped before the match.
+    for (const e of svg.querySelectorAll("script, style, foreignObject, set, animate, animateMotion, animateTransform, image"))
+      e.remove();
     for (const e of [svg, ...svg.querySelectorAll("*")])
-      for (const a of [...e.attributes])
-        if (/^on/i.test(a.name) || /^\s*javascript:/i.test(a.value)) e.removeAttribute(a.name);
+      for (const a of [...e.attributes]) {
+        const link = a.localName === "href" || a.localName === "src";
+        const value = a.value.replace(/[\s\u0000-\u001f]/g, "");
+        if (/^on/i.test(a.name) || /javascript:/i.test(value) || (link && !value.startsWith("#"))) e.removeAttributeNode(a);
+      }
     g.append(...[...svg.childNodes].map((n) => document.importNode(n, true)));
   }
   Object.assign(g.style, { color: "var(--k-fg)" });
   // Inline style, so an exporter's inline fill or stroke cannot win; its stroke-width stays.
   for (const s of g.querySelectorAll<SVGElement>(SHAPES))
-    Object.assign(s.style, { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" });
+    if (!s.closest(UNDRAWN))
+      Object.assign(s.style, { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" });
   return {
     draw: drawOn(g),
     glow(tl, selector) {

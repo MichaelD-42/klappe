@@ -32,6 +32,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Frontmatter: commas inside quoted list items.
 - CLI: `--deck` followed by a flag; the `init` guard on Windows; `init` says when it moves klappe to `dependencies`.
 - Self-test: text in a scaled group is checked at its real size; an empty result names its cause.
+- `lineArt` strips animations, images and links to other files, catches `javascript:` hidden by whitespace, and leaves shapes in `defs`, `clipPath` and `mask` alone.
+- `drawOn` returns where its draw starts; `icon()` no longer guesses it.
 - Design lint: named code fonts, `font: italic` and `oblique`, pills beyond buttons, protocol-relative URLs.
 
 ## 0.3.0 (2026-10-24)
