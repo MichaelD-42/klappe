@@ -48,6 +48,6 @@ export function agendaScene(md: string): SceneModule {
   };
 }
 
-// The slide before is the numbers deck's video; the training breaks it open.
+// The slide before is the meeting room; the training breaks it open.
 const section: SectionModule = { transition: "shatter" };
 export default section;

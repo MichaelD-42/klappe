@@ -73,10 +73,16 @@ git subtree push --prefix klappe https://github.com/MichaelD-42/klappe.git my-fi
 
 ## Claude agents
 
-klappe ships agents in `klappe/.claude/`. Skills are deferred: they will be written from experience after a few real decks.
+klappe ships agents and the `klappe` skill in `klappe/.claude/`.
 Claude Code does not find a `.claude` folder nested in a subfolder.
 So `klappe init` and `npm run klappe:sync` copy the `klappe*` agents (and any `klappe*` skills) to `.claude/` in the deck repo root.
 Run `npm run klappe:sync` after every klappe update. It overwrites the copied files. It never deletes. Remove stale `klappe*` files in `.claude/` by hand.
+
+## Presenting
+
+Open the deck full screen (F11) and press `N` for the speaker view in a second window.
+A laptop with desktop animations turned off asks browsers for reduced motion, and klappe then cuts every camera move and leaves out the slow push on pictures.
+To present with full motion anyway, open the deck with `?reducedmotion=0`, for example `http://localhost:5173/?reducedmotion=0`. The other keys and URL flags are in [deck format](docs/reference/deck-format.md#keys).
 
 ## Reference
 

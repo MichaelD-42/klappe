@@ -72,3 +72,9 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
 - Value stream (Task 12): the overview band is still modest with a left-aligned caption; the carried stack overlaps the right hand; analysis step 1 frame is mostly empty; the clarification-2 label sits about 10 px from the bottom edge.
 - Global team and meeting (Task 13): the shout "Decide." step dims differently from the question steps; coastlines cut site-name digits; arcs cross arriving figures in the zoomed host shot; meeting figures are dimmed by reaching into the figure DOM; map labels are turned off via empty text.
 - Numbers (Task 14): chart notes repeat the bullets; video playback is unverified offline (user manual check).
+
+# After M3
+
+## Reported by the user
+
+- Shout-out takes two clicks to reach full size; it should take one (2026-10-24). Today `enter` scales the question from `from` to 1, and `hold`, the next click, pushes it on to `push` (1.04 calm, 1.12 bold) over 2 to 2.5 s (`src/fx/shout.ts`). Fix: `enter` grows straight to `push`. Then `hold` has nothing left to do: drop it, so a shout-out is three steps (enter, fade, answer), or keep a still hold. Dropping it changes the four-step contract in the parser (`shout-hold`), the renderer (`src/render/world.ts`), `effects.md`, `markdown.md` and every `scene.ts` that plays the four adders (the shout catalog section, value-stream clarification, the meeting scene).

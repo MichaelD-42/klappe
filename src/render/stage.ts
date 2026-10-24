@@ -8,7 +8,9 @@ export function mountStage(root: HTMLElement): { stage: HTMLElement; worlds: HTM
   stage.append(worlds, ui);
   root.append(stage);
   const fit = () => {
-    const s = Math.min(innerWidth / W, innerHeight / H);
+    // A window with no size (minimized, a background tab reloading) keeps scale 1: effects measure the stage
+    // while the timeline is built, and scale 0 makes every rect 0. The resize on restore fits it.
+    const s = Math.min(innerWidth / W, innerHeight / H) || 1;
     stage.style.transform = `translate(-50%, -50%) scale(${s})`;
   };
   fit();

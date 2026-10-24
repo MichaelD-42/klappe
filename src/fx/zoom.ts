@@ -38,16 +38,16 @@ function aim(from: CanvasRuntime, p: Pose, target?: string): { x: number; y: num
 
 // The old canvas dives into the ref opts.target (or its frame centre), then the new canvas scales in.
 // The dive scales the whole old canvas, pinned background included, so the camera keeps the pose the seek gave it.
-// The grow scales the layer that holds all canvases, not `to`: the target step starts at "reveal" and may fly
-// `to`'s camera at the same time.
+// The grow scales `to.el`, not the layer of all canvases: that layer also holds the old canvas, still fading
+// out, and would pull it back mid-dive. The camera moves `to.world` inside `to.el`, so a target step that flies
+// the camera from "reveal" does not fight the grow.
 export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: TransitionOpts): gsap.core.Timeline {
   const a = pose(from.world);
   const p = aim(from, a, opts.target);
   // The dive point on the stage, under the camera.
   const q = { x: a.x + p.x * a.scale, y: a.y + p.y * a.scale };
   const dive = { x: STAGE.w / 2 - q.x * DIVE, y: STAGE.h / 2 - q.y * DIVE, scale: DIVE };
-  const worlds = from.el.parentElement!;
-  const stage = worlds.parentElement!;
+  const stage = from.el.parentElement!.parentElement!;
   const stageBg = getComputedStyle(stage).backgroundColor;
   // The stage turns black behind the scaled layer, then fades back to its colour while the new canvas grows.
   return gsap
@@ -60,13 +60,13 @@ export function transitionZoom(from: CanvasRuntime, to: CanvasRuntime, opts: Tra
     .set(from.el, { clearProps: "transform" }, DIVE_TIME)
     // The dive point sits at the stage centre at the end of the dive; the new canvas grows out of that point.
     .fromTo(
-      worlds,
+      to.el,
       { scale: FROM_SCALE, transformOrigin: `${STAGE.w / 2}px ${STAGE.h / 2}px` },
       { scale: 1, duration: IN_TIME, ease: "power2.out", immediateRender: false },
       "reveal",
     )
     .fromTo(to.el, { autoAlpha: 0 }, { autoAlpha: 1, duration: IN_TIME, ease: "power2.out" }, "reveal")
     .to(stage, { backgroundColor: stageBg, duration: IN_TIME, ease: "none" }, "reveal")
-    .set(worlds, { clearProps: "transform,transformOrigin" })
+    .set(to.el, { clearProps: "transform,transformOrigin" })
     .set(stage, { clearProps: "backgroundColor" });
 }
