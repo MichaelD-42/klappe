@@ -57,6 +57,8 @@ function startDeck() {
   stepper.on("step", (a: StepAddr) => router.push(a.index));
   const selector = new Selector(ui, deck, steps, () => stepper.index, go);
   const overview = new Overview(ui, deck, canvases, steps, () => stepper.index, go);
+  // The speaker view, history and autoplay move the stage without a key: a panel must not stay open over it.
+  stepper.on("step", () => (overview.close(), selector.close()));
   const speaker = {
     open() {
       const url = new URL(location.href);

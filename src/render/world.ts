@@ -250,6 +250,8 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   return { el: d, push: bg.kenBurns ? img : undefined };
 }
 
+const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter"];
+
 export function renderWorld(
   deck: Deck,
   canvases: CanvasLayout[],
@@ -347,7 +349,9 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        return [s.id, { kind: m?.transition ?? "fade", opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
+        // Reduced motion: the dive, the CRT flash and the shatter fade instead.
+        const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
+        return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
     return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems };

@@ -537,7 +537,7 @@ steps: [(tl, { down }) => down.run(tl)],
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt` and `shatter` play a fade.
 
 ## `registry`
 

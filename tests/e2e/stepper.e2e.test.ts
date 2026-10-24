@@ -51,3 +51,24 @@ test('a same-tick burst of 3 presses lands exactly 3 steps on', async () => {
   expect(ms).toBeLessThan(1200) // queued moves are fast-forwarded; only the last one plays
   await page.close()
 })
+
+// The speaker view, browser history and autoplay move the stage without a key: an open panel must not stay over it.
+test('a step from outside the panels closes the overview and the section list', async () => {
+  const page = await open()
+  const after = await page.evaluate(async () => {
+    const { stepper, overview, selector } = window.klappe
+    const out: boolean[] = []
+    for (const p of [overview, selector]) {
+      p.open()
+      await stepper.next() // what a speaker "next" command and autoplay call
+      out.push(p.isOpen)
+    }
+    selector.open()
+    history.back() // the router's popstate jump
+    await new Promise((r) => setTimeout(r, 500))
+    out.push(selector.isOpen)
+    return out
+  })
+  expect(after).toEqual([false, false, false])
+  await page.close()
+})

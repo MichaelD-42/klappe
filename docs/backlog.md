@@ -6,8 +6,8 @@ One ranked list, rebuilt from the M1 and M2 review findings on 2026-10-24. Fixed
 
 Presenting risks:
 
-- [ ] An open overview or section list stays open while the stage moves under it (speaker view command, browser back, autoplay).
-- [ ] Reduced motion still plays the zoom dive, the CRT flash and the shatter: fall back to a fade.
+- [x] An open overview or section list stays open while the stage moves under it (speaker view command, browser back, autoplay).
+- [x] Reduced motion still plays the zoom dive, the CRT flash and the shatter: fall back to a fade.
 
 Markdown and deck parsing:
 

@@ -122,3 +122,8 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - So `file://` is not supported: ES modules do not load from it, and the speaker channel's `file://` case needs no work.
   - `klappe build` does not fail on deck problems: it runs no browser. `klappe test` fails on them, and CI runs the tests before it deploys.
   - `vite-plugin-singlefile` is no longer needed.
+
+## 2026-10-24 (reduced motion)
+
+- **Reduced motion also turns the `zoom`, `crt` and `shatter` transitions into a fade.** It replaces "reduced motion turns camera flights into cuts and nothing else" (M1).
+  - Why: the dive, the flash and the falling shards are the most intense moves in a deck, the ones a reduced-motion viewer most wants gone. `?reducedmotion=0` keeps them for a presenter whose laptop asks for reduced motion.

@@ -185,7 +185,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 ## URL flags
 
 - `?instant=1`: every play becomes a seek.
-- `?reducedmotion=1`: camera moves become cuts, and pictures leave out the Ken Burns push. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
+- `?reducedmotion=1`: camera moves become cuts, pictures leave out the Ken Burns push, and the `zoom`, `crt` and `shatter` transitions play a fade. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion, for a presenter laptop with animations off.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.

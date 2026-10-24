@@ -105,3 +105,19 @@ for (const reduced of [false, true])
       expect(r.checks.filter((c) => !c.ok)).toEqual([])
       expect(r.ok).toBe(true)
     })
+
+// The dive, the CRT flash and the shatter are the most intense moves in a deck: reduced motion fades instead.
+test('reduced motion plays a fade for the zoom, CRT and shatter transitions', async () => {
+  const kinds = async (fixture: string, flag: string) => {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=${fixture}&reducedmotion=${flag}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    const k = await page.evaluate(() => window.klappe.canvases.flatMap((c: any) => Object.values(c.entries).map((e: any) => e.kind)))
+    await page.close()
+    return k as string[]
+  }
+  for (const [fixture, kind] of [['fx-zoom', 'zoom'], ['fx-crt', 'crt'], ['fx-shatter', 'shatter']]) {
+    expect(await kinds(fixture, '0'), fixture).toContain(kind)
+    expect((await kinds(fixture, '1')).filter((k) => ['zoom', 'crt', 'shatter'].includes(k)), fixture).toEqual([])
+  }
+}, 60_000)
