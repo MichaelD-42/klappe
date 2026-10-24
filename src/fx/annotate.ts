@@ -21,7 +21,10 @@ type P = { x: number; y: number };
 const SVG = "http://www.w3.org/2000/svg";
 const ARROW = 160; // the arrow's length from its tail to the target edge
 const HEAD = 22; // each head stroke's length
-const MARKER = "color-mix(in srgb, var(--k-accent) 35%, transparent)"; // --k-fg on it holds 6.3:1 or more in every built-in theme
+export const MARKER_MIX = 0.35; // the share of --k-accent in a highlight band; --k-fg on it holds 6.3:1 or more in every built-in theme
+const MARKER = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`;
+const BAND = 0.8; // a highlight band's height, as a share of its line's
+const SLANT = 0.3; // the most a highlight band's ends lean (tan of the angle), as a chisel marker's do
 
 // mulberry32: a small seeded generator, so a stroke is the same on every load and in every test.
 function random(seed: number) {
@@ -88,8 +91,12 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
     ];
   }
   if (kind === "underline") return [line({ x: x0, y: y1 + rnd() * 4 }, { x: x1, y: y1 + 4 + rnd() * 6 }, 16, 3, rnd)];
-  // highlight: a near-level band through the middle, as a marker drags across; show makes it most of the line's height.
-  if (kind === "highlight") return [line({ x: x0, y: cy + (rnd() - 0.5) * 8 }, { x: x1, y: cy + (rnd() - 0.5) * 8 }, 16, 3, rnd)];
+  // highlight: a near-level band through the middle, as a marker drags across. show makes it BAND of the line's
+  // height and leans its ends up to SLANT, so each end stops short by what its lean adds.
+  if (kind === "highlight") {
+    const o = (box.h * BAND * SLANT) / 2;
+    return [line({ x: x0 + o, y: cy + (rnd() - 0.5) * 8 }, { x: x1 - o, y: cy + (rnd() - 0.5) * 8 }, 16, 3, rnd)];
+  }
   if (kind === "strike") return [line({ x: x0, y: cy + 4 - rnd() * 4 }, { x: x1, y: cy - 4 + rnd() * 4 }, 16, 3, rnd)];
   if (kind === "box") {
     // Four sides in one stroke; each corner overshoots a little, as a quick frame does.
@@ -139,13 +146,18 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
       const boxes = perLine ? lines(ctx, target) : box ? [box] : [];
       if (!boxes.length) return ctx.problem(`annotate: ${opts.kind} target has no size to measure`);
       const seed = opts.seed ?? 1;
-      const marks = boxes.flatMap((b, i) => scribble(opts.kind, b, { pad: opts.pad ?? 12, seed: seed + i, side: opts.side }).map((pts) => ({ pts, h: b.h })));
-      const paths = marks.map(({ pts, h }) => {
+      const marks = boxes.flatMap((b, i) => scribble(opts.kind, b, { pad: opts.pad ?? 12, seed: seed + i, side: opts.side }).map((pts) => ({ pts, b, i })));
+      const paths = marks.map(({ pts, b, i }) => {
         const p = document.createElementNS(SVG, "path");
         p.setAttribute("d", pts.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "));
-        // A highlight band is most of its line's height, with butt ends: a round cap would reach into the next word.
-        const stroke = hl ? { stroke: MARKER, strokeWidth: String(Math.round(h * 0.8)), strokeLinecap: "butt" } : { stroke: "var(--k-accent)", strokeWidth: "4", strokeLinecap: "round" };
+        // A highlight band is most of its line's height, with butt ends (a round cap would reach into the next
+        // word) that a skew about its middle leans like a chisel marker's, a little more or less on each line.
+        const stroke = hl ? { stroke: MARKER, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: "var(--k-accent)", strokeWidth: "4", strokeLinecap: "round" };
         Object.assign(p.style, { fill: "none", strokeLinejoin: "round", ...stroke });
+        if (hl) {
+          const t = SLANT * (0.6 + 0.4 * random(seed + i)());
+          p.setAttribute("transform", `translate(${(-(b.y + b.h / 2) * t).toFixed(1)} 0) skewX(${((Math.atan(t) * 180) / Math.PI).toFixed(1)})`);
+        }
         return svg.appendChild(p);
       });
       drawOn(paths, { duration: opts.kind === "circle" ? 0.7 : 0.45, each: 0.12 })(tl);

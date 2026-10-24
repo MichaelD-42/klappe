@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { scribble } from '../../src/fx/annotate'
+import { MARKER_MIX, scribble } from '../../src/fx/annotate'
 import { contrast, parseTokens } from '../../src/theme'
 
 const box = { x: 400, y: 300, w: 240, h: 60 }
@@ -96,14 +96,18 @@ test('a highlight runs level through the middle of the box, end to end', () => {
   for (const y of ys(band)) expect(Math.abs(y - (box.y + box.h / 2))).toBeLessThan(box.h / 8)
   expect(Math.min(...xs(band))).toBeLessThanOrEqual(box.x)
   expect(Math.max(...xs(band))).toBeGreaterThanOrEqual(box.x + box.w)
+  // Inside the pad: the band's slanted ends lean past its line's ends, and must stay out of the next word.
+  expect(Math.min(...xs(band))).toBeGreaterThan(box.x - PAD)
+  expect(Math.max(...xs(band))).toBeLessThan(box.x + box.w + PAD)
 })
 
-// The band is --k-accent at 35 % over the stage (color-mix in srgb): text on it must keep the 4.5:1 floor.
+// The band is --k-accent at MARKER_MIX over the stage (color-mix in srgb). The code and the reference page
+// promise 6.3:1 for text on it, above the 4.5:1 floor.
 const themes = import.meta.glob<string>('../../src/themes/*.css', { query: '?raw', import: 'default', eager: true })
 test.each(Object.entries(themes))('--k-fg stays readable on a highlight in %s', (_, css) => {
   const t = parseTokens(css)
   const rgb = (h: string) => (h.length === 4 ? [...h.slice(1)].map((c) => c + c) : [h.slice(1, 3), h.slice(3, 5), h.slice(5, 7)]).map((c) => parseInt(c, 16))
   const [a, b] = [rgb(t['--k-accent']), rgb(t['--k-bg'])]
-  const mix = `rgb(${a.map((v, i) => Math.round(v * 0.35 + b[i] * 0.65)).join(', ')})`
-  expect(contrast(t['--k-fg'], mix)).toBeGreaterThanOrEqual(4.5)
+  const mix = `rgb(${a.map((v, i) => Math.round(v * MARKER_MIX + b[i] * (1 - MARKER_MIX))).join(', ')})`
+  expect(contrast(t['--k-fg'], mix)).toBeGreaterThanOrEqual(6.3)
 })
