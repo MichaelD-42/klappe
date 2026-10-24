@@ -11,3 +11,9 @@ declare module "virtual:klappe-fx" {
   const names: string[];
   export default names;
 }
+
+// Built by bin/scan-plugin.mjs: the languages the deck's code names as a literal lang value.
+declare module "virtual:klappe-langs" {
+  const langs: string[];
+  export default langs;
+}

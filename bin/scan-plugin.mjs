@@ -2,12 +2,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 
-// Scans the deck's code at build time, for two virtual modules (see klappeScan).
+// Scans the deck's code at build time, for three virtual modules (see klappeScan).
 // icon(ctx, "rocket", …) looks names up in "virtual:klappe-icons": only the icons that stand in the code as
 // string literals are bundled. A computed name is not found: pass the icon itself
 // (import { Rocket } from "klappe/fx/lucide").
 const ICONS = 'virtual:klappe-icons'
 const FX = 'virtual:klappe-fx'
+const LANGS = 'virtual:klappe-langs'
 const CODE = /\.(?:[cm]?[jt]sx?)$/
 const LITERAL = /["'`]([A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*)["'`]/g
 
@@ -62,9 +63,18 @@ export function importedFx(dirs) {
   return [...names].sort()
 }
 
-// Two virtual modules from one scan of the code:
+// The languages deck code names as a literal lang value (code(ctx, { lang: "ts" })), sorted.
+export function usedLangs(dirs) {
+  const langs = new Set()
+  for (const f of dirs.flatMap((d) => codeFiles(d)))
+    for (const [, l] of fs.readFileSync(f, 'utf8').matchAll(/\blang\s*:\s*["'`]([\w+#-]+)["'`]/g)) langs.add(l)
+  return [...langs].sort()
+}
+
+// Three virtual modules from one scan of the code:
 // - "virtual:klappe-icons": the Lucide icons named in deckDir and extraDirs (klappe's test fixtures).
 // - "virtual:klappe-fx": the effects deckDir's code imports, so main.ts loads Shiki only for a deck that shows code.
+// - "virtual:klappe-langs": the languages deckDir's code passes to code(), so only their grammars load.
 export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
   const files = lucideFiles(klappeDir)
   const all = [deckDir, ...extraDirs]
@@ -75,6 +85,7 @@ export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
       return `${imports.join('\n')}\nexport default { ${keys.map((k, i) => `${JSON.stringify(k)}: i${i}`).join(', ')} };\n`
     },
     [FX]: () => `export default ${JSON.stringify(importedFx([deckDir]))};\n`,
+    [LANGS]: () => `export default ${JSON.stringify(usedLangs([deckDir]))};\n`,
   }
   const last = {}
   return {

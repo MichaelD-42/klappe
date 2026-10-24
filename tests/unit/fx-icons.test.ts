@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { importedFx, klappeScan } from "../../bin/scan-plugin.mjs";
+import { importedFx, klappeScan, usedLangs } from "../../bin/scan-plugin.mjs";
 import { Rocket } from "../../src/fx/lucide";
 import { iconGlyph } from "../../src/fx/icons";
 
@@ -55,6 +55,16 @@ describe("the scan plugin", () => {
       expect(importedFx([dir])).toEqual(["code", "icon"]);
       fs.writeFileSync(path.join(dir, "c.ts"), `import * as fx from "klappe/fx";`);
       expect(importedFx([dir])).toContain("*");
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+  it("lists the languages deck code names as literal lang values", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-langs-"));
+    try {
+      fs.writeFileSync(path.join(dir, "a.ts"), `code(ctx, { src, lang: "python", x: 0 }); code(ctx, { lang:'ts' }); code(ctx, { lang: l });`);
+      fs.writeFileSync(path.join(dir, "b.ts"), `code(ctx, { src, lang: \`sql\` }); code(ctx, { lang: "ts" });`);
+      expect(usedLangs([dir])).toEqual(["python", "sql", "ts"]);
     } finally {
       fs.rmSync(dir, { recursive: true });
     }

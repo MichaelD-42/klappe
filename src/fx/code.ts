@@ -1,11 +1,22 @@
 import { gsap } from "gsap";
-import type { HighlighterCore } from "shiki/core";
+import type { HighlighterCore, LanguageRegistration } from "shiki/core";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 
-// The fence languages loadHighlighter bundles; any other language shows plain.
-export const LANGS = ["ts", "js", "python", "bash", "json", "yaml", "sql", "html", "css"];
+// The fence languages loadHighlighter bundles, each its own chunk; any other language shows plain.
+const GRAMMARS: Record<string, () => Promise<{ default: LanguageRegistration[] }>> = {
+  ts: () => import("shiki/langs/typescript.mjs"),
+  js: () => import("shiki/langs/javascript.mjs"),
+  python: () => import("shiki/langs/python.mjs"),
+  bash: () => import("shiki/langs/bash.mjs"),
+  json: () => import("shiki/langs/json.mjs"),
+  yaml: () => import("shiki/langs/yaml.mjs"),
+  sql: () => import("shiki/langs/sql.mjs"),
+  html: () => import("shiki/langs/html.mjs"),
+  css: () => import("shiki/langs/css.mjs"),
+};
+export const LANGS = Object.keys(GRAMMARS);
 
 export interface CodeOpts {
   src: string;
@@ -23,14 +34,14 @@ export interface CodeHandle {
 }
 
 let hl: HighlighterCore | null = null;
-let tried = false; // loadHighlighter ran, even if it failed
+let wanted = new Set<string>(); // the languages loadHighlighter was asked for, even if it failed
 
-// Shiki's one-time async init; main.ts awaits it before the world renders, only for a deck that shows code.
-// Shiki itself loads here, so a deck without code never fetches it.
+// Shiki's one-time async init with the grammars of langs; main.ts awaits it before the world renders,
+// only for a deck that shows code. Shiki itself loads here, so a deck without code never fetches it.
 // A failed init is logged once and code shows plain, so the deck never goes blank.
-export async function loadHighlighter(): Promise<void> {
-  if (tried) return;
-  tried = true;
+export async function loadHighlighter(langs: string[]): Promise<void> {
+  if (wanted.size) return;
+  wanted = new Set(langs);
   try {
     const [{ createCssVariablesTheme, createHighlighterCore }, { createJavaScriptRegexEngine }] = await Promise.all([
       import("shiki/core"),
@@ -38,17 +49,7 @@ export async function loadHighlighter(): Promise<void> {
     ]);
     hl = await createHighlighterCore({
       themes: [createCssVariablesTheme({ name: "klappe", variablePrefix: "--k-code-" })],
-      langs: [
-        import("shiki/langs/typescript.mjs"),
-        import("shiki/langs/javascript.mjs"),
-        import("shiki/langs/python.mjs"),
-        import("shiki/langs/bash.mjs"),
-        import("shiki/langs/json.mjs"),
-        import("shiki/langs/yaml.mjs"),
-        import("shiki/langs/sql.mjs"),
-        import("shiki/langs/html.mjs"),
-        import("shiki/langs/css.mjs"),
-      ],
+      langs: LANGS.filter((l) => wanted.has(l)).map((l) => GRAMMARS[l]()),
       engine: createJavaScriptRegexEngine(),
     });
   } catch (e) {
@@ -140,17 +141,19 @@ function runs(ns: number[]): string {
 const trim = (src: string) => src.replace(/\n$/, "");
 const splitLines = (src: string) => trim(src).split("\n");
 
-// The code's lines as tokens: Shiki's for a bundled language once loadHighlighter ran, else one plain token per line.
+// The code's lines as tokens: Shiki's for a language loadHighlighter loaded, else one plain token per line.
 export const codeLines = (src: string, lang: string): { content: string; color?: string }[][] =>
-  hl && LANGS.includes(lang)
+  hl && wanted.has(lang) && LANGS.includes(lang)
     ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe" })
     : splitLines(src).map((content) => [{ content }]);
 
 export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   addStyle();
-  // main.ts loads Shiki only when the deck's code imports code() by name, or a scene.md has a code fence.
-  if (!tried && LANGS.includes(opts.lang))
-    ctx.problem(`code: highlighting was not loaded, so "${opts.lang}" shows plain; import code by name: import { code } from "klappe/fx"`);
+  // main.ts loads a grammar only for a scene.md fence, or a literal lang value in deck code that imports code() by name.
+  if (!wanted.has(opts.lang) && LANGS.includes(opts.lang))
+    ctx.problem(
+      `code: highlighting was not loaded, so "${opts.lang}" shows plain; import code by name (import { code } from "klappe/fx") and write the language as a literal (lang: "${opts.lang}")`,
+    );
   const h = opts.h ?? ctx.rect.h - opts.y;
   let texts = splitLines(opts.src);
   const cols = Math.max(1, ...texts.map((t) => t.length));

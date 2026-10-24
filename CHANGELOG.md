@@ -27,6 +27,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
+- Shiki loads only the grammars a deck uses: the languages of its code fences, and the `lang` values its `scene.ts` code passes to `code()`. Write `lang` as a string literal: a computed one shows plain and reports a deck problem. The demo fetches one grammar instead of nine (about 600 KB).
 - Reduced motion also turns the `zoom`, `crt` and `shatter` transitions into a fade.
 - The Ken Burns push starts when the picture's fade-in ends, so the step lasts the fade plus 6 s.
 - `klappe:sync` replaces each `klappe*` agent and skill, so files that left klappe leave the deck repo too.

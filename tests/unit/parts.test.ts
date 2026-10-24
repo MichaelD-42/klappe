@@ -14,7 +14,7 @@ const deck = (scenes: Record<string, string>, modules: Record<string, unknown> =
 
 describe("partsOf", () => {
   it("names only the parts the scene.md files use", () => {
-    expect(partsOf(deck({ "10-b": "## B\n\n- One.\n" }), [])).toEqual({ names: [], highlight: false });
+    expect(partsOf(deck({ "10-b": "## B\n\n- One.\n" }), [], [])).toEqual({ names: [], langs: [] });
     const all = deck({
       "10-b": "## B\n\n### Why?\n\nBecause.\n",
       "20-c": "## C\n\n- [ ] Do it.\n",
@@ -22,19 +22,20 @@ describe("partsOf", () => {
       "40-e": "## E\n\n- Sales [Sales](data/sales.csv)\n",
       "50-f": "## F\n\n```console\n$ ls\n```\n\n- List.\n",
     });
-    expect(partsOf(all, []).names.sort()).toEqual(["agenda", "chart", "checklist", "shout", "terminal"]);
-    expect(partsOf(all, []).highlight).toBe(false);
+    expect(partsOf(all, [], []).names.sort()).toEqual(["agenda", "chart", "checklist", "shout", "terminal"]);
+    expect(partsOf(all, [], []).langs).toEqual([]);
   });
-  it("loads Shiki for a code fence, or when the deck's code imports code", () => {
-    expect(partsOf(deck({ "10-b": "## B\n\n```ts {1}\nconst a = 1;\n```\n\n- A.\n" }), []).highlight).toBe(true);
+  it("loads the grammars of the code fences, and of code() when the deck's code imports it", () => {
+    const fences = deck({ "10-b": "## B\n\n```ts {1}\nconst a = 1;\n```\n\n- A.\n", "20-c": "## C\n\n```cobol\nX.\n```\n\n- C.\n" });
+    expect(partsOf(fences, [], ["python"]).langs).toEqual(["ts"]);
     const plain = deck({ "10-b": "## B\n\n- One.\n" });
-    expect(partsOf(plain, ["code"]).highlight).toBe(true);
-    expect(partsOf(plain, ["*"]).highlight).toBe(true);
-    expect(partsOf(plain, ["icon"]).highlight).toBe(false);
+    expect(partsOf(plain, ["code"], ["sql", "js", "de"]).langs).toEqual(["js", "sql"]);
+    expect(partsOf(plain, ["*"], ["js"]).langs).toEqual(["js"]);
+    expect(partsOf(plain, ["icon"], ["js"]).langs).toEqual([]);
   });
   it("skips a scene that builds itself in scene.ts", () => {
     const d = deck({ "10-b": "## B\n\n### Why?\n\nBecause.\n" }, { "sections/10-a/10-b/scene.ts": { build: () => ({}), steps: [] } });
-    expect(partsOf(d, []).names).toEqual([]);
+    expect(partsOf(d, [], []).names).toEqual([]);
   });
 });
 
