@@ -10,6 +10,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
+- `annotate`: a hand-drawn ring, underline, frame, strike-through or arrow on a target, drawn on in the accent colour.
 - `spotlight`: dims the scene but for a hole around a target; the next step moves the hole or lifts the dim.
 - Full-screen video: `video()` with no `rect` fills the scene frame, cropped to cover, with no border or caption.
 - Animated backgrounds: a `.mp4` or `.webm` `href` in `background` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. Only the background on screen moves; reduced motion and the self-test keep them still.

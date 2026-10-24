@@ -1,5 +1,6 @@
 // Effects for deck code: import { shatter, crt, chart } from "klappe/fx".
 export * from "./agenda";
+export * from "./annotate";
 export * from "./callout";
 export * from "./chart";
 export * from "./checklist";
