@@ -29,6 +29,7 @@ export * from "./swimlanes";
 export * from "./terminal";
 export * from "./timer";
 export * from "./transitions";
+export * from "./travel";
 export * from "./tree";
 export * from "./wipe";
 export * from "./zoom";

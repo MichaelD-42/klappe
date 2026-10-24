@@ -15,7 +15,6 @@ New effects, proposed 2026-10-24, not yet specified:
 - `flipCard`: a card turns over to show its back (a question, then the answer; a myth, then the fact). A 3D `rotationY` with `backface-visibility`; check the PDF export shows the side the step leaves.
 - `matrix`: a 2×2 with axis labels, items placed and moved between quadrants step by step. A common business-deck diagram no effect covers.
 - `roadmap`: a time axis with milestones and a "today" marker that moves. `agenda` covers a day's time slots, `sequence` messages between actors; neither is a roadmap.
-- `path`: an element travels along an SVG path (a parcel, a figure walking a route). `flow().send()` does this along flow edges with GSAP's MotionPathPlugin already loaded; a free path is a small generalisation.
 - `burst`: confetti or a particle pop for a milestone reached. `swarm` has the canvas; a one-shot burst from a point may fit as a swarm mode rather than a new effect. Decorative, so under `data-k-ignore` and off with reduced motion.
 - `video` options `autoplay` and `muted` for YouTube and Vimeo embeds: with `autoplay: true` the player starts when its step arrives (the URL's `autoplay=1` plus `allow="autoplay"` on the iframe); `muted` defaults to `true`. `muted: false` asks for sound, which a browser may still block; say what happens then. Default stays: the viewer starts the player. Local files already play on their step.
 - Chart types `funnel` and `sankey`: common in business decks, missing from `chart`.
@@ -33,7 +32,7 @@ New transitions, proposed 2026-10-24:
 
 New camera moves, proposed 2026-10-24:
 
-- Follow: the camera tracks a moving element (a figure walking, a packet in a flow). Pairs with `path`.
+- Follow: the camera tracks a moving element (a figure walking, a packet in a flow). Pairs with `travel`.
 - Focus pull: all but the target blurs and dims, a depth-of-field cousin of `spotlight`. Mind the blur cost (perf notes).
 - Impact shake: a short jolt of the whole scene when something lands; the camera-level twin of `shake`.
 - Tilt: a slight 3D lean during a camera flight, so long flights feel less flat.

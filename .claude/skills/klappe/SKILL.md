@@ -15,6 +15,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Show a command and its output: a ```` ```console ```` fence. [terminal](klappe/docs/reference/elements/terminal.md)
 - Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`. Mark words as a pen would: `annotate`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md), [annotate](klappe/docs/reference/elements/annotate.md)
 - Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
+- Move something along a route (a parcel to a customer): `travel`. [travel](klappe/docs/reference/effects.md#travel)
 - Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
 - Show how a decision was made: `decisionTree`. [decisionTree](klappe/docs/reference/elements/decisionTree.md)
