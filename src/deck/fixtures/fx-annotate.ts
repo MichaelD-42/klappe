@@ -3,8 +3,8 @@ import { annotate, type AnnotateHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule } from "../../types";
 
-// A paragraph with marked words: each kind of mark on its own step, one on a plain rect, an underline on a
-// phrase that wraps onto a second line, then all fade out.
+// A paragraph with marked words: each kind of mark on its own step, one on a plain rect, a highlight and then an
+// underline on a phrase that wraps onto a second line, then all fade out.
 // A second scene marks an element with no size (the fixture's only problem).
 const WORDS = ["circle", "underline", "box", "strike", "arrow"] as const;
 
@@ -27,14 +27,15 @@ const marks: SceneModule = {
     phrase.dataset.word = "wrapped";
     gsap.set([p, wrap], { autoAlpha: 0 });
     const a = WORDS.map((kind, i) => annotate(ctx, spans[i], { kind, side: "top" }));
-    return { p, wrap, a, rect: annotate(ctx, { x: 160, y: 700, w: 400, h: 80 }, { kind: "box", seed: 2 }), lines: annotate(ctx, phrase, { kind: "underline" }) };
+    return { p, wrap, a, rect: annotate(ctx, { x: 160, y: 700, w: 400, h: 80 }, { kind: "box", seed: 2 }), hl: annotate(ctx, phrase, { kind: "highlight" }), lines: annotate(ctx, phrase, { kind: "underline" }) };
   },
   steps: [
     (tl, r) => void tl.to([r.p, r.wrap], { autoAlpha: 1, duration: 0.6 }),
     ...WORDS.map((_, i) => (tl: gsap.core.Timeline, r: { a: AnnotateHandle[] }) => r.a[i].show(tl)),
     (tl, r: { rect: AnnotateHandle }) => r.rect.show(tl),
+    (tl, r: { hl: AnnotateHandle }) => r.hl.show(tl),
     (tl, r: { lines: AnnotateHandle }) => r.lines.show(tl),
-    (tl, r: { a: AnnotateHandle[]; rect: AnnotateHandle; lines: AnnotateHandle }) => [...r.a, r.rect, r.lines].forEach((h) => h.hide(tl)),
+    (tl, r: { a: AnnotateHandle[]; rect: AnnotateHandle; hl: AnnotateHandle; lines: AnnotateHandle }) => [...r.a, r.rect, r.hl, r.lines].forEach((h) => h.hide(tl)),
   ],
 };
 
@@ -53,7 +54,7 @@ export default () =>
       "deck.md": "---\ntitle: Fixture\n---\n",
       "sections/10-a/section.md": "# Annotate\n",
       "sections/10-a/10-marks/scene.md":
-        "## Marks\n\n- The text.\n- Circle.\n- Underline.\n- Box.\n- Strike.\n- Arrow.\n- A rect.\n- A wrapped phrase.\n- All fade.\n",
+        "## Marks\n\n- The text.\n- Circle.\n- Underline.\n- Box.\n- Strike.\n- Arrow.\n- A rect.\n- A highlighted phrase.\n- A wrapped phrase.\n- All fade.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
     },
     { "sections/10-a/10-marks/scene.ts": marks, "sections/10-a/20-no-size/scene.ts": noSize },

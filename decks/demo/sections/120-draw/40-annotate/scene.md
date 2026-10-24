@@ -6,3 +6,4 @@
 - Ring the condition.
 - Underline what has to pass.
 - An arrow to where it starts.
+- Highlight what ships.
