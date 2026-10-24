@@ -23,6 +23,8 @@ Open:
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
+- Dev server: the first code deck loaded after starting it (with a fresh `node_modules/.vite`) logs `code: syntax highlighting failed to load` and shows code plain: the import of a Shiki grammar bundle 404s on a stale `?v=` hash. It came with the lazy Shiki load on branch `ccr-01ec298b-ee1qc5` (reproduced there with `fx-code.e2e.test.ts`). `optimizeDeps.include` for Shiki, and for every lazily loaded dependency, did not fix it. Builds are not affected; no test fails on it, as the e2e tests that check code do not check console errors.
+
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 
 ## Milestones
