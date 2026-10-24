@@ -72,3 +72,11 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
 - Value stream (Task 12): the overview band is still modest with a left-aligned caption; the carried stack overlaps the right hand; analysis step 1 frame is mostly empty; the clarification-2 label sits about 10 px from the bottom edge.
 - Global team and meeting (Task 13): the shout "Decide." step dims differently from the question steps; coastlines cut site-name digits; arcs cross arriving figures in the zoomed host shot; meeting figures are dimmed by reaching into the figure DOM; map labels are turned off via empty text.
 - Numbers (Task 14): chart notes repeat the bullets; video playback is unverified offline (user manual check).
+
+# After M3
+
+## Reported by the user
+
+- Zooming in is sometimes not smooth: a little jumpy when it reaches the target (2026-10-24). Which zoom and which scene is not pinned down yet; reproduce first. Two suspects, neither checked:
+  - Camera moves (`src/camera.ts` `addCameraMove`): x, y and scale tween linearly under one ease, so at a large scale ratio the apparent speed climbs towards the end and the target point drifts, then settles. A long flight also gets a mid pose, and `power2.inOut` on each keyframe brings the camera to a stop there.
+  - The `zoom` transition (`src/fx/zoom.ts`): the dive is `power2.in`, fastest at the moment it hands over, and the new canvas grows in from `reveal` with an overlap, so speed and scale can jump at the seam.
