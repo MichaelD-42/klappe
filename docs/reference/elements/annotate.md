@@ -19,26 +19,26 @@ steps: [(tl, r) => r.ring.show(tl), (tl, r) => r.arrow.show(tl)],
 
 ### Options
 
-| Name | Type | Default | Meaning |
-| --- | --- | --- | --- |
+| Name   | Type                                                                     | Default  | Meaning                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | ------------------------------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `kind` | `"circle"`, `"underline"`, `"box"`, `"strike"`, `"arrow"`, `"highlight"` | required | `circle`: a rounded loop round the target, a little over one turn. `underline` and `strike`: a stroke under or through each line of the target. `box`: a quick frame with overshooting corners. `arrow`: a 160-unit arrow from `side` to the target's edge. `highlight`: a marker band behind each line of the target, 80 % of the line's height, in `--k-accent` at 35 % over the stage |
-| `side` | `"left"`, `"right"`, `"top"`, `"bottom"` | `"left"` | `arrow` only: where it comes from |
-| `pad` | number | 12 | scene units between the target and the mark |
-| `seed` | number | 1 | picks the wobble; the same seed draws the same mark on every load |
+| `side` | `"left"`, `"right"`, `"top"`, `"bottom"`                                 | `"left"` | `arrow` only: where it comes from                                                                                                                                                                                                                                                                                                                                                        |
+| `pad`  | number                                                                   | 12       | scene units between the target and the mark                                                                                                                                                                                                                                                                                                                                              |
+| `seed` | number                                                                   | 1        | picks the wobble; the same seed draws the same mark on every load                                                                                                                                                                                                                                                                                                                        |
 
 ### Step adders
 
-| Handle | Step |
-| --- | --- |
+| Handle | Step                                                              |
+| ------ | ----------------------------------------------------------------- |
 | `show` | the mark draws on (`drawOn`), 0.45 s per stroke, 0.7 s for a ring |
-| `hide` | it fades out |
+| `hide` | it fades out                                                      |
 
 ### Limits
 
 - An element target is measured when `show` is added: it must be in its final place by then. One with no size reports `annotate: <kind> target has no size to measure`.
 - On dense code, a ring reaches the lines above and below; use `box`, `underline` or `strike` with a small `pad` there.
 - A target that wraps: `underline`, `strike` and `highlight` follow each line; `circle`, `box` and `arrow` frame the whole.
-- A highlight paints behind its target's top-level element in the scene. It shows only where that element is positioned (scene text is) and has no background of its own: on a card, it is hidden under the card. On a rect target it goes behind everything in the scene.
+- A highlight paints behind its target's top-level element in the scene. That element must be positioned; scene text is. On an element with its own background, such as a card, the band is hidden. On a rect target it goes behind everything in the scene.
 - `--k-fg` on a highlight holds 6.3:1 or more in every built-in theme; a custom theme with a very bright `--k-accent` should check its own.
 
 ## `scribble`
