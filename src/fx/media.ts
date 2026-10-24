@@ -16,7 +16,7 @@ export interface ImageOpts {
   fit?: "contain" | "cover"; // cover fills the rect and crops; default contain
   // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses. Reduced motion leaves it out.
   kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
-  scrim?: number; // 0..1: a dark layer over the picture, for text on top
+  scrim?: number; // 0..1: a --k-scrim layer over the picture, for text on top
 }
 export interface ImageHandle {
   // A full-frame picture (fit cover, no rect) shows from its step's start, so it is there while the camera flies in.
@@ -160,7 +160,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   b.append(img);
   if (scrim) {
     const s = document.createElement("div");
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(scrim) });
     b.append(s);
   }
   const kb = kenBurns === true ? {} : kenBurns;

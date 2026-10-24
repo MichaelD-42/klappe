@@ -317,7 +317,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   }
   if (loop && bg.scrim) {
     const s = d.appendChild(el("div", ""));
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(bg.scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(bg.scrim) });
   }
   if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });

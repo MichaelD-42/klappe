@@ -7,7 +7,7 @@ export interface WipeOpts {
   before: { href: string; alt: string };
   after: { href: string; alt: string };
   rect?: Rect; // default: the full scene frame
-  scrim?: number; // 0..1, a dark layer on both pictures for text on top
+  scrim?: number; // 0..1, a --k-scrim layer on both pictures for text on top
 }
 export interface WipeHandle {
   show: StepAdder;

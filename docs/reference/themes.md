@@ -15,7 +15,8 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-series-1` to `--k-series-6` | chart series, diagram participant colours |
 | `--k-font`, `--k-font-code` | text font; code and terminal font. klappe bundles Inter Variable (calm), Space Grotesk Variable (bold) and JetBrains Mono Variable (code, both); a theme may name any of them, or an installed font. The faces they name are loaded before the deck renders. |
 | `--k-code-foreground`, `--k-code-background`, `--k-code-token-constant`, `-string`, `-comment`, `-keyword`, `-parameter`, `-function`, `-string-expression`, `-punctuation`, `-link` | syntax colours, mapped from Shiki's `css-variables` theme |
-| `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition |
+| `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition; the CRT screen is always dark, so these stay bright in a light theme too |
+| `--k-scrim` | the layer a `scrim` lays over a picture: `#000` under light text, `#fff` in a light theme |
 
 ## Which theme is used
 
@@ -23,7 +24,19 @@ Set `theme: <name>` in `deck.md`. The name is looked up in this order, and the f
 
 1. `decks/<id>/themes/<name>.css`: this deck only.
 2. `themes/<name>.css` at the deck repo root: every deck in the repo.
-3. `klappe/src/themes/<name>.css`: built in. klappe ships `calm` (the default navy palette) and `bold` (a lively violet and pink palette for trainings).
+3. `klappe/src/themes/<name>.css`: built in. klappe ships seven:
+
+| Theme | Mood | Text font |
+| --- | --- | --- |
+| `calm` | the default: navy, blue and mint, for a board | Inter |
+| `bold` | lively violet and pink, for trainings | Space Grotesk |
+| `sorbet` | dark, with soft pastels: peach, raspberry, lime and lilac on aubergine | Space Grotesk |
+| `lavender` | light pastel: deep violet ink on a lilac stage, white cards | Inter |
+| `daylight` | light and crisp: near-black on white, cobalt and orange, for bright rooms that wash out a dark slide | Inter |
+| `forest` | dark and quiet: deep green with a warm gold accent | Inter |
+| `ink` | high contrast: near-black, white type and one electric lime | Space Grotesk |
+
+Try one with `?theme=<name>`. Each meets the contrast floors below, its code colours hold 4.5:1 on the code panel, and its chart series are checked for colour-blind readers: series 1 to 4 stay apart from each other, 5 and 6 from their neighbours. The demo's photos are dark; a deck in a light theme reads best with light pictures, as small muted text on a picture has no contrast guarantee.
 
 An unknown name shows the problem `theme "<name>" not found; using calm`. `intensity` is separate; it defaults to `bold` for the `bold` theme and `calm` otherwise.
 

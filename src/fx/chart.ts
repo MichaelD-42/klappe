@@ -159,7 +159,7 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
 const PALETTE = [1, 2, 3, 4].map((n) => `var(--k-series-${n})`);
 const SLICES = [1, 2, 3, 4, 5, 6].map((n) => `var(--k-series-${n})`); // a donut's up to DONUT_MAX slices
-const UP = "var(--k-phosphor)";
+const UP = "var(--k-ok)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
 // Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
 const FONT = 22;
@@ -210,9 +210,9 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
     justifyContent: "center",
     textAlign: "center",
     overflowWrap: "anywhere",
-    border: "4px dashed var(--k-phosphor-amber)",
+    border: "4px dashed var(--k-warn)",
     background: "var(--k-bg)",
-    color: "var(--k-phosphor-amber)",
+    color: "var(--k-warn)",
     fontSize: "48px",
     fontWeight: "700",
   });
@@ -294,7 +294,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
     const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
-    s.style.fill = "var(--k-phosphor-amber)";
+    s.style.fill = "var(--k-warn)";
     head.push(s);
   }
   if (legend.length) {
@@ -579,7 +579,7 @@ export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
   if (opts.title) head.push(text(root, opts.title, { x: R.x, y: R.y + 34, "font-weight": 700 }, 32));
   if (showsSample(opts.sample, loaded.source)) {
     const s = text(root, t("sampleData", ctx.deck.lang), { x: R.x + R.w, y: R.y + 34, "text-anchor": "end" });
-    s.style.fill = "var(--k-phosphor-amber)";
+    s.style.fill = "var(--k-warn)";
     head.push(s);
   }
   const axis = svg(root, "g", { transform: `translate(${P.x} ${P.y - 12})` });

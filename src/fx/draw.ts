@@ -120,7 +120,7 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
     glow(tl, selector) {
       const els = g.querySelectorAll(selector);
       if (!els.length) return ctx.problem(`lineArt glow: nothing matches '${selector}'`);
-      const [fg, warm] = [token(g, "--k-fg"), token(g, "--k-phosphor-amber")];
+      const [fg, warm] = [token(g, "--k-fg"), token(g, "--k-warn")];
       // The start values equal the look at load, so rendering them at load changes nothing on screen.
       tl.fromTo(els, { color: fg }, { color: warm, duration: 0.5 });
       tl.fromTo(

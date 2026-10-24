@@ -72,7 +72,7 @@ export default scene;
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
 - **Presenting:** speaker view, overview, section list, autoplay, exercise timers, deep links, and reduced motion respected (with a `?reducedmotion=0` override).
 - **Checks:** a missing picture or data file shows a placeholder on stage and a line in `media/TODO.md`; the self-test and a design lint run in CI.
-- **Themes:** `calm` and `bold`, built from `--k-*` tokens; a deck can bring its own.
+- **Themes:** seven built in (`calm`, `bold`, `sorbet`, `lavender`, `daylight`, `forest`, `ink`; dark, light and pastel), built from `--k-*` tokens with bundled fonts; a deck can bring its own.
 
 Every effect has a scene in the demo deck's catalog, the sections after the story. Open the [live demo](https://michaeld-42.github.io/klappe/) and press `S` for the list.
 

@@ -71,12 +71,12 @@ test('the glow turns the bulb warm', async () => {
       await window.klappe.stepper.goto(i, 'cut')
       const b = document.querySelector('g[data-scene="desk"] .bulb')!
       const root = getComputedStyle(document.documentElement)
-      return { color: getComputedStyle(b).color, filter: getComputedStyle(b).filter, warm: root.getPropertyValue('--k-phosphor-amber').trim() }
+      return { color: getComputedStyle(b).color, filter: getComputedStyle(b).filter, warm: root.getPropertyValue('--k-warn').trim() }
     }, i)
   const before = await bulb(0)
   const after = await bulb(1)
   expect(before.color).not.toBe(after.color)
-  expect(after.color).toBe('rgb(255, 181, 71)') // --k-phosphor-amber #ffb547
+  expect(after.color).toBe('rgb(255, 181, 71)') // --k-warn #ffb547
   expect(after.filter).toContain('22px')
   await page.close()
 })

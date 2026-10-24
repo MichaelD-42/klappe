@@ -31,4 +31,5 @@
   --k-phosphor: #7dffa0; /* CRT text, green */
   --k-phosphor-amber: #ffb547; /* CRT text, amber */
   --k-blackout: #000; /* the blackout transition */
+  --k-scrim: #000; /* the layer that dims a picture under text: black under light text, white under dark */
 }

@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-phosphor`, falling ones muted, with a legend; labels that would touch are moved apart |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -244,7 +244,7 @@ steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")],
 | Handle | Step |
 | --- | --- |
 | `draw` | every stroke draws on, one after another (`drawOn`) |
-| `glow(tl, selector)` | the matching parts turn amber (`--k-phosphor-amber`) and glow; no match is the deck problem `lineArt glow: nothing matches '<selector>'` |
+| `glow(tl, selector)` | the matching parts turn amber (`--k-warn`) and glow; no match is the deck problem `lineArt glow: nothing matches '<selector>'` |
 
 ### Limits
 
@@ -351,7 +351,7 @@ steps: [(tl, img) => img.show(tl)],
 | `rect` | `{ x, y, w, h }` | the whole scene frame | where the picture sits |
 | `fit` | `"contain"`, `"cover"` | `"contain"` | `cover` fills the rect and crops |
 | `kenBurns` | `true` or `{ from?, to? }` | none | a slow push on `show`; `true` is scale 1 to 1.08 with a small drift. Your own poses are `{ scale, x, y }`; a drift stays inside the push's overscan. Reduced motion leaves it out |
-| `scrim` | number 0 to 1 | none | a dark layer over the picture; use 0.6 or more for text on top |
+| `scrim` | number 0 to 1 | none | a `--k-scrim` layer over the picture (black, white in a light theme); use 0.6 or more for text on top |
 
 ### Step adders
 
@@ -409,7 +409,7 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | --- | --- | --- | --- |
 | `before`, `after` | `{ href, alt }` | required | the two pictures; a missing one shows IMAGE MISSING and a deck problem, as `image` does |
 | `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
-| `scrim` | number | none | 0 to 1, a dark layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
+| `scrim` | number | none | 0 to 1, a `--k-scrim` layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
 
 | Handle | Step |
 | --- | --- |
