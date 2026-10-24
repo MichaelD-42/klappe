@@ -27,7 +27,6 @@ Not on this list, because they exist: code morph (`code().diff()`) and packets a
 Effects:
 
 - CRT: bloom edges slightly olive-grey; amber READY cursor not captured in a shot (blink phase); long-text floor at about 14 px. The CRT transition's default bright phase (`brightness(3)`) still washes out the tint; `flash: "soft"` avoids it, and the default stays as decks have it.
-- Shout: the `back.out` overshoot is not checked visually; the new one-click enter (straight to 1.04 calm, 1.12 bold) is not checked at full speed.
 - Figure: clearer arm swing (10 to 15 degrees); the seated figure needs a chair and arms; standing figures closer and the group larger at 1366.
 - Swarm: the canvas is not re-rasterised on a deeper zoom, so a camera that zooms into a swarm sees soft dots.
 - Full-frame pictures: a flat 0.6 scrim darkens the whole picture; a gradient scrim, dark only under the text, keeps more of it.
