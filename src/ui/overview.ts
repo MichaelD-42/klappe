@@ -3,10 +3,8 @@ import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
 import { button, OverlayPanel } from "./selector";
 
-// Grid area inside the overlay, in stage px: 1920x1080 minus padding and the heading row.
-const AREA = { w: 1760, h: 840 };
-const GAP = 40;
-const CAPTION = 48;
+// Scene card thumbnail, in stage px.
+const THUMB = { w: 288, h: 162 };
 
 // A copy of the world at its end state, with no camera transform, so the whole canvas shows.
 // shortcut: backgrounds are pinned to the screen, outside the world, so the copy has none; add them if the overview needs them.
@@ -26,6 +24,7 @@ function endState(c: CanvasRuntime): HTMLElement {
   return copy;
 }
 
+// One row per section: its title, then a card per scene showing that scene's frame of the canvas at its end state.
 export class Overview extends OverlayPanel {
   constructor(
     ui: HTMLElement,
@@ -40,44 +39,42 @@ export class Overview extends OverlayPanel {
 
   protected fill(body: HTMLElement): void {
     body.classList.add("k-overview");
-    const cols = Math.ceil(Math.sqrt(this.canvases.length));
-    const rows = Math.ceil(this.canvases.length / cols);
-    const cellW = (AREA.w - GAP * (cols - 1)) / cols;
-    const cellH = (AREA.h - GAP * (rows - 1)) / rows - CAPTION;
-    body.style.gridTemplateColumns = `repeat(${cols}, ${cellW}px)`;
     const here = this.steps[this.current()];
+    const copies = new Map<CanvasRuntime, HTMLElement>(); // one end-state copy per canvas, cloned again per card
 
-    for (const c of this.canvases) {
-      const { w, h } = c.layout.size;
-      const fit = Math.min(cellW / w, cellH / h);
-      const sections = this.deck.sections.filter((s) => c.layout.sectionIds.includes(s.id));
-      const cell = document.createElement("div");
-      cell.className = "k-ov-cell";
-      const caption = document.createElement("div");
-      caption.className = "k-ov-caption";
-      caption.textContent = sections.map((s) => s.title).join(" · ");
-      const thumb = document.createElement("div");
-      thumb.className = "k-ov-thumb";
-      Object.assign(thumb.style, { width: `${w * fit}px`, height: `${h * fit}px` });
-      const scaler = document.createElement("div");
-      scaler.className = "k-ov-scaler";
-      scaler.style.transform = `scale(${fit})`;
-      scaler.append(endState(c));
-      thumb.append(scaler);
+    for (const s of this.deck.sections) {
+      const c = this.canvases.find((c) => c.layout.sectionIds.includes(s.id));
+      if (!c) continue;
+      if (!copies.has(c)) copies.set(c, endState(c));
+      const row = document.createElement("section");
+      row.className = "k-ov-row";
+      row.append(Object.assign(document.createElement("h3"), { className: "k-ov-caption", textContent: s.title }));
+      const cards = document.createElement("div");
+      cards.className = "k-ov-cards";
 
-      for (const s of sections)
-        for (const sc of s.scenes) {
-          const first = this.steps.findIndex((a) => a.section === s.id && a.scene === sc.id);
-          const r = c.layout.rects[sc.id];
-          if (first < 0 || !r) continue;
-          const m = button("", () => this.pick(() => this.go(first)), "k-ov-marker");
-          m.append(Object.assign(document.createElement("span"), { textContent: sc.title }));
-          Object.assign(m.style, { left: `${r.x * fit}px`, top: `${r.y * fit}px`, width: `${r.w * fit}px`, height: `${r.h * fit}px` });
-          if (here?.section === s.id && here.scene === sc.id) m.setAttribute("aria-current", "true");
-          thumb.append(m);
-        }
-      cell.append(caption, thumb);
-      body.append(cell);
+      for (const sc of s.scenes) {
+        const first = this.steps.findIndex((a) => a.section === s.id && a.scene === sc.id);
+        const r = c.layout.rects[sc.id];
+        if (first < 0 || !r) continue;
+        const fit = Math.min(THUMB.w / r.w, THUMB.h / r.h);
+        const thumb = document.createElement("div");
+        thumb.className = "k-ov-thumb";
+        const scaler = document.createElement("div");
+        scaler.className = "k-ov-scaler";
+        // Centre the scene's rect in the card.
+        const dx = (THUMB.w - r.w * fit) / 2 - r.x * fit;
+        const dy = (THUMB.h - r.h * fit) / 2 - r.y * fit;
+        scaler.style.transform = `translate(${dx}px, ${dy}px) scale(${fit})`;
+        scaler.append(copies.get(c)!.cloneNode(true));
+        thumb.append(scaler);
+        const m = button("", () => this.pick(() => this.go(first)), "k-ov-marker");
+        m.append(thumb, Object.assign(document.createElement("span"), { className: "k-ov-title", textContent: sc.title }));
+        if (here?.section === s.id && here.scene === sc.id) m.setAttribute("aria-current", "true");
+        cards.append(m);
+      }
+      row.append(cards);
+      body.append(row);
     }
+    body.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "center" });
   }
 }

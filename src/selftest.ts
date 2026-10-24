@@ -272,10 +272,10 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const scenes = deck.sections.flatMap((s: any) => s.scenes);
     const title = scenes.find((s: any) => s.id === "analysis")?.title;
     const bad = [
-      tiles !== canvases.length && `${tiles} tiles, want ${canvases.length} canvases`,
+      tiles !== scenes.length && `${tiles} tiles, want ${scenes.length} scenes`,
       markers.length !== scenes.length && `${markers.length} markers, want ${scenes.length} scenes`,
     ];
-    const marker = markers.find((m) => m.textContent === title);
+    const marker = markers.find((m) => m.querySelector(".k-ov-title")?.textContent === title);
     if (!marker) return [...bad, `no marker for analysis ("${title}")`];
     marker.click();
     const landed = await until(() => steps[stepper.index]?.scene === "analysis");
