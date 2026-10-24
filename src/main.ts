@@ -47,7 +47,7 @@ function startDeck() {
   const flag = query.get("reducedmotion");
   const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
-  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion });
+  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest") });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 

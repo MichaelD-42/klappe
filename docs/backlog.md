@@ -12,6 +12,21 @@ Done on branch `backlog-m1-m2` (2026-10-24): every entry is fixed, or was found 
 - Bundle size (user decision: all three): only the Lucide icons a deck names are bundled, `icon()` takes an `IconNode`, and an async start loads effects, Shiki, transitions, the self-test and the fixtures only when needed. Numbers in `docs/perf-m3.md`.
 - M3 Task 14: `docs/perf-m3.md`; the look review with `?theme=bold` (76 scenes at 1920 and 1366, no deck problems) found the stale shout caption, now fixed.
 
+## Effects, M4 (user decision 2026-10-24)
+
+In this order, each with a catalog scene, a reference entry and tests. Branch `effects-m4`.
+
+- Animated backgrounds: a `.mp4` or `.webm` `href` plays muted in a loop; `animate: "aurora"` draws a slow drift in the theme's colours with no file. They run on the wall clock, outside the timeline: under `data-k-ignore`, still under reduced motion and in the self-test, paused while their background is not on screen.
+- Full-screen video: `video()` with no `rect` fills the scene frame, `cover`, no caption or border.
+- `spotlight`: dims everything but a rect or an element; the next step moves the hole.
+- Hand-drawn annotations: circle, underline, arrow, strike over existing content, drawn on with `drawOn`.
+- Before/after wipe: two pictures and a divider that sweeps across on a step.
+- Text scramble: a decode reveal, written from `onUpdate` as a function of progress.
+- Parallax: background layers move with a fraction of the camera's flight.
+- QR code for a link.
+
+Not here: mesh3d and decorative loop elements (an animated character, an avatar). The user has both in another repo and brings them over; mesh3d brings its own loop, so check whether the background loop rules fit it then. Already built, so not on this list: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
+
 ## Milestones
 
 - PDF export and offline fonts (the single-file build is dropped; see DECISIONS).

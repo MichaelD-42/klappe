@@ -303,7 +303,7 @@ steps: [(tl, img) => img.show(tl)],
 
 - A missing file shows IMAGE MISSING over the picture's area and a deck problem; a `cover` image with alt text also shows a prompt for an image generator. `klappe test` writes it to `media/TODO.md`.
 - For a sharp push at 1920 wide use a source of at least about 2080x1170 px.
-- A background for a whole section is `background: { href, alt, scrim, kenBurns }` in `section.ts`, see [deck format](deck-format.md).
+- A background for a whole section is `background: { href, alt, scrim, kenBurns }` in `section.ts`, see [deck format](deck-format.md). A `.mp4` or `.webm` `href` or `animate: "aurora"` makes it move.
 
 ## `KEN_BURNS`
 

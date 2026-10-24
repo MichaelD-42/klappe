@@ -78,10 +78,12 @@ export interface Ctx {
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
 export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
-// A full-frame picture from media/ behind the scene content. scrim: 0..1 dark layer for text on top.
-// Pinned to the screen, under the content the camera moves. kenBurns: a slow push, once, from the first scene that shows it.
+// A full-frame picture or video from media/, or a generated drift, behind the scene content. scrim: 0..1 dark
+// layer for text on top. Pinned to the screen, under the content the camera moves. kenBurns: a slow push, once,
+// from the first scene that shows it (pictures only).
 export interface Background {
-  href: string;
+  href?: string; // a picture, or a .mp4 or .webm video that plays muted in a loop
+  animate?: "aurora"; // instead of href: a slow drift of light in the theme's colours, no file
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
   kenBurns?: boolean;

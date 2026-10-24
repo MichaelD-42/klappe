@@ -1,9 +1,10 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame } from "../camera";
 import { code, LANGS } from "../fx/code";
-import { KEN_BURNS, STEP_LABEL, image, video, type ImageHandle } from "../fx/media";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
+import { aurora } from "./aurora";
 import { part as fxPart } from "./parts";
 import { motion } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
@@ -236,23 +237,37 @@ export function appendStep(tl: gsap.core.Timeline, label: string, add: (tl: gsap
   return early;
 }
 
-// A background pinned to the screen: one cover image in the canvas's pinned layer, under the world, so the
-// camera moves the content over a still picture. The timeline fades it in and out as scenes take turns.
+// A background pinned to the screen: one cover picture, a looping video or an aurora in the canvas's pinned
+// layer, under the world, so the camera moves the content over it. The timeline fades it in and out as scenes
+// take turns. A video or an aurora moves on the wall clock: renderWorld plays it only while it is on screen.
 interface Pinned {
   el: HTMLElement;
   push?: ImageHandle; // set while its Ken Burns push has not been put on the timeline yet
+  loop?: { play(): void; pause(): void };
 }
 function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string): Pinned {
   const d = pinned.appendChild(el("div", "k-layer"));
   d.dataset.kBackground = id;
   Object.assign(d.style, { width: "1920px", height: "1080px" });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
-  const img = safe(`${source}: background`, () =>
-    image({ ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem }, { href: bg.href, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }),
-  );
+  const full = { ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem };
+  let img: ImageHandle | undefined;
+  let loop: Pinned["loop"];
+  if (bg.animate !== undefined) {
+    if (bg.animate === "aurora") loop = aurora(d);
+    else problem(`unknown animate "${bg.animate}"; use "aurora"`);
+  } else if (!bg.href) problem("needs an href or animate");
+  else if (LOOP_VIDEO.test(bg.href)) {
+    const v = safe(`${source}: background`, () => loopVideo(full, { href: bg.href!, alt: bg.alt }));
+    if (v) loop = { play: () => void v.play().catch(() => {}), pause: () => v.pause() }; // a blocked play keeps the first frame
+  } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }));
+  if (loop && bg.scrim) {
+    const s = d.appendChild(el("div", ""));
+    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-blackout)", opacity: String(bg.scrim) });
+  }
   gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });
-  return { el: d, push: bg.kenBurns ? img : undefined };
+  return { el: d, push: bg.kenBurns ? img : undefined, loop };
 }
 
 const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter"];
@@ -261,7 +276,8 @@ export function renderWorld(
   deck: Deck,
   canvases: CanvasLayout[],
   root: HTMLElement,
-  opts: { reducedMotion?: boolean } = {},
+  // still: videos and auroras in backgrounds do not move (reduced motion, the self-test).
+  opts: { reducedMotion?: boolean; still?: boolean } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
   const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
@@ -346,6 +362,21 @@ export function renderWorld(
           bg: pin,
         });
       }
+    // Only the background on screen moves. The one left behind stops once the camera has landed: it is
+    // still fading out until then. A cut stops it at once.
+    const loops = [...pins.values()].filter((p) => p.loop);
+    if (loops.length && !opts.still) {
+      const bgOf = new Map(sections.flatMap((s) => s.scenes).map((sc) => [sc.id, perScene.get(sc)?.bg]));
+      let stop: gsap.core.Tween | undefined;
+      stepListeners.push(({ play, scene }) => {
+        const on = scene === null ? undefined : bgOf.get(scene); // undefined for a scene on another canvas
+        stop?.kill();
+        on?.loop?.play();
+        const off = () => loops.forEach((p) => p !== on && p.loop!.pause());
+        if (play) stop = gsap.delayedCall(motion.camera, off);
+        else off();
+      });
+    }
     // The first scene's background shows from load, so it fades in with its canvas.
     const bg0 = perScene.get(sections.flatMap((s) => s.scenes)[0])?.bg;
     if (bg0) gsap.set(bg0.el, { autoAlpha: 1 });

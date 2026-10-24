@@ -91,6 +91,25 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: str
 
 const CAPTION = 48; // the row under a video box for its caption
 
+// A local video file: a background plays it in a loop instead of showing it as a picture.
+export const LOOP_VIDEO = /\.(?:mp4|webm)$/i;
+
+// A full-frame video that plays muted in a loop, under data-k-ignore: playback runs on the wall clock,
+// outside the timeline. The caller plays and pauses it. A missing file shows VIDEO MISSING and returns nothing.
+export function loopVideo(ctx: Ctx, opts: { href: string; alt?: string }): HTMLVideoElement | undefined {
+  const rect = { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
+  const url = ctx.files.media[key(opts.href)];
+  if (url === undefined) return void missing(ctx, rect, t("videoMissing", ctx.deck.lang), [key(opts.href), opts.alt].filter(Boolean).join(" — "));
+  const b = box(ctx, rect);
+  b.setAttribute("data-k-ignore", "");
+  const v = document.createElement("video");
+  Object.assign(v, { src: url, muted: true, defaultMuted: true, loop: true, playsInline: true, preload: "auto" });
+  if (opts.alt) v.setAttribute("aria-label", opts.alt);
+  Object.assign(v.style, { width: "100%", height: "100%", objectFit: "cover" });
+  b.append(v);
+  return v;
+}
+
 // show may take a longer fade and its own ease; hide always fades over motion.step.
 const fade = (b: HTMLElement, duration = motion.step, ease?: string) => ({
   show: (tl: gsap.core.Timeline, at?: number | string) => void tl.to(b, { autoAlpha: 1, duration, ease }, at),

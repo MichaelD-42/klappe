@@ -64,6 +64,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) darkens it for text on top; use 0.6 or more, so theme text keeps 4.5:1 contrast even over white. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
+- An animated background: an `href` to a `.mp4` or `.webm` file in `media/` plays muted in a loop and covers the stage (`kenBurns` is for pictures only); `{ animate: "aurora" }` instead of `href` draws a slow drift of light in the theme's accent colours, with no file. `scrim` works for both. They move on the wall clock, not with the steps: under `data-k-ignore`, so the self-test leaves them out. Only the background on screen moves; the one the camera leaves stops once the flight has landed. With reduced motion and in the self-test they stay still. A missing video shows VIDEO MISSING and a deck problem; a background with neither `href` nor `animate` reports `background: needs an href or animate`. Catalog: `#/fullscreen/aurora/1`.
 
 ## Effects
 
@@ -157,6 +158,9 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 
 // A background, in a section.ts (or scene.ts) default export. Plain scene.md text shows on top.
 { background: { href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true } }
+// An animated background: a looping video, or an aurora with no file.
+{ background: { href: "media/waves.mp4", scrim: 0.6 } }
+{ background: { animate: "aurora" } }
 
 // shout with its own intensity: the scene.md has the 3 steps of a shout-out (### Question? and an answer).
 { build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
