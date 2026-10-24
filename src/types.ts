@@ -90,6 +90,7 @@ export interface Background {
   parallax?: boolean; // drifts a little with each camera flight, as a far layer does
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
+  scrimSide?: "left" | "right" | "top" | "bottom"; // full scrim on that side only, clear past the middle
   kenBurns?: boolean;
 }
 export interface SceneModule {

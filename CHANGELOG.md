@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `scrimSide` on `image()`, `wipe()` and backgrounds: the scrim covers one side only, so the rest of the picture keeps its light.
 - `ctx.onStep` events carry `next`, the scene of the following step.
 - `crt` and the `crt` transition: `flash: "soft"`, a gentler power-on that keeps the phosphor colour instead of flashing near white.
 - `mesh3d`: `brightness` lightens or darkens the mood colours, for a dark frame, without a CSS filter.

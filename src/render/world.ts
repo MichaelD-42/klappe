@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
 import { code, LANGS } from "../fx/code";
-import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, video, type ImageHandle } from "../fx/media";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
@@ -317,11 +317,11 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     } else if (LOOP_VIDEO.test(bg.href)) {
       const v = safe(`${source}: background`, () => loopVideo(full, { href: bg.href!, alt: bg.alt }));
       if (v) loop = { play: () => void v.play().catch(() => {}), pause: () => v.pause() }; // a blocked play keeps the first frame
-    } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }));
+    } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim, scrimSide: bg.scrimSide }));
   }
   if (loop && bg.scrim) {
     const s = d.appendChild(el("div", ""));
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(bg.scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(bg.scrimSide), opacity: String(bg.scrim) });
   }
   if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });

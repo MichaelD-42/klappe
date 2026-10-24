@@ -1,13 +1,14 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
-import { image } from "./media";
+import { image, type ScrimSide } from "./media";
 
 export interface WipeOpts {
   before: { href: string; alt: string };
   after: { href: string; alt: string };
   rect?: Rect; // default: the full scene frame
   scrim?: number; // 0..1, a --k-scrim layer on both pictures for text on top
+  scrimSide?: ScrimSide; // as for image()
 }
 export interface WipeHandle {
   show: StepAdder;
@@ -23,8 +24,8 @@ export function wipe(ctx: Ctx, opts: WipeOpts): WipeHandle {
   Object.assign(root.style, { position: "absolute", left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px`, overflow: "hidden" });
   const inner = { ...ctx, html: root, rect: { ...rect, x: 0, y: 0 } };
   const box = { x: 0, y: 0, w: rect.w, h: rect.h };
-  const before = image(inner, { ...opts.before, fit: "cover", rect: box, scrim: opts.scrim });
-  const after = image(inner, { ...opts.after, fit: "cover", rect: box, scrim: opts.scrim });
+  const before = image(inner, { ...opts.before, fit: "cover", rect: box, scrim: opts.scrim, scrimSide: opts.scrimSide });
+  const after = image(inner, { ...opts.after, fit: "cover", rect: box, scrim: opts.scrim, scrimSide: opts.scrimSide });
   const clipped = root.lastElementChild as HTMLElement; // image() appends its box last
   const divider = root.appendChild(document.createElement("div"));
   divider.setAttribute("data-k-wipe-divider", "");

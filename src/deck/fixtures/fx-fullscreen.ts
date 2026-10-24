@@ -53,6 +53,7 @@ export default () => {
       "sections/10-a/10-cover/scene.md": `## Cover\n\n${steps(1)}\n`,
       "sections/10-a/20-ken-burns/scene.md": `## Ken Burns\n\n${steps(2)}\n`,
       "sections/10-a/30-scrim/scene.md": `## Scrim\n\n${steps(1)}\n`,
+      "sections/10-a/35-side-scrim/scene.md": `## Side scrim\n\n${steps(1)}\n`,
       "sections/10-a/40-missing/scene.md": `## Missing\n\n${steps(1)}\n`,
       "sections/20-b/section.md": "# B\n",
       "sections/20-b/10-first/scene.md": `## Over the ridge\n\n- The background shows behind this text.\n- A second line.\n`,
@@ -86,6 +87,13 @@ export default () => {
         build: (ctx: any) => ({
           img: image(ctx, { href: "media/dawn-busy.svg", alt: "A dawn sky over two ridges", fit: "cover", scrim: SCRIM }),
           text: caption(ctx, "Text over a scrim", "The dark layer keeps this line readable on a bright sky."),
+        }),
+        steps: [(tl: gsap.core.Timeline, r: any) => (r.img.show(tl), fadeIn(tl, r.text))],
+      },
+      "sections/10-a/35-side-scrim/scene.ts": {
+        build: (ctx: any) => ({
+          img: image(ctx, { href: "media/dawn-busy.svg", alt: "A dawn sky over two ridges", fit: "cover", scrim: SCRIM, scrimSide: "bottom" }),
+          text: caption(ctx, "Text over a side scrim", "Only the lower part is dimmed; the sky above keeps its light."),
         }),
         steps: [(tl: gsap.core.Timeline, r: any) => (r.img.show(tl), fadeIn(tl, r.text))],
       },
