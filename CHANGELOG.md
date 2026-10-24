@@ -10,6 +10,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe --version`.
 - `ctx.doc` (the scene's parsed `scene.md`) and `ctx.deck` (`lang`, `intensity`) for `scene.ts` code. The demo scenes read their titles, shout-outs and agenda rows from `ctx.doc` instead of copies.
 - A `bin` entry in `package.json`.
+- Charts: `type: "donut"` (parts of a whole, up to 6, the total in the centre) and `type: "slope"` (before and after, one line per group).
 - `qr`: a QR code the room can scan, dark on light with a quiet zone.
 - `scramble`: a line that decodes, random glyphs settling on the text left to right.
 - `wipe`: before and after, two pictures on one spot; the after picture sweeps in behind a divider, halfway or all the way.

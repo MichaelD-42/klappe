@@ -5,11 +5,11 @@ import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
-// must be a number in every row (only all-text columns are text). bar and waterfall use the first series;
-// stacked and line use all of them; timeline reads a start and an end per row (for example years): the
-// columns named start/from/begin and end/to/until, else the first two number columns.
+// must be a number in every row (only all-text columns are text). bar, waterfall and donut use the first
+// series; stacked and line use all of them; slope the first two (before, after); timeline reads a start and an
+// end per row (for example years): the columns named start/from/begin and end/to/until, else the first two.
 export type Row = Record<string, string | number>;
-export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline";
+export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope";
 export interface ChartOpts {
   src: string; // the data file, as in the Markdown link: "data/x.csv"
   data?: Row[] | null; // null: the file is missing; left out: read src from ctx.files.data
@@ -71,15 +71,58 @@ export function dataError(rows: unknown[], type: ChartType): string {
   const data = rows as Row[];
   const { series } = columns(data);
   if (type === "timeline" && series.length < 2) return "needs a start and an end column";
+  if (type === "slope" && series.length < 2) return "needs a before and an after column";
   if (!series.length) return "no number column";
   for (const [i, r] of data.entries())
     for (const k of series) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
+  if (type === "donut") {
+    const k = series[0];
+    const i = data.findIndex((r) => num(r, k) < 0);
+    if (i >= 0) return `row ${i + 1}, ${k} below zero`;
+    if (!(d3.sum(data, (r) => num(r, k)) > 0)) return "the values add up to zero";
+    if (data.length > DONUT_MAX) return `${data.length} slices; a donut reads up to ${DONUT_MAX}: merge the small ones into Other`;
+  }
   if (type === "timeline") {
     const [a, b] = span(series);
     const i = data.findIndex((r) => num(r, b) < num(r, a));
     if (i >= 0) return `row ${i + 1}, ${b} before ${a}`;
   }
   return "";
+}
+
+// A donut stops reading past this many slices; more is a data error that says to merge them.
+const DONUT_MAX = 6;
+
+// Each value's slice as fractions of a turn from 12 o'clock, clockwise, in row order.
+export function donutSlices(values: number[]): { start: number; end: number; share: number }[] {
+  const total = d3.sum(values);
+  let at = 0;
+  return values.map((v) => {
+    const share = v / total;
+    return { start: at, end: (at += share), share };
+  });
+}
+
+// Label positions moved apart until each is at least gap below the one before, in order. A bunch that has to
+// move stays centred on where it was; labels already far enough apart stay put.
+export function spread(ys: number[], gap: number): number[] {
+  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  // Groups of labels that touch, each placed as a block centred on its members' mean.
+  const groups: { ids: number[]; mean: number }[] = [];
+  for (const { y, i } of order) {
+    groups.push({ ids: [i], mean: y });
+    while (groups.length >= 2) {
+      const [a, b] = groups.slice(-2);
+      const aEnd = a.mean + ((a.ids.length - 1) * gap) / 2;
+      const bStart = b.mean - ((b.ids.length - 1) * gap) / 2;
+      if (bStart - aEnd >= gap) break;
+      const ids = [...a.ids, ...b.ids];
+      groups.splice(-2, 2, { ids, mean: d3.mean(ids, (k) => ys[k])! });
+    }
+  }
+  const out = [...ys];
+  for (const g of groups) g.ids.forEach((k, j) => (out[k] = g.mean + (j - (g.ids.length - 1) / 2) * gap));
+  return out;
 }
 
 // Each delta's bar runs from the running total before it to the one after it.
@@ -97,6 +140,11 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
     const [s, e] = span(series);
     return [d3.min(rows, (r) => num(r, s)) ?? 0, d3.max(rows, (r) => num(r, e)) ?? 0];
   }
+  // A slope shows change: its axis spans the data, not zero.
+  if (type === "slope") {
+    const vs = rows.flatMap((r) => [num(r, series[0]), num(r, series[1])]);
+    return [Math.min(...vs), Math.max(...vs)];
+  }
   if (type === "waterfall") vs = waterfallSteps(rows.map((r) => num(r, a))).flat();
   else if (type === "stacked")
     vs = rows.flatMap((r) => {
@@ -110,6 +158,7 @@ export function chartDomain(rows: Row[], type: ChartType): [number, number] {
 
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
 const PALETTE = [1, 2, 3, 4].map((n) => `var(--k-series-${n})`);
+const SLICES = [1, 2, 3, 4, 5, 6].map((n) => `var(--k-series-${n})`); // a donut's up to DONUT_MAX slices
 const UP = "var(--k-phosphor)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
 // Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
@@ -204,14 +253,15 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (why) return placeholder(ctx, opts, t("dataError", ctx.deck.lang), why);
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
-  const keys = type === "stacked" || type === "line" ? series : [series[0]];
+  const keys = type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : [series[0]];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
   const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
+  // Colour means direction in a waterfall and a slope; the legend says which is which.
   const legend =
-    type === "waterfall"
+    type === "waterfall" || type === "slope"
       ? [
           { name: t("increase", ctx.deck.lang), fill: UP },
           { name: t("decrease", ctx.deck.lang), fill: DOWN },
@@ -222,10 +272,14 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
 
   const R = opts.rect;
   const longest = d3.max(names, (n) => n.length) ?? 0;
+  const dec = decimals(data.flatMap((r) => keys.map((k) => num(r, k))));
+  const fmt = d3.format(`,.${dec}f`);
+  // A slope's value column: about 13 units per character at FONT.
+  const valW = 13 * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
   const m = {
-    top: 56 + (legend.length ? 40 : 0) + 40,
-    left: type === "timeline" ? Math.min(R.w * 0.3, 24 + longest * 13) : 90,
-    right: type === "timeline" ? 130 : 30,
+    top: 56 + (legend.length ? 40 : 0) + 40 + (type === "slope" ? 36 : 0), // a slope's column headers sit above the plot
+    left: type === "timeline" ? Math.min(R.w * 0.3, 24 + longest * 13) : type === "slope" ? Math.min(R.w * 0.4, 48 + valW + longest * 13) : 90,
+    right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : 30,
     bottom: 56,
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
@@ -258,8 +312,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const marks = svg(root, "g", {});
   const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number }[] = [];
   const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string }[] = [];
-  const dec = decimals(data.flatMap((r) => keys.map((k) => num(r, k))));
-  const fmt = d3.format(`,.${dec}f`);
+  const labels: SVGElement[] = []; // names and headers that show with the axes step
+  const sweeps: { el: SVGElement; len: number }[] = []; // donut arcs: drawn round, not scaled
   const valueAt = (attrs: Record<string, string | number>, from: number, to: number, show: (n: number) => string) => {
     const el = text(root, "", attrs);
     // A dark halo keeps the number readable where it crosses a line or a bar.
@@ -273,9 +327,67 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     grown.push({ el: r, origin: up ? "50% 100%" : "50% 0%", scale: "scaleY" });
   };
 
-  let xAxis: d3.Axis<any>;
-  let yAxis: d3.Axis<any>;
-  if (type === "timeline") {
+  let xAxis: d3.Axis<any> | undefined;
+  let yAxis: d3.Axis<any> | undefined;
+  if (type === "donut") {
+    // The ring on the left with the total in its centre; a legend on the right: name, value and share.
+    const k = keys[0];
+    const total = d3.sum(data, (r) => num(r, k));
+    const d = Math.min(P.h, P.w * 0.45);
+    const [cx, cy, thick] = [P.x + d / 2, P.y + P.h / 2, d * 0.18];
+    const GAP = data.length > 1 ? 0.004 : 0; // a hairline of background between slices, in turns
+    donutSlices(data.map((r) => num(r, k))).forEach((s, i) => {
+      const len = Math.max(0.001, s.share - GAP);
+      const arc = svg(marks, "circle", {
+        cx, cy, r: d / 2 - thick / 2, fill: "none", "stroke-width": thick, pathLength: 1,
+        transform: `rotate(${-90 + (s.start + GAP / 2) * 360} ${cx} ${cy})`,
+      });
+      Object.assign(arc.style, { stroke: SLICES[i], strokeDasharray: `${len} 1` });
+      sweeps.push({ el: arc, len });
+    });
+    valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 64, "font-weight": 700 }, 0, total, fmt);
+    labels.push(text(root, t("total", ctx.deck.lang), { x: cx, y: cy + 60, "text-anchor": "middle" }));
+    const x0 = P.x + d + 80;
+    const rowH = Math.min(72, P.h / data.length);
+    data.forEach((r, i) => {
+      const y = P.y + P.h / 2 + (i - (data.length - 1) / 2) * rowH;
+      const sw = svg(root, "rect", { x: x0, y: y - 16, width: 24, height: 24, rx: 4 });
+      sw.style.fill = SLICES[i];
+      labels.push(sw, text(root, names[i], { x: x0 + 40, y: y + 4 }));
+      // Two columns: the value, then its share of the total.
+      const n = num(r, k);
+      valueAt({ x: R.x + R.w - 120, y: y + 4, "text-anchor": "end" }, 0, n, fmt);
+      valueAt({ x: R.x + R.w, y: y + 4, "text-anchor": "end" }, 0, n, (v) => `${Math.round((v / total) * 100)} %`);
+    });
+  } else if (type === "slope") {
+    // Before on the left, after on the right, one line per row: up in the accent of change, down muted.
+    const [a, b] = keys;
+    v.range([P.y + P.h, P.y]);
+    const [xL, xR] = [P.x, P.x + P.w];
+    labels.push(text(root, a, { x: xL, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
+    labels.push(text(root, b, { x: xR, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
+    const id = `k-chart-clip-${++clips}`;
+    const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
+    grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the lines draw left to right
+    marks.setAttribute("clip-path", `url(#${id})`);
+    const gap = FONT + 8;
+    const ys = (k: string) => spread(data.map((r) => v(num(r, k)) + FONT * 0.35), gap);
+    const [left, right] = [ys(a), ys(b)];
+    data.forEach((r, i) => {
+      const [va, vb] = [num(r, a), num(r, b)];
+      const fill = vb > va ? UP : DOWN;
+      const line = svg(marks, "path", { d: `M${xL} ${v(va)}L${xR} ${v(vb)}`, fill: "none", "stroke-width": 5, "stroke-linecap": "round" });
+      line.style.stroke = fill;
+      for (const [x, n] of [[xL, va], [xR, vb]]) {
+        const c = svg(root, "circle", { cx: x, cy: v(n), r: 8 });
+        c.style.fill = fill;
+        grown.push({ el: c, origin: "50% 50%", scale: "scale" });
+      }
+      labels.push(text(root, names[i], { x: xL - 32 - valW, y: left[i], "text-anchor": "end" }));
+      valueAt({ x: xL - 20, y: left[i], "text-anchor": "end" }, 0, va, fmt);
+      valueAt({ x: xR + 20, y: right[i] }, 0, vb, fmt);
+    });
+  } else if (type === "timeline") {
     const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
     const y = d3.scaleBand().domain(band).range([P.y, P.y + P.h]).padding(0.35);
@@ -367,8 +479,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     root.insertBefore(g, marks);
     return g;
   };
-  const axesEls: SVGElement[] = [axisAt(xAxis, 0, P.y + P.h), axisAt(yAxis, P.x, 0)];
-  if (type !== "timeline") {
+  const axesEls: SVGElement[] = [...(xAxis ? [axisAt(xAxis, 0, P.y + P.h)] : []), ...(yAxis ? [axisAt(yAxis, P.x, 0)] : []), ...labels];
+  if (type !== "timeline" && type !== "donut" && type !== "slope") {
     axesEls[0].querySelector(".domain")?.remove();
     const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
     z.style.stroke = "var(--k-fg)";
@@ -379,12 +491,18 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   for (const e of values) e.el.setAttribute("data-k-text", "");
   gsap.set([...head, ...axesEls, ...values.map((e) => e.el)], { autoAlpha: 0 });
   for (const { el, origin, scale } of grown) gsap.set(el, { [scale]: 0, transformOrigin: origin });
+  for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
 
   return {
     axes(tl) {
       tl.to([...head, ...axesEls], { autoAlpha: 1, duration: motion.step, stagger: 0.1 });
     },
     grow(tl) {
+      // Donut arcs draw round one after another, each in a time by its share, a full turn in 1.2 s.
+      sweeps.forEach(({ el, len }, i) =>
+        tl.to(el, { strokeDashoffset: 0, duration: Math.max(0.15, 1.2 * len), ease: i === sweeps.length - 1 ? "power2.out" : "none", autoRound: false }, i ? ">" : undefined),
+      );
+      if (!grown.length) return;
       const step = Math.min(0.12, 1 / grown.length);
       grown.forEach(({ el, scale, dur }, i) =>
         tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, i ? `<${step}` : ">"),

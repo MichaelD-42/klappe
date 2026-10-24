@@ -6,7 +6,7 @@ Every example below is a scene from the demo deck's catalog (the sections after 
 
 ## `chart`
 
-Catalog: section `110-chart` (`#/chart/bars/1`). A bar, stacked, line, waterfall or timeline chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
+Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/slope/1`). A bar, stacked, line, waterfall, timeline, donut or slope chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
 
 From `decks/demo/sections/110-chart/10-bars/scene.ts`:
 
@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-phosphor`, falling ones muted, with a legend; labels that would touch are moved apart |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -35,7 +35,7 @@ The first column labels the rows; every later column with a number in any row is
 | Handle | Step |
 | --- | --- |
 | `axes` | title, legend and axes fade in |
-| `grow` | bars, segments, lines or waterfall steps grow in, staggered |
+| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right |
 | `values` | the value labels fade in and count up |
 
 ### Limits
@@ -54,6 +54,14 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `dataError`
 
 `dataError(rows, type)` returns why the rows cannot be drawn as that chart type (`"row 3, Q2 not a number"`, `"needs a start and an end column"`, `"row 2, end before start"`), or `""`. `chart` calls it; call it yourself to check data before you pass it as `data`.
+
+## `donutSlices`
+
+`donutSlices(values)` gives each value's slice as `{ start, end, share }`, fractions of a turn from 12 o'clock, clockwise, in row order.
+
+## `spread`
+
+`spread(ys, gap)` moves label positions apart until each is at least `gap` from the next, keeping their order; a bunch that has to move stays centred on where it was, and labels already far enough apart stay put. The slope chart uses it for its labels.
 
 ## `waterfallSteps`
 
