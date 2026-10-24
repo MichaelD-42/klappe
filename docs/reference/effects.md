@@ -354,6 +354,17 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | `show` | both pictures and the divider fade in; only the before picture shows |
 | `to(f)` | the divider sweeps to `f` (0 to 1) of the width and the after picture shows left of it: `to(0.5)` half, `to(1)` all, `to(0)` back to before |
 
+## `qr`
+
+Catalog: section `190-media` (`#/media/qr/1`). A QR code the room can scan, usually for a link.
+
+```ts
+build: (ctx) => qr(ctx, { text: "https://example.com/talk", x: 735, y: 180, size: 450, label: "Slides and notes" }),
+steps: [(tl, h) => h.show(tl)],
+```
+
+`qr(ctx, { text, x, y, size, label? })`: `x`, `y` the top-left corner, `size` the code's width and height in scene units, `label` a line under it. Dark modules (`--k-bg`) on a light tile (`--k-fg`) with the standard 4-module quiet zone, because not every phone camera reads an inverted code. Error correction M: it still reads with 15 % of it covered. `show` fades it in. Text too long for any QR code reports `qr: the text is too long for a QR code (N characters)` and shows nothing. Keep `size` at 400 or more for a link, so the room can scan it from the back.
+
 ## `shatter`
 
 Catalog: section `200-shatter` (`#/shatter/card/1`). A card you built cracks, cracks to its edges, then falls apart in shards.
