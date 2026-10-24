@@ -22,6 +22,7 @@ export interface Mesh3dOpts {
   start?: "mesh" | "dot"; // "dot": one pulsing dot, visible from load; show() grows the mesh out of it
   dot?: number; // dot size factor, default 1; larger dots read better on white
   minAlpha?: number; // opacity of the farthest dot, 0..1, default 0.35; near dots stay at full opacity
+  brightness?: number; // default 1, the mood colour; 1.5 mixes it halfway to white, 0.5 halfway to black
 }
 type At = number | string;
 export interface Mesh3dHandle {
@@ -72,6 +73,12 @@ function life(t: number, period: number, phase: number): number {
 }
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
+// A colour's channels at brightness b: 1 keeps it, above 1 mixes toward white (2 is white), below toward black.
+// The hue stays, which a CSS brightness() filter loses once a channel clips.
+export function tint(color: string, b: number): number[] {
+  const k = Math.min(2, Math.max(0, b));
+  return (gsap.utils.splitColor(color) as number[]).slice(0, 3).map((v) => (k >= 1 ? v + (255 - v) * (k - 1) : v * k));
+}
 // A dot's opacity: its life alpha, faded with depth from 1 (near) down to minAlpha (far).
 export const shade = (al: number, depth: number, minAlpha = 0.35) => al * (minAlpha + (1 - minAlpha) * depth);
 
@@ -118,7 +125,8 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
   // Step state, tweened by the timeline only, so a seek lands on the right look. The ticker reads it.
   let mood = MOODS[opts.mood ?? "calm"];
   let turn = opts.speed ?? mood.turn;
-  const [r0, g0, b0] = gsap.utils.splitColor(mood.color) as number[];
+  const light = opts.brightness ?? 1;
+  const [r0, g0, b0] = tint(mood.color, light);
   const st = { form: 0, collapse: 0, r: r0, g: g0, b: b0, turn, fx: 0, fy: 0 };
 
   const R = size * 0.45; // a dot on the unit sphere projects at most 1.06 R from the centre (F = 3 R), inside size / 2
@@ -226,8 +234,8 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
     mood(tl, name, at) {
       const next = MOODS[name];
       if (!next) throw new Error(`mesh3d: no mood "${name}" (${Object.keys(MOODS).join(", ")})`);
-      const [r1, g1, b1] = gsap.utils.splitColor(next.color) as number[];
-      const [rf, gf, bf] = gsap.utils.splitColor(mood.color) as number[];
+      const [r1, g1, b1] = tint(next.color, light);
+      const [rf, gf, bf] = tint(mood.color, light);
       const nextTurn = opts.speed ?? next.turn;
       // The previous mood is known here: adders run in step order at build.
       tl.fromTo(st, { r: rf, g: gf, b: bf, turn }, { r: r1, g: g1, b: b1, turn: nextTurn, duration: motion.step, immediateRender: false }, at);

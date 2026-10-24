@@ -10,6 +10,8 @@ export interface CrtOpts {
   lines: CrtLine[];
   // Lines typed after READY., on the cursor row, one prompt() step each. Declared here so their DOM exists at build.
   prompts?: string[];
+  // "soft": power-on peaks at brightness 1.4 instead of 2.2, and the beam keeps more of the phosphor colour.
+  flash?: "full" | "soft";
 }
 export interface CrtHandle {
   powerOn: StepAdder;
@@ -96,6 +98,7 @@ const CSS = `
   animation: k-crt-flicker 3.2s infinite steps(1); }
 .k-retro .k-crt-beam { position: absolute; inset: 40px; border-radius: 60px / 50px; background: color-mix(in srgb, var(--k-crt) 35%, #fff);
   box-shadow: 0 0 60px 20px color-mix(in srgb, var(--k-crt) 70%, transparent); }
+.k-retro.k-crt-soft .k-crt-beam { background: color-mix(in srgb, var(--k-crt) 70%, #fff); }
 @keyframes k-crt-blink { 50% { opacity: 0; } }
 @keyframes k-crt-flicker { 0% { opacity: 0; } 31% { opacity: .06; } 33% { opacity: 0; } 67% { opacity: .03; } 69% { opacity: 0; } }
 `;
@@ -119,6 +122,7 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
       ctx.problem(`crt: count line "${l.text}" needs a label and a number with K, like "MEMORY TEST: 640K OK"`);
   const root = div(ctx.html, "k-retro");
   if (opts.color && opts.color !== "green") root.style.setProperty("--k-crt", crtColor(opts.color));
+  if (opts.flash === "soft") root.classList.add("k-crt-soft");
   const screen = div(root, "k-crt-screen");
   const term = div(screen, "k-crt-term");
   // Rows: the lines, READY., the prompts and the cursor row. Columns: the longest line plus the typing cursor.
@@ -181,7 +185,7 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
   const settleScreen = (tl: gsap.core.Timeline, at?: gsap.Position) =>
     tl.fromTo(
       screen,
-      { filter: "brightness(2.2) blur(2px)" },
+      { filter: `brightness(${opts.flash === "soft" ? 1.4 : 2.2}) blur(2px)` },
       { filter: "brightness(1) blur(0px)", duration: 1.1, ease: "power2.out", immediateRender: false },
       at,
     );
@@ -235,7 +239,7 @@ export function crt(ctx: Ctx, opts: CrtOpts): CrtHandle {
 export function transitionCrt(
   from: CanvasRuntime,
   to: CanvasRuntime,
-  opts: TransitionOpts & { color?: CrtColor },
+  opts: TransitionOpts & { color?: CrtColor; flash?: "full" | "soft" },
 ): gsap.core.Timeline {
   const worlds = from.el.parentElement!;
   const stage = worlds.parentElement!;
@@ -262,7 +266,7 @@ export function transitionCrt(
     .to(worlds, { scaleX: 0, duration: 0.12, ease: "power2.in" })
     .fromTo(...glow(60, 0.8, 0, 0, 0.12, "power2.in"))
     .set(to.el, { autoAlpha: 1 }, "+=0.15")
-    .set(worlds, { filter: "brightness(3)" }, "<") // the new canvas opens bright, then settles
+    .set(worlds, { filter: `brightness(${opts.flash === "soft" ? 1.4 : 3})` }, "<") // the new canvas opens bright, then settles
     .to(worlds, { scaleX: 1, duration: 0.22, ease: "power3.out" })
     .fromTo(...glow(0, 0.8, 60, 0.8, 0.22, "power3.out"))
     .to(worlds, { scaleY: 1, duration: 0.2, ease: "expo.in" })

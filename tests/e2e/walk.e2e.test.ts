@@ -53,3 +53,26 @@ test('walk reports problems raised after fonts.ready and during the walk', async
   expect(r.problems.filter((p) => p.includes('late:')).sort()).toEqual(['late: after fonts.ready', 'late: during the walk'].map((p) => expect.stringContaining(p)))
   expect(r.ok).toBe(false)
 })
+
+// The on-screen problems list shows a late problem too, not only the ones known at load.
+test('the problems panel lists problems raised after load and during a play', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=late-problem`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    const panel = () =>
+      page.evaluate(() => ({
+        summary: document.querySelector('.k-problems summary')?.textContent ?? '',
+        items: [...document.querySelectorAll('.k-problems li')].map((li) => li.textContent),
+      }))
+    await expect.poll(async () => (await panel()).items).toContain('late: after fonts.ready')
+    await page.evaluate(() => window.klappe.stepper.next())
+    await expect.poll(async () => (await panel()).items).toContain('late: during the walk')
+    const r = await panel()
+    expect(r.summary).toContain(`(${r.items.length})`)
+  } finally {
+    await browser.close()
+  }
+})

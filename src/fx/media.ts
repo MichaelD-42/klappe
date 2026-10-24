@@ -17,7 +17,14 @@ export interface ImageOpts {
   // A slow push on show(): true = 1.0 to 1.08 with a slight drift, or your own poses. Reduced motion leaves it out.
   kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
   scrim?: number; // 0..1: a --k-scrim layer over the picture, for text on top
+  scrimSide?: ScrimSide; // the scrim is full on this side only and clears past the middle; default: flat
 }
+export type ScrimSide = "left" | "right" | "top" | "bottom";
+// The scrim layer's background: flat, or full over the 45% of the frame on `side` and clear by 85%.
+const OPPOSITE = { left: "right", right: "left", top: "bottom", bottom: "top" } as const;
+export const scrimFill = (side?: ScrimSide) =>
+  side ? `linear-gradient(to ${OPPOSITE[side]}, var(--k-scrim) 0%, var(--k-scrim) 45%, transparent 85%)` : "var(--k-scrim)";
+
 export interface ImageHandle {
   el: HTMLElement; // the picture's box (or the IMAGE MISSING stand-in), last in ctx.html
   // A full-frame picture (fit cover, no rect) shows from its step's start, so it is there while the camera flies in.
@@ -137,7 +144,7 @@ export function clampPose(p: KenBurnsPose, rect: Rect): KenBurnsPose {
 }
 
 export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
-  const { href, alt, scrim, kenBurns } = opts;
+  const { href, alt, scrim, scrimSide, kenBurns } = opts;
   const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
   const cover = opts.fit === "cover";
   const fullFrame = cover && !opts.rect;
@@ -162,7 +169,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   b.append(img);
   if (scrim) {
     const s = document.createElement("div");
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(scrimSide), opacity: String(scrim) });
     b.append(s);
   }
   const kb = kenBurns === true ? {} : kenBurns;
@@ -274,10 +281,10 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     poster.setAttribute("data-k-ignore", "");
     b.append(poster);
     if (!full) b.append(caption);
-    // The player loads when its scene becomes current, not at deck load: a deck with many embeds
-    // otherwise loads every player on start, also on a deep link to another scene.
+    // The player loads one step before its scene, so it is ready when the scene shows; not at deck load: a deck
+    // with many embeds otherwise loads every player on start, also on a deep link to another scene.
     const load = () => !el.isConnected && poster.replaceWith(el);
-    if (ctx.scene) ctx.onStep(({ scene }) => void (scene === ctx.scene && load()));
+    if (ctx.scene) ctx.onStep(({ scene, next }) => void ((scene === ctx.scene || next === ctx.scene) && load()));
     else load();
   } else {
     el.src = src;

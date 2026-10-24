@@ -12,6 +12,7 @@ export interface FigureOpts {
   strokeWidth?: number; // in figure units, before scale; default 4
 }
 export interface FigureHandle {
+  el: SVGGElement; // the figure's root group, for a scene that dims or moves it
   // `at` is the position on the timeline, as in tl.to.
   appear(tl: gsap.core.Timeline, at?: gsap.Position): void;
   /**
@@ -106,6 +107,7 @@ export function figure(ctx: Ctx, opts: FigureOpts): FigureHandle {
   };
 
   return {
+    el: root,
     appear: (tl, at) => void tl.to(root, { autoAlpha: 1, duration: 0.5 }, at),
     walk(tl, path, { duration, at }) {
       tl.to(root, { motionPath: { path }, duration, ease: "none", onUpdate: stride(duration) }, at);

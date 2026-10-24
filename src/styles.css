@@ -180,6 +180,14 @@ body {
   padding: 20px 32px;
 }
 
+/* The current section: more than the hover border, so it reads without the focus ring. */
+.k-selector .k-btn[aria-current="true"] {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--k-accent) 14%, transparent);
+  border-left: 8px solid var(--k-accent);
+  padding-left: 26px; /* the thicker edge keeps the text where the others have it */
+}
+
 .k-overview {
   overflow: auto;
   padding: 8px; /* room for the focus ring */
@@ -245,6 +253,16 @@ body {
   outline: 2px solid color-mix(in srgb, var(--k-fg) 20%, transparent);
 }
 
+/* A scene's pinned background, the full screen scaled to the card, under the world copy. */
+.k-ov-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+}
+
 .k-ov-scaler {
   position: absolute;
   left: 0;
@@ -254,79 +272,4 @@ body {
 
 .k-ov-title {
   padding: 0 4px 4px;
-}
-
-/* Speaker view (?speaker=1): a normal page, not the scaled stage. */
-.k-speaker {
-  position: fixed;
-  inset: 0;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 48px;
-  padding: 40px 48px;
-  background: var(--k-bg);
-  color: var(--k-fg);
-  font-family: var(--k-font);
-}
-
-.k-sp-now,
-.k-sp-side {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.k-sp-scene {
-  margin: 0 0 16px;
-  font-size: 40px;
-  font-weight: 700;
-}
-
-.k-sp-text {
-  margin: 0 0 32px;
-  font-size: 34px;
-  line-height: 1.35;
-}
-
-.k-sp-label {
-  margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--k-accent);
-}
-
-.k-sp-notes {
-  flex: 1;
-  overflow: auto;
-  font-size: 26px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-}
-
-.k-sp-time {
-  margin: 0 0 32px;
-  font-size: 56px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.k-sp-next {
-  flex: 1;
-  margin: 0;
-  overflow: auto;
-  font-size: 26px;
-  line-height: 1.4;
-  opacity: 0.85;
-}
-
-.k-sp-buttons {
-  display: flex;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.k-sp-buttons .k-btn {
-  flex: 1;
-  text-align: center;
 }

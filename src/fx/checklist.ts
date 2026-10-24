@@ -10,6 +10,7 @@ export interface ChecklistOpts {
   h?: number; // with h, the list shrinks to fit it, down to the floor, then reports a problem
 }
 export interface ChecklistHandle {
+  el: HTMLElement; // the list's block, for a scene that places or moves it
   show: StepAdder;
   tick(i: number): StepAdder;
 }
@@ -66,6 +67,7 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
 
   let last = -1; // the item the previous tick lit; it settles when the next tick starts
   return {
+    el: root,
     show: (tl) => {
       const at = tl.duration();
       if (!fit()) return void tl.set({}, {}, at + 0.4);

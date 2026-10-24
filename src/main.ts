@@ -55,7 +55,10 @@ async function startDeck(svg: Record<string, string>) {
   const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
   problems.push(...(await loadFonts()));
-  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg });
+  // A problem raised after this start (a web font loads, a step plays) goes to the list and the panel too.
+  let late: ((msg: string) => void) | undefined;
+  const onProblem = (msg: string) => late?.(msg);
+  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg, onProblem });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 
@@ -99,7 +102,11 @@ async function startDeck(svg: Record<string, string>) {
   });
 
   window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router };
-  showProblems(ui, problems, deck.meta.lang);
+  const panel = showProblems(ui, problems, deck.meta.lang);
+  late = (msg) => {
+    problems.push(msg);
+    panel.add(msg);
+  };
   const first = stepper.goto(router.start(), "cut");
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
   // The self-test loads only when asked.

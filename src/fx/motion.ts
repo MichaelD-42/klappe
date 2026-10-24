@@ -19,14 +19,17 @@ export interface CounterOpts {
   from: number;
   to: number;
   label: string;
+  decimals?: number; // places shown, default 0
 }
 
 const TAIL = 24; // bubble tail size in scene units
 const LINE = 3; // bubble stroke width
 
-// The counter's text at progress p: round(lerp(from, to, p)) with the deck language's thousands separators.
-export function counterText(from: number, to: number, p: number, lang = "en"): string {
-  return new Intl.NumberFormat(lang).format(Math.round(from + (to - from) * p));
+// The counter's text at progress p: lerp(from, to, p) rounded to `decimals` places, always that many shown,
+// with the deck language's separators.
+export function counterText(from: number, to: number, p: number, lang = "en", decimals = 0): string {
+  const f = 10 ** decimals;
+  return new Intl.NumberFormat(lang, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(Math.round((from + (to - from) * p) * f) / f);
 }
 
 type Pose = { x: number; y: number; scaleX: number; scaleY: number };
@@ -53,16 +56,20 @@ export function morph(ctx: Ctx, opts: MorphOpts): { play: StepAdder } {
       const [a, b] = [from.getBoundingClientRect(), to.getBoundingClientRect()];
       const dx = (b.left + b.width / 2 - (a.left + a.width / 2)) / k;
       const dy = (b.top + b.height / 2 - (a.top + a.height / 2)) / k;
-      // One factor for both axes (the geometric mean of the size ratios): no stretched text mid-way.
-      const s = a.width && a.height && b.width && b.height ? Math.sqrt((b.width / a.width) * (b.height / a.height)) : 1;
+      // Uniform factors, so text is not stretched. The old shape grows by the smaller size ratio, so it ends inside
+      // the new one; the new one starts at the larger, so it starts inside the old one. Neither spills over the other.
+      const ok = a.width && a.height && b.width && b.height;
+      const [rw, rh] = ok ? [b.width / a.width, b.height / a.height] : [1, 1];
+      const [s, t] = [Math.min(rw, rh), Math.max(rw, rh)];
       const d = motion.step * 2;
       const move = { duration: d, ease: "power2.inOut", immediateRender: false };
-      // The crossfade runs over the middle 70% of the move: each shape shows alone at its end, half and half mid-way.
-      const fade = { duration: d * 0.7, ease: "none", immediateRender: false };
+      // The new shape fades in over the old one, which then fades out: one of them always shows strongly,
+      // never both at half (that washed the text out mid-way).
+      const fade = { duration: d * 0.45, ease: "none", immediateRender: false };
       tl.fromTo(from, p, { x: p.x + dx, y: p.y + dy, scaleX: p.scaleX * s, scaleY: p.scaleY * s, ...move });
-      tl.fromTo(to, { x: q.x - dx, y: q.y - dy, scaleX: q.scaleX / s, scaleY: q.scaleY / s }, { ...q, ...move }, "<");
-      tl.fromTo(from, { autoAlpha: 1 }, { autoAlpha: 0, ...fade }, `<${d * 0.15}`);
-      tl.fromTo(to, { autoAlpha: 0 }, { autoAlpha: 1, ...fade }, "<");
+      tl.fromTo(to, { x: q.x - dx, y: q.y - dy, scaleX: q.scaleX / t, scaleY: q.scaleY / t }, { ...q, ...move }, "<");
+      tl.fromTo(to, { autoAlpha: 0 }, { autoAlpha: 1, ...fade }, `<${d * 0.1}`);
+      tl.fromTo(from, { autoAlpha: 1 }, { autoAlpha: 0, ...fade }, `<${d * 0.35}`);
     },
   };
 }
@@ -137,12 +144,12 @@ export function bubble(
 
 // A big number with a label under it, centred on (x, y), scene-local. run counts from -> to.
 export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTMLElement; caption: HTMLElement } {
-  const { x, y, from, to, label } = opts;
+  const { x, y, from, to, label, decimals = 0 } = opts;
   const box = document.createElement("div");
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
   const num = document.createElement("div");
   num.dataset.kText = "";
-  num.textContent = counterText(from, to, 0, ctx.deck.lang);
+  num.textContent = counterText(from, to, 0, ctx.deck.lang, decimals);
   Object.assign(num.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", fontVariantNumeric: "tabular-nums" });
   const cap = document.createElement("div");
   cap.textContent = label;
@@ -159,7 +166,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTML
         duration: motion.step * 3,
         ease: "none",
         onUpdate(this: gsap.core.Tween) {
-          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang);
+          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang, decimals);
         },
       });
     },

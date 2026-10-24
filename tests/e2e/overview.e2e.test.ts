@@ -83,3 +83,52 @@ test('a repeated scene title shows its section label; a section or scene can set
   expect(r.markers).toEqual(['Intro · Today', 'Why', 'Lab · Today', 'Setup', 'Wrap-up · Today', 'Thanks and questions'])
   await page.close()
 })
+
+// Backgrounds sit outside the world, pinned to the screen; each card shows its scene's own, under the copy.
+test('a scene card shows its background: the section one, the scene own one, or none', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-fullscreen`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.keyboard.press('o')
+  const bgs = await page.evaluate(() =>
+    Object.fromEntries(
+      [...document.querySelectorAll('.k-overlay .k-ov-marker')].map((m) => [
+        m.querySelector('.k-ov-title')!.textContent,
+        m.querySelector<HTMLImageElement>('.k-ov-bg img')?.getAttribute('src')?.split('/').pop() ?? null,
+      ]),
+    ),
+  )
+  expect(bgs['Cover']).toBeNull()
+  expect(bgs['Over the ridge']).toBeTruthy()
+  expect(bgs['Same sky']).toBe(bgs['Over the ridge'])
+  expect(bgs['Its own sky']).toBeTruthy()
+  expect(bgs['Its own sky']).not.toBe(bgs['Over the ridge'])
+  await page.close()
+})
+
+// The section list marks the current section by more than the focus ring or a hover border: a tint and bold text.
+test('the section list marks the current section apart from the others', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=overview-many`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.steps.length - 1, 'cut'))
+  await page.keyboard.press('s')
+  const r = await page.evaluate(() => {
+    const look = (b: Element) => {
+      const s = getComputedStyle(b)
+      return { bg: s.backgroundColor, weight: s.fontWeight }
+    }
+    const items = [...document.querySelectorAll('.k-selector .k-btn')]
+    const cur = items.find((b) => b.getAttribute('aria-current') === 'true')!
+    const other = items.find((b) => b !== cur)!
+    const view = document.querySelector('.k-selector')!.getBoundingClientRect()
+    const box = cur.getBoundingClientRect()
+    const inView = box.top >= view.top && box.bottom <= view.bottom
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    return { cur: look(cur), other: look(other), inView }
+  })
+  expect(r.inView).toBe(true) // the last section of 20: the list opens scrolled to it
+  expect(r.cur.bg).not.toBe(r.other.bg)
+  expect(Number(r.cur.weight)).toBeGreaterThan(Number(r.other.weight))
+  await page.close()
+})

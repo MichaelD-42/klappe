@@ -55,7 +55,7 @@ const scene: SceneModule = {
     const ask = bubble(ctx, { x: MEET - 40, y: FLOOR - 205, text: "[Question]", side: "left" });
     const reply = bubble(ctx, { x: CUSTOMER + 40, y: FLOOR - 205, text: "[Answer]", side: "right" });
     const open = counter(ctx, { x: (MEET + CUSTOMER) / 2, y: 330, from: CARDS, to: 0, label: "Open questions" });
-    const count = ctx.html.lastElementChild; // counter() appends its box last; the shout clears it
+    const count = open.el; // the shout clears it
     // Last, so it sits above the scene. Question, answer and intensity come from scene.md and deck.md.
     const out = shout(ctx, { question: ctx.doc!.steps.find((s) => s.kind === "shout-enter")!.text, answer: ctx.doc!.steps.find((s) => s.kind === "shout-answer")!.text });
     return { title, person, customer, name, figures, stack, cards, pulse, ask, reply, open, count, out };

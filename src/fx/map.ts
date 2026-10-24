@@ -9,7 +9,7 @@ import type { Ctx, Rect, StepAdder } from "../types";
 
 export interface Site {
   id: string;
-  label: string;
+  label?: string; // none: no text, for a deck that places its own labels
   lon: number;
   lat: number;
 }
@@ -74,7 +74,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
   );
   const arcLayer = node(g, "g", {});
 
-  const sites = new Map<string, { at: [number, number]; dot: SVGCircleElement; label: SVGTextElement }>();
+  const sites = new Map<string, { at: [number, number]; dot: SVGCircleElement; label?: SVGTextElement }>();
   for (const s of opts.sites) {
     const at = Number.isFinite(s.lon) && Number.isFinite(s.lat) ? proj([s.lon, s.lat]) : null;
     if (!at) {
@@ -82,14 +82,14 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       continue;
     }
     const dot = node(g, "circle", { cx: at[0], cy: at[1], r: 3.5, style: "fill: var(--k-accent)" });
-    const label = node(g, "text", {
-      x: at[0] + 6,
-      y: at[1] + LABEL_SIZE * 0.35,
-      style: `fill: var(--k-fg); font-family: var(--k-font); font-size: ${LABEL_SIZE}px`,
-    });
-    label.textContent = s.label;
+    const label = s.label
+      ? node(g, "text", { x: at[0] + 6, y: at[1] + LABEL_SIZE * 0.35, style: `fill: var(--k-fg); font-family: var(--k-font); font-size: ${LABEL_SIZE}px` })
+      : undefined;
+    if (label) {
+      label.textContent = s.label!;
+      gsap.set(label, { autoAlpha: 0 });
+    }
     gsap.set(dot, { autoAlpha: 0, scale: 0, transformOrigin: "50% 50%" }); // transform written at load, as seek(0) leaves it
-    gsap.set(label, { autoAlpha: 0 });
     sites.set(s.id, { at, dot, label });
   }
 
@@ -140,17 +140,18 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       const s = get(id);
       if (!s) return;
       // Labels are too small to read at world zoom; only the zoomed site's label shows, so none sits off stage.
-      const others = [...sites.values()].filter((o) => o !== s).map((o) => o.label);
+      const others = [...sites.values()].filter((o) => o !== s).flatMap((o) => (o.label ? [o.label] : []));
       tl.to(s.dot, { autoAlpha: 1, scale: 1, duration: 0.3 });
       if (others.length) tl.to(others, { autoAlpha: 0, duration: 0.3 }, "<");
       const [x, y] = [ctx.rect.x + s.at[0], ctx.rect.y + s.at[1]];
       ctx.camera.to(tl, { x: x - ZOOM.w / 2, y: y - ZOOM.h / 2, ...ZOOM }, { at: "<" });
       strokes(tl, STROKE.zoom);
       zoomed = true;
-      tl.to(s.label, { autoAlpha: 1, duration: motion.step });
+      if (s.label) tl.to(s.label, { autoAlpha: 1, duration: motion.step });
     },
     world(tl) {
-      tl.to([...sites.values()].map((s) => s.label), { autoAlpha: 0, duration: 0.3 });
+      const labels = [...sites.values()].flatMap((s) => (s.label ? [s.label] : []));
+      if (labels.length) tl.to(labels, { autoAlpha: 0, duration: 0.3 });
       ctx.camera.to(tl, ctx.rect, { at: "<" });
       strokes(tl, STROKE.world);
       zoomed = false;

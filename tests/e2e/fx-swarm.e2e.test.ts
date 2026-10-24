@@ -243,3 +243,37 @@ test('bubble show takes a position, like hide', async () => {
   expect(r[2]).toBeGreaterThan(r[1])
   await page.close()
 })
+
+// A wide bar into a taller card: the bar must end inside the card, the card start inside the bar, and mid-way one of the
+// two shows strongly (not both at half, which washed the text out).
+test('a morph fits the old shape inside the new one, and one of them shows strongly mid-way', async () => {
+  const page = await open('?fixture=fx-motion#/a/chain/1')
+  await page.evaluate("import('/src/fx/motion.ts').then((m) => { window.__morph = m.morph })")
+  const r = await page.evaluate(() => {
+    const box = (l: number, t: number, w: number, h: number) => {
+      const d = document.body.appendChild(document.createElement('div'))
+      d.style.cssText = `position:fixed;left:${l}px;top:${t}px;width:${w}px;height:${h}px`
+      return d
+    }
+    const from = box(100, 100, 300, 40)
+    const to = box(700, 300, 160, 140)
+    const m = (window as any).__morph({ html: document.body }, { from, to })
+    const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+    m.play(tl)
+    tl.seek(0.001)
+    const [a0, b0] = [from.getBoundingClientRect(), to.getBoundingClientRect()]
+    const startsInside = b0.width <= a0.width + 0.5 && b0.height <= a0.height + 0.5
+    tl.seek(tl.duration() / 2)
+    const alpha = (e: HTMLElement) => Number(getComputedStyle(e).opacity) * (getComputedStyle(e).visibility === 'visible' ? 1 : 0)
+    const mid = Math.max(alpha(from), alpha(to))
+    tl.seek(tl.duration())
+    const [a, b] = [from.getBoundingClientRect(), to.getBoundingClientRect()]
+    from.remove()
+    to.remove()
+    return { mid, startsInside, fits: a.width <= b.width + 0.5 && a.height <= b.height + 0.5 }
+  })
+  expect(r.fits).toBe(true)
+  expect(r.startsInside).toBe(true)
+  expect(r.mid).toBeGreaterThanOrEqual(0.75)
+  await page.close()
+})

@@ -12,6 +12,12 @@ describe("counterText", () => {
     expect(counterText(128, 0, 1)).toBe("0");
     expect(counterText(0, 2000, 1)).toBe("2,000");
   });
+  it("keeps a fixed number of decimals, so the width does not jump while it counts", () => {
+    expect(counterText(0, 4.2, 1, "en", 1)).toBe("4.2");
+    expect(counterText(0, 4.2, 0, "en", 1)).toBe("0.0");
+    expect(counterText(0, 1, 0.5, "en", 2)).toBe("0.50");
+    expect(counterText(0, 1234.5, 1, "de", 1)).toBe("1.234,5");
+  });
 });
 
 describe("bubbleLayout", () => {

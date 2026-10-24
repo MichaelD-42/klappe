@@ -16,7 +16,7 @@ Task items in `scene.md`. The first step shows the list; each item is one step t
 
 ## `checklist`
 
-In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ show, tick(i) }`.
+In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ el, show, tick(i) }`; `el` is the list's block, for a scene that places or moves it.
 
 ### Options
 

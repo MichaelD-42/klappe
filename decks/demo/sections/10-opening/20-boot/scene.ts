@@ -37,7 +37,8 @@ const scene: SceneModule = {
     const dim = ctx.html.appendChild(document.createElement("div"));
     Object.assign(dim.style, { position: "absolute", inset: "0", background: "color-mix(in srgb, var(--k-bg) 40%, var(--k-blackout))" });
     gsap.set(dim, { autoAlpha: 0 });
-    return { dim, h: crt(ctx, { lines: BOOT.map(([line]) => line) }) };
+    // A soft flash: the power-on keeps the phosphor green instead of a near-white card.
+    return { dim, h: crt(ctx, { lines: BOOT.map(([line]) => line), flash: "soft" }) };
   },
   steps: [
     (tl, { dim, h }: Refs) => {

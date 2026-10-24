@@ -89,3 +89,20 @@ test('autoplay started mid-play holds from the end of the play', async () => {
   expect(ms).toBeGreaterThan(600 + 2500 - 100) // the play, then the full hold
   await page.close()
 }, 30_000)
+
+// A scene's title fades in over the camera's last 0.4 s, not after it lands: the frame is never empty for 0.6 s.
+test('the title starts to fade in 0.4 s before the camera lands', async () => {
+  const page = await open()
+  const r = await page.evaluate(() => {
+    const tl = window.klappe.canvases[0].tl
+    const title = document.querySelector('[data-scene="second"] h2')!
+    const world = window.klappe.canvases[0].world
+    const tweens = tl.getChildren(false, true, false) as gsap.core.Tween[]
+    const fade = tweens.find((t) => t.targets()[0] === title)!
+    // The flight to this scene: the last camera tween that starts before the title's fade.
+    const cam = tweens.filter((t) => t.targets()[0] === world && t.startTime() <= fade.startTime()).at(-1)!
+    return { lead: +(cam.endTime() - fade.startTime()).toFixed(3) }
+  })
+  expect(r.lead).toBe(0.4)
+  await page.close()
+})

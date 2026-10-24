@@ -1,0 +1,86 @@
+/* Speaker view (?speaker=1): a normal page, not the scaled stage. Type scales with the window (vw), with floors
+   and ceilings; the current step is the largest text, the next one a 2-line preview. */
+.k-speaker {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: clamp(24px, 3vw, 64px);
+  padding: clamp(24px, 3vw, 56px) clamp(32px, 3.5vw, 72px);
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font-family: var(--k-font);
+}
+
+.k-sp-now,
+.k-sp-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.k-sp-scene {
+  margin: 0 0 12px;
+  font-size: clamp(20px, 1.9vw, 36px);
+  font-weight: 600;
+  color: var(--k-muted);
+}
+
+.k-sp-text {
+  margin: 0 0 32px;
+  font-size: clamp(32px, 3.6vw, 72px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.k-sp-label {
+  margin: 0 0 8px;
+  font-size: clamp(16px, 1.3vw, 24px);
+  font-weight: 600;
+  color: var(--k-accent);
+}
+
+.k-sp-notes {
+  flex: 1;
+  overflow: auto;
+  font-size: clamp(28px, 2.4vw, 46px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.k-sp-time {
+  margin: 0 0 8px;
+  font-size: clamp(40px, 3.6vw, 72px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.k-sp-progress {
+  margin: 0 0 32px;
+  font-size: clamp(20px, 1.8vw, 34px);
+  color: var(--k-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.k-sp-next {
+  margin: 0;
+  font-size: clamp(22px, 1.9vw, 36px);
+  line-height: 1.35;
+  opacity: 0.85;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.k-sp-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.k-sp-buttons .k-btn {
+  flex: 1;
+  text-align: center;
+}

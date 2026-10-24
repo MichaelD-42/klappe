@@ -35,7 +35,8 @@ const scene: SceneModule = {
       r.map.zoomTo(tl, r.host);
       tl.to(r.zoomLabel, { autoAlpha: 1, duration: 0.6 });
       tl.to(r.members.map((m) => m.body), { strokeWidth: FIG.zoomed, duration: 1.6 }, "zoom");
-      tl.to(r.sites.map((s) => s.arc), { strokeWidth: ARC.zoomed, duration: 1.6 }, "zoom");
+      // The arcs have done their work: they recede, so they do not run through the arriving figures.
+      tl.to(r.sites.map((s) => s.arc), { strokeWidth: ARC.zoomed, opacity: 0.35, duration: 1.6 }, "zoom");
     },
     // The map steps back as the table appears.
     (tl, r: GlobalTeam) => {

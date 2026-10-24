@@ -34,7 +34,7 @@ export const agendaScene: SceneModule = {
     const rows = part?.kind === "agenda" ? part.rows : [];
     const h = title(ctx, ctx.doc!.title);
     const a = agenda(ctx, { rows, x: 160, y: 0, w: 1600 });
-    centre(ctx.html.lastElementChild as HTMLElement); // agenda() appends its block last
+    centre(a.el);
     return { h, a };
   },
   steps: [

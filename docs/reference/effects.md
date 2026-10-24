@@ -151,7 +151,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `rect` | `{ x, y, w, h }` | required | the whole globe, fitted into this rect |
-| `sites` | `{ id, label, lon, lat }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out |
+| `sites` | `{ id, label?, lon, lat }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out. Without `label` the map draws no text for it, for a deck that places its own labels |
 | `arcs` | `{ from, to }[]` | none | arcs created at load; `arc` then only draws them |
 
 ### Step adders
@@ -208,6 +208,8 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
+
+The handle's `el` is the figure's root group, for a scene that dims or moves it (`tl.to(f.el, { opacity: 0.3 })`).
 
 ### Limits
 
@@ -316,7 +318,7 @@ build: (ctx) => iconTile(ctx, "lightbulb", { x: 300, y: 500, tone: "accent" }),
 steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 ```
 
-`iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, `"accent"`, `"phosphor"`, `"phosphor-amber"` or a full `"--k-accent"`; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
+`iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, short (`"accent"`, `"ok"`, `"warn"`) or full (`"--k-accent"`). Prefer the colour tokens: the CRT ones (`"phosphor"`, `"phosphor-amber"`) stay bright in every theme and wash out on a light stage; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
 
 ## `iconGlyph`
 
@@ -352,6 +354,7 @@ steps: [(tl, img) => img.show(tl)],
 | `fit` | `"contain"`, `"cover"` | `"contain"` | `cover` fills the rect and crops |
 | `kenBurns` | `true` or `{ from?, to? }` | none | a slow push on `show`; `true` is scale 1 to 1.08 with a small drift. Your own poses are `{ scale, x, y }`; a drift stays inside the push's overscan. Reduced motion leaves it out |
 | `scrim` | number 0 to 1 | none | a `--k-scrim` layer over the picture (black, white in a light theme); use 0.6 or more for text on top |
+| `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none (flat) | the scrim covers only that side: full over the 45% of the frame there, clear by 85%. Keep the text inside that 45%; the rest of the picture keeps its light |
 
 ### Step adders
 
@@ -410,6 +413,7 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | `before`, `after` | `{ href, alt }` | required | the two pictures; a missing one shows IMAGE MISSING and a deck problem, as `image` does |
 | `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
 | `scrim` | number | none | 0 to 1, a `--k-scrim` layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
+| `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none | as for `image`: the scrim on that side only |
 
 | Handle | Step |
 | --- | --- |
@@ -595,7 +599,7 @@ build(ctx) { /* … */ return { doc, a: morph(ctx, { from: doc, to: fact }), b: 
 steps: [(tl, { doc }) => tl.to(doc, { autoAlpha: 1, duration: 0.6 }), (tl, { a }) => a.play(tl), (tl, { b }) => b.play(tl)],
 ```
 
-`morph(ctx, { from, to })` takes two elements, HTML or SVG (`60-motion/20-shape-morph`). `play(tl)` moves `from` onto `to` over 1.2 s (`power2.inOut`) and crossfades over the middle 70%. Both scale by one factor (the geometric mean of the size ratios), so text is never stretched; a transform you set yourself is kept. `to` is hidden until `play`. Build `morph` after both elements are in place: positions are measured when the step is added.
+`morph(ctx, { from, to })` takes two elements, HTML or SVG (`60-motion/20-shape-morph`). `play(tl)` moves `from` onto `to` over 1.2 s (`power2.inOut`). `to` fades in first, over `from`, then `from` fades out, so one of them always shows strongly. Each scales uniformly, so text is never stretched: `from` by the smaller size ratio, so it ends inside `to`, and `to` from the larger, so it starts inside `from`. A transform you set yourself is kept. `to` is hidden until `play`. Build `morph` after both elements are in place: positions are measured when the step is added.
 
 ## `bubble`
 
@@ -625,7 +629,7 @@ down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions (s
 steps: [(tl, { down }) => down.run(tl)],
 ```
 
-`counter(ctx, { x, y, from, to, label })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use English thousands separators.
+`counter(ctx, { x, y, from, to, label, decimals? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
 
 ## `scramble`
 
@@ -644,7 +648,7 @@ steps: [(tl, s) => s.run(tl)],
 
 ## `counterText`
 
-`counterText(from, to, p)` gives the counter's text at progress `p`: `round(from + (to - from) * p)` with thousands separators. `counterText(0, 2000, 0.5)` is `"1,000"`.
+`counterText(from, to, p, lang?, decimals?)` gives the counter's text at progress `p`: `from + (to - from) * p` rounded to `decimals` places (default 0), with the language's separators. `counterText(0, 2000, 0.5)` is `"1,000"`; `counterText(0, 4.2, 1, "en", 1)` is `"4.2"`.
 
 ## Transitions
 
@@ -682,4 +686,4 @@ const section: SectionModule = { transition: "shatter", transitionOptions: { sha
 
 ## `transitionCrt`
 
-Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green.
+Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "soft"` opens the new canvas less bright (see [crt](elements/crt.md)).

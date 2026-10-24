@@ -56,3 +56,30 @@ test('the worldMap handle exposes site points and arc paths, and arc() takes a p
   expect(r.start).toBe(1.5)
   await browser.close()
 }, 30_000)
+
+// A site without a label draws no text: a deck that sets its own labels needs no empty strings.
+test('a site without a label draws no text, and zoomTo and world still work', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-map`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const imp = new Function('p', 'return import(p)') as (p: string) => Promise<any>
+    const { worldMap } = await imp('/src/fx/map.ts')
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    document.querySelector('svg')!.append(svg)
+    const problems: string[] = []
+    const ctx = { svg, html: document.body, rect: { x: 0, y: 0, w: 1920, h: 1080 }, camera: { to() {} }, problem: (p: string) => problems.push(p) }
+    const map = worldMap(ctx, { rect: { x: 0, y: 0, w: 1600, h: 900 }, sites: [{ id: 'a', lon: 13.4, lat: 52.5 }, { id: 'b', label: 'B', lon: -74, lat: 40.7 }] })
+    const tl = new (window.klappe.canvases[0].tl.constructor as any)({ paused: true })
+    map.zoomTo(tl, 'a')
+    map.world(tl)
+    tl.seek(tl.duration())
+    const texts = [...svg.querySelectorAll('text')].map((t) => t.textContent)
+    svg.remove()
+    return { problems, texts }
+  })
+  expect(r).toEqual({ problems: [], texts: ['B'] })
+  await browser.close()
+})

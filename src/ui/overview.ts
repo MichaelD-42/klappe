@@ -1,13 +1,13 @@
 import type { CanvasRuntime } from "../render/world";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
-import { button, OverlayPanel } from "./selector";
+import { button, OverlayPanel } from "./panel";
 
 // Scene card thumbnail, in stage px.
 const THUMB = { w: 288, h: 162 };
 
 // A copy of the world at its end state, with no camera transform, so the whole canvas shows.
-// shortcut: backgrounds are pinned to the screen, outside the world, so the copy has none; add them if the overview needs them.
+// Backgrounds are pinned to the screen, outside the world: each card adds its scene's own (backdrop).
 // The live timeline is seeked to its end and back in the same tick: nothing on stage changes.
 // Events on, so text that effects write from onUpdate (data-k-text) shows its end state and comes back.
 function endState(c: CanvasRuntime): HTMLElement {
@@ -16,12 +16,27 @@ function endState(c: CanvasRuntime): HTMLElement {
   const copy = c.world.cloneNode(true) as HTMLElement;
   c.tl.seek(time, false);
   // The clone must not repeat ids of the live DOM. Shortcut: this breaks url(#id) refs inside the clone; rename them if an effect needs those.
+  return quiet(copy, { transform: "none" });
+}
+
+// A copy that shows, keeps no ids and takes no input.
+function quiet(copy: HTMLElement, style: Partial<CSSStyleDeclaration> = {}): HTMLElement {
   copy.removeAttribute("id");
   for (const e of copy.querySelectorAll("[id]")) e.removeAttribute("id");
-  Object.assign(copy.style, { transform: "none", opacity: "1", visibility: "visible" });
+  Object.assign(copy.style, { opacity: "1", visibility: "visible", ...style });
   copy.inert = true;
   copy.setAttribute("aria-hidden", "true");
   return copy;
+}
+
+// A scene's background, the full 1920x1080 screen scaled to the card. A looping video or an aurora shows
+// as its still first frame (a cloned canvas is blank).
+function backdrop(bg: HTMLElement): HTMLElement {
+  const box = document.createElement("div");
+  box.className = "k-ov-bg";
+  box.append(quiet(bg.cloneNode(true) as HTMLElement, { transform: "none" }));
+  box.style.transform = `scale(${THUMB.w / 1920})`;
+  return box;
 }
 
 // One row per section: its title, then a card per scene showing that scene's frame of the canvas at its end state.
@@ -70,6 +85,8 @@ export class Overview extends OverlayPanel {
         const dy = (THUMB.h - r.h * fit) / 2 - r.y * fit;
         scaler.style.transform = `translate(${dx}px, ${dy}px) scale(${fit})`;
         scaler.append(copies.get(c)!.cloneNode(true));
+        const bg = c.backgrounds[sc.id];
+        if (bg) thumb.append(backdrop(bg));
         thumb.append(scaler);
         const label = sc.module?.overviewLabel ?? (repeated(sc.title) ? `${sectionLabel(s)} · ${sc.title}` : sc.title);
         const m = button("", () => this.pick(() => this.go(first)), "k-ov-marker");

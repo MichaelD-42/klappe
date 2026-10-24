@@ -221,3 +221,25 @@ test('timer show takes a position; the start follows it', async () => {
   expect(r).toEqual({ at: 0, startedWithAt: '', end: 2 })
   await page.close()
 })
+
+// hide: after its step the timer is gone and stopped, as if its scene were left; t no longer reaches it.
+test('hide fades the timer out and stops it; t does nothing after; the label is styleable', async () => {
+  const page = await open('', '#/a/cycle/1')
+  const read = () =>
+    page.evaluate(() => {
+      const root = document.querySelector<HTMLElement>('[data-scene$="hide"] [data-k-timer]')!
+      return { text: root.querySelector('[data-k-timer-text]')!.textContent, visible: getComputedStyle(root).visibility, label: root.querySelector('[data-k-timer-label]')?.textContent }
+    })
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(1600 + 20_500)
+  expect(await read()).toEqual({ text: '9:40', visible: 'visible', label: 'Pairs' })
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(1000)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(2000)
+  expect(await read()).toMatchObject({ text: '10:00', visible: 'hidden' })
+  await page.keyboard.press('t')
+  await page.clock.runFor(5000)
+  expect(await read()).toMatchObject({ text: '10:00', visible: 'hidden' })
+  await page.close()
+})

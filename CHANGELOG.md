@@ -6,6 +6,14 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `figure`, `timer` and `checklist` handles expose `el`; a `worldMap` site's `label` is optional (no label, no text).
+- `scrimSide` on `image()`, `wipe()` and backgrounds: the scrim covers one side only, so the rest of the picture keeps its light.
+- `ctx.onStep` events carry `next`, the scene of the following step.
+- `crt` and the `crt` transition: `flash: "soft"`, a gentler power-on that keeps the phosphor colour instead of flashing near white.
+- `mesh3d`: `brightness` lightens or darkens the mood colours, for a dark frame, without a CSS filter.
+- `timer`: `hide(tl, at?)` fades it out and stops it; the label carries `data-k-timer-label` for a deck's `deck.css`.
+- `terminal` `wrap` also breaks after a `/`, so a long path splits between its parts; `wrapBreaks` is the helper.
+- `counter`: `decimals`, how many places it shows while it counts.
 - Five built-in themes: `sorbet` (dark pastel), `lavender` (light pastel), `daylight` (light, crisp), `forest` (dark green and gold) and `ink` (black and lime). Each passes the contrast floors and a colour-blind check of its chart series.
 - `--k-scrim`: the colour a picture's `scrim` lays over it; white in a light theme, so dark text stays readable over a picture.
 - Bundled fonts (SIL OFL, from npm, offline): Inter in calm, Space Grotesk in bold, JetBrains Mono for code and terminal in both. They load before the deck renders, so text measures the same on every machine and in the PDF. Digits are fixed-width on the stage; code has no ligatures.
@@ -35,13 +43,16 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `SceneModule.auto`: per-step auto advance after N seconds.
 - `SceneModule.overviewLabel` and `SectionModule.overviewLabel`; a scene title that repeats in the deck shows as `<section> · <title>` in the overview.
 - An optional `decks/<id>/deck.css` (fonts and component classes), loaded after the theme.
-- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load when their scene becomes current.
+- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load one step before their scene, so they are ready when it shows.
 - `agenda`: `move(tl, toRow, at)` slides the marker and the colours to another row; `slide: false`; the handle has `el` and `rows`.
 - `terminal`: a `wrap` option for long lines; `show(tl, at?)`.
 - Handles expose their elements: `iconTile` and `icon` (`el`), `counter` (`el`, `caption`), `image` (`el`), `chart` (`bars`, the bar rects in data order).
 
 ### Changed
 
+- Overview cards show each scene's background, and the section list marks the current section with a tint and bold text and opens scrolled to it.
+- Speaker view: the current step is the largest text, notes are larger, type scales with the window, an "N / M" shows the place, the next step is a 2-line preview, and the Notes heading hides when there are none.
+- A scene's title fades in over the camera's last 0.4 s instead of after it lands, so the frame is not empty for 0.6 s and the step's content follows sooner.
 - Charts draw rising slope lines and waterfall increases in `--k-ok`, and the Sample data label and DATA MISSING box in `--k-warn`; `lineArt` glow turns `--k-warn`. They used the CRT's `--k-phosphor` tokens, which are too pale on a light theme. In calm, `--k-warn` is the same amber; `--k-ok` is a deeper green.
 - The calm and bold themes use the bundled fonts instead of the system font: text widths, and so wrapping, change a little.
 - Shiki loads only the grammars a deck uses: the languages of its code fences, and the `lang` values its `scene.ts` code passes to `code()`. Write `lang` as a string literal: a computed one shows plain and reports a deck problem. The demo fetches one grammar instead of nine (about 600 KB).
@@ -66,6 +77,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `morph`: the old shape ends inside the new one and the new one starts inside the old, so text no longer spills over its card mid-way; the new shape fades in before the old one fades out, so the middle frame is not two half-transparent shapes.
+- `shatter`: the black gaps between the shards fade as they start to fall, so they fall over the scene instead of over a black box (and its edge no longer shows as a strip).
+- A `ctx.problem` call made after load (a helper measuring text once its font is in, or during a play) shows in the on-screen problems list, not only in the self-test.
 - The zoom transition no longer pulls the old canvas back just before the target.
 - A window with no size at load no longer breaks callouts ("has no size to measure").
 - An open overview or section list closes when the speaker view, history or autoplay moves the stage.

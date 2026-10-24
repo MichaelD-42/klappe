@@ -93,7 +93,7 @@ npm run dev                                        # http://localhost:5173
 
 ## Presenting
 
-Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step, its notes, the next step and a clock.
+Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step in large type, its notes, the next step, a clock and where you are (`12 / 40`).
 
 | Key | Action |
 | --- | --- |

@@ -212,8 +212,10 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     background: `radial-gradient(circle at ${o.impact.x}px ${o.impact.y}px, var(--k-fg) 0, color-mix(in srgb, var(--k-fg) 85%, transparent) 6%, color-mix(in srgb, var(--k-accent) 25%, transparent) 22%, transparent 45%)`,
   });
 
-  // Near-black gaps between the shards, as in the spike.
+  // Near-black gaps between the shards, as in the spike: they show as the shards part, then fade as they fall,
+  // so the shards fall over the scene, not over a black box.
   const gaps = document.createElement("div");
+  gaps.className = "k-shatter-gaps";
   abs(gaps, { background: "var(--k-blackout)" });
   const field = document.createElement("div");
   abs(field, { perspective: "1000px" });
@@ -277,6 +279,7 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     tl.set([...hide, svg], { autoAlpha: 0 }, t0);
     tl.fromTo([gaps, ...shards.map((s) => s.el)], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0, immediateRender: false }, t0);
     tl.fromTo(flash, { opacity: 0.9 }, { opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, t0);
+    tl.to(gaps, { autoAlpha: 0, duration: 0.35, ease: "power1.in" }, t0 + 0.12); // after the shards part
     tl.to(field, shake(16, 6), t0);
     for (const s of shards) {
       const [ux, uy] = [(s.cx - o.impact.x) / (s.d || 1), (s.cy - o.impact.y) / (s.d || 1)];
@@ -308,7 +311,6 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
         }, at);
     }
     const end = tl.duration(); // the slowest shard is gone
-    tl.to(gaps, { autoAlpha: 0, duration: 0.4 }, end - 0.4);
     tl.set(shards.map((s) => s.el), { autoAlpha: 0 }, end);
   };
   return { crack: (tl) => pulse(tl, 1, 22, true), crack2: (tl) => pulse(tl, 0.7, 12, false), fall };

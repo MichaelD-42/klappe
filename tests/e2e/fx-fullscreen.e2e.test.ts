@@ -126,7 +126,8 @@ const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b
 // has dark text, so the darkest pixel is its worst case: the text must hold against both.
 for (const theme of ['calm', 'daylight'])
 for (const [hash, sel] of [
-  ['#/a/scrim/1', '[data-scene$="scrim"] h2, [data-scene$="scrim"] p'],
+  ['#/a/scrim/1', '[data-scene="scrim"] h2, [data-scene="scrim"] p'],
+  ['#/a/side-scrim/1', '[data-scene$="side-scrim"] h2, [data-scene$="side-scrim"] p'],
   ['#/b/first/1', '[data-scene$="first"] h2, [data-scene$="first"] p[data-step="1"]'],
 ])
 test(`text over the scrim at ${hash} in ${theme} is at least 14 px at 1366 and keeps 4.5:1 against the brightest and darkest pixel behind it`, async () => {
@@ -321,3 +322,15 @@ test('the zoom dives into a canvas with its pinned background, and the shatter b
   expect(await page.evaluate(() => window.klappe.errors)).toEqual([])
   await page.close()
 }, 30_000)
+
+// scrimSide: the layer is a gradient, full on that side and clear on the other, not a flat dim over the whole picture.
+test('a side scrim dims only its side of the picture', async () => {
+  const page = await open('#/a/side-scrim/1')
+  const bg = await page.evaluate(() => {
+    const img = document.querySelector('[data-scene="side-scrim"] img')!
+    const layer = [...img.parentElement!.children].find((e) => e !== img) as HTMLElement
+    return getComputedStyle(layer).backgroundImage
+  })
+  expect(bg).toMatch(/^linear-gradient\(to top,/)
+  await page.close()
+})

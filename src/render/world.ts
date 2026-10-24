@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { addCameraMove, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
 import { code, LANGS } from "../fx/code";
-import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, video, type ImageHandle } from "../fx/media";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
@@ -24,6 +24,8 @@ export interface CanvasRuntime {
   stepListeners: Parameters<Ctx["onStep"]>[0][];
   // ctx.problem messages; the self-test adds them to the deck's problems.
   problems: string[];
+  // Each scene's pinned background, by scene id, for the overview's cards.
+  backgrounds: Record<string, HTMLElement>;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -64,6 +66,8 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
     c.values(tl);
   };
 }
+
+const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
 // Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
@@ -313,11 +317,11 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     } else if (LOOP_VIDEO.test(bg.href)) {
       const v = safe(`${source}: background`, () => loopVideo(full, { href: bg.href!, alt: bg.alt }));
       if (v) loop = { play: () => void v.play().catch(() => {}), pause: () => v.pause() }; // a blocked play keeps the first frame
-    } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim }));
+    } else img = safe(`${source}: background`, () => image(full, { href: bg.href!, alt: bg.alt ?? "", fit: "cover", scrim: bg.scrim, scrimSide: bg.scrimSide }));
   }
   if (loop && bg.scrim) {
     const s = d.appendChild(el("div", ""));
-    Object.assign(s.style, { position: "absolute", inset: "0", background: "var(--k-scrim)", opacity: String(bg.scrim) });
+    Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(bg.scrimSide), opacity: String(bg.scrim) });
   }
   if (d.children.length) gsap.set(d.children, { autoAlpha: 1 });
   gsap.set(d, { autoAlpha: 0 });
@@ -332,7 +336,8 @@ export function renderWorld(
   root: HTMLElement,
   // still: videos and auroras in backgrounds do not move (reduced motion, the self-test).
   // svg: the text of animated background .svg files, by media key (svgBackgrounds).
-  opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string> } = {},
+  // onProblem: also told of each ctx.problem, so one raised after load reaches the on-screen list.
+  opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string>; onProblem?: (msg: string) => void } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
   const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
@@ -392,7 +397,7 @@ export function renderWorld(
         camera,
         files,
         onStep: (fn) => stepListeners.push(fn),
-        problem: (msg) => problems.push(msg),
+        problem: (msg) => (problems.push(msg), opts.onProblem?.(msg)),
         reducedMotion: opts.reducedMotion,
         deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
       };
@@ -456,7 +461,11 @@ export function renderWorld(
         return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
-    return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems };
+    const backgrounds = Object.fromEntries(sections.flatMap((s) => s.scenes).flatMap((sc) => {
+      const bg = perScene.get(sc)?.bg;
+      return bg ? [[sc.id, bg.el]] : [];
+    }));
+    return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems, backgrounds };
   });
 
   // Pass 2: timelines in step-list order (deck order), one label 'e:<global index>' after each step.
@@ -471,7 +480,8 @@ export function renderWorld(
           const start = tl.duration();
           if (i === 0) {
             ctx.camera.to(tl, ctx.rect);
-            if (title) tl.to(title, { autoAlpha: 1, duration: motion.step });
+            // Over the flight's last 0.4 s, so the frame is never empty after it lands; not before the step (a cut).
+            if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
