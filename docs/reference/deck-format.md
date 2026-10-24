@@ -93,7 +93,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
 - `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
-- `ctx.problem(msg)` reports a deck problem. One reported after load (once a web font is in, or while a step plays) joins the on-screen list too. `ctx.onStep(fn)` hears every move; video uses it to play and pause.
+- `ctx.problem(msg)` reports a deck problem. One reported after load (once a web font is in, or while a step plays) joins the on-screen list too. `ctx.onStep(fn)` hears every move, as `{ play, span, scene, next }`: `next` is the scene of the step after it, for a helper that gets ready one step early. Video uses it to play, pause and load.
 
 ### Examples
 
@@ -153,7 +153,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 // A video box has a thin frame and its title as a caption underneath, so it reads as a video even offline.
 // fallback: an image in media/ that an online video shows when there is no network (see scene.md).
 // A click into a YouTube or Vimeo player reaches the player; klappe then takes keyboard focus back, so the clicker keeps working.
-// A YouTube or Vimeo player loads when its scene becomes the current one, not at deck start. Until then the box shows the
+// A YouTube or Vimeo player loads one step before its scene, so it is ready when the scene shows, not at deck start. Until then the box shows the
 // fallback image (or stays black). In a section.ts build() (no scene), the player loads at deck start.
 // image() also returns el, the picture's box (or the IMAGE MISSING box).
 // An animated GIF, APNG or WebP loops by itself and needs no option: the self-test compares styles and marked text, not pixels.

@@ -62,7 +62,8 @@ export interface Ctx {
   // Called on every move. span: this step's start and end time on this canvas's timeline,
   // or null when the current step is on another canvas. play: the step plays (not a cut).
   // scene: the current step's scene id.
-  onStep(fn: (e: { play: boolean; span: [number, number] | null; scene: string | null }) => void): void;
+  // next: the scene of the step after this one (null at the end), for a helper that gets ready one step early.
+  onStep(fn: (e: { play: boolean; span: [number, number] | null; scene: string | null; next?: string | null }) => void): void;
   // Records a deck problem: shown on screen and fails the self-test.
   problem(msg: string): void;
   // The viewer asked for reduced motion: effects leave out decorative motion (Ken Burns).

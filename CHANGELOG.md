@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `ctx.onStep` events carry `next`, the scene of the following step.
 - `crt` and the `crt` transition: `flash: "soft"`, a gentler power-on that keeps the phosphor colour instead of flashing near white.
 - `mesh3d`: `brightness` lightens or darkens the mood colours, for a dark frame, without a CSS filter.
 - `timer`: `hide(tl, at?)` fades it out and stops it; the label carries `data-k-timer-label` for a deck's `deck.css`.
@@ -40,7 +41,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `SceneModule.auto`: per-step auto advance after N seconds.
 - `SceneModule.overviewLabel` and `SectionModule.overviewLabel`; a scene title that repeats in the deck shows as `<section> · <title>` in the overview.
 - An optional `decks/<id>/deck.css` (fonts and component classes), loaded after the theme.
-- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load when their scene becomes current.
+- Video: an image in the same list item is the offline fallback; `?offline=1` forces it. YouTube and Vimeo players load one step before their scene, so they are ready when it shows.
 - `agenda`: `move(tl, toRow, at)` slides the marker and the colours to another row; `slide: false`; the handle has `el` and `rows`.
 - `terminal`: a `wrap` option for long lines; `show(tl, at?)`.
 - Handles expose their elements: `iconTile` and `icon` (`el`), `counter` (`el`, `caption`), `image` (`el`), `chart` (`bars`, the bar rects in data order).

@@ -209,8 +209,8 @@ test('the image handle exposes its box as el', async () => {
   await page.close()
 })
 
-// An embed loads only when its scene is the current one: a deep link elsewhere makes no iframe.
-test('YouTube and Vimeo iframes are created only when their scene becomes current', async () => {
+// An embed loads one step before its scene, so the player is ready when the scene shows; a deep link elsewhere makes no iframe.
+test('YouTube and Vimeo iframes are created one step before their scene', async () => {
   const page = await open('?fixture=fx-media#/a/image/1')
   for (const host of ['https://www.youtube.com/**', 'https://player.vimeo.com/**']) await page.route(host, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
   const frames = () => page.evaluate(() => [...document.querySelectorAll('iframe[data-k-video]')].map((f) => f.closest('[data-scene]')!.getAttribute('data-scene')!.split('/').pop()))
@@ -223,6 +223,13 @@ test('YouTube and Vimeo iframes are created only when their scene becomes curren
       const s = window.klappe.stepper as any
       return s.goto(s.steps.findIndex((x: { scene: string }) => x.scene.endsWith(n)), 'cut')
     }, name)
+  // One step early: on the last step of the scene before, the next scene's player starts to load.
+  await page.evaluate(() => {
+    const s = window.klappe.stepper as any
+    const i = s.steps.findIndex((x: { scene: string }) => x.scene.endsWith('youtube')) - 1
+    return s.goto(i, 'cut')
+  })
+  expect(await frames()).toEqual(['youtube'])
   await go('youtube')
   expect(await frames()).toEqual(['youtube'])
   expect(await page.evaluate(() => !!document.querySelector('[data-scene$="youtube"] [data-k-media] img'))).toBe(false)

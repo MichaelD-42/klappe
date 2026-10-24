@@ -274,10 +274,10 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     poster.setAttribute("data-k-ignore", "");
     b.append(poster);
     if (!full) b.append(caption);
-    // The player loads when its scene becomes current, not at deck load: a deck with many embeds
-    // otherwise loads every player on start, also on a deep link to another scene.
+    // The player loads one step before its scene, so it is ready when the scene shows; not at deck load: a deck
+    // with many embeds otherwise loads every player on start, also on a deep link to another scene.
     const load = () => !el.isConnected && poster.replaceWith(el);
-    if (ctx.scene) ctx.onStep(({ scene }) => void (scene === ctx.scene && load()));
+    if (ctx.scene) ctx.onStep(({ scene, next }) => void ((scene === ctx.scene || next === ctx.scene) && load()));
     else load();
   } else {
     el.src = src;
