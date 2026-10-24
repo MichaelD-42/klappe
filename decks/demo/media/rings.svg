@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <!-- Theme tokens work here: klappe inlines an animated SVG, so the k tokens come from the deck's theme. -->
+  <style>
+    .ring { fill: none; stroke: var(--k-line); stroke-width: 2; opacity: 0.5; transform-origin: 1440px 620px; }
+    .lit { stroke: var(--k-accent); stroke-dasharray: 60 40; opacity: 0.35; }
+    .a { animation: turn 60s linear infinite; }
+    .b { animation: turn 90s linear infinite reverse; }
+    .c { animation: turn 140s linear infinite; }
+    @keyframes turn { to { transform: rotate(360deg); } }
+  </style>
+  <circle class="ring a lit" cx="1440" cy="620" r="220" />
+  <circle class="ring b" cx="1440" cy="620" r="340" stroke-dasharray="4 18" />
+  <circle class="ring c lit" cx="1440" cy="620" r="480" />
+  <circle class="ring a" cx="1440" cy="620" r="640" stroke-dasharray="120 60" />
+</svg>

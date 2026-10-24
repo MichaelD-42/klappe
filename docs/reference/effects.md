@@ -214,6 +214,10 @@ steps: [(tl, r) => drawOn(r.plain)(tl), (tl, r) => drawOn(r.thin.children, { dur
 
 A shape with `vector-effect="non-scaling-stroke"` is measured when the step is added, so do not tween an SVG ancestor's transform before the draw. A zero-length stroke fades in instead.
 
+## `cleanSvg`
+
+`cleanSvg(svg, animated)` strips what an exported SVG must not bring into the deck: scripts, `foreignObject`, images, handlers (`on…`), `javascript:` and links to other files (only `#id` stays). `lineArt` calls it with `animated` false, which also drops `<style>` and every animation. An animated background calls it with `animated` true: `<style>` stays (scoped in a shadow root) without `@import` or outside `url()`, and SMIL animations stay, except any that animates a link or a handler.
+
 ## `icon`
 
 Catalog: section `140-icons` (`#/icons/icons/1`). Any Lucide icon, drawn on and lit.

@@ -6,7 +6,7 @@ import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
 import { loadTransitions } from "./fx/transitions";
 import { loadParts } from "./render/parts";
-import { renderWorld } from "./render/world";
+import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { Stepper } from "./stepper";
 import { applyTheme, motion } from "./theme";
@@ -32,22 +32,24 @@ if (query.get("speaker") === "1") {
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
 } else {
-  // Effects build synchronously at load: the ones the deck may not use load first (Markdown parts, Shiki, transitions).
-  await Promise.all([
+  // Effects build synchronously at load: the ones the deck may not use load first (Markdown parts, Shiki,
+  // transitions), and the text of animated background SVG files.
+  const [, , svg] = await Promise.all([
     loadParts(deck, query.has("fixture")),
     loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
+    svgBackgrounds(deck),
   ]);
-  startDeck();
+  startDeck(svg);
 }
 
-function startDeck() {
+function startDeck(svg: Record<string, string>) {
   const { stage, ui, worlds } = mountStage(document.body);
   // Reduced motion only turns camera flights into cuts; ?instant=1 turns every play into a seek.
   // ?reducedmotion=0 overrides the system setting: a presenter laptop with animations off still plays the deck in full.
   const flag = query.get("reducedmotion");
   const reducedMotion = flag === "1" || (flag !== "0" && matchMedia("(prefers-reduced-motion: reduce)").matches);
   problems.push(...applyTheme(deck, query.get("theme")));
-  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest") });
+  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
 

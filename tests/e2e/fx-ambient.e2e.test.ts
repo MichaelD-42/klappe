@@ -8,6 +8,7 @@ afterAll(() => browser?.close())
 
 const MISSING = 'sections/30-c/20-no-loop/scene.md: background: VIDEO MISSING: media/harbour.mp4 — Waves in a harbour at night'
 const EMPTY = 'sections/30-c/30-empty/scene.md: background: needs an href or animate'
+const BAD_SVG = 'sections/40-d/30-bad-svg/scene.md: background: media/bad.svg animates but is not valid SVG; shown as a still picture'
 
 // play() and pause() are stubbed: the stand-in video does not decode, and a test reads `playing` instead.
 async function open(hash: string, flags = ''): Promise<Page> {
@@ -48,11 +49,11 @@ const go = (page: Page, hash: string) =>
 test.each([
   { w: 1920, h: 1080 },
   { w: 1366, h: 768 },
-])('walk: the ambient fixture walks clean at $w x $h, but for the missing video and the empty background', async (vp) => {
+])('walk: the ambient fixture walks clean at $w x $h, but for the missing video, the empty background and the bad SVG', async (vp) => {
   const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-ambient`, vp)
   expect(r.errors).toEqual([])
   expect(r.checks.filter((c) => !c.ok)).toEqual([])
-  expect(r.problems).toEqual([MISSING, EMPTY])
+  expect(r.problems).toEqual([MISSING, EMPTY, BAD_SVG])
 }, 120_000)
 
 test('a video background is muted, loops, covers the stage and sits outside the timeline', async () => {
@@ -147,3 +148,69 @@ for (const theme of ['calm', 'bold'])
     }
     await page.close()
   }, 30_000)
+
+// Section D: what the deck's own background and the animated SVG file are doing.
+const dState = (page: Page) =>
+  page.evaluate(() => {
+    const own = document.querySelector<HTMLElement>('[data-k-background="own"] [data-own]')!.getAnimations()[0].playState
+    const host = document.querySelector<HTMLElement>('[data-k-background="svg-loop"] [data-k-svg-loop]')!
+    const svg = host.shadowRoot!.querySelector('svg')!
+    return { own: own === 'running', svg: !svg.animationsPaused() }
+  })
+
+test('a background the deck draws and an animated SVG file play only while on screen', async () => {
+  const page = await open('#/d/own/1')
+  expect(await dState(page)).toEqual({ own: true, svg: false })
+  await go(page, '#/d/svg-loop/1')
+  expect(await dState(page)).toEqual({ own: false, svg: true })
+  await go(page, '#/c/plain/1')
+  expect(await dState(page)).toEqual({ own: false, svg: false })
+  await page.close()
+}, 60_000)
+
+test('the deck\'s own and SVG backgrounds stay still with reduced motion', async () => {
+  const page = await open('#/d/own/1', '&reducedmotion=1')
+  expect(await dState(page)).toEqual({ own: false, svg: false })
+  await go(page, '#/d/svg-loop/1')
+  expect(await dState(page)).toEqual({ own: false, svg: false })
+  await page.close()
+}, 60_000)
+
+test('an animated SVG file keeps its animations and drops scripts, handlers, outside links and foreign content', async () => {
+  const page = await open('#/d/svg-loop/1')
+  const r = await page.evaluate(() => {
+    const root = document.querySelector<HTMLElement>('[data-k-background="svg-loop"] [data-k-svg-loop]')!.shadowRoot!
+    const svg = root.querySelector('svg')!
+    const css = [...root.querySelectorAll('style')].map((s) => s.textContent).join('')
+    return {
+      hacked: (window as any).hacked ?? null,
+      script: !!root.querySelector('script'),
+      onload: svg.hasAttribute('onload'),
+      foreign: !!root.querySelector('foreignObject'),
+      set: !!root.querySelector('set'),
+      animate: !!root.querySelector('animate'),
+      keyframes: css.includes('@keyframes spin'),
+      outside: /evil\.test/.test(css),
+      // Its styles stay in the shadow root: the page has no rule for .r.
+      leaked: [...document.styleSheets].some((s) => [...s.cssRules].some((r) => r.cssText.startsWith('.r'))),
+    }
+  })
+  expect(r).toEqual({ hacked: null, script: false, onload: false, foreign: false, set: false, animate: true, keyframes: true, outside: false, leaked: false })
+  await page.close()
+})
+
+// The demo's rings.svg uses var(--k-line) in its own <style>: the theme token reaches into the shadow root.
+test('an inlined SVG takes the theme tokens', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/#/fullscreen/svg-loop/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(() => {
+    const ring = document.querySelector<HTMLElement>('[data-k-svg-loop]')!.shadowRoot!.querySelector('.ring:not(.lit)')!
+    const line = getComputedStyle(document.documentElement).getPropertyValue('--k-line').trim()
+    const probe = Object.assign(document.createElement('div'), { style: `color: ${line}` })
+    document.body.append(probe)
+    return { stroke: getComputedStyle(ring).stroke, line: getComputedStyle(probe).color }
+  })
+  expect(r.stroke).toBe(r.line)
+  await page.close()
+})

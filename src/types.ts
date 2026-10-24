@@ -83,7 +83,9 @@ export type StepFn = (tl: gsap.core.Timeline, refs: any, ctx: Ctx) => void;
 // from the first scene that shows it (pictures only).
 export interface Background {
   href?: string; // a picture, or a .mp4 or .webm video that plays muted in a loop
-  animate?: "aurora"; // instead of href: a slow drift of light in the theme's colours, no file
+  // Instead of href: "aurora", a slow drift of light in the theme's colours; or a function that draws into el
+  // (the full stage, 1920x1080) and returns play and pause, for a background the deck makes itself.
+  animate?: "aurora" | ((el: HTMLElement) => { play(): void; pause(): void });
   parallax?: boolean; // drifts a little with each camera flight, as a far layer does
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
