@@ -126,3 +126,18 @@ test('back across the shatter transition leaves no shard visible', async () => {
   expect(await visibleShards(page)).toBe(0)
   await page.close()
 })
+
+// The black gaps between shards show as the card breaks, then go: the shards fall over the scene, not over a black box.
+test('mid-fall, the shards fall over the scene, not over a black gaps layer', async () => {
+  const page = await open('#/a/default/3')
+  await page.evaluate(() => window.klappe.stepper.next())
+  const gaps = (back: number) =>
+    page.evaluate((back) => {
+      const c = window.klappe.canvases[0]
+      c.tl.seek(c.tl.time() - back, false)
+      const g = document.querySelector<HTMLElement>('[data-scene="default"] .k-shatter-gaps')!
+      return Number(getComputedStyle(g).opacity) * (getComputedStyle(g).visibility === 'visible' ? 1 : 0)
+    }, back)
+  expect(await gaps(1)).toBe(0) // mid-fall
+  await page.close()
+})
