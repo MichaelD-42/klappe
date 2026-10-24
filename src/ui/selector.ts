@@ -84,5 +84,6 @@ export class Selector extends OverlayPanel {
       if (s.id === here) b.setAttribute("aria-current", "true");
       body.append(b);
     }
+    body.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "center" });
   }
 }

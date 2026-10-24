@@ -36,7 +36,6 @@ Effects:
 
 Engine and panels:
 
-- Overview thumbnails show no backgrounds (clone `c.el` and clear the world transform); the selector marks the current section only with its focus ring.
 
 Demo story:
 

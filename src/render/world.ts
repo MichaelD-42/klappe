@@ -24,6 +24,8 @@ export interface CanvasRuntime {
   stepListeners: Parameters<Ctx["onStep"]>[0][];
   // ctx.problem messages; the self-test adds them to the deck's problems.
   problems: string[];
+  // Each scene's pinned background, by scene id, for the overview's cards.
+  backgrounds: Record<string, HTMLElement>;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -459,7 +461,11 @@ export function renderWorld(
         return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
-    return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems };
+    const backgrounds = Object.fromEntries(sections.flatMap((s) => s.scenes).flatMap((sc) => {
+      const bg = perScene.get(sc)?.bg;
+      return bg ? [[sc.id, bg.el]] : [];
+    }));
+    return { layout, el: canvas, world, tl, refs, entries, stepListeners, problems, backgrounds };
   });
 
   // Pass 2: timelines in step-list order (deck order), one label 'e:<global index>' after each step.

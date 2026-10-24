@@ -48,6 +48,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
+- Overview cards show each scene's background, and the section list marks the current section with a tint and bold text and opens scrolled to it.
 - Speaker view: the current step is the largest text, notes are larger, type scales with the window, an "N / M" shows the place, the next step is a 2-line preview, and the Notes heading hides when there are none.
 - A scene's title fades in over the camera's last 0.4 s instead of after it lands, so the frame is not empty for 0.6 s and the step's content follows sooner.
 - Charts draw rising slope lines and waterfall increases in `--k-ok`, and the Sample data label and DATA MISSING box in `--k-warn`; `lineArt` glow turns `--k-warn`. They used the CRT's `--k-phosphor` tokens, which are too pale on a light theme. In calm, `--k-warn` is the same amber; `--k-ok` is a deeper green.

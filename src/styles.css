@@ -180,6 +180,14 @@ body {
   padding: 20px 32px;
 }
 
+/* The current section: more than the hover border, so it reads without the focus ring. */
+.k-selector .k-btn[aria-current="true"] {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--k-accent) 14%, transparent);
+  border-left: 8px solid var(--k-accent);
+  padding-left: 26px; /* the thicker edge keeps the text where the others have it */
+}
+
 .k-overview {
   overflow: auto;
   padding: 8px; /* room for the focus ring */
@@ -243,6 +251,16 @@ body {
   border-radius: 4px;
   background: var(--k-bg);
   outline: 2px solid color-mix(in srgb, var(--k-fg) 20%, transparent);
+}
+
+/* A scene's pinned background, the full screen scaled to the card, under the world copy. */
+.k-ov-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
 }
 
 .k-ov-scaler {
