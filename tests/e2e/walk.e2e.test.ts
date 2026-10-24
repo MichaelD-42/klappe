@@ -1,6 +1,9 @@
 import { expect, inject, test } from 'vitest'
 import { runSelftest } from './driver'
 
+// The driver's wait grows with the deck (selftestTimeout); this ceiling only stops a hung run.
+const WALK_CEILING_MS = 1_800_000
+
 // Review focus 4: play and deep link agree at every step, and text stays legible off 16:9.
 for (const vp of [
   { w: 1920, h: 1080 },
@@ -14,7 +17,7 @@ for (const vp of [
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.steps).toBeGreaterThan(0)
     expect(r.ok).toBe(true)
-  })
+  }, WALK_CEILING_MS)
 }
 
 // Text of an earlier scene stays visible off camera; only the current scene is checked for legibility.
