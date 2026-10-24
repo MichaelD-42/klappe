@@ -9,7 +9,7 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): a softer crt power-on flash; a `mesh3d` colour or brightness option (the deck uses a CSS filter on dark frames); `counter` decimals; `timer` label font and colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` calls in the on-screen problems list; lazy embeds one step early.
+Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): a softer crt power-on flash; a `mesh3d` colour or brightness option (the deck uses a CSS filter on dark frames); `timer` label font and colour tokens, `hide`, and separate T groups; a `dotGrid` helper; `terminal` wrap at "/"; late `ctx.problem` calls in the on-screen problems list; lazy embeds one step early.
 
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
 

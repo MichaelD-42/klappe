@@ -625,7 +625,7 @@ down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions (s
 steps: [(tl, { down }) => down.run(tl)],
 ```
 
-`counter(ctx, { x, y, from, to, label })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use English thousands separators.
+`counter(ctx, { x, y, from, to, label, decimals? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
 
 ## `scramble`
 
@@ -644,7 +644,7 @@ steps: [(tl, s) => s.run(tl)],
 
 ## `counterText`
 
-`counterText(from, to, p)` gives the counter's text at progress `p`: `round(from + (to - from) * p)` with thousands separators. `counterText(0, 2000, 0.5)` is `"1,000"`.
+`counterText(from, to, p, lang?, decimals?)` gives the counter's text at progress `p`: `from + (to - from) * p` rounded to `decimals` places (default 0), with the language's separators. `counterText(0, 2000, 0.5)` is `"1,000"`; `counterText(0, 4.2, 1, "en", 1)` is `"4.2"`.
 
 ## Transitions
 

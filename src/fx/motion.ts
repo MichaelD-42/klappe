@@ -19,14 +19,17 @@ export interface CounterOpts {
   from: number;
   to: number;
   label: string;
+  decimals?: number; // places shown, default 0
 }
 
 const TAIL = 24; // bubble tail size in scene units
 const LINE = 3; // bubble stroke width
 
-// The counter's text at progress p: round(lerp(from, to, p)) with the deck language's thousands separators.
-export function counterText(from: number, to: number, p: number, lang = "en"): string {
-  return new Intl.NumberFormat(lang).format(Math.round(from + (to - from) * p));
+// The counter's text at progress p: lerp(from, to, p) rounded to `decimals` places, always that many shown,
+// with the deck language's separators.
+export function counterText(from: number, to: number, p: number, lang = "en", decimals = 0): string {
+  const f = 10 ** decimals;
+  return new Intl.NumberFormat(lang, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(Math.round((from + (to - from) * p) * f) / f);
 }
 
 type Pose = { x: number; y: number; scaleX: number; scaleY: number };
@@ -137,12 +140,12 @@ export function bubble(
 
 // A big number with a label under it, centred on (x, y), scene-local. run counts from -> to.
 export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTMLElement; caption: HTMLElement } {
-  const { x, y, from, to, label } = opts;
+  const { x, y, from, to, label, decimals = 0 } = opts;
   const box = document.createElement("div");
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
   const num = document.createElement("div");
   num.dataset.kText = "";
-  num.textContent = counterText(from, to, 0, ctx.deck.lang);
+  num.textContent = counterText(from, to, 0, ctx.deck.lang, decimals);
   Object.assign(num.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", fontVariantNumeric: "tabular-nums" });
   const cap = document.createElement("div");
   cap.textContent = label;
@@ -159,7 +162,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTML
         duration: motion.step * 3,
         ease: "none",
         onUpdate(this: gsap.core.Tween) {
-          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang);
+          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang, decimals);
         },
       });
     },
