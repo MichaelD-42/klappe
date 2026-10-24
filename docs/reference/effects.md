@@ -334,6 +334,26 @@ steps: [(tl, v) => v.show(tl)],
 
 `show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer, and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
 
+## `wipe`
+
+Catalog: section `230-fullscreen` (`#/fullscreen/wipe/2`). Before and after: two pictures from `media/` on one spot, cropped to cover it. The after picture is revealed from the left behind an `--k-accent` divider.
+
+```ts
+build: (ctx) => wipe(ctx, { before: { href: "media/old.png", alt: "…" }, after: { href: "media/new.png", alt: "…" } }),
+steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `before`, `after` | `{ href, alt }` | required | the two pictures; a missing one shows IMAGE MISSING and a deck problem, as `image` does |
+| `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
+| `scrim` | number | none | 0 to 1, a dark layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
+
+| Handle | Step |
+| --- | --- |
+| `show` | both pictures and the divider fade in; only the before picture shows |
+| `to(f)` | the divider sweeps to `f` (0 to 1) of the width and the after picture shows left of it: `to(0.5)` half, `to(1)` all, `to(0)` back to before |
+
 ## `shatter`
 
 Catalog: section `200-shatter` (`#/shatter/card/1`). A card you built cracks, cracks to its edges, then falls apart in shards.

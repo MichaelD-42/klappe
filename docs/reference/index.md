@@ -4,7 +4,7 @@
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
-- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `shatter`, `shout`, `swarm`, `crt`, `morph`, `bubble`, `counter`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
