@@ -35,8 +35,29 @@ test('the zoom keeps the old canvas pose and leaves it hidden', async () => {
   expect(after[0][1]).toBe('hidden')
   expect(after[0][0]).toBe(before[0][0])
   expect(after[1][1]).toBe('visible')
-  // The grow scales the layer of all canvases and clears it at the end.
-  expect(await page.evaluate(() => document.querySelector<HTMLElement>('.k-worlds')!.style.transform)).toBe('')
+  // The grow scales the new canvas and clears it at the end; the layer of all canvases is never touched.
+  expect(await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.k-worlds, .k-canvas')].filter((e) => e.style.transform !== '').length)).toBe(0)
+  await page.close()
+})
+
+// The new canvas grows in while the old one still fades out: the grow must not pull the old canvas back.
+test('the old canvas only grows on screen while it shows', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-zoom`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const widths = await page.evaluate(async () => {
+    const old = document.querySelectorAll<HTMLElement>('.k-canvas')[0]
+    const out: number[] = []
+    let done = false
+    window.klappe.stepper.next().then(() => (done = true))
+    while (!done) {
+      if (Number(getComputedStyle(old).opacity) > 0) out.push(old.getBoundingClientRect().width)
+      await new Promise(requestAnimationFrame)
+    }
+    return out
+  })
+  expect(widths.length).toBeGreaterThan(3)
+  expect(widths.filter((w, i) => i > 0 && w < widths[i - 1] - 0.5)).toEqual([])
   await page.close()
 })
 

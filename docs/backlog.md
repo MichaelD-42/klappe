@@ -77,7 +77,4 @@ Deferred findings from the M2 reviews (2026-10-19), copied from the M2 build led
 
 ## Reported by the user
 
-- Zooming in is sometimes not smooth: a little jumpy when it reaches the target (2026-10-24). Which zoom and which scene is not pinned down yet; reproduce first. Two suspects, neither checked:
-  - Camera moves (`src/camera.ts` `addCameraMove`): x, y and scale tween linearly under one ease, so at a large scale ratio the apparent speed climbs towards the end and the target point drifts, then settles. A long flight also gets a mid pose, and `power2.inOut` on each keyframe brings the camera to a stop there.
-  - The `zoom` transition (`src/fx/zoom.ts`): the dive is `power2.in`, fastest at the moment it hands over, and the new canvas grows in from `reveal` with an overlap, so speed and scale can jump at the seam.
 - Shout-out takes two clicks to reach full size; it should take one (2026-10-24). Today `enter` scales the question from `from` to 1, and `hold`, the next click, pushes it on to `push` (1.04 calm, 1.12 bold) over 2 to 2.5 s (`src/fx/shout.ts`). Fix: `enter` grows straight to `push`. Then `hold` has nothing left to do: drop it, so a shout-out is three steps (enter, fade, answer), or keep a still hold. Dropping it changes the four-step contract in the parser (`shout-hold`), the renderer (`src/render/world.ts`), `effects.md`, `markdown.md` and every `scene.ts` that plays the four adders (the shout catalog section, value-stream clarification, the meeting scene).
