@@ -21,6 +21,8 @@
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [venn](elements/venn.md): two or three circles whose regions light up one per step.
+  - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
   - [checklist](elements/checklist.md): boxes that tick.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
