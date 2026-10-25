@@ -37,19 +37,35 @@ One master GSAP timeline per canvas; seek must equal play.
 
 - Create all DOM in `build(ctx)`, hidden. A step never creates, removes or edits DOM.
 - A step function only adds tweens to `tl`. Use `fromTo`, never `from`.
+- Give every `fromTo` `immediateRender: false`, and set its start value in `build()` with `gsap.set`. Otherwise a later step's start value applies at load, and seek no longer equals play.
 - `onUpdate` may write the DOM only as a pure function of the tween's progress, on an element marked `data-k-text` or `data-k-progress`.
 - Never start a step with `"<"` or `"-="`: it is a deck problem.
 - `steps` lines up with the list items in `scene.md`; the walk fails if the counts differ.
 - Read the scene's text from `ctx.doc` (title, steps, notes) and the deck's `lang` and `intensity` from `ctx.deck`; never copy text from `scene.md` into `scene.ts`.
 
+## Writing scene.ts
+
+- With `build()`, klappe draws nothing for the scene, not even its title. Put `ctx.doc.title` into an element you build.
+- `ctx.html` paints over `ctx.svg`: an HTML box with a background hides the SVG helpers under it. Within a layer, what you build later paints on top.
+- klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate scene id` problem.
+- Reach an effect's elements only through its handle (`el` and the named parts), never with `lastElementChild` or `children[i]`. If the handle lacks a part, ask for it in klappe.
+- A scene that plays in several places (a break, an agenda hop) is one function outside `sections/` that returns a `SceneModule`; each `scene.ts` calls it.
+
 ## Design rules
 
 - Colours only as `var(--k-*)` tokens ([themes](klappe/docs/reference/themes.md)). No colour literals.
+- GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(document.documentElement).getPropertyValue("--k-accent").trim()` and tween that value.
 - Text at least 20 scene px (14 px at 1366). Lines, arrows and borders use `--k-line`, at least 2 px; what the room must follow uses `--k-accent`.
 - One idea per step. Name the new thing by drawing it in `--k-accent`; it settles when the next step starts.
-- A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest.
-- Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`.
+- No dead clicks: every press changes the picture and gives the speaker something to say. Chain motion that needs no words with `auto` (seconds per step), so one press runs it.
+- Before a large element or an answer lands, fade out what it would cover. Check each scene's last step for overlap.
+- A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
+- Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample" label.
+- On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
+- Convention, not checked by klappe: state the deck's safe area once (side margins, a floor above any logo or footer) and keep all ink inside it at both sizes. Measure the ink, not left plus width.
 
 ## Check your work
 
-Run `npm test`, then open the deck at 1920x1080 and 1366x768 (`npm run dev`, `?theme=calm` and `?theme=bold`) and run `?selftest=walk`. Fix every deck problem the page shows.
+Run `npm test`, then open the deck at 1920x1080 and 1366x768 (`npm run dev`, `?theme=calm` and `?theme=bold`) and run `?selftest=walk`. Deep-link each scene's last step. Fix every deck problem the page shows.
+
+Building a whole deck from a storyboard: read [building a deck](references/building-a-deck.md).
