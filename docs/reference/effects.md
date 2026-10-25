@@ -528,6 +528,44 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | `show` | both pictures and the divider fade in; only the before picture shows |
 | `to(f)` | the divider sweeps to `f` (0 to 1) of the width and the after picture shows left of it: `to(0.5)` half, `to(1)` all, `to(0)` back to before |
 
+## `loupe`
+
+Catalog: section `236-loupe` (`#/loupe/detail/1` to `#/loupe/detail/3`). A magnifying lens over a picture from `media/`: a circle that shows the detail under its centre enlarged, ringed in `--k-accent`. Each step slides it to the next detail, so the room looks where you talk.
+
+From `decks/demo/sections/236-loupe/10-detail/scene.ts`:
+
+```ts
+import { loupe } from "klappe/fx";
+
+build: (ctx) => {
+  const lens = loupe(ctx, { href: "media/fullscreen-hero.png", alt: "…", rect: { x: 160, y: 60, w: 1600, h: 860 }, fit: "cover", r: 160, zoom: 2.5, at: { x: 1328, y: 557 } });
+  return { lens, chart: lens.to(1595, 404), drawing: lens.to(973, 748) };
+},
+steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.drawing(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `href`, `alt` | string | required | the picture, as for `image`; a missing file shows IMAGE MISSING and a deck problem, with no lens |
+| `rect` | `{ x, y, w, h }` | the full scene frame | the picture's box |
+| `fit` | `"contain"` or `"cover"` | `"contain"` | as for `image` |
+| `r` | number | 140 | the lens radius in scene units |
+| `zoom` | number | 2.5 | how much the lens enlarges |
+| `at` | `{ x, y }` | the centre of `rect` | where the lens first shows, in scene units |
+
+| Handle | Step |
+| --- | --- |
+| `show` | the picture fades in, then the lens |
+| `to(x, y)` | the lens slides so its centre is on the scene point `(x, y)`, with a soft start and stop over 1.2 s. With reduced motion it cuts there |
+
+Make each `to` in `build` and call it in a step, as above. Points are scene units on the picture as it shows in `rect`: with `fit: "cover"` the picture is cropped, so check the points in the deck, not on the file.
+
+Limits: the picture has no Ken Burns push (the enlarged copy would not follow it), and no scrim. A lens near the picture's edge shows `--k-bg` past it.
+
+## `loupeOffset`
+
+`loupeOffset({ x, y }, rect, r, zoom)` gives where the enlarged copy sits in a `loupe` lens (from the lens's top-left), so the scene point `(x, y)` shows at the lens centre.
+
 ## `qr`
 
 Catalog: section `190-media` (`#/media/qr/1`). A QR code the room can scan, usually for a link.
