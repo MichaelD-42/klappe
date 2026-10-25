@@ -29,6 +29,8 @@ export * from "./motion";
 // Not revealUnits: the split, for its unit test.
 export { reveal, type RevealHandle, type RevealOpts } from "./reveal";
 export * from "./sequence";
+// Not arrowPath: the arrow geometry, for its unit test.
+export { arrow, shape, tint, type ArrowOpts, type ShapeHandle, type ShapeOpts, type TintOpts, type TintProp } from "./shape";
 export * from "./shatter";
 export * from "./scramble";
 export * from "./shout";

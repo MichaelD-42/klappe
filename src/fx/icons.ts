@@ -2,7 +2,7 @@ import type { IconNode } from "lucide";
 import named from "virtual:klappe-icons";
 import type { gsap } from "gsap";
 import type { Ctx } from "../types";
-import { drawOn } from "./draw";
+import { drawOn, token } from "./draw";
 
 export interface IconOpts {
   x: number; // centre of the icon, scene-local
@@ -120,7 +120,7 @@ export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHand
   const s = opts.size ?? 96;
   const [x0, y0, r] = [opts.x - s / 2, opts.y - s / 2, s / 12];
   let tone = opts.tone.startsWith("--") ? opts.tone : `--k-${opts.tone}`;
-  if (!getComputedStyle(ctx.svg).getPropertyValue(tone).trim()) {
+  if (!token(ctx.svg, tone)) {
     ctx.problem(`iconTile: unknown tone '${opts.tone}'`);
     tone = "--k-accent";
   }
