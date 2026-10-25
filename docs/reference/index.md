@@ -1,6 +1,6 @@
 # Reference
 
-- [Deck format](deck-format.md): folders, `deck.md`, `scene.md` and its Markdown forms, `scene.ts`, `section.ts`, the effects, keys, URL flags and deep links.
+- [Deck format](deck-format.md): folders, `deck.md`, `scene.md` and its Markdown forms, `scene.ts`, `section.ts`, the effects, keys, URL flags and deep links, and reusing a scene with options.
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.

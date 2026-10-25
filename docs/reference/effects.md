@@ -894,7 +894,7 @@ steps: [(tl, c) => c.show(0, 3)(tl), (tl, c) => c.show(3)(tl)],
 
 | Handle | Step |
 | --- | --- |
-| `show(from?, to?)` | the words `from` to `to - 1` in weight order (0 is the heaviest) fade in and grow from 0.6 to full size, heaviest first, staggered over at most 1.2 s. Default: all. `show(0, 3)` then `show(3)` shows the top three, then the rest |
+| `show(from?, to?)` | the words `from` to `to - 1` in weight order (0 is the heaviest) fade in and grow from 0.6 to full size, heaviest first, staggered over at most 1.2 s. Default: all. `show(0, 3)` then `show(3)` shows the top three, then the rest. A bare `show()` after `show(0, 3)` fades the top three in again: use `show(3)` |
 | `words` | not a step: the words, heaviest first, the order `show` counts in |
 | `el` | not a step: the box that holds the words |
 

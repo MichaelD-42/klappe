@@ -11,34 +11,15 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 Helpers wanted by the training deck (2026-10-25 harvest; counts are greps over its `sections/` and `shared/`):
 
-- Scene reuse with options: 36 scenes are two-line copies of a shared scene function.
 - Self-test checks for ink outside a safe area (margins, footer) and for text clipped by its box; the most frequent look finding.
-- Smaller: a typewriter in the brand font, a heading-font token.
-
-New effects, proposed 2026-10-24, not yet specified:
-
-- Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with `reveal`.
-- Word cloud: words sized by weight from a `data/` file, placed without overlap, revealed step by step. Placement must be deterministic (seek equals play, same picture in CI).
-- Chat: a messenger thread; messages arrive, a typing indicator shows, the answer streams in. Seek must equal play, so the stream is a pure function of progress, like `typed`.
-- Redline: prose changes as strike-through and insert, the text cousin of `code().diff()`.
-- Split-flap: an airport-board flip to a number or a word, in the `scramble` family.
-- Handwriting: a short phrase writes itself stroke by stroke (needs glyph paths; check fonts and licence).
-- Loupe: a magnifying lens slides over a picture and enlarges one detail.
 
 New transitions, proposed 2026-10-24:
 
-- `push`: the new section pushes the old one off in a direction.
-- `iris`: a circle opens from a point (default the centre) with an animated `clip-path`.
 - Magic move: an element with the same id in both sections flies to its new place while the rest fades. The hardest of these.
-- `glitch`: a short digital break-up, for the bold theme.
-- Cube: the old section turns away as one face of a cube.
-- Page turn: the old section peels off like a page.
 
 New camera moves, proposed 2026-10-24:
 
-- Follow: the camera tracks a moving element (a figure walking, a packet in a flow). Pairs with `travel`.
 - Focus pull: all but the target blurs and dims, a depth-of-field cousin of `spotlight`. Mind the blur cost (perf notes).
-- Impact shake: a short jolt of the whole scene when something lands; the camera-level twin of `shake`.
 - Tilt: a slight 3D lean during a camera flight, so long flights feel less flat.
 - Dolly zoom: the "vertigo" move (zoom in while the camera pulls back), for a big reveal.
 
