@@ -41,7 +41,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
     el.textContent = text;
     Object.assign(el.style, {
       position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 28px", borderRadius: "16px", background: "var(--k-surface)",
-      border: "2px solid var(--k-line)", outline: "2px solid transparent", // the outline turns accent when pulled: 4 px of accent, no layout change
+      border: "2px solid var(--k-line)", outline: "2px solid transparent", // border and outline turn accent when pulled: 4 px of accent, no layout change
       color: "var(--k-fg)", font: "600 32px/1.25 var(--k-font)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       transformOrigin: ORIGIN, zIndex: String(i + 1),
     });
@@ -53,13 +53,13 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
   });
   const fan = (i: number) => ({ rotation: fanPose(i, n), y: 0, scale: 1 });
   const pose = (tl: gsap.core.Timeline, el: HTMLElement, vars: gsap.TweenVars, at: number) =>
-    move ? tl.to(el, { ...vars, duration: motion.step, ease: "power2.inOut" }, at) : tl.set(el, vars, at);
+    move ? tl.to(el, { ...vars, duration: motion.step, ease: "power2.inOut" }, at) : tl.set(el, { ...vars, immediateRender: false }, at);
   const dim = (tl: gsap.core.Timeline, except: number | undefined, at: number) =>
     cards.forEach((c, k) => tl.to(c.scrim, { autoAlpha: except === undefined || k === except ? 0 : DIM, duration: motion.step }, at));
 
   let pulled: number | undefined; // step-order state, written only inside the adders
   const settle = (tl: gsap.core.Timeline, i: number, at: number) => {
-    tl.set(cards[i].el, { zIndex: i + 1, outlineColor: "transparent", immediateRender: false }, at);
+    tl.set(cards[i].el, { zIndex: i + 1, outlineColor: "transparent", borderColor: "var(--k-line)", immediateRender: false }, at);
     pose(tl, cards[i].el, fan(i), at);
   };
 
@@ -76,7 +76,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
         const prev = pulled;
         pulled = i;
         if (prev !== undefined && prev !== i) settle(tl, prev, t);
-        tl.set(cards[i].el, { zIndex: n + 1, outlineColor: "var(--k-accent)", immediateRender: false }, t);
+        tl.set(cards[i].el, { zIndex: n + 1, outlineColor: "var(--k-accent)", borderColor: "var(--k-accent)", immediateRender: false }, t);
         pose(tl, cards[i].el, { rotation: 0, y: -h * LIFT, scale: GROW }, t);
         dim(tl, i, t);
       };

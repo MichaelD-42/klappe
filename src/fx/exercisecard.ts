@@ -73,7 +73,7 @@ export function exerciseCard(ctx: Ctx, opts: ExerciseCardOpts): ExerciseCardHand
   const extras = (opts.extras ?? []).map((s) => item("+", "var(--k-accent)", s));
   ctx.html.append(root);
   gsap.set(root, { autoAlpha: 0 });
-  gsap.set(extras, { autoAlpha: 0, y: 0 });
+  if (extras.length) gsap.set(extras, { autoAlpha: 0, y: 0 }); // GSAP warns on an empty target list
 
   let fits: boolean | undefined;
   const fit = () => {

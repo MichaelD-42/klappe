@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-// The stack's over-long label is the fixture's only problem.
+// The stack's over-long label and its next() past the top are the fixture's problems.
 for (const [vp, q] of [
   [{ w: 1920, h: 1080 }, ''],
   [{ w: 1366, h: 768 }, ''],
@@ -17,7 +17,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pyramid${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['pyramid: label of "long" too long'])
+    expect(r.problems).toEqual(['pyramid: label of "long" too long', 'pyramid: next() past the top layer (2 layers)'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {
@@ -76,4 +76,17 @@ test('with reduced motion, a layer fades in at full size instead of growing', as
     expect(scale < 0.99, q).toBe(grows)
     await page.close()
   }
+}, 60_000)
+
+// A next() past the top builds nothing, but its step still takes a beat, like every other empty step.
+test('a next() past the top layer still takes a beat', async () => {
+  const page = await open('#/a/stack/3')
+  const span = await page.evaluate(() => {
+    const { canvases, steps } = window.klappe
+    const i = steps.findIndex((s: any) => s.scene === 'stack' && s.step === 3)
+    const tl = canvases[steps[i].canvas].tl
+    return tl.labels[`e:${i}`] - tl.labels[`e:${i - 1}`]
+  })
+  expect(span).toBeGreaterThanOrEqual(0.4)
+  await page.close()
 }, 60_000)

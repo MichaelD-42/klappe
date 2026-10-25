@@ -93,7 +93,10 @@ export function pyramid(ctx: Ctx, opts: PyramidOpts): PyramidHandle {
       return (tl) => {
         const i = built++;
         const layer = layers[i];
-        if (!layer) return void ctx.problem(`pyramid: next() past the top layer (${layers.length} layers)`);
+        if (!layer) {
+          ctx.problem(`pyramid: next() past the top layer (${layers.length} layers)`);
+          return void tl.set({}, {}, tl.duration() + 0.4); // the step still takes a beat
+        }
         fit();
         const t = tl.duration();
         if (i > 0) tl.fromTo(layers[i - 1].hot, { autoAlpha: 1 }, { autoAlpha: 0, duration: motion.step, immediateRender: false }, t);

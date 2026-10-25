@@ -51,3 +51,15 @@ test('the newest row is lit in --k-accent and settles to --k-fg on the next row'
   expect(await colours(4)).toEqual(['fg', 'fg', 'accent'])
   await page.close()
 }, 90_000)
+
+// A row of text only and a card without extras have nothing to set: GSAP must not warn about a missing target.
+test('a row without marks and a card without extras build without a GSAP warning', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  const warned: string[] = []
+  page.on('console', (m) => m.text().includes('GSAP target') && warned.push(m.text()))
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-table-card#/a/card-tall/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.waitForTimeout(300)
+  expect(warned).toEqual([])
+  await page.close()
+}, 60_000)

@@ -60,7 +60,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
       marks.push(mark);
     });
     gsap.set(row, { autoAlpha: 0 });
-    gsap.set(marks, { autoAlpha: 0, scale: ctx.reducedMotion ? 1 : 0.4 });
+    if (marks.length) gsap.set(marks, { autoAlpha: 0, scale: ctx.reducedMotion ? 1 : 0.4 }); // GSAP warns on an empty target list
     return { row, label, marks };
   });
   ctx.html.append(root);

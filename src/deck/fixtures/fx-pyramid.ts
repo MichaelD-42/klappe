@@ -2,8 +2,8 @@ import { assembleDeck } from "../assemble";
 import { pyramid, type PyramidHandle, type PyramidOpts } from "klappe/fx";
 import type { SceneModule, StepAdder } from "../../types";
 
-// A test pyramid built bottom-up in three steps; a stack of bars with one label too long for its bar (the
-// fixture's only problem). A third scene makes its second next() adder before its first and runs them in step order.
+// A test pyramid built bottom-up in three steps; a stack of bars with one label too long for its bar, and a
+// third next() past its top (the fixture's two problems). A third scene makes its second next() adder before its first and runs them in step order.
 const tests: PyramidOpts = {
   x: 460, y: 140, w: 1000, h: 760,
   layers: [{ id: "unit", label: "Unit tests" }, { id: "int", label: "Integration" }, { id: "e2e", label: "End to end" }],
@@ -22,7 +22,7 @@ const stack: SceneModule = {
       layers: [{ id: "hw", label: "Hardware" }, { id: "long", label: "An extraordinarily long layer label that cannot possibly fit on one line at the floor size" }],
     }),
   }),
-  steps: [(tl, r: R) => r.p.next()(tl), (tl, r: R) => r.p.next()(tl)],
+  steps: [(tl, r: R) => r.p.next()(tl), (tl, r: R) => r.p.next()(tl), (tl, r: R) => r.p.next()(tl)],
 };
 const early: SceneModule = {
   build: (ctx) => {
@@ -39,7 +39,7 @@ export default () =>
       "deck.md": "---\ntitle: Fixture\n---\n",
       "sections/10-a/section.md": "# Pyramid\n",
       "sections/10-a/10-walk/scene.md": md("Bottom-up", 3),
-      "sections/10-a/20-stack/scene.md": md("Stack", 2),
+      "sections/10-a/20-stack/scene.md": md("Stack", 3),
       "sections/10-a/30-early/scene.md": md("Built early", 2),
     },
     { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-stack/scene.ts": stack, "sections/10-a/30-early/scene.ts": early },

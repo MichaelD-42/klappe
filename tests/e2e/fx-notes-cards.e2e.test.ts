@@ -76,28 +76,39 @@ test('adders built out of step order still play in step order', async () => {
   await page.close()
 }, 60_000)
 
-// Card widths (scale, not the bounding box of a leaning card) and dims: the pulled one is larger and on top, the others under a scrim.
+// Card widths (scale, not the bounding box of a leaning card), dims and edges: the pulled one is larger and on top
+// with a --k-accent border, the others under a scrim with a --k-line border.
 const cards = (page: Page) =>
-  page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('[data-scene="stack"] [data-k-card]')].map((c) => ({
-      w: Math.round(c.offsetWidth * Math.hypot(new DOMMatrix(getComputedStyle(c).transform).a, new DOMMatrix(getComputedStyle(c).transform).b)),
-      dim: Number(getComputedStyle(c.lastElementChild!).opacity) > 0.2,
-    })),
-  )
+  page.evaluate(() => {
+    const probe = document.body.appendChild(document.createElement('i'))
+    const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
+    const tk = { line: token('--k-line'), accent: token('--k-accent') }
+    return [...document.querySelectorAll<HTMLElement>('[data-scene="stack"] [data-k-card]')].map((c) => {
+      const b = getComputedStyle(c).borderTopColor
+      return {
+        w: Math.round(c.offsetWidth * Math.hypot(new DOMMatrix(getComputedStyle(c).transform).a, new DOMMatrix(getComputedStyle(c).transform).b)),
+        dim: Number(getComputedStyle(c.lastElementChild!).opacity) > 0.2,
+        edge: b === tk.accent ? 'accent' : b === tk.line ? 'line' : b,
+      }
+    })
+  })
 
 test('a pulled card is larger and the rest dim; the next pull puts it back; back undims all', async () => {
   let page = await open('#/a/stack/2')
   let r = await cards(page)
   expect(r[1].w).toBeGreaterThan(Math.max(...r.filter((_, i) => i !== 1).map((c) => c.w)))
   expect(r.map((c) => c.dim)).toEqual([true, false, true, true, true])
+  expect(r.map((c) => c.edge)).toEqual(['line', 'accent', 'line', 'line', 'line'])
   await page.close()
   page = await open('#/a/stack/3')
   r = await cards(page)
   expect(r[3].w).toBeGreaterThan(r[1].w)
   expect(r.map((c) => c.dim)).toEqual([true, true, true, false, true])
+  expect(r.map((c) => c.edge)).toEqual(['line', 'line', 'line', 'accent', 'line'])
   await page.close()
   page = await open('#/a/stack/4')
   expect((await cards(page)).map((c) => c.dim)).toEqual([false, false, false, false, false])
+  expect((await cards(page)).map((c) => c.edge)).toEqual(['line', 'line', 'line', 'line', 'line'])
   await page.close()
 }, 60_000)
 

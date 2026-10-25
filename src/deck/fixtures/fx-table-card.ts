@@ -2,8 +2,9 @@ import { assembleDeck } from "../assemble";
 import { compareTable, exerciseCard, type CompareTableHandle, type ExerciseCardHandle } from "klappe/fx";
 import type { SceneModule, StepAdder } from "../../types";
 
-// A table whose row adders are made in build out of step order, a short row, a missing row and a table too tall;
-// a card with extras revealed per step, a missing extra and a card too tall.
+// A table whose row adders are made in build out of step order, a short row, a row of text only (no marks), a missing
+// row and a table too tall;
+// a card with extras revealed per step, a missing extra and a card too tall (with no extras).
 const columns = ["Basic", "Team", "Enterprise"];
 const rows = [
   { label: "Single sign-on", cells: [false, true, true] },
@@ -26,7 +27,7 @@ const order: SceneModule = {
   steps: [(tl, x: Rows) => x.t.show(tl), (tl, x) => x.r[0](tl), (tl, x) => x.r[1](tl), (tl, x) => x.r[2](tl)],
 };
 const broken: SceneModule = {
-  build: (ctx) => ({ t: compareTable(ctx, { columns, rows: [rows[0], { label: "Short", cells: [true, false] }], ...rect }) }),
+  build: (ctx) => ({ t: compareTable(ctx, { columns, rows: [rows[0], { label: "Short", cells: [true, false] }, { label: "Text only", cells: ["A", "B", "C"] }], ...rect }) }),
   steps: [(tl, x: { t: CompareTableHandle }) => x.t.show(tl), (tl, x) => x.t.row(1)(tl), (tl, x) => x.t.row(9)(tl)],
 };
 const tall: SceneModule = {
