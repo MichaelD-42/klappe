@@ -11,12 +11,14 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 
 ## Choose the element by intent
 
+- A title or a text box in a `scene.ts` scene: `title`, `text`. Fade any element in or out: `show`, `hide`. [basics](klappe/docs/reference/elements/basics.md)
 - Show code, one part at a time: a fenced block with `{1-2|4}` groups in `scene.md`. Code changing: `code` with `diff`. [code](klappe/docs/reference/elements/code.md)
 - Show a command and its output: a ```` ```console ```` fence. [terminal](klappe/docs/reference/elements/terminal.md)
-- Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`. Mark words as a pen would: `annotate`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md), [annotate](klappe/docs/reference/elements/annotate.md)
+- Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`; light one item in place while the rest dim, with no dark layer: `focus`. Mark words as a pen would: `annotate`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md), [focus](klappe/docs/reference/elements/focus.md), [annotate](klappe/docs/reference/elements/annotate.md)
 - Nudge one element (a glow, a pulse, a shake): `glow`, `pulse`, `shake`. [attention](klappe/docs/reference/elements/attention.md)
 - Hold back an answer, then reveal it (question and answer, myth and fact): `flipCard`. [flipCard](klappe/docs/reference/elements/flipCard.md)
 - Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
+- Draw a small diagram of your own (boxes, a ring, a connector): `shape`, `arrow`. Change a colour to a theme token in a step: `tint`, or `token` for your own tween. [shape](klappe/docs/reference/elements/shape.md)
 - Move something along a route (a parcel to a customer): `travel`. [travel](klappe/docs/reference/effects.md#travel)
 - Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
@@ -27,7 +29,7 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Time an exercise: `timer` with `minutes`; count to a clock time (end of a break): `timer` with `until`. [timer](klappe/docs/reference/elements/timer.md)
 - An 80s computer screen that boots and types: `crt`. [crt](klappe/docs/reference/elements/crt.md) A character who speaks: `bubble`. [bubble](klappe/docs/reference/elements/bubble.md) A quiet companion with moods that runs by itself: `mesh3d`. [mesh3d](klappe/docs/reference/elements/mesh3d.md)
 - Compare numbers: `chart` from a `data/` file. Show where: `worldMap`. A person moving: `figure`.
-- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A milestone reached: `burst`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. Before and after: `wipe`. One line that lands: `scramble`. A statement or a quote, line by line or word by word: `reveal`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
+- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A milestone reached: `burst`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. A clip that should run as its scene arrives: `video` with `autoplay: true` (muted unless `muted: false`). Before and after: `wipe`. One line that lands: `scramble`. A statement or a quote, line by line or word by word: `reveal`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
 - Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
 - What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys: [deck-format](klappe/docs/reference/deck-format.md).
 

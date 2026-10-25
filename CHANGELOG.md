@@ -6,6 +6,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `title`, `text`, `show` and `hide`: the basics of a `scene.ts` scene. `title(ctx)` builds the `scene.md` title as a hidden `h2`, placed as in a Markdown scene; `text(ctx, { text, x, y, w })` builds a hidden text box in a `--k-*` token colour; `show(el)` and `hide(el)` fade any element or list in or out.
+- `focus`: one item of a list stays lit while the others dim in place; `on` again moves the focus, `clear` brings all back. No layer over the scene (unlike `spotlight`); reduced motion keeps the fade.
+- `shape` and `arrow`: a rectangle, circle, line or connector on `ctx.svg` in `--k-line` (or `--k-accent`), 4 px, hidden until it draws on (`draw`) or fades in (`show`); an arrow can bow with `curve`, and its head draws when the shaft arrives. `tint(el, { to, prop })` tweens a colour to a theme token, and `token(el, name)` reads a token's colour for a tween of your own (GSAP cannot tween `var()`).
+- `video` options `autoplay` and `muted`: with `autoplay: true` a YouTube or Vimeo player starts when its step arrives and shows its thumbnail again when the viewer leaves. `muted` defaults to `true`; `muted: false` asks for sound, which a browser may block. Without `autoplay` the viewer starts the player, as before.
 - `travel`: one step moves an element along an SVG path, a `d` string or a path element of the scene; the route can show or draw on behind it, and `rotate` turns the element along it. With reduced motion it jumps to the end.
 - `burst`: seeded confetti pops once from a point, for a milestone reached, in the theme's series colours. Decoration under `data-k-ignore`; reduced motion leaves it out.
 - `roadmap`: a time axis with month ticks, milestones that appear one per step in `--k-accent`, and a "today" marker that moves step by step. The deck gives "today" (never the wall clock); dates are written in the deck language. With reduced motion the marker jumps and a milestone dot shows at once.
