@@ -105,10 +105,10 @@ test('**bold** words grow and take the accent as they rise; the markers never sh
   const before = await keys(page)
   expect(before.plain).toBe('We ship small and very often.')
   expect(before.ks.map((k) => k.text)).toEqual(['small', 'very', 'often'])
-  expect(before.ks.every((k) => k.scale === 1 && !k.accent)).toBe(true)
+  expect(before.ks.every((k) => k.scale === 0.87 && !k.accent)).toBe(true)
   await page.clock.runFor(3000)
   const end = await keys(page)
-  expect(end.ks.every((k) => k.scale === 1.15 && k.accent)).toBe(true)
+  expect(end.ks.every((k) => k.scale === 1 && k.accent)).toBe(true)
   await page.close()
 }, 60_000)
 
@@ -117,7 +117,7 @@ test('a deep link to the stress step shows the key words grown and in the accent
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal${q}#/a/stress/1`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    expect((await keys(page)).ks.every((k) => k.scale === 1.15 && k.accent)).toBe(true)
+    expect((await keys(page)).ks.every((k) => k.scale === 1 && k.accent)).toBe(true)
     await page.close()
   }
 }, 60_000)

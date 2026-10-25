@@ -18,7 +18,7 @@ export interface RevealHandle {
 }
 
 const GAP = { line: 0.3, word: 0.15 }; // seconds between one unit's start and the next
-const STRESS = 1.15; // the scale a key word grows to
+const STRESS = 1.15; // a key word's size, in the font size of the text around it
 
 // The units that rise one after another: the source lines, or the words. Never the rendered lines, so the
 // reveal does not depend on where a font wraps. Empty lines are dropped. Key words keep their **markers**;
@@ -55,11 +55,11 @@ export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
     for (const p of keyParts(t)) {
       if (!p.key) u.append(p.text);
       else {
-        // Inline-block, so it can scale; the side padding leaves the room it grows into.
+        // Laid out at its stressed size, so the line never reflows; it starts scaled down and grows into its room.
         const k = u.appendChild(document.createElement("span"));
         k.textContent = p.text;
         k.setAttribute("data-k-key", "");
-        Object.assign(k.style, { display: "inline-block", padding: "0 0.08em", transformOrigin: "50% 70%" });
+        Object.assign(k.style, { display: "inline-block", fontSize: `${STRESS}em`, transformOrigin: "50% 80%" });
         own.push(k);
       }
     }
@@ -72,8 +72,8 @@ export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
   const fg = token(root, "--k-fg");
   const accent = token(root, "--k-accent");
   // y: 0 written at load as well: a seek leaves GSAP's translate on each unit, so play must start with it too.
-  if (ctx.reducedMotion) gsap.set(root, { autoAlpha: 0 }), all.length && gsap.set(all, { scale: STRESS, color: accent });
-  else gsap.set(units, { autoAlpha: 0, y: 0 }), all.length && gsap.set(all, { scale: 1, color: fg });
+  if (ctx.reducedMotion) gsap.set(root, { autoAlpha: 0 }), all.length && gsap.set(all, { scale: 1, color: accent });
+  else gsap.set(units, { autoAlpha: 0, y: 0 }), all.length && gsap.set(all, { scale: 1 / STRESS, color: fg });
   return {
     el: root,
     run(tl) {
@@ -85,7 +85,7 @@ export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
       // A key word grows as its unit settles: the stress lands as the word is read.
       keys.forEach((own, i) => {
         if (own.length)
-          tl.fromTo(own, { scale: 1, color: fg }, { scale: STRESS, color: accent, duration: motion.step * 1.5, ease: "back.out(2)", immediateRender: false }, at + delay + i * GAP[by] + 0.3);
+          tl.fromTo(own, { scale: 1 / STRESS, color: fg }, { scale: 1, color: accent, duration: motion.step * 1.5, ease: "back.out(2)", immediateRender: false }, at + delay + i * GAP[by] + 0.3);
       });
     },
   };
