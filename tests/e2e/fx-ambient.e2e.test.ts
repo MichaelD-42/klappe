@@ -66,6 +66,14 @@ test('a video background is muted, loops, covers the stage and sits outside the 
   await page.close()
 })
 
+// The fixture's section background is { href: "media/loop.mp4", scrim: 0.6 }: the scrim dims the clip, not hides it.
+test('a moving background keeps its scrim at the scrim value', async () => {
+  const page = await open('#/a/loop/1')
+  const opacity = await page.evaluate(() => getComputedStyle(document.querySelector('[data-k-background="a"]')!.lastElementChild!).opacity)
+  expect(opacity).toBe('0.6')
+  await page.close()
+})
+
 test('only the background on screen moves; the one left behind stops once the camera has landed', async () => {
   const page = await open('#/a/loop/1')
   expect(await state(page)).toEqual({ video: true, ownAurora: false, aurora: false })
