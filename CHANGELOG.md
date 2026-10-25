@@ -4,7 +4,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ## 0.5.0 (unreleased)
 
-Tooling for building decks with agents, the architecture doc and a glossary, and a scrim fix for moving backgrounds.
+Tooling for building decks with agents, the architecture doc and a glossary, a scrim fix for moving backgrounds, and look and motion polish.
 
 ### Added
 
@@ -12,15 +12,21 @@ Tooling for building decks with agents, the architecture doc and a glossary, and
 - `klappe outline` (`npm run outline`): the deck as text, with no browser: every section and scene with its deep-link ids, every step with its note, and a timing estimate (notes at 130 words a minute, at least 15 s a step). A new `deck.md` key, `duration` in minutes, gives it a target to compare against.
 - A timeline lint (`tests/lint/timeline.test.ts`): deck code may not use `from()`.
 - The skill's "Choose the element by intent" is a table: intent, effect, reference page and the catalog scene to copy, for every effect a deck can call. `tests/lint/skill-catalog.test.ts` keeps it complete and its links and scenes real.
+- `CLAUDE.md` for agents working on klappe itself: where things are, the commands, and the rules the lints and the walk hold.
 - `docs/architecture.md`: the components, the path from deck folder to stage, a step press, and where the timeline rule is enforced, with Mermaid diagrams. `docs/glossary.md`: the terms klappe uses, each with one meaning and its relations.
 - The demo deck has a local clip, `media/sample.mp4` (six seconds, 65 KB, made for the demo), and a catalog scene for a video background (`#/fullscreen/video-loop/1`). The media scenes play it instead of a clip from the internet, so the demo runs offline.
 
 ### Fixed
 
+- `swarm` stays sharp when the camera closes in: its canvas re-rasterises at the zoom it is shown at, up to 4096 device pixels a side (about 2x for a full-frame swarm).
+- `shatter`: the impact frame is lighter. Each shard is cut to its polygon's bounds instead of a full-frame clone, and its layer exists from load, so less is rastered at the impact (a long frame of 83 ms became 67 ms on a desktop GPU; see `docs/perf-m2.md`).
+- Demo: the camera catalog's tilt and dolly scenes raised a deck problem with reduced motion (a caption timed 0.6 s before a flight's end, which is a cut there). A test now loads the demo with reduced motion and expects no problem.
+- Demo: the value-stream band clears the bottom safe area, and the flight to Analysis runs straight into the document stream (`auto`), so its first step is no longer an empty frame.
 - A video, aurora, animated SVG or own-loop background with a `scrim` showed the scrim at full strength, so the stage was black: the scrim now keeps its value.
 
 ### Changed
 
+- The `crt` transition opens the new canvas at 1.4 times its brightness by default, so the phosphor tint shows; `transitionOptions: { flash: "full" }` brings back the old bright open at 3 times. A look change for decks that use it.
 - Building a deck from a storyboard: before the fan-out, the agent asks the deck owner whether to build the sections inline in its own session, with a checkpoint after each, or with one `klappe-builder` subagent per section, and recommends one.
 - `Point` (`{ x, y }`) is in `klappe/types`; `flow`, `swimlanes` and `shatter` use it instead of their own, and `magicMove`'s `Box` is `Rect`.
 
