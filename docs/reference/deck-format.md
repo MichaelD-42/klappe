@@ -17,6 +17,7 @@ decks/<id>/
       10-old-way/
         scene.md
         scene.ts          # optional
+  shared/                 # optional: helpers and scene factories, not loaded as scenes
 ```
 
 ## deck.md
@@ -66,6 +67,23 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Keep one master timeline per canvas. The engine owns it.
+
+### Reuse a scene with options
+
+When several scenes share one shape and differ only in their words or numbers, write the shape once as a function that takes options and returns a `SceneModule`. Put it in `decks/<id>/shared/`. klappe loads every `.ts` under `sections/` as a scene or section module, so a helper there would be taken for one. Each scene then needs two lines:
+
+```ts
+import { checkpoint } from "../../../shared/checkpoint";
+export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: "It is round." });
+```
+
+- Return a new object from each call. Keep no DOM or state at module level: two scenes that use the factory can be built at once.
+- The factory fixes the number of step functions, so every `scene.md` that uses it needs that many list items. A mismatch is a deck problem.
+- `scene.md` still gives the title, the step text and the notes. Read them in `build(ctx)` from `ctx.doc` (`title(ctx)` does), so the options carry only what differs.
+- A factory result is a plain `SceneModule`, so another wrapper can take it, as the demo's `captioned(text, scene)` does.
+- The path counts folders: from `sections/<section>/<scene>/scene.ts` it is `../../../shared/`.
+
+Catalog: `#/reuse/check-data/1` and `#/reuse/check-motion/1` both call `checkpoint()` from `decks/demo/shared/checkpoint.ts`.
 
 ## section.ts
 
