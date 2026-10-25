@@ -35,6 +35,13 @@ describe("parseScene", () => {
     expect(parseScene("## A\n\n- one\n\n> say this\n", "10-a").scene.steps[0].notes).toBe("say this");
     expect(parseScene("## A\n\n> intro\n\n- one\n", "10-a").scene.notes).toBe("intro");
   });
+  it("takes a quote nested in an item as that step's note, paragraphs kept", () => {
+    const { steps } = parseScene("## A\n\n- one\n\n  > say this\n  >\n  > then that\n\n- two\n", "10-a").scene;
+    expect(steps.map((s) => [s.text, s.notes])).toEqual([["one", "say this\n\nthen that"], ["two", ""]]);
+  });
+  it("reads an ordered list as steps", () => {
+    expect(parseScene("## A\n\n1. one\n2. two\n", "10-a").scene.steps.map((s) => s.text)).toEqual(["one", "two"]);
+  });
   it("joins nested list content into text", () => {
     expect(parseScene("## A\n\n- one\n  - two\n", "10-a").scene.steps[0].text).toBe("one two");
   });

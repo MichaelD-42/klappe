@@ -38,6 +38,30 @@ test('a key during a play finishes it, then advances once', async () => {
   await page.close()
 })
 
+// A clicker's held key repeats, Ctrl+R reloads and Enter presses a focused button: none of them steps.
+test('a repeat, a key with a modifier and Enter or Space on a button do not step; a plain key does', async () => {
+  const page = await open()
+  const after = (init: { key: string; repeat?: boolean; [mod: string]: unknown }, onButton = false) =>
+    page.evaluate(
+      async ({ init, onButton }) => {
+        const s = window.klappe.stepper
+        const at = s.index
+        const target = onButton ? document.body.appendChild(document.createElement('button')) : document.body
+        target.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }))
+        await s.idle
+        target === document.body || target.remove()
+        return s.index - at
+      },
+      { init, onButton },
+    )
+  expect(await after({ key: 'ArrowRight', repeat: true })).toBe(0)
+  for (const mod of ['ctrlKey', 'altKey', 'metaKey']) expect(await after({ key: 'ArrowRight', [mod]: true }), mod).toBe(0)
+  expect(await after({ key: 'Enter' }, true)).toBe(0)
+  expect(await after({ key: ' ' }, true)).toBe(0)
+  expect(await after({ key: 'ArrowRight' })).toBe(1)
+  await page.close()
+})
+
 test('a same-tick burst of 3 presses lands exactly 3 steps on', async () => {
   const page = await open()
   const ms = await page.evaluate(async () => {
