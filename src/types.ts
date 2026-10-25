@@ -54,7 +54,9 @@ export interface Ctx {
     to(
       tl: gsap.core.Timeline,
       target: Rect,
-      opts?: { duration?: number; at?: number | string },
+      // tilt: degrees of a 3D lean into the flight's direction, at its peak mid-flight; none by default, none
+      // with reduced motion (the flight is a cut).
+      opts?: { duration?: number; at?: number | string; tilt?: number },
     ): void;
     // Closes in on a moving point and keeps it centred: point(t) is where it is, in canvas units, at time share t
     // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.

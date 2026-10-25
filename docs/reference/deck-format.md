@@ -67,6 +67,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
 - Use `follow(ctx, travel(…))` to keep a travelling element centred, and `impactShake(ctx)` for a jolt when it lands: see [camera](elements/camera.md).
+- `ctx.camera.to` also takes `tilt` (degrees): the flight leans a little into its direction and lands flat. `tilt(ctx, rect)` is the step adder for it; see [camera](elements/camera.md).
 - Keep one master timeline per canvas. The engine owns it.
 
 ### Reuse a scene with options
