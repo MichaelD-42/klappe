@@ -25,6 +25,8 @@
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
   - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
   - [checklist](elements/checklist.md): boxes that tick.
+  - [compareTable](elements/compareTable.md): a feature matrix whose rows build one per step, with ticks and crosses.
+  - [exerciseCard](elements/exerciseCard.md): a task card with time box, group, tasks and optional items revealed per step.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
   - [timer](elements/timer.md): a countdown on the wall clock.

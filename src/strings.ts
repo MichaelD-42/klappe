@@ -37,6 +37,9 @@ export const strings = {
     neutral: "Neutral",
     agree: "Agree",
     stronglyAgree: "Strongly agree",
+    min: "min", // "15 min" on an exercise card
+    yes: "yes", // the spoken name of a tick in a comparison table
+    no: "no",
   },
 };
 
