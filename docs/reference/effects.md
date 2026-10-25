@@ -986,7 +986,7 @@ const section: SectionModule = { transition: "shatter", transitionOptions: { sha
 
 ## `transitionCrt`
 
-Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "soft"` opens the new canvas less bright (see [crt](elements/crt.md)).
+Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "full"` opens the new canvas brighter (see [crt](elements/crt.md)).
 
 ## `push` and `iris`
 
