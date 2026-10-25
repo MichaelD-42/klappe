@@ -53,7 +53,7 @@ One master GSAP timeline per canvas; seek must equal play.
 
 ## Design rules
 
-- Colours only as `var(--k-*)` tokens ([themes](klappe/docs/reference/themes.md)). No colour literals.
+- Colours only as `var(--k-*)` tokens ([themes](klappe/docs/reference/themes.md)). No colour literals and no deck-own colour tokens: a colour klappe lacks is a request for a new `--k-*` token.
 - GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(document.documentElement).getPropertyValue("--k-accent").trim()` and tween that value.
 - Text at least 20 scene px (14 px at 1366). Lines, arrows and borders use `--k-line`, at least 2 px; what the room must follow uses `--k-accent`.
 - One idea per step. Name the new thing by drawing it in `--k-accent`; it settles when the next step starts.
