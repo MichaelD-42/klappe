@@ -20,6 +20,7 @@ const boot: SceneModule = {
   ...scene,
   build(ctx) {
     const refs = scene.build!(ctx);
+    refs.root.setAttribute("data-k-bleed", ""); // the bezel fills the frame by design
     captionOf(ctx).style.top = "920px";
     return refs;
   },

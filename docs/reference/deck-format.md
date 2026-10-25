@@ -29,6 +29,7 @@ Frontmatter keys:
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
+- `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
 
 ## deck.css
 
@@ -219,8 +220,24 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
-- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`.
+- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
+
+## Look checks
+
+`?selftest=walk` checks the look of the current scene at every step, once the step has settled. The findings are warnings: they go to `warnings` in the self-test result (the `script#klappe-selftest` JSON) and never fail the self-test. Each finding is listed once, at the first step that shows it.
+
+- Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the 1920x1080 frame). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
+- Clipped text: shown text that a parent's `overflow: hidden` or `clip` cuts off, which includes `text-overflow: ellipsis` and line clamps. Text that a mask hides completely is not counted.
+
+These are not checked:
+
+- Ink off the stage, and a stroke that is not drawn yet.
+- Ink that spans the whole frame width or height, such as a band or a full-frame picture.
+- Section layers and backgrounds.
+- Anything inside an element with `data-k-ignore` or `data-k-bleed`.
+
+To mark an intended bleed, set `data-k-bleed` on its element, for example `el.setAttribute("data-k-bleed", "")`. Use it for a picture that runs off the edge or a map the camera zooms into. It turns off both checks for that element and everything inside it.
 
 ## Deep links
 

@@ -9,7 +9,11 @@ const sites = [
 
 // An arc not declared up front, and a zoom to a site without a site step first.
 export default captioned("worldMap() in a smaller rect — m.arc(tl, from, to) draws an arc made on the spot", {
-  build: (ctx) => worldMap(ctx, { rect: { x: 760, y: 200, w: 1100, h: 680 }, sites }),
+  build: (ctx) => {
+    const m = worldMap(ctx, { rect: { x: 760, y: 200, w: 1100, h: 680 }, sites });
+    ctx.svg.querySelector("[data-k-map]")?.setAttribute("data-k-bleed", ""); // the zoom runs the land off the frame by design
+    return m;
+  },
   steps: [
     (tl, m: WorldMapHandle) => m.draw(tl),
     (tl, m: WorldMapHandle) => m.site(tl, "s1"),

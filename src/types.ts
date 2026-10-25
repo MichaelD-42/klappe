@@ -13,6 +13,7 @@ export interface DeckMeta {
   intensity: "calm" | "bold";
   confidential: boolean;
   sharedCanvas: string[][];
+  safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-fade" | "shout-answer";
@@ -168,4 +169,5 @@ export interface SelftestResult {
   checks: SelftestCheck[];
   problems: string[];
   errors: string[];
+  warnings: string[]; // soft findings (safe area, clipped text): reported, never fail the self-test
 }

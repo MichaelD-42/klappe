@@ -76,3 +76,18 @@ test('the problems panel lists problems raised after load and during a play', as
     await browser.close()
   }
 })
+
+// The look checks are soft: ink outside the safe area and clipped text come back as warnings, and the walk still passes.
+test('walk warns about ink outside the safe area and clipped text, and still passes', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=safe-area`)
+  expect(r.ok).toBe(true)
+  expect(r.problems).toEqual([])
+  expect(r.warnings).toEqual(
+    expect.arrayContaining([
+      expect.stringMatching(/safe area: \S+ div: ink \[1500,300,1900,\d+\] outside \[64,48,1856,1032\]/),
+      expect.stringMatching(/clipped text: \S+ "Too much text/),
+    ]),
+  )
+  expect(r.warnings.join(' ')).not.toContain('Bleed band')
+  expect(r.warnings.join(' ')).not.toContain('ink [-40,700')
+})

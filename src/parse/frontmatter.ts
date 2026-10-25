@@ -56,6 +56,13 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   const sharedCanvas = (mixed ? [] : sc.every(Array.isArray) ? sc : sc.length ? [sc] : []).map((g) =>
     (g as unknown[]).map(String),
   );
+  // CSS order: one value for all sides, [y, x], [top, x, bottom] or [top, right, bottom, left].
+  const sa = data["safe-area"];
+  const nums = (Array.isArray(sa) ? sa : [sa]).map(Number);
+  const safeArea = sa === undefined ? undefined : nums.length >= 1 && nums.length <= 4 && nums.every((n) => n >= 0)
+    ? ([nums[0], nums[1] ?? nums[0], nums[2] ?? nums[0], nums[3] ?? nums[1] ?? nums[0]] as [number, number, number, number])
+    : undefined;
+  if (sa !== undefined && !safeArea) problems.push("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
   return {
     meta: {
       title,
@@ -64,6 +71,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       intensity,
       confidential: data.confidential === true,
       sharedCanvas,
+      ...(safeArea && { safeArea }),
     },
     problems,
   };
