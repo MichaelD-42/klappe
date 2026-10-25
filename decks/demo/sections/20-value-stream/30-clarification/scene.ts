@@ -1,9 +1,9 @@
 import { bubble, counter, figure, shout } from "klappe/fx";
 import type { SceneModule } from "klappe/types";
-import { heading, label, stageFrame, svgEl } from "../section";
+import { heading, label, LINE_Y, stageFrame, svgEl } from "../section";
 
 // Scene-local layout. The Clarification stage sits at x 420 (box 190..650), Design at 1520 (box 1290..1750).
-const FLOOR = 930; // the figures' feet, just above the stream band
+const FLOOR = 910; // the figures' feet, just above the stream band
 const PERSON = 600; // where the person starts, beside the Clarification tile
 const PICK = 690; // where the person stands to pick it up
 const CARRY = 85; // the stack rides this far right of the body, so the arm, torso and walk show
@@ -12,7 +12,7 @@ const MEET = 960; // where the person stops in front of the customer
 const CUSTOMER = 1180;
 const HANDS = 30; // the carried stack sits this far above the feet: in front of the hip, below the hand
 const CARDS = 5; // the stack the counter counts down: the cards drawn here, not a statistic
-const PULSE = { from: 650, to: 1290, y: 1022 }; // along the line, from the Clarification box to the Design box
+const PULSE = { from: 650, to: 1290, y: LINE_Y }; // along the line, from the Clarification box to the Design box
 
 const hidden = { opacity: "0", visibility: "hidden" };
 

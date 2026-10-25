@@ -2,9 +2,9 @@ import { iconTile, morph, swarm } from "klappe/fx";
 import type { Rect, SceneModule } from "klappe/types";
 import { grow, heading, label, stageFrame, svgEl } from "../section";
 
-// Scene-local layout around the Analysis stage, centred in the frame: tile at (960, 887), box below it.
+// Scene-local layout around the Analysis stage, centred in the frame: tile at (960, 851), box below it.
 const FROM: Rect = { x: 120, y: 320, w: 260, h: 420 }; // from the Requirements side, at the left
-const HEAP: Rect = { x: 760, y: 560, w: 400, h: 240 }; // right over the Analysis tile
+const HEAP: Rect = { x: 760, y: 524, w: 400, h: 240 }; // right over the Analysis tile
 const AGENT = { x: 960, y: 330 };
 const FACT_Y = 470; // the row the key facts rise to, between the heap and the agent
 const FACT = { w: 170, h: 46 };
@@ -67,6 +67,8 @@ const scene: SceneModule = {
     };
     return { docs, title, agent, beam, items, names };
   },
+  // The flight needs no words: the documents start streaming as the camera lands, on the same press.
+  auto: [0.2, null, null, null],
   steps: [
     // The camera flies to the Analysis stage.
     (tl, r, ctx) => {

@@ -90,3 +90,18 @@ test('walk warns about ink outside the safe area and clipped text, and still pas
   )
   expect(r.warnings.filter((w) => /ink \[-?\d+,700,/.test(w))).toEqual([])
 })
+
+// Reduced motion turns camera flights into cuts: a step timed against a flight's end (">-0.6") then starts early.
+// shot and pdf always run with it, and so may a presenter's laptop.
+test('the deck has no problems with reduced motion', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?reducedmotion=1`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 60_000 })
+    expect(await page.evaluate(() => window.klappe.problems)).toEqual([])
+  } finally {
+    await browser.close()
+  }
+})
