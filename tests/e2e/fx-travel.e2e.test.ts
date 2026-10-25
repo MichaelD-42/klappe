@@ -18,11 +18,13 @@ for (const [vp, q] of [
     expect(r.problems).toEqual(['travel: path has no length'])
   }, 120_000)
 
-async function open(hash: string, query = ''): Promise<Page> {
+// With clock, the page runs on a fake clock that only moves with page.clock.runFor, as in fx-reveal.
+async function open(hash: string, query = '', clock = false): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  if (clock) await page.clock.install()
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-travel${query}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await (clock ? page.clock.runFor(500) : page.waitForTimeout(300))
   return page
 }
 
@@ -35,23 +37,23 @@ const state = (page: Page) =>
   })
 
 test('the parcel waits at the start, travels with the route drawing behind it, and ends at the end', async () => {
-  const page = await open('#/a/parcel/1')
+  const page = await open('#/a/parcel/1', '', true)
   expect(await state(page)).toEqual({ x: 200, y: 540, drawn: 0 })
-  await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(1000)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(1000)
   const mid = await state(page)
   expect(mid.drawn).toBeGreaterThan(0.1)
   expect(mid.drawn).toBeLessThan(0.9)
   expect(mid.x).toBeGreaterThan(200)
-  await page.waitForTimeout(1500)
+  await page.clock.runFor(1500)
   expect(await state(page)).toEqual({ x: 960, y: 900, drawn: 1 })
   await page.close()
 }, 60_000)
 
 test('with reduced motion, the parcel jumps to the end', async () => {
-  const page = await open('#/a/parcel/1', '&reducedmotion=1')
-  await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(100)
+  const page = await open('#/a/parcel/1', '&reducedmotion=1', true)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(100)
   expect(await state(page)).toEqual({ x: 960, y: 900, drawn: 1 })
   await page.close()
 }, 60_000)
