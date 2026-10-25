@@ -20,7 +20,7 @@
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
   - [checklist](elements/checklist.md): boxes that tick.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
-  - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves; demo section `305-roadmap`.
+  - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
   - [timer](elements/timer.md): a countdown on the wall clock.
   - [crt](elements/crt.md): colour, settle, prompt lines and dim of the retro terminal.
   - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.

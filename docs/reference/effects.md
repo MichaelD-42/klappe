@@ -230,7 +230,7 @@ import { iconTile, travel } from "klappe/fx";
 
 build: (ctx) => {
   const parcel = iconTile(ctx, "package", { x: 0, y: 0, size: 88, tone: "warn" });
-  return { parcel, ship: travel(ctx, parcel.el, { path: "M410 700 C 800 260, 1150 900, 1500 450", route: "draw", duration: 2.5 }) };
+  return { parcel, ship: travel(ctx, parcel.el, { path: "M410 700 C 800 260, 1150 900, 1546 420", route: "draw", duration: 2.5 }) };
 },
 steps: [(tl, r) => r.parcel.draw(tl), (tl, r) => r.ship(tl)],
 ```
@@ -595,7 +595,7 @@ Build the burst first so the text you add after it paints above the canvas.
 | `origin` | `{ x, y }` | required | where the pieces pop from, scene px |
 | `seed` | number | required | the same seed gives the same burst |
 | `count` | number | 150 | how many pieces |
-| `radius` | number | 360 | how far the pieces fly, scene px; the canvas is the square of this radius around `origin` |
+| `radius` | number | 360 | how far the pieces fly, scene px; the canvas is a square, 2 × radius wide, centred on `origin` |
 | `duration` | number | 1.4 | seconds |
 
 `pop(tl, at?)` adds the pop: the pieces fly out, slow down, fall a little, spin, and fade out over the last 30%. `at` is a timeline position, for example `"<"` to pop with the tween before. The canvas is empty before and after the pop.
