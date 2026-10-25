@@ -88,5 +88,5 @@ test('walk warns about ink outside the safe area and clipped text, and still pas
       expect.stringMatching(/clipped text: \S+ "Too much text/),
     ]),
   )
-  expect(r.warnings.join(' ')).not.toContain('ink [-40,700')
+  expect(r.warnings.filter((w) => /ink \[-?\d+,700,/.test(w))).toEqual([])
 })
