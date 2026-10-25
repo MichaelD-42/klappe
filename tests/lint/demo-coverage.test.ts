@@ -17,6 +17,7 @@ const ALLOW = [
   'gaugeAngle', 'likertShares', // gauge task
   'cycleLayout', 'vModelLayout', // cycle task: the cycle and vModel layouts, for their unit test
   'pyramidLayout', 'vennLayout', // venn-pyramid task
+  'wordDiff', 'flapGlyphs', // redline-flap task: the word diff and the board glyphs, for their unit test
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
