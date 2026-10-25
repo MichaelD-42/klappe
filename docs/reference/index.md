@@ -29,6 +29,7 @@
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
   - [timer](elements/timer.md): a countdown on the wall clock.
   - [crt](elements/crt.md): colour, settle, prompt lines and dim of the retro terminal.
+  - [chat](elements/chat.md): a messenger thread; typing dots, then the answer streams in.
   - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.
   - [mesh3d](elements/mesh3d.md): a self-running 3D dot mesh with moods.
 - [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

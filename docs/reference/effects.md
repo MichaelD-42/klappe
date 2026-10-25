@@ -711,6 +711,31 @@ The font fits the lines, 46 px at most. If the lines need less than 20 px the de
 
 `typed(full, p)` gives the first `round(p * length)` characters of `full`: the text of a line at typing progress `p`. `crt` writes it from `onUpdate`.
 
+A typewriter in the deck font: `terminal` and `crt` type in a code font, and their fit maths assume its fixed character width. To type in `--k-font`, write `typed` into a `text()` box from `onUpdate` and mark the box `data-k-text`, so the self-test compares its text between play and seek. From `decks/demo/sections/217-chat/20-typewriter/scene.ts`:
+
+```ts
+build(ctx) {
+  const box = text(ctx, { text: "", x: 160, y: 400, w: 1600, size: 72, weight: 700 });
+  box.el.dataset.kText = "";
+  return box;
+},
+steps: [
+  (tl, box: BasicHandle, ctx) => {
+    const line = ctx.doc!.steps[0].text;
+    box.show(tl);
+    tl.to({}, {
+      duration: line.length / 20, // characters per second
+      ease: "none",
+      onUpdate(this: gsap.core.Tween) {
+        box.el.textContent = typed(line, this.progress());
+      },
+    });
+  },
+],
+```
+
+A text that wraps reflows as it types; `chat` keeps a hidden full copy in the box to avoid that.
+
 ## `counted`
 
 `counted(full, p)` is `typed` for a count line (`"MEMORY TEST: 640K OK"`): the label types, then the number counts up in 16K steps, then ` OK` shows at `p = 1`. Text that is not a count line is typed.
