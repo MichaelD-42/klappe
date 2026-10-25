@@ -3,6 +3,7 @@ export * from "./agenda";
 // Not lean: the per-line slant, shared with scribble for its unit test.
 export { annotate, MARKER_MIX, scribble, type AnnotateHandle, type AnnotateOpts, type AnnotationKind } from "./annotate";
 export * from "./attention";
+export * from "./basics";
 // Not burstPoint: math for its unit test.
 export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./callout";

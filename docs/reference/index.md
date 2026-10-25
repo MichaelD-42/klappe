@@ -6,6 +6,7 @@
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
 - [Effects](effects.md): `chart`, `worldMap`, `figure`, `travel`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `qr`, `kpi`, `waffle`, `progress`, `barRace`, `shatter`, `shout`, `swarm`, `burst`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, `scramble`, `reveal`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
+  - [basics](elements/basics.md): `title`, `text` boxes, and `show` and `hide` fades for any element.
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
