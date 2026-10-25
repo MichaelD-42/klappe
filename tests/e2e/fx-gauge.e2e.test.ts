@@ -27,13 +27,14 @@ async function open(hash: string, q = ''): Promise<Page> {
   return page
 }
 
-// The gauge's number and its needle's angle from straight up, to a tenth of a degree.
-const dial = (page: Page) =>
-  page.evaluate(() => {
+// The gauge's number and its needle's angle from straight up, to a tenth of a degree; arc is the arc's dash offset.
+const dial = (page: Page, arc = false) =>
+  page.evaluate((arc) => {
     const g = document.querySelector('div[data-scene="dial"] [data-k-gauge]')!
     const m = (g.querySelector('line') as SVGLineElement).transform.baseVal.consolidate()!.matrix
-    return { text: g.querySelector('[data-k-text]')!.textContent, angle: Math.round((Math.atan2(m.b, m.a) * 1800) / Math.PI) / 10 }
-  })
+    const r = { text: g.querySelector('[data-k-text]')!.textContent, angle: Math.round((Math.atan2(m.b, m.a) * 1800) / Math.PI) / 10 }
+    return arc ? { ...r, arc: getComputedStyle(g.querySelectorAll('path')[1]).strokeDashoffset } : r
+  }, arc)
 
 test('the needle swings to the value, then on to each new value in step order, numbers in German', async () => {
   for (const [step, want] of [
@@ -49,11 +50,13 @@ test('the needle swings to the value, then on to each new value in step order, n
 
 test('a step back over a swing to a whole number shows the decimals again', async () => {
   const page = await open('#/a/dial/2')
+  const want = await dial(page, true) // the arc rewinds too: its offset is a fraction, not rounded to 0
+  expect(want.arc).not.toBe('0px')
   await page.keyboard.press('ArrowRight')
   await page.waitForTimeout(1500)
   await page.keyboard.press('ArrowLeft')
   await page.waitForTimeout(1500)
-  expect(await dial(page)).toEqual({ text: '95,5', angle: 81.9 })
+  expect(await dial(page, true)).toEqual({ ...want, text: '95,5', angle: 81.9 })
   await page.close()
 }, 60_000)
 

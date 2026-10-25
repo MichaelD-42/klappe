@@ -260,7 +260,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const swing = (tl: gsap.core.Timeline, from: number, to: number, at?: string) => {
     const d = { duration: ctx.reducedMotion ? 0 : motion.step * 2, ease: "power2.out", immediateRender: false };
     tl.fromTo(needle, { rotation: gaugeAngle(from, min, max) }, { rotation: gaugeAngle(to, min, max), ...d }, at);
-    tl.fromTo(arc, { strokeDashoffset: 1 - frac(from) }, { strokeDashoffset: 1 - frac(to), autoRound: false, ...d }, "<");
+    tl.fromTo(arc, { strokeDashoffset: 1 - frac(from), autoRound: false }, { strokeDashoffset: 1 - frac(to), autoRound: false, ...d }, "<");
     // Each end shows its own decimals (a step back over to(40) shows 95,5 again); in between the finer of the two.
     const dec = (p: number) => (p >= 1 ? decimals(to) : p <= 0 ? decimals(from) : Math.max(decimals(from), decimals(to)));
     tl.to({}, {

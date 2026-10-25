@@ -35,8 +35,9 @@ function path(e: Element, root: Element, memo?: Map<Element, string>): string {
 // One line per element: the world camera pose, then every inline-styled or SVG-transformed element
 // under it. GSAP writes SVG transforms to the attribute, so that is recorded too. Effects that write
 // from onUpdate mark their output: data-k-text (its text) and data-k-progress (a progress value).
-// Dash, filter, fill-opacity and colour are recorded too, for draw-ons, glows and tints. They are read
-// computed: GSAP rewinds an unset inline filter to "none", which renders the same as unset.
+// Dash, filter, fill-opacity, colour, stroke, outline and border colour and z-index are recorded too, for
+// draw-ons, glows, tints and lit edges. They are read computed: GSAP rewinds an unset inline filter to "none",
+// which renders the same as unset, and an inline var() reads the same as its rgb().
 // Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.world, p)}`).join(" ");
@@ -49,7 +50,7 @@ export function snapshot(c: CanvasRuntime): string {
     const attr = e.getAttribute("transform") ?? "";
     const progress = e.getAttribute("data-k-progress") ?? "";
     const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
-    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}`)}${text}`);
+    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}|${k.stroke}|${k.outlineColor}|${k.borderColor}|${k.zIndex}`)}${text}`);
   }
   return lines.join("\n");
 }
@@ -58,10 +59,10 @@ export function snapshot(c: CanvasRuntime): string {
 const shown = (canvases: CanvasRuntime[]) =>
   canvases.map((c, k) => `canvas ${k}|${round(`${c.el.style.opacity}|${c.el.style.visibility}`)}`).join("\n");
 
-function firstDiff(a: string, b: string): string {
+function firstDiff(a: string, b: string, names = ["play", "seek"]): string {
   const [x, y] = [a.split("\n"), b.split("\n")];
   for (let k = 0; k < Math.max(x.length, y.length); k++)
-    if (x[k] !== y[k]) return `play "${x[k] ?? "(none)"}" vs seek "${y[k] ?? "(none)"}"`;
+    if (x[k] !== y[k]) return `${names[0]} "${x[k] ?? "(none)"}" vs ${names[1]} "${y[k] ?? "(none)"}"`;
   return "";
 }
 
@@ -127,14 +128,27 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
     gsap.globalTimeline.timeScale(1);
   }
 
-  for (let i = 0; i < steps.length; i++) {
-    reset();
-    await stepper.goto(i, "cut");
-    const hash = formatHash(steps[i]);
-    const diff = firstDiff(played[i], state(i));
-    checks.push({ name: `step ${hash}: ${diff ? "play≠seek" : "play=seek"}`, ok: !diff, detail: diff || undefined });
-    const bad = legibility(active(i), steps[i].scene, stage);
-    checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
+  // A step back is a cut from the step after; it must land where the deep link does. Play and seek alone miss
+  // tweens that rewind to a wrong start value.
+  gsap.globalTimeline.timeScale(PLAY_SPEED);
+  try {
+    for (let i = 0; i < steps.length; i++) {
+      reset();
+      await stepper.goto(i, "cut");
+      const hash = formatHash(steps[i]);
+      const seek = state(i);
+      const diff = firstDiff(played[i], seek);
+      checks.push({ name: `step ${hash}: ${diff ? "play≠seek" : "play=seek"}`, ok: !diff, detail: diff || undefined });
+      const bad = legibility(active(i), steps[i].scene, stage);
+      checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
+      if (i === steps.length - 1) continue; // next() on the last step only ends the deck
+      await stepper.next();
+      await stepper.prev();
+      const back = firstDiff(seek, state(i), ["seek", "back"]);
+      checks.push({ name: `step ${hash}: ${back ? "back≠seek" : "back=seek"}`, ok: !back, detail: back || undefined });
+    }
+  } finally {
+    gsap.globalTimeline.timeScale(1);
   }
 }
 
