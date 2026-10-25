@@ -860,7 +860,7 @@ build: (ctx) => handwrite(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 400, s
 steps: [(tl, h) => h.write(tl)],
 ```
 
-`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average). The phrase stays on one line. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, 0.09 s a character, 0.6 s to 4 s in all; a space is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
+`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average; default 1). The phrase stays on one line. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, 0.09 s a character, 0.6 s to 4 s in all; a space is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
 
 ## `reveal`
 
@@ -1042,7 +1042,7 @@ const section: SectionModule = { transition: "pageTurn" };
 
 ## `transitionMagicMove`
 
-Catalog: sections `301-magic-a` and `302-magic-b` (`#/magic-b/after/1`). An element that both sections show with the same `data-k-match` key flies from its old place to its new one in 0.9 s, while the rest fades as in `fade`. On the way its old look fades into its new look, each scaled uniformly (as in `morph`), so text never stretches. Set the key in the scene's `build`: `el.dataset.kMatch = "plan"` on an HTML element, `tile.el.dataset.kMatch = "rocket"` on an icon or any SVG shape. A Markdown scene cannot set it.
+Catalog: sections `301-magic-a` and `302-magic-b` (`#/magic-b/after/1`). An element that both sections show with the same `data-k-match` key flies from its old place to its new one in 0.9 s. Meanwhile the old canvas fades out, then the new one fades in, over the 0.9 s flight. On the way its old look fades into its new look, each scaled uniformly (as in `morph`), so text never stretches. Set the key in the scene's `build`: `el.dataset.kMatch = "plan"` on an HTML element, `tile.el.dataset.kMatch = "rocket"` on an icon or any SVG shape. A Markdown scene cannot set it.
 
 A key counts when its element shows in the frame on both sides: on the old canvas as it stands, on the new canvas as its first step leaves it. With the same key twice on one side, the first in document order flies. The flying copies sit in a layer above both canvases; the real elements are hidden meanwhile by an attribute (`data-k-fly-hide`), never by inline styles, so the steps keep them. Sets `reveal` when the flight lands: the first step plays under the landed copy, which leaves when that step ends. A key press ends it at once, and nothing stays behind. With no shared key it plays a fade; with reduced motion too. From `decks/demo/sections/302-magic-b/section.ts`:
 
@@ -1050,7 +1050,7 @@ A key counts when its element shows in the frame on both sides: on the old canva
 const section: SectionModule = { transition: "magicMove" };
 ```
 
-Limits: the copy carries the computed styles of each node inline, which suits a chip, a title or an icon, not a large subtree. A step that moves the element after the first step is not followed. Rotation is not carried.
+Limits: the copy carries the computed styles of each node inline, which suits a chip, a title or an icon, not a large subtree. A step that moves the element after the first step is not followed. Rotation is not carried. The new section's first step is run once, out of sight, to measure it: its `onUpdate` and `.call()` callbacks fire then too.
 
 ## `magicBox`
 

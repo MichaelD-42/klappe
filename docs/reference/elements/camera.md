@@ -1,8 +1,8 @@
 # Camera: `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom`
 
-Camera moves inside a scene. `follow` closes in on an element that `travel` moves and keeps it in the middle of the screen until it arrives. `impactShake` jolts everything the camera shows once, for "this landed"; it is the camera-level twin of `shake`.
+Camera moves inside a scene. `follow` closes in on an element that `travel` moves and keeps it in the middle of the screen until it arrives. `impactShake` jolts everything the camera shows once, for "this landed"; it is the camera-level twin of `shake`. `rackFocus` keeps one item sharp while the others blur. `tilt` leans a long camera flight into its direction. `dollyZoom` pulls the camera back while the target holds its size.
 
-Catalog: section `237-camera` (`#/camera/follow/2`).
+Catalog: section `237-camera`: `follow` and `impactShake` at `#/camera/follow/2`, `rackFocus` at `#/camera/rack-focus/2`, `tilt` at `#/camera/tilt/2`, `dollyZoom` at `#/camera/dolly/2`.
 
 Only in `scene.ts`. Shortened from `decks/demo/sections/237-camera/10-follow/scene.ts` (the scene also draws the tiles in a first step):
 
@@ -41,7 +41,7 @@ Limits:
 
 ## `impactShake`
 
-`impactShake(ctx)` returns a step adder: a damped jolt down and up for 0.4 s that ends exactly at rest. It starts when the tweens added to the step so far end, so add it after the move that lands. It moves the world's layers, not the world, so it does not fight the camera. The pinned background stays still. With reduced motion it does nothing.
+`impactShake(ctx)` returns a step adder: a damped jolt down and up for 0.4 s that ends exactly at rest. It starts when the tweens added to the step so far end, so add it after the move that lands. It moves the world's layers, not the world, so it does not fight the camera. The pinned background stays still. In a deck with `intensity: bold` the jolt is 1.5 times as deep. With reduced motion it does nothing.
 
 ## `rackFocus`
 

@@ -58,7 +58,9 @@ const CHECKS: [string, string, number][] = [
 export async function loadFonts(): Promise<string[]> {
   const root = getComputedStyle(document.documentElement);
   try {
-    await Promise.all(["--k-font", "--k-font-heading", "--k-font-code"].map((v) => document.fonts.load(`16px ${root.getPropertyValue(v)}`)));
+    // An empty token (a theme without a heading face) would make an invalid font shorthand: skip it.
+    const families = ["--k-font", "--k-font-heading", "--k-font-code"].map((v) => root.getPropertyValue(v).trim()).filter(Boolean);
+    await Promise.all(families.map((f) => document.fonts.load(`16px ${f}`)));
     return [];
   } catch (e) {
     return [`theme: fonts did not load (${e instanceof Error ? e.message : e})`];
