@@ -29,10 +29,11 @@ export interface WordCloudHandle {
 }
 
 // Width per character and line height, in font sizes. An estimate, not a measure: the layout is the same on
-// every machine and in CI, whatever the rasteriser. 0.62 is a little wider than Inter 700's average letter,
-// and the pad covers a word of wide letters.
-const CHAR = 0.62;
-const LINE = 1.25; // Inter's ascent plus descent is 1.21 font sizes
+// every machine and in CI, whatever the rasteriser. Each class is a little wider than its widest letter in
+// Inter 700 and Space Grotesk 700; the pad covers the rest.
+const charW = (c: string) => (/[WMmw@]/.test(c) ? 1 : /[iljtfrI.,:;'!|]/.test(c) ? 0.36 : /[A-Z0-9]/.test(c) ? 0.72 : 0.62);
+const textW = (s: string) => [...s].reduce((sum, c) => sum + charW(c), 0);
+const LINE = 1.3; // the theme fonts' ascent plus descent: Inter 1.21, Space Grotesk 1.28 font sizes
 const MIN = 24;
 
 const hit = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -53,7 +54,7 @@ export function cloudLayout(words: CloudWord[], rect: Rect, max = Math.min(160, 
     out = [];
     for (const word of sorted) {
       const size = Math.max(MIN, max * scale * Math.sqrt(word.weight / top));
-      const w = word.text.length * size * CHAR + size * 0.3;
+      const w = (textW(word.text) + 0.3) * size;
       const h = size * LINE;
       for (let a = 0; ; a += 0.1) {
         const r = 2 * a;

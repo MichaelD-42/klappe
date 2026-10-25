@@ -77,6 +77,13 @@ test('no two words overlap on screen, wide letters included, and the layout is t
   lefts(small).forEach((l, i) => expect(Math.abs(l - lefts(a)[i])).toBeLessThan(3))
 }, 90_000)
 
+test('no two words overlap in the bold theme either: its font is taller and wider', async () => {
+  const page = await open('&theme=bold#/a/cloud/2')
+  const w = await read(page)
+  await page.close()
+  expect(w.flatMap((p, i) => w.slice(i + 1).filter((q) => p.b.l < q.b.r && q.b.l < p.b.r && p.b.t < q.b.b && q.b.t < p.b.b).map((q) => [p.text, q.text]))).toEqual([])
+}, 60_000)
+
 test('words grow in, heaviest first, mid-play', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.clock.install()
