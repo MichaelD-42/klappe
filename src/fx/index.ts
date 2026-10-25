@@ -25,6 +25,7 @@ export * from "./focus";
 export * from "./glitch";
 export * from "./icons";
 export * from "./loupe";
+export * from "./magic";
 export * from "./map";
 export * from "./matrix";
 export * from "./pyramid";

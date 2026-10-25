@@ -937,11 +937,11 @@ steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to(
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube` and `pageTurn` play a fade.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube`, `pageTurn` and `magicMove` play a fade.
 
 ## `registry`
 
-`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
+`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`, `magicMove`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
 
 ## `playTransition`
 
@@ -949,7 +949,7 @@ Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the c
 
 ## `loadTransitions`
 
-`loadTransitions(kinds)` loads the code of `zoom`, `shatter`, `crt`, `glitch`, `cube` and `pageTurn` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
+`loadTransitions(kinds)` loads the code of `zoom`, `shatter`, `crt`, `glitch`, `cube`, `pageTurn` and `magicMove` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
 
 ## `transitionZoom`
 
@@ -1024,3 +1024,23 @@ const section: SectionModule = { transition: "pageTurn" };
 ## `pagePeel`
 
 `pagePeel(p)` gives the peel at progress `p` (0 to 1) as two polygons in frame pixels: `page`, the part of the old canvas that still lies flat, and `flap`, the peeled part folded back over it. The fold runs from the bottom-right corner to the top-left one. It is pure; `transitionPageTurn` draws it as clip paths.
+
+## `transitionMagicMove`
+
+Catalog: sections `301-magic-a` and `302-magic-b` (`#/magic-b/after/1`). An element that both sections show with the same `data-k-match` key flies from its old place to its new one in 0.9 s, while the rest fades as in `fade`. On the way its old look fades into its new look, each scaled uniformly (as in `morph`), so text never stretches. Set the key in the scene's `build`: `el.dataset.kMatch = "plan"` on an HTML element, `tile.el.dataset.kMatch = "rocket"` on an icon or any SVG shape. A Markdown scene cannot set it.
+
+A key counts when its element shows in the frame on both sides: on the old canvas as it stands, on the new canvas as its first step leaves it. With the same key twice on one side, the first in document order flies. The flying copies sit in a layer above both canvases; the real elements are hidden meanwhile by an attribute (`data-k-fly-hide`), never by inline styles, so the steps keep them. Sets `reveal` when the flight lands: the first step plays under the landed copy, which leaves when that step ends. A key press ends it at once, and nothing stays behind. With no shared key it plays a fade; with reduced motion too. From `decks/demo/sections/302-magic-b/section.ts`:
+
+```ts
+const section: SectionModule = { transition: "magicMove" };
+```
+
+Limits: the copy carries the computed styles of each node inline, which suits a chip, a title or an icon, not a large subtree. A step that moves the element after the first step is not followed. Rotation is not carried.
+
+## `magicBox`
+
+`magicBox(rect, stage)` turns a screen rect (`{ left, top, width, height }`) into stage pixels `{ x, y, w, h }`: it removes the stage's offset and undoes the scale that fits the 1920 x 1080 stage to the window.
+
+## `magicFit`
+
+`magicFit(box, base)` gives the pose `{ x, y, scale }` (origin top left) of a copy of size `base` (`{ w, h }`) scaled uniformly to fit inside `box`, centred on it. An empty `base` keeps scale 1. The old look ends inside the new box and the new look starts inside the old one.
