@@ -46,4 +46,5 @@ export * from "./transitions";
 export * from "./travel";
 export * from "./tree";
 export * from "./wipe";
+export { cloudLayout, wordCloud, type CloudWord, type PlacedWord, type WordCloudHandle, type WordCloudOpts } from "./wordcloud";
 export * from "./zoom";

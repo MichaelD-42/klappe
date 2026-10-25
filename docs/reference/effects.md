@@ -782,7 +782,7 @@ steps: [(tl, s) => s.run(tl)],
 
 ## `reveal`
 
-Catalog: section `215-reveal` (`#/reveal/quote/1` and `#/reveal/statement/1`). A statement or a quote whose lines, or words, rise in one after another, in `--k-fg`.
+Catalog: section `215-reveal` (`#/reveal/quote/1`, `#/reveal/statement/1` and `#/reveal/kinetic/1`). A statement or a quote whose lines, or words, rise in one after another, in `--k-fg`.
 
 From `decks/demo/sections/215-reveal/10-quote/scene.ts`, with the quote as one list item on three source lines in `scene.md`:
 
@@ -792,6 +792,35 @@ steps: [(tl, r) => r.run(tl)],
 ```
 
 `reveal(ctx, { text, x, y, w?, size?, by?, delay? })`: `text` is a string, whose lines are its line breaks (the source lines of a list item), or a list of strings, one line each; empty lines are dropped. `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 56, weight 600). `by` is `"line"` (default) or `"word"`: what rises as one. `delay` is the seconds `run` holds before the first unit rises (default 0). A section's first step plays under the section fade (0.4 s), so give a reveal there `delay: 0.4`, or its first line has risen before the room sees it. The units are the source lines or the words, never the lines the browser wraps to, so the reveal is the same with every font. A line too long for `w` wraps and rises as one block. `run(tl)` lifts each unit half its font size and fades it in over 0.9 s (`power2.out`), 0.3 s apart by line, 0.15 s apart by word. `el` is the text box. Reduced motion: the whole text fades in, already in place, after the same `delay`.
+
+Key words: mark them `**bold**` in the list item, as in `- We do not ship **features**. We ship **outcomes**.` (`#/reveal/kinetic/1`). The markers never show. As its unit rises, 0.3 s after the unit starts, a key word grows to 1.15 times its size and turns from `--k-fg` to `--k-accent` over 0.9 s. It keeps that look after the step. A marked phrase stresses each of its words. Punctuation outside the markers stays plain. Each key word has a little side padding, so it grows into that room and does not touch its neighbour. This works `by: "word"` and `by: "line"`; by word, the stress lands on the word as it is read. Reduced motion: the key words are already grown and in the accent when the text fades in.
+
+## `wordCloud`
+
+Catalog: section `216-words` (`#/words/cloud/1`). Words from a `data/` file, sized by weight and placed without overlap. The heaviest word is `--k-accent`; the others cycle through `--k-series-2` to `--k-series-6` (in the bold theme `--k-series-1` is the accent).
+
+From `decks/demo/sections/216-words/10-cloud/scene.ts`:
+
+```ts
+import { wordCloud } from "klappe/fx";
+
+build: (ctx) => wordCloud(ctx, { src: "data/words.csv", rect: { x: 160, y: 80, w: 1600, h: 840 } }),
+steps: [(tl, c) => c.show(0, 3)(tl), (tl, c) => c.show(3)(tl)],
+```
+
+`wordCloud(ctx, { src, rect, data?, max?, sample? })`: `src` is the data file, `"data/x.csv"`; its first column is the word and its first number column the weight, above zero. `data` takes rows you parsed yourself, `null` says the file is missing (as for `chart`). `max` is the heaviest word's font size (default `rect.h / 5`, at most 160). `sample` shows the "Sample data" label; it also shows when the file has the line `# source: klappe demo sample`. The label takes a 40-unit strip at the top of `rect`. The `# source:` line goes to the speaker notes.
+
+| Handle | Step |
+| --- | --- |
+| `show(from?, to?)` | the words `from` to `to - 1` in weight order (0 is the heaviest) fade in and grow from 0.6 to full size, heaviest first, staggered over at most 1.2 s. Default: all. `show(0, 3)` then `show(3)` shows the top three, then the rest |
+| `words` | not a step: the words, heaviest first, the order `show` counts in |
+| `el` | not a step: the box that holds the words |
+
+Reduced motion: the words fade in at full size, all at once. A missing file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `wordCloud: <label>: <src> (<why>)`. A word that does not fit reports `wordCloud: <n> words of <src> do not fit in the rect`. Words are horizontal only.
+
+## `cloudLayout`
+
+`cloudLayout(words, rect, max?)` places `{ text, weight }` words for `wordCloud`: `{ text, weight, size, x, y, w, h }` each, heaviest first, ties in input order. A word's font size follows the square root of its weight, so its area follows the weight; the smallest is 24. Each word goes on an Archimedean spiral out from the centre of `rect`, as wide as `rect`, at the first spot where its box is inside `rect` and touches no other box. A box is estimated, not measured: 0.62 font sizes per character plus 0.3 font sizes, by 1.25 font sizes. So the layout is the same on every machine and in CI, whatever fonts and rasteriser the browser has. If a word does not fit, every size shrinks by 10 % and the layout starts again, up to 12 times; words that still do not fit are left out. Nothing is random: the same words always give the same layout.
 
 ## `scrambleGlyphs`
 

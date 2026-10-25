@@ -16,6 +16,7 @@ const ALLOW = [
   'funnelLayout', 'sankeyLayout', // funnel-sankey: chart layout helpers
   'gaugeAngle', 'likertShares', // gauge task
   'cycleLayout', 'vModelLayout', // cycle task: the cycle and vModel layouts, for their unit test
+  'cloudLayout', // cloud-quote task: the word cloud layout, for its unit test
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
