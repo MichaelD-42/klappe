@@ -17,7 +17,7 @@ export default captioned("loupe(ctx, { href, alt, rect, r, zoom, at }) — and t
       rect: { x: 160, y: 60, w: 1600, h: 860 },
       fit: "cover",
       r: 160,
-      zoom: 2.5,
+      zoom: 1.7,
       at: { x: 1328, y: 557 },
     });
     return { lens, chart: lens.to(1595, 404), drawing: lens.to(973, 748) };

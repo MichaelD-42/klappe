@@ -5,9 +5,9 @@ export default captioned("venn(ctx, { sets, regions, … }) — light(…ids) li
   build: (ctx) => ({
     h: title(ctx),
     v: venn(ctx, {
-      x: 160, y: 270, w: 1600, h: 670,
+      x: 160, y: 300, w: 1600, h: 600,
       sets: [{ id: "design", label: "Design" }, { id: "code", label: "Code" }, { id: "data", label: "Data" }],
-      regions: { design: "Taste", "design+code": "Prototypes", "code+data": "Reports", "design+code+data": "Products" },
+      regions: { design: "Taste", "design+code": "Mockups", "code+data": "Reports", "design+code+data": "Products" },
     }),
   }),
   steps: [

@@ -4,7 +4,7 @@ Two camera moves inside a scene. `follow` closes in on an element that `travel` 
 
 Catalog: section `237-camera` (`#/camera/follow/2`).
 
-Only in `scene.ts`. From `decks/demo/sections/237-camera/10-follow/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/237-camera/10-follow/scene.ts` (the scene also draws the tiles in a first step):
 
 ```ts
 import { follow, iconTile, impactShake, travel } from "klappe/fx";
@@ -34,11 +34,11 @@ The camera reads the travel's path at the move's progress, not the element's pla
 
 Limits:
 
-- It follows `travel` only. A travel whose path has no length gives `follow: add the travel's step before follow, in the same step`, as does a follow added before its travel.
+- It follows `travel` only. A travel whose path has no length gives `follow: add the travel's step before follow, in the same step`, as does a follow added before its travel. A travel added in an earlier step gives `follow: the travel is in an earlier step; add follow in the travel's step`.
 - The view is not kept inside the canvas: near a canvas edge, the camera shows the empty stage past it.
 
 `ctx.camera.follow(tl, point, { duration, at, zoom })` is the engine move under it, for an element that moves another way: `point(t)` gives the place in canvas units at time share `t` (0 to 1). It must be a pure function of `t`.
 
 ## `impactShake`
 
-`impactShake(ctx)` returns a step adder: a damped jolt down and up for 0.4 s that ends exactly at rest. It starts when the tweens added to the step so far end, so add it after the move that lands. It moves the world's layers, not the world, so it does not fight the camera. The pinned background stays still. With reduced motion it does nothing.
+`impactShake(ctx)` returns a step adder: a damped jolt down and up for 0.4 s that ends exactly at rest. It starts when the tweens added to the step so far end, so add it after the move that lands. It moves the world's layers, not the world, so it does not fight the camera. The pinned background stays still. In a deck with `intensity: bold` the jolt is 1.5 times as deep. With reduced motion it does nothing.

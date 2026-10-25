@@ -12,7 +12,7 @@ Each canvas has one master GSAP timeline. The engine owns it. Playing a step and
 - Give every `fromTo` `immediateRender: false`, and set its start value in `build()` with `gsap.set`. Otherwise GSAP applies the start value when the timeline is built, so a later step's start value shows at load. A `tl.set` in a step is fine only on a value `build()` already set.
 - A callback may write the DOM only as a pure function of a tween's progress: `onUpdate` that sets text or a canvas from `this.progress()`. Mark that element `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it. `counter` and `crt` do this.
 - Position `"<"` is fine after a tween this step added. Never start a step with `"<"` or `"-="`: a step starts at its own label, and an offset before it can pull the tween into the previous step. A step that does this shows a deck problem.
-- Camera moves inside a scene are `ctx.camera.to(tl, rect, { duration, at })`, after the scene's entry.
+- Camera moves inside a scene are `ctx.camera.to(tl, rect, { duration, at })`, after the scene's entry. To ride along with a moving element or jolt the scene on a landing, use `follow` and `impactShake` ([camera](elements/camera.md)).
 
 ## Step functions
 

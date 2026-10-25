@@ -35,15 +35,16 @@ const charW = (c: string) => (/[WMmw@]/.test(c) ? 1 : /[iljtfrI.,:;'!|]/.test(c)
 const textW = (s: string) => [...s].reduce((sum, c) => sum + charW(c), 0);
 const LINE = 1.3; // the theme fonts' ascent plus descent: Inter 1.21, Space Grotesk 1.28 font sizes
 const MIN = 24;
+export const MAX_WORDS = 60; // more is no longer a cloud the room can read, and the spiral search grows with the square
 
 const hit = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 // Words heaviest first, each sized by the square root of its weight (area follows weight) and placed on an
 // Archimedean spiral out from the centre of rect at the first spot where its box touches no other box.
 // When a word does not fit inside rect, every size shrinks by 10 % and the layout starts again (up to 12
-// times); words that still do not fit are left out. Ties keep input order. Pure: the same words give the same layout.
+// times); words that still do not fit are left out. Only the MAX_WORDS heaviest are placed. Ties keep input order. Pure: the same words give the same layout.
 export function cloudLayout(words: CloudWord[], rect: Rect, max = Math.min(160, rect.h / 5)): PlacedWord[] {
-  const sorted = words.map((w, i) => ({ w, i })).sort((a, b) => b.w.weight - a.w.weight || a.i - b.i).map((x) => x.w);
+  const sorted = words.map((w, i) => ({ w, i })).sort((a, b) => b.w.weight - a.w.weight || a.i - b.i).map((x) => x.w).slice(0, MAX_WORDS);
   const top = sorted[0]?.weight ?? 1;
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
@@ -105,7 +106,9 @@ export function wordCloud(ctx: Ctx, opts: WordCloudOpts): WordCloudHandle {
   // The label takes a 40 px strip at the top of rect, so no word sits under it.
   const area = sample ? { ...R, y: R.y + 40, h: R.h - 40 } : R;
   const placed = cloudLayout(rows.map((r) => ({ text: String(r[label]).trim(), weight: r[weight] as number })), area, opts.max);
-  if (placed.length < rows.length) ctx.problem(`wordCloud: ${rows.length - placed.length} words of ${opts.src} do not fit in the rect`);
+  if (rows.length > MAX_WORDS) ctx.problem(`wordCloud: ${opts.src} has ${rows.length} words; only the ${MAX_WORDS} heaviest show`);
+  const n = Math.min(rows.length, MAX_WORDS);
+  if (placed.length < n) ctx.problem(`wordCloud: ${n - placed.length} words of ${opts.src} do not fit in the rect`);
   const els = placed.map((p, i) => {
     const s = root.appendChild(document.createElement("span"));
     s.textContent = p.text;

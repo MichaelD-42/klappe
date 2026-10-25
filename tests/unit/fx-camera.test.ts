@@ -54,6 +54,28 @@ test('follow before the travel step is a problem', () => {
   expect(problems).toEqual(["follow: add the travel's step before follow, in the same step"])
 })
 
+test('follow of a travel from an earlier step is a problem', () => {
+  const { ctx, asks, problems } = setup()
+  const ship = travel(ctx, { x: 0, y: 0 } as unknown as Element, { path: 'M100 200 L500 200', duration: 1 })
+  const tl = gsap.timeline({ paused: true })
+  ship(tl)
+  tl.addLabel('step') // what the engine puts at each step start
+  follow(ctx, ship)(tl)
+  expect(asks).toEqual([])
+  expect(problems).toEqual(["follow: the travel is in an earlier step; add follow in the travel's step"])
+})
+
+test('impactShake shakes harder in a bold deck', () => {
+  const peak = (intensity: string) => {
+    const { ctx, layers } = setup()
+    Object.assign(ctx, { deck: { lang: 'en', intensity } })
+    const tl = gsap.timeline({ paused: true })
+    impactShake(ctx)(tl)
+    return Math.max(...Array.from({ length: 40 }, (_, i) => (tl.seek(i * 0.01), Math.abs(layers[0].y))))
+  }
+  expect(peak('bold')).toBeCloseTo(peak('calm') * 1.5)
+})
+
 test('impactShake jolts the layers and ends exactly at rest', () => {
   const { ctx, layers } = setup()
   const tl = gsap.timeline({ paused: true })

@@ -11,14 +11,14 @@ const SHEET = { backgroundColor: "var(--k-bg)", backfaceVisibility: "hidden", ov
 const CLEAR = "transform,transformOrigin,backgroundColor,backfaceVisibility,overflow,filter";
 
 // The old canvas turns away to the left as one face of a cube; the new one turns in as the next face.
-// Both turn about the cube's centre, 960 px behind the screen, so their edges meet. Black shows around the cube.
+// Both turn about the cube's centre, 960 px behind the screen, so their edges meet. The stage colour shows around the cube.
 export function transitionCube(from: CanvasRuntime, to: CanvasRuntime, _opts: TransitionOpts): gsap.core.Timeline {
   const worlds = from.el.parentElement!;
   const stage = worlds.parentElement!;
   const face = { ...SHEET, transformOrigin: "50% 50% -960px" };
   return gsap
     .timeline()
-    .set(stage, { backgroundColor: "var(--k-blackout)" })
+    .set(stage, { backgroundColor: "var(--k-bg)" })
     .set(worlds, { perspective: 2400 })
     .set(from.el, face)
     .set(to.el, { ...face, autoAlpha: 1 })
@@ -59,19 +59,19 @@ export function pagePeel(p: number): { page: Pt[]; flap: Pt[] } {
   return { page: cut(rect, s, 1), flap: peeled.map((q) => { const d = 2 * (along(q) - s); return [q[0] - d * U[0], q[1] - d * U[1]]; }) };
 }
 
+// The gradient line of a box-sized gradient at this angle runs along U, and a stop at n px sits where along() = n.
+const SHADE_ANGLE = 180 - (Math.atan2(W, H) * 180) / Math.PI;
 const poly = (P: Pt[]) => (P.length ? `polygon(${P.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(", ")})` : "inset(50%)");
 
-// The old canvas peels off like a page from its bottom-right corner; the back of the page (the surface colour)
-// folds over it, and the new canvas under it comes out of the page's shadow.
+// The old canvas peels off like a page from its bottom-right corner; the back of the page (the surface colour,
+// a shade at the crease and darker toward the corner) folds over it, and the new canvas comes out of its shadow.
 export function transitionPageTurn(from: CanvasRuntime, to: CanvasRuntime, _opts: TransitionOpts): gsap.core.Timeline {
   const worlds = from.el.parentElement!;
   let flap = worlds.querySelector<HTMLElement>(":scope > [data-k-peel]");
   if (!flap) {
     flap = worlds.appendChild(document.createElement("div"));
     flap.dataset.kPeel = "";
-    // The back of the page, lit at the fold and darker toward the corner.
-    Object.assign(flap.style, { position: "absolute", left: "0", top: "0", width: `${W}px`, height: `${H}px`, zIndex: "2",
-      background: "linear-gradient(135deg, var(--k-surface) 40%, color-mix(in srgb, var(--k-surface) 70%, var(--k-blackout)))" });
+    Object.assign(flap.style, { position: "absolute", left: "0", top: "0", width: `${W}px`, height: `${H}px`, zIndex: "2" });
   }
   const f = flap;
   gsap.set(f, { autoAlpha: 0 });
@@ -79,6 +79,10 @@ export function transitionPageTurn(from: CanvasRuntime, to: CanvasRuntime, _opts
     const g = pagePeel(p);
     from.el.style.clipPath = p >= 1 ? "" : poly(g.page);
     f.style.clipPath = poly(g.flap);
+    // The shade moves with the fold (along = s); the folded corner lands at along = 2s - DIAG.
+    const s = DIAG * (1 - p);
+    const mix = (k: number) => `color-mix(in srgb, var(--k-surface) ${k}%, var(--k-blackout))`;
+    f.style.background = `linear-gradient(${SHADE_ANGLE}deg, ${mix(72)} ${2 * s - DIAG}px, var(--k-surface) ${s - 60}px, ${mix(85)} ${s}px)`;
   };
   return gsap
     .timeline()
@@ -90,6 +94,6 @@ export function transitionPageTurn(from: CanvasRuntime, to: CanvasRuntime, _opts
     .fromTo(to.el, { filter: "brightness(0.5)" }, { filter: "brightness(1)", duration: PAGE, ease: "power1.in", immediateRender: false }, 0)
     .addLabel("reveal", PAGE * REVEAL)
     .set(from.el, { autoAlpha: 0, clearProps: "zIndex,clipPath" }, PAGE)
-    .set(f, { autoAlpha: 0 }, PAGE)
+    .set(f, { autoAlpha: 0, clearProps: "clipPath,background" }, PAGE)
     .set(to.el, { clearProps: "filter,backgroundColor" }, PAGE);
 }

@@ -18,6 +18,7 @@ export const NOTE_MIX = 0.3; // the share of the series colour in a note, the re
 const PAD = 16;
 const COL_GAP = 32;
 const LABEL_H = 56; // the band at the top of a group column for its label
+const NOTE_GAP = 48; // the most room between a label's rule and the first note under it
 const MIN_W = 180;
 const MAX_W = 240;
 const TILT = 4; // the most a scattered note leans, degrees
@@ -178,12 +179,12 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
       const to = scatterIn(areas, scattered.map((id) => notes.get(id)!.i), note, seed);
       scattered.forEach((id, k) => target.set(id, to[k]));
     } else for (const id of scattered) target.set(id, pose.get(id) ?? scatter[notes.get(id)!.i]); // shortcut: once every group formed, left-over notes stay put and may overlap a column
-    // A column's notes sit centred in the height under its label.
+    // A column's notes sit under its label, centred in the height but at most NOTE_GAP below the rule.
     groups.forEach((_, g) => {
       const members = [...where].filter(([, w]) => w.g === g);
       if (!members.length) return;
       const used = Math.ceil((Math.max(...members.map(([, w]) => w.k)) + 1) / cols) * (note.h + PAD) - PAD;
-      const off = r2(Math.max(0, (columns[g].h - used) / 2));
+      const off = r2(Math.max(0, Math.min(NOTE_GAP - PAD, (columns[g].h - used) / 2)));
       for (const [id, w] of members) {
         const s = slots[g][w.k] ?? labels[g];
         target.set(id, { x: s.x, y: s.y + off, rotation: 0 });

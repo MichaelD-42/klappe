@@ -468,7 +468,7 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        // Reduced motion: the dive, the CRT flash, the shatter and the push fade instead.
+        // Reduced motion: the dive, the CRT flash, the shatter, the push, the glitch, the cube and the page turn fade instead.
         const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
         return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),

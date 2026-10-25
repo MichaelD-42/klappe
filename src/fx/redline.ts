@@ -29,14 +29,10 @@ export function wordDiff(before: string, after: string): WordOp[] {
   return lineDiff(a, b).map((o) => (o.op === "add" ? { op: "add", word: b[o.to] } : { op: o.op, word: a[o.from] }));
 }
 
-// A max-width that no word of n characters reaches: the width tweens to and from it, so nothing is measured.
-// shortcut: the reveal ends a little before the tween does, measure the word if that ever shows.
-const roomy = (n: number) => `${(n + 1) * 0.75}em`;
-
 // Prose changes as a redline: deleted words struck through in --k-bad, new words underlined on a --k-ok tint.
-// Every word of both texts is laid out at build. An inserted word starts at max-width 0 and grows in; a deleted
-// word collapses the same way in clean. The text reflows only as a function of those tweens, so seek equals play.
-// Reduced motion: the marks and words fade in and out in place, the widths cut at the start of the fade.
+// Every word of both texts is laid out at build. An inserted word starts at max-width 0; apply gives it its full
+// width in one cut at the step's start, then fades it in, so no word shows half clipped and the text never reflows
+// mid-tween. clean fades the deleted words out, then cuts their width to 0. Reduced motion: the marks fade in place.
 export function redline(ctx: Ctx, opts: RedlineOpts): RedlineHandle {
   const { x, y, size = 48 } = opts;
   const root = ctx.html.appendChild(document.createElement("div"));
@@ -68,13 +64,11 @@ export function redline(ctx: Ctx, opts: RedlineOpts): RedlineHandle {
     if (o.op === "del") strikes.push(bar(t, { top: "52%", height: "0.08em", background: "var(--k-bad)" }));
     w.append(" ");
     (o.op === "del" ? del : o.op === "add" ? add : []).push(w);
-    if (o.op !== "keep") w.dataset.room = roomy(o.word.length);
   }
-  const room = (_: number, e: HTMLElement) => e.dataset.room!; // GSAP calls it with (index, target)
   const markAlpha = (i: number) => (i % 2 ? 1 : 0.25); // marks go tint, underline, tint, …
   gsap.set(root, { autoAlpha: 0 });
   gsap.set(add, { maxWidth: 0, opacity: 0 });
-  gsap.set(del, { maxWidth: room, opacity: 1 });
+  gsap.set(del, { opacity: 1 });
   gsap.set([...strikes, ...marks], { scaleX: 0, opacity: 1 });
   gsap.set(marks, { opacity: markAlpha });
   const rm = ctx.reducedMotion;
@@ -92,22 +86,20 @@ export function redline(ctx: Ctx, opts: RedlineOpts): RedlineHandle {
       const at = tl.duration();
       tw(tl, del, { opacity: 1 }, { opacity: 0.6 }, at);
       tw(tl, add, { opacity: 0 }, { opacity: 1 }, at);
+      if (add.length) tl.set(add, { maxWidth: "none" }, at);
       if (rm) {
-        // The marks fade in at full length; the inserted words take their room at once.
-        if (add.length) tl.set(add, { maxWidth: room }, at);
+        // The marks fade in at full length.
         tw(tl, strikes, { scaleX: 1, opacity: 0 }, { scaleX: 1, opacity: 1 }, at);
         tw(tl, marks, { scaleX: 1, opacity: 0 }, { scaleX: 1, opacity: markAlpha }, at);
         return;
       }
-      tw(tl, add, { maxWidth: 0 }, { maxWidth: room }, at);
       tw(tl, strikes, { scaleX: 0 }, { scaleX: 1 }, at);
       tw(tl, marks, { scaleX: 0 }, { scaleX: 1 }, at);
     },
     clean(tl) {
       const at = tl.duration();
       tw(tl, del, { opacity: 0.6 }, { opacity: 0 }, at);
-      if (rm) { if (del.length) tl.set(del, { maxWidth: 0 }, at + d); }
-      else tw(tl, del, { maxWidth: room }, { maxWidth: 0 }, at);
+      if (del.length) tl.set(del, { maxWidth: 0 }, at + d);
       tw(tl, marks, { opacity: markAlpha }, { opacity: 0 }, at);
     },
   };

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cloudLayout, type PlacedWord } from '../../src/fx/wordcloud'
+import { cloudLayout, MAX_WORDS, type PlacedWord } from '../../src/fx/wordcloud'
 
 const rect = { x: 160, y: 80, w: 1600, h: 840 }
 const words = ['Trust', 'Speed', 'Quality', 'Focus', 'Ownership', 'Feedback', 'Learning', 'Safety', 'Clarity', 'Customer', 'Craft', 'Flow', 'Data', 'Team', 'Kaizen', 'Respect', 'Courage', 'Pace']
@@ -38,4 +38,12 @@ test('a rect too small for every word leaves words out instead of overlapping th
   const p = cloudLayout(words, { x: 0, y: 0, w: 300, h: 60 })
   expect(p.length).toBeLessThan(words.length)
   expect(overlaps(p)).toEqual([])
+})
+
+test('cloudLayout places at most the MAX_WORDS heaviest words', () => {
+  const many = Array.from({ length: MAX_WORDS + 20 }, (_, i) => ({ text: `w${i}`, weight: i + 1 }))
+  const out = cloudLayout(many, { x: 0, y: 0, w: 4000, h: 3000 })
+  expect(out.length).toBeLessThanOrEqual(MAX_WORDS)
+  expect(out[0].text).toBe(`w${MAX_WORDS + 19}`)
+  expect(out.some((w) => w.text === 'w0')).toBe(false)
 })

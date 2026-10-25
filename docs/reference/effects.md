@@ -546,7 +546,7 @@ From `decks/demo/sections/236-loupe/10-detail/scene.ts`:
 import { loupe } from "klappe/fx";
 
 build: (ctx) => {
-  const lens = loupe(ctx, { href: "media/fullscreen-hero.png", alt: "…", rect: { x: 160, y: 60, w: 1600, h: 860 }, fit: "cover", r: 160, zoom: 2.5, at: { x: 1328, y: 557 } });
+  const lens = loupe(ctx, { href: "media/fullscreen-hero.png", alt: "…", rect: { x: 160, y: 60, w: 1600, h: 860 }, fit: "cover", r: 160, zoom: 1.7, at: { x: 1328, y: 557 } });
   return { lens, chart: lens.to(1595, 404), drawing: lens.to(973, 748) };
 },
 steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.drawing(tl)],
@@ -568,7 +568,7 @@ steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.drawing
 
 Make each `to` in `build` and call it in a step, as above. Points are scene units on the picture as it shows in `rect`: with `fit: "cover"` the picture is cropped, so check the points in the deck, not on the file.
 
-Limits: the picture has no Ken Burns push (the enlarged copy would not follow it), and no scrim. A lens near the picture's edge shows `--k-bg` past it.
+Limits: the picture has no Ken Burns push (the enlarged copy would not follow it), and no scrim. A lens near the picture's edge shows `--k-bg` past it. The lens only enlarges the source pixels: for a sharp lens the source must be at least `zoom` times as wide as `rect` (scene units are pixels at 1920). The demo's 1672-pixel picture in a 1600-unit rect stretches about 1.6 times at `zoom: 1.7`, so its lens is a little softer than the picture; at 2.5 it would be blurred.
 
 ## `loupeOffset`
 
@@ -898,11 +898,12 @@ steps: [(tl, c) => c.show(0, 3)(tl), (tl, c) => c.show(3)(tl)],
 | `words` | not a step: the words, heaviest first, the order `show` counts in |
 | `el` | not a step: the box that holds the words |
 
-Reduced motion: the words fade in at full size, all at once. A missing file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `wordCloud: <label>: <src> (<why>)`. A word that does not fit reports `wordCloud: <n> words of <src> do not fit in the rect`. Words are horizontal only.
+Reduced motion: the words fade in at full size, all at once. A missing file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `wordCloud: <label>: <src> (<why>)`. A word that does not fit reports `wordCloud: <n> words of <src> do not fit in the rect`. At most the 60 heaviest words show; a longer file reports `wordCloud: <src> has <n> words; only the 60 heaviest show`. Words are horizontal only.
 
 ## `cloudLayout`
 
-`cloudLayout(words, rect, max?)` places `{ text, weight }` words for `wordCloud`: `{ text, weight, size, x, y, w, h }` each, heaviest first, ties in input order. A word's font size follows the square root of its weight, so its area follows the weight; the smallest is 24. Each word goes on an Archimedean spiral out from the centre of `rect`, as wide as `rect`, at the first spot where its box is inside `rect` and touches no other box. A box is estimated, not measured, from character classes (font sizes per character: 1 for W, M, m, w and @; 0.36 for i, l, j, t, f, r, I and punctuation; 0.72 for capitals and digits; 0.62 for the rest) plus 0.3 font sizes, by 1.3 font sizes. So the layout is the same on every machine and in CI, whatever fonts and rasteriser the browser has. If a word does not fit, every size shrinks by 10 % and the layout starts again, up to 12 times; words that still do not fit are left out. Nothing is random: the same words always give the same layout.
+`cloudLayout(words, rect, max?)` places `{ text, weight }` words for `wordCloud`: `{ text, weight, size, x, y, w, h }` each, heaviest first, ties in input order. A word's font size follows the square root of its weight, so its area follows the weight; the smallest is 24. Each word goes on an Archimedean spiral out from the centre of `rect`, as wide as `rect`, at the first spot where its box is inside `rect` and touches no other box. A box is estimated, not measured, from character classes (font sizes per character: 1 for W, M, m, w and @; 0.36 for i, l, j, t, f, r, I and punctuation; 0.72 for capitals and digits; 0.62 for the rest) plus 0.3 font sizes, by 1.3 font sizes. So the layout is the same on every machine and in CI, whatever fonts and rasteriser the browser has. If a word does not fit, every size shrinks by 10 % and the layout starts again, up to 12 times; words that still do not fit are left out. Only the 60 heaviest words are placed. Nothing is random: the same words always give the same layout.
+
 ## `redline`
 
 Catalog: section `218-redline-flap` (`#/redline-flap/redline/1`). Prose changes as a redline, the text cousin of `code().diff()`: deleted words struck through in `--k-bad`, new words underlined on a `--k-ok` tint, then the clean text.
@@ -914,7 +915,7 @@ build: (ctx) => redline(ctx, { before: "Every release is tested by hand on Frida
 steps: [(tl, r) => r.show(tl), (tl, r) => r.apply(tl), (tl, r) => r.clean(tl)],
 ```
 
-`redline(ctx, { before, after, x, y, w?, size? })`: `before` and `after` the two texts, diffed by words (`wordDiff`); `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 48, weight 600). `show(tl)` fades in the before text. `apply(tl)` draws a strike through each deleted word and dims it to 0.6, and grows each new word in with its tint and underline, over 0.9 s. `clean(tl)` collapses the deleted words and fades the marks, which leaves the after text. Every word of both texts is laid out at build; a word grows and collapses by its `max-width`, so the text reflows only as a function of the tween and seek equals play. `el` is the text box; screen readers get the after text. Reduced motion: the marks and words fade in and out at full length, with no growing or collapsing.
+`redline(ctx, { before, after, x, y, w?, size? })`: `before` and `after` the two texts, diffed by words (`wordDiff`); `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 48, weight 600). `show(tl)` fades in the before text. `apply(tl)` draws a strike through each deleted word and dims it to 0.6; each new word takes its full width in one cut at the step's start, then fades in while its tint and underline draw on, over 0.9 s. `clean(tl)` fades the deleted words and the marks, then cuts the deleted words' width to 0, which leaves the after text. Every word of both texts is laid out at build; the text reflows only at those two cuts, never mid-tween, so no word shows half clipped and seek equals play. `el` is the text box; screen readers get the after text. Reduced motion: the marks fade in and out at full length, with no draw-on.
 
 ## `splitFlap`
 
@@ -923,12 +924,11 @@ Catalog: section `218-redline-flap` (`#/redline-flap/board/1`). An airport board
 From `decks/demo/sections/218-redline-flap/20-board/scene.ts`:
 
 ```ts
-build: (ctx) => splitFlap(ctx, { x: 437, y: 360, cells: 10, text: "On time", size: 120 }),
+build: (ctx) => splitFlap(ctx, { x: 287, y: 360, cells: 10, text: "On time", size: 120 }),
 steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to("98.6% up")(tl)],
 ```
 
-`splitFlap(ctx, { x, y, cells, text, size? })`: `x`, `y` the top-left corner; `cells` how many characters the board holds; `text` what it shows first; `size` the font size (default 96, weight 700; a cell is 0.8 by 1.3 times it). Text is upper-cased and left-aligned; a text longer than `cells` logs `splitFlap: '<text>' has <n> characters for <cells> cells; the rest is cut`. `show(tl)` fades the board in. `to(text)` gives a step that flips each cell forward through the drum (space, A to Z, 0 to 9, `.,:-+%/€## `scrambleGlyphs`
-?!`) to its new character over 1.8 s, each cell a little after the one to its left; a character not on the drum changes in one flip at its cell's end. Each cell's character is written from `onUpdate` as a pure function of progress (`flapGlyphs`), and the text a step flips from is read when the step is added, so `to` steps may be built in any order. A line across each cell's middle gives the split look. `el` is the row of cells. Reduced motion: the board cuts to the new text.
+`splitFlap(ctx, { x, y, cells, text, size? })`: `x`, `y` the top-left corner; `cells` how many characters the board holds; `text` what it shows first; `size` the font size (default 96, weight 700; a cell is 1.05 by 1.3 times it, so the widest letters, W and M, fit in every theme font; anything wider is clipped at the cell's edge). Text is upper-cased and left-aligned; a text longer than `cells` reports the problem `splitFlap: '<text>' has <n> characters for <cells> cells; the rest is cut`. `show(tl)` fades the board in. `to(text)` gives a step that flips each cell forward through the drum (space, A to Z, 0 to 9, `.,:-+%/€$&?!`) to its new character over 1.8 s, each cell a little after the one to its left; a character not on the drum changes in one flip at its cell's end. Each cell's character is written from `onUpdate` as a pure function of progress (`flapGlyphs`), and the text a step flips from is read when the step is added, so `to` steps may be built in any order. A line across each cell's middle gives the split look. `el` is the row of cells. Reduced motion: the board cuts to the new text.
 
 ## `scrambleGlyphs`
 
@@ -1010,7 +1010,7 @@ const section: SectionModule = { transition: "push" };
 
 ## `transitionGlitch`
 
-Catalog: section `297-venn-pyramid`. A short digital break-up, 0.5 s, for the bold theme. Both canvases show in horizontal bands that jump sideways, with a colour split in the theme's two accents (`--k-accent`, `--k-accent-2`); the bands turn from old to new. The pattern is seeded: `transitionOptions: { seed: 3 }` picks another. From `decks/demo/sections/297-venn-pyramid/section.ts`:
+Catalog: section `297-venn-pyramid`. A short digital break-up, 0.5 s, for the bold theme. Both canvases show in horizontal bands that jump sideways, with a colour split in the theme's two accents (`--k-accent`, `--k-accent-2`); the bands turn from old to new. A band of the new canvas shows it as it is before its first step. The pattern is seeded: `transitionOptions: { seed: 3 }` picks another. From `decks/demo/sections/297-venn-pyramid/section.ts`:
 
 ```ts
 const section: SectionModule = { transition: "glitch" };
@@ -1022,7 +1022,7 @@ const section: SectionModule = { transition: "glitch" };
 
 ## `transitionCube`
 
-Catalog: section `298-table-card`. The old canvas turns away to the left as one face of a cube, and the new canvas turns in as the next face, over black, in 1 s. Sets `reveal` at 60 %, so the new step starts while the face lands. From `decks/demo/sections/298-table-card/section.ts`:
+Catalog: section `298-table-card`. The old canvas turns away to the left as one face of a cube, and the new canvas turns in as the next face, over the stage colour (`--k-bg`), in 1 s. Sets `reveal` at 60 %, so the new step starts while the face lands. From `decks/demo/sections/298-table-card/section.ts`:
 
 ```ts
 const section: SectionModule = { transition: "cube" };
@@ -1030,7 +1030,7 @@ const section: SectionModule = { transition: "cube" };
 
 ## `transitionPageTurn`
 
-Catalog: section `299-notes-cards`. The old canvas peels off like a page from its bottom-right corner, in 0.9 s. The back of the page, in `--k-surface`, folds over it, and the new canvas comes out of the page's shadow. Sets `reveal` at 60 %. From `decks/demo/sections/299-notes-cards/section.ts`:
+Catalog: section `299-notes-cards`. The old canvas peels off like a page from its bottom-right corner, in 0.9 s. The back of the page, in `--k-surface` with a light shade at the crease and toward the folded corner, folds over it, and the new canvas comes out of the page's shadow. Sets `reveal` at 60 %. From `decks/demo/sections/299-notes-cards/section.ts`:
 
 ```ts
 const section: SectionModule = { transition: "pageTurn" };

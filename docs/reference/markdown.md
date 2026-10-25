@@ -16,6 +16,7 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 Notes:
 
 - A scene has one code or console block.
+- `**bold**` in a list item marks key words for `reveal` (scene.ts); a plain scene shows the asterisks.
 - A mix of time ranges and plain items stays plain steps.
 - A missing image, video or data file shows a placeholder and a deck problem; `klappe test` and `klappe build` list it in `media/TODO.md` or `data/TODO.md`.
 - A full-frame picture, a background, a flow, a sequence, swimlanes, a decision tree, a callout and a timer have no Markdown form: use `scene.ts`.

@@ -44,7 +44,7 @@ const words = (page: Page) =>
   )
 const shown = (ws: Awaited<ReturnType<typeof words>>) => ws.filter((w) => w.w > 1 && w.o > 0).map((w) => w.text).join(' ')
 
-test('apply strikes the deleted words and grows the new ones in; clean leaves the after text', async () => {
+test('apply strikes the deleted words and fades the new ones in at full width; clean leaves the after text', async () => {
   const page = await open('prose/1', '', true)
   await page.clock.runFor(500)
   expect(shown(await words(page))).toBe('We release every month after a manual test run.')
@@ -59,6 +59,7 @@ test('apply strikes the deleted words and grows the new ones in; clean leaves th
   expect(week.o).toBeLessThan(1)
   await page.clock.runFor(1000)
   const end = await words(page)
+  expect(Math.abs(end.find((w) => w.text === 'week')!.w - week.w)).toBeLessThan(0.5) // the new word holds its full width from the step start
   for (const w of end.filter((w) => w.op !== 'keep')) {
     expect(w.bar).toBeGreaterThan(w.tw * 0.95) // the mark runs the whole word
     expect(w.w).toBeGreaterThan(w.tw) // the word and its space, not clipped
@@ -105,4 +106,20 @@ test('with reduced motion the board cuts to the new text: no other character sho
   await page.clock.runFor(50)
   expect(await board(page)).toBe('DELAYED ')
   await page.close()
+}, 60_000)
+
+test('a cell holds the widest glyphs of every theme font', async () => {
+  for (const theme of ['calm', 'bold']) {
+    const page = await open('board/1', `&theme=${theme}`)
+    const over = await page.evaluate(() =>
+      ['W', 'M', '€', '%'].flatMap((c) => {
+        const g = document.querySelector<HTMLElement>('[data-k-splitflap] [data-k-text]')!
+        g.textContent = c
+        const [gw, cw] = [g.getBoundingClientRect().width, g.parentElement!.clientWidth]
+        return gw > cw ? [`${c}: ${gw} of ${cw}`] : []
+      }),
+    )
+    expect(over, theme).toEqual([])
+    await page.close()
+  }
 }, 60_000)
