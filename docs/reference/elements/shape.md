@@ -8,7 +8,7 @@ Catalog: section `125-shapes` (`#/shapes/diagram/5`).
 
 ## `shape`
 
-Only in `scene.ts`. From `decks/demo/sections/125-shapes/10-diagram/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/125-shapes/10-diagram/scene.ts` (the box labels left out):
 
 ```ts
 import { arrow, shape, tint, token, type ShapeHandle } from "klappe/fx";
