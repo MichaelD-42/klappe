@@ -159,7 +159,8 @@ function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[
       const shown = cut(r, clipOf(e));
       const what = `"${t.textContent.trim().slice(0, 30)}"`;
       if (shown[2] <= shown[0] || shown[3] <= shown[1]) continue; // hidden behind a mask, not clipped
-      if (shown[0] > r[0] + 1 || shown[1] > r[1] + 1 || shown[2] < r[2] - 1 || shown[3] < r[3] - 1)
+      const tol = 2 * fit; // sub-pixel layout of a moved track is not a clip
+      if (shown[0] > r[0] + tol || shown[1] > r[1] + tol || shown[2] < r[2] - tol || shown[3] < r[3] - tol)
         bad.push(`clipped text: ${path(e, c.el)} ${what}: text [${units(r).map(Math.round)}] cut to [${units(shown).map(Math.round)}]`);
       ink(e, shown, what);
     }
