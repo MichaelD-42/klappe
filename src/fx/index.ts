@@ -15,6 +15,7 @@ export * from "./draw";
 export * from "./figure";
 export * from "./flipcard";
 export * from "./flow";
+export * from "./focus";
 export * from "./icons";
 export * from "./map";
 export * from "./matrix";
