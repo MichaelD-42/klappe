@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 // The fixture causes exactly two problems: a tick of a missing item and a list too tall for its rect.
 for (const vp of [
@@ -23,7 +23,7 @@ test('tick adders built out of step order light the box of the latest tick only'
     const boxes = async (step: number) => {
       await page.goto(`${inject('BASE_URL')}/?fixture=fx-checklist#/a/order/${step}`)
       await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-      await page.waitForTimeout(300)
+      await settle(page)
       return page.evaluate(() => {
         const root = document.querySelector<HTMLElement>('div[data-scene="order"]')!
         const probe = root.appendChild(document.createElement('i'))

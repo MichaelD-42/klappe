@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test'
 import { createRequire } from 'node:module'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -30,7 +30,7 @@ for (const [w, h, theme] of [
     const page = await browser.newPage({ viewport: { width: w, height: h } })
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-qr&theme=${theme}#/a/link/1`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(800)
+    await settle(page)
     await page.addScriptTag({ path: JSQR })
     const box = (await page.locator('[data-scene="link"] [data-k-qr] svg').boundingBox())!
     const png = (await page.screenshot({ clip: box })).toString('base64')

@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -24,7 +24,7 @@ const open = async (hash: string, flags = '') => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-chat${flags}#/a/${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1500)
+  await settle(page)
   return page
 }
 // Each message row of a scene: its streamed text, whether it shows, whether its typing dots show, and its
@@ -102,7 +102,7 @@ test('reduced motion: no dots, the message lands whole', async () => {
   const page = await open('thread/1', '&reducedmotion=1')
   expect(await page.locator('[data-scene="thread"] .k-chat-dots').count()).toBe(0)
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.waitForTimeout(300)
+  await settle(page)
   const r = (await read(page, 'thread'))[1]
   expect(r.text).toBe(ANSWER)
   expect(r.dots).toBe(false)

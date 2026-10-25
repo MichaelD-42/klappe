@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -23,7 +23,7 @@ test('a rebase moves the branch past the target tip, and the merge joins it on m
   const at = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-gitgraph#/a/steps/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(500)
+    await settle(page)
     return page.evaluate(() =>
       Object.fromEntries(
         [...document.querySelectorAll<HTMLElement>('[data-scene="steps"] [data-k-git-commit]')].map((e) => {

@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => {
@@ -95,7 +95,7 @@ test('a shown mesh3d does not read computed style per frame', async () => {
   })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/wrap/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   await page.evaluate(() => ((window as any).canvasReads = 0))
   await page.waitForTimeout(500)
   expect(await page.evaluate(() => (window as any).canvasReads)).toBe(0)

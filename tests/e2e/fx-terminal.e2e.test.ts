@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => {
@@ -27,7 +27,7 @@ test('a deep link onto command 2 shows both commands typed and their output', as
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-terminal#/a/run/2`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1500)
+  await settle(page)
   const r = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('[data-scene="run"] .k-term > div')].map((e) => ({
       text: e.textContent,
@@ -60,7 +60,7 @@ test('wrap: a long command wraps inside the panel and the rows below move down',
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-terminal#/a/wrap/2`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const term = document.querySelector<HTMLElement>('[data-scene="wrap"] .k-term')!
     const rows = [...term.querySelectorAll<HTMLElement>(':scope > div')]

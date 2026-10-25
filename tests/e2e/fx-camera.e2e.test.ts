@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -65,13 +65,13 @@ test('the camera follows the parcel, holds it centred, and the scene jolts when 
   const deep = await open('#/a/ride/2')
   expect(await state(deep)).toEqual(walked)
   await next(deep)
-  await deep.waitForTimeout(2200)
+  await settle(deep)
   expect((await state(deep)).cam).toEqual(rest.cam) // the next step flies back to the scene's frame
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect(await state(deep)).toEqual(walked)
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect((await state(deep)).cam).toEqual(rest.cam)
   await page.close()
   await deep.close()

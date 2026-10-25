@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -32,7 +32,7 @@ test('the newest row is lit in --k-accent and settles to --k-fg on the next row'
   const colours = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-table-card#/a/order/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(300)
+    await settle(page)
     return page.evaluate(() => {
       const root = document.querySelector<HTMLElement>('div[data-scene="order"]')!
       const probe = root.appendChild(document.createElement('i'))
@@ -59,7 +59,7 @@ test('a row without marks and a card without extras build without a GSAP warning
   page.on('console', (m) => m.text().includes('GSAP target') && warned.push(m.text()))
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-table-card#/a/card-tall/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   expect(warned).toEqual([])
   await page.close()
 }, 60_000)

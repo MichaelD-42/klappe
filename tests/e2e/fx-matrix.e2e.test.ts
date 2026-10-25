@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -25,7 +25,7 @@ test('the moved item is in the accent and lands in its new quadrant', async () =
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-matrix#/a/sort/5`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   const r = await page.evaluate(() => {
     const el = (id: string) => document.querySelector<HTMLElement>(`[data-k-matrix-item="${id}"]`)!
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--k-accent').trim()
@@ -48,7 +48,7 @@ test('place adders built out of step order still place, then move', async () => 
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-matrix#/a/early/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(300)
+    await settle(page)
     const r = await page.evaluate(() => {
       const el = document.querySelector<HTMLElement>('[data-scene="early"] [data-k-matrix-item="sso"]')!
       const r = el.getBoundingClientRect()

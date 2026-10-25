@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => {
@@ -26,7 +26,7 @@ test('the leader ends at the code line edge and the label follows it', async () 
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-callout#/a/code/2`)
   await page.waitForFunction(() => window.klappe?.stepper?.index === 1, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const scene = document
     const label = scene.querySelector<HTMLElement>('div[data-k-callout]')!

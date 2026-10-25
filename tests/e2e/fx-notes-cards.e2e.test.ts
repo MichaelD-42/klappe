@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -23,7 +23,7 @@ async function open(hash: string, query = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-notes-cards${query}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 
@@ -116,7 +116,7 @@ test('a pulled card is larger and the rest dim; the next pull puts it back; back
 test('with reduced motion a note cuts to its group', async () => {
   const page = await open('#/a/notes/2', '&reducedmotion=1')
   await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(120)
+  await settle(page)
   expect(await note(page, 'notes', 'a')).toEqual({ col: 'pain', tilt: 0 })
   await page.close()
 }, 60_000)
@@ -147,7 +147,7 @@ for (const [name, url, scene, steps] of [
     for (let step = 1; step <= steps; step++) {
       await page.goto(`${inject('BASE_URL')}${url}${step}`)
       await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-      await page.waitForTimeout(300)
+      await settle(page)
       const { cols, notes } = await board(page, scene)
       const scattered = notes.filter((n) => !n.upright)
       for (let i = 0; i < notes.length; i++)
