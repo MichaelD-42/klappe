@@ -8,8 +8,9 @@ import type { Ctx, Rect, StepAdder } from "../types";
 // must be a number in every row (only all-text columns are text). bar, waterfall and donut use the first
 // series; stacked and line use all of them; slope the first two (before, after); timeline reads a start and an
 // end per row (for example years): the columns named start/from/begin and end/to/until, else the first two.
+// funnel uses the first series as stages; sankey reads its columns by position: source, target, value.
 export type Row = Record<string, string | number>;
-export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope";
+export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope" | "funnel" | "sankey";
 export interface ChartOpts {
   src: string; // the data file, as in the Markdown link: "data/x.csv"
   data?: Row[] | null; // null: the file is missing; left out: read src from ctx.files.data
@@ -22,8 +23,11 @@ export interface ChartHandle {
   axes: StepAdder;
   grow: StepAdder;
   values: StepAdder;
-  // The bar rects in data order: waterfall then its total, stacked series by series, none for a line or a placeholder.
+  // The bar rects in data order: waterfall then its total, stacked series by series, funnel stages, sankey nodes
+  // in sankeyLayout order; none for a line or a placeholder.
   bars: SVGElement[];
+  // A sankey only: the flow in that data row turns --k-accent; the one shown before goes back.
+  highlight(row: number): StepAdder;
 }
 
 // shortcut: no quoted commas, upgrade to d3-dsv if decks need it
@@ -71,6 +75,17 @@ export function dataError(rows: unknown[], type: ChartType): string {
   const bad = rows.findIndex((r) => !r || typeof r !== "object" || Array.isArray(r));
   if (bad >= 0) return `row ${bad + 1} is not an object`;
   const data = rows as Row[];
+  // By position, not columns(): a target named "2024" is still a name.
+  if (type === "sankey") {
+    const [s, tg, k] = Object.keys(data[0] ?? {});
+    if (!k) return "needs source, target and value columns";
+    for (const [i, r] of data.entries()) {
+      if (r[s] === "" || r[s] === undefined || r[tg] === "" || r[tg] === undefined) return `row ${i + 1}, no source or target`;
+      if (typeof r[k] !== "number" || !(r[k] > 0)) return `row ${i + 1}, ${k} not a number above zero`;
+    }
+    const laid = sankeyLayout(sankeyLinks(data), 0);
+    return typeof laid === "string" ? laid : "";
+  }
   const { series } = columns(data);
   if (type === "timeline" && series.length < 2) return "needs a start and an end column";
   if (type === "slope" && series.length < 2) return "needs a before and an after column";
@@ -84,6 +99,13 @@ export function dataError(rows: unknown[], type: ChartType): string {
     if (!(d3.sum(data, (r) => num(r, k)) > 0)) return "the values add up to zero";
     if (data.length > DONUT_MAX) return `${data.length} slices; a donut reads up to ${DONUT_MAX}: merge the small ones into Other`;
   }
+  if (type === "funnel") {
+    const k = series[0];
+    const i = data.findIndex((r) => num(r, k) < 0);
+    if (i >= 0) return `row ${i + 1}, ${k} below zero`;
+    if (!(d3.max(data, (r) => num(r, k))! > 0)) return "every stage is zero";
+    if (data.length > FUNNEL_MAX) return `${data.length} stages; a funnel reads up to ${FUNNEL_MAX}`;
+  }
   if (type === "timeline") {
     const [a, b] = span(series);
     const i = data.findIndex((r) => num(r, b) < num(r, a));
@@ -94,6 +116,79 @@ export function dataError(rows: unknown[], type: ChartType): string {
 
 // A donut stops reading past this many slices; more is a data error that says to merge them.
 const DONUT_MAX = 6;
+const FUNNEL_MAX = 8;
+// A sankey's limits: past these its labels no longer fit a slide.
+const SANKEY_MAX_NODES = 16;
+const SANKEY_MAX_COLUMNS = 6;
+const SANKEY_MAX_PER_COLUMN = 8;
+
+// Each stage's width as a share of the largest, and its conversion from the stage before (null for the first
+// stage, or when the stage before is zero).
+export function funnelLayout(values: number[]): { share: number; conversion: number | null }[] {
+  const max = Math.max(...values);
+  return values.map((v, i) => ({ share: max > 0 ? v / max : 0, conversion: i && values[i - 1] > 0 ? v / values[i - 1] : null }));
+}
+
+export interface SankeyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+// A sankey's rows as links: the columns by position, source, target, value.
+function sankeyLinks(rows: Row[]): SankeyLink[] {
+  const [s, tg, k] = Object.keys(rows[0] ?? {});
+  return rows.map((r) => ({ source: String(r[s]), target: String(r[tg]), value: num(r, k) }));
+}
+export interface SankeyLayout {
+  // y0 and y1 in 0..1 of the plot height; depth is the column: the longest path from a node with no inflow.
+  nodes: { name: string; depth: number; value: number; y0: number; y1: number }[];
+  // In input order: source and target node indices, the band's top at each end (0..1), and its thickness.
+  links: { s: number; t: number; value: number; sy: number; ty: number; w: number }[];
+  columns: number;
+}
+// Nodes in columns by depth, in order of first appearance; link bands stacked at each end. The same links always
+// give the same layout. gap: the space between nodes in a column, as a share of the height.
+// A string says why the links cannot be laid out (a cycle, a self-loop, too many nodes or columns).
+export function sankeyLayout(links: SankeyLink[], gap: number): SankeyLayout | string {
+  const names: string[] = [];
+  const id = (n: string) => (names.includes(n) ? names.indexOf(n) : names.push(n) - 1);
+  const L = links.map((l) => ({ s: id(l.source), t: id(l.target), value: l.value }));
+  if (names.length > SANKEY_MAX_NODES) return `${names.length} nodes; a sankey reads up to ${SANKEY_MAX_NODES}`;
+  const self = L.findIndex((l) => l.s === l.t);
+  if (self >= 0) return `row ${self + 1}, ${names[L[self].s]} flows into itself`;
+  // Kahn's order: a node never reached sits on a cycle.
+  const inflow = names.map((_, i) => L.filter((l) => l.t === i).length);
+  const depth = names.map(() => 0);
+  const queue = names.map((_, i) => i).filter((i) => !inflow[i]);
+  for (let q = 0; q < queue.length; q++)
+    for (const l of L.filter((l) => l.s === queue[q])) {
+      depth[l.t] = Math.max(depth[l.t], depth[l.s] + 1);
+      if (!--inflow[l.t]) queue.push(l.t);
+    }
+  if (queue.length < names.length) return `a cycle through ${names[inflow.findIndex((n) => n > 0)]}; a sankey flows one way`;
+  const columns = Math.max(...depth) + 1;
+  if (columns > SANKEY_MAX_COLUMNS) return `${columns} columns; a sankey reads up to ${SANKEY_MAX_COLUMNS}`;
+  const value = names.map((_, i) => Math.max(d3.sum(L, (l) => (l.t === i ? l.value : 0)), d3.sum(L, (l) => (l.s === i ? l.value : 0))));
+  const cols = d3.range(columns).map((c) => names.map((_, i) => i).filter((i) => depth[i] === c));
+  const crowded = cols.findIndex((c) => c.length > SANKEY_MAX_PER_COLUMN);
+  if (crowded >= 0) return `${cols[crowded].length} nodes in column ${crowded + 1}; a sankey reads up to ${SANKEY_MAX_PER_COLUMN}`;
+  // One scale for every column, so a band is as thick at both ends; each column centred.
+  const k = d3.min(cols, (c) => (1 - gap * (c.length - 1)) / d3.sum(c, (i) => value[i]))!;
+  const y0 = names.map(() => 0);
+  for (const c of cols) {
+    let at = (1 - k * d3.sum(c, (i) => value[i]) - gap * (c.length - 1)) / 2;
+    for (const i of c) (y0[i] = at), (at += k * value[i] + gap);
+  }
+  // Bands leave a node in the order of their targets and arrive in the order of their sources: no crossing at a node.
+  const out = names.map(() => 0);
+  const into = names.map(() => 0);
+  const placed = L.map((l) => ({ ...l, sy: 0, ty: 0, w: l.value * k }));
+  const by = (key: "s" | "t") => placed.map((l, i) => ({ l, i })).sort((a, b) => y0[a.l[key]] - y0[b.l[key]] || a.i - b.i);
+  for (const { l } of by("t")) (l.sy = y0[l.s] + out[l.s]), (out[l.s] += l.w);
+  for (const { l } of by("s")) (l.ty = y0[l.t] + into[l.t]), (into[l.t] += l.w);
+  const nodes = names.map((name, i) => ({ name, depth: depth[i], value: value[i], y0: y0[i], y1: y0[i] + k * value[i] }));
+  return { nodes, links: placed, columns };
+}
 
 // Each value's slice as fractions of a turn from 12 o'clock, clockwise, in row order.
 export function donutSlices(values: number[]): { start: number; end: number; share: number }[] {
@@ -222,7 +317,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bars: [] };
+  return { axes: show, grow: show, values: show, bars: [], highlight: () => show };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -255,7 +350,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (why) return placeholder(ctx, opts, t("dataError", ctx.deck.lang), why);
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
-  const keys = type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : [series[0]];
+  const keys =
+    type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : type === "sankey" ? [Object.keys(data[0])[2]] : [series[0]];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
@@ -280,8 +376,15 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const valW = 13 * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
   const m = {
     top: 56 + (legend.length ? 40 : 0) + 40 + (type === "slope" ? 36 : 0), // a slope's column headers sit above the plot
-    left: type === "timeline" ? Math.min(R.w * 0.3, 24 + longest * 13) : type === "slope" ? Math.min(R.w * 0.4, 48 + valW + longest * 13) : 90,
-    right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : 30,
+    left:
+      type === "timeline" || type === "funnel"
+        ? Math.min(R.w * 0.3, 24 + longest * 13)
+        : type === "slope"
+          ? Math.min(R.w * 0.4, 48 + valW + longest * 13)
+          : type === "sankey"
+            ? 0
+            : 90,
+    right: type === "timeline" ? 130 : type === "slope" || type === "funnel" ? 40 + valW : type === "sankey" ? 0 : 30,
     bottom: 56,
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
@@ -323,6 +426,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     // A dark halo keeps the number readable where it crosses a line or a bar.
     Object.assign(el.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
     values.push({ el, from, to, show });
+    return el;
   };
   const bar = (x: number, w: number, lo: number, hi: number, fill: string, up: boolean) => {
     const [y0, y1] = [v(lo), v(hi)];
@@ -332,6 +436,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     grown.push({ el: r, origin: up ? "50% 100%" : "50% 0%", scale: "scaleY" });
   };
 
+  let accents: SVGElement[] = []; // a sankey's links again in --k-accent, hidden until highlight()
   let xAxis: d3.Axis<any> | undefined;
   let yAxis: d3.Axis<any> | undefined;
   if (type === "donut") {
@@ -392,6 +497,64 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       valueAt({ x: xL - 20, y: left[i], "text-anchor": "end" }, 0, va, fmt);
       valueAt({ x: xR + 20, y: right[i] }, 0, vb, fmt);
     });
+  } else if (type === "funnel") {
+    // One centred bar per stage, width by value; the name left, the value right, the conversion between stages.
+    const k = keys[0];
+    const stages = funnelLayout(data.map((r) => num(r, k)));
+    const rowH = P.h / data.length;
+    const bh = rowH * 0.62;
+    const cx = P.x + P.w / 2;
+    data.forEach((r, i) => {
+      const top = P.y + i * rowH + (rowH - bh) / 2;
+      const w = Math.max(2, stages[i].share * P.w);
+      const rect = svg(marks, "rect", { x: cx - w / 2, y: top, width: w, height: bh, rx: 4 });
+      rect.style.fill = color(0);
+      bars.push(rect);
+      grown.push({ el: rect, origin: "50% 50%", scale: "scaleX" });
+      const yc = top + bh / 2 + FONT * 0.35;
+      labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
+      valueAt({ x: R.x + R.w, y: yc, "text-anchor": "end" }, 0, num(r, k), fmt);
+      const c = stages[i].conversion;
+      if (i)
+        valueAt({ x: cx, y: P.y + i * rowH + FONT * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
+          c === null ? "–" : `${Math.round(n)} %`,
+        ).style.fill = "var(--k-muted)";
+    });
+  } else if (type === "sankey") {
+    // Nodes in columns, bands between them; names and values beside each node, outside the last column inwards.
+    const gap = Math.min(FONT * 2 + 16, P.h / (2 * SANKEY_MAX_PER_COLUMN));
+    const lay = sankeyLayout(sankeyLinks(data), gap / P.h) as SankeyLayout; // dataError has laid it out already
+    const NW = 20;
+    const xAt = (d: number) => P.x + (d * (P.w - NW)) / Math.max(1, lay.columns - 1);
+    const Y = (f: number) => P.y + f * P.h;
+    const id = `k-chart-clip-${++clips}`;
+    const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
+    const flows = svg(marks, "g", { "clip-path": `url(#${id})` });
+    const band = (l: SankeyLayout["links"][number], fill: string) => {
+      const [x0, x1] = [xAt(lay.nodes[l.s].depth) + NW, xAt(lay.nodes[l.t].depth)];
+      const [xm, s0, t0, h] = [(x0 + x1) / 2, Y(l.sy), Y(l.ty), l.w * P.h];
+      const p = svg(flows, "path", { d: `M${x0} ${s0}C${xm} ${s0} ${xm} ${t0} ${x1} ${t0}V${t0 + h}C${xm} ${t0 + h} ${xm} ${s0 + h} ${x0} ${s0 + h}Z` });
+      // A hairline of background keeps bands of one colour apart.
+      Object.assign(p.style, { fill, stroke: "var(--k-bg)", strokeWidth: "2px" });
+      return p;
+    };
+    for (const l of lay.links) band(l, "var(--k-line)");
+    accents = lay.links.map((l) => band(l, "var(--k-accent)"));
+    lay.nodes.forEach((n, i) => {
+      const x = xAt(n.depth);
+      const rect = svg(marks, "rect", { x, y: Y(n.y0), width: NW, height: Math.max(2, (n.y1 - n.y0) * P.h) });
+      rect.style.fill = SLICES[i % SLICES.length];
+      bars.push(rect);
+      grown.push({ el: rect, origin: "50% 50%", scale: "scaleY" });
+      const last = n.depth === lay.columns - 1;
+      const at = { x: last ? x - 12 : x + NW + 12, "text-anchor": last ? "end" : "start" };
+      const yc = Y((n.y0 + n.y1) / 2);
+      const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
+      Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+      labels.push(name);
+      valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
+    });
+    grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
   } else if (type === "timeline") {
     const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
@@ -486,7 +649,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     return g;
   };
   const axesEls: SVGElement[] = [...(xAxis ? [axisAt(xAxis, 0, P.y + P.h)] : []), ...(yAxis ? [axisAt(yAxis, P.x, 0)] : []), ...labels];
-  if (type !== "timeline" && type !== "donut" && type !== "slope") {
+  if (!["timeline", "donut", "slope", "funnel", "sankey"].includes(type)) {
     axesEls[0].querySelector(".domain")?.remove();
     const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
     z.style.stroke = "var(--k-fg)";
@@ -495,9 +658,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
 
   for (const { el, from, show } of values) el.textContent = show(from);
   for (const e of values) e.el.setAttribute("data-k-text", "");
-  gsap.set([...head, ...axesEls, ...values.map((e) => e.el)], { autoAlpha: 0 });
+  gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents], { autoAlpha: 0 });
   for (const { el, origin, scale } of grown) gsap.set(el, { [scale]: 0, transformOrigin: origin });
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
+  let lit = -1; // the sankey flow the steps added so far end on
 
   return {
     bars,
@@ -526,6 +690,16 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         },
       };
       tl.to({}, count, "<");
+    },
+    // The step order, not the call order, decides which flow was lit before: bookkeeping inside the adder.
+    highlight: (row) => (tl) => {
+      if (type !== "sankey") return ctx.problem(`chart: highlight() is for a sankey, not a ${type}: ${opts.src}`);
+      if (!(row >= 0 && row < accents.length)) return ctx.problem(`chart: no flow in row ${row + 1}: ${opts.src}`);
+      if (row === lit) return;
+      const d = { duration: motion.step, immediateRender: false };
+      if (lit >= 0) tl.fromTo(accents[lit], { autoAlpha: 1 }, { autoAlpha: 0, ...d });
+      tl.fromTo(accents[row], { autoAlpha: 0 }, { autoAlpha: 1, ...d }, lit >= 0 ? "<" : undefined);
+      lit = row;
     },
   };
 }

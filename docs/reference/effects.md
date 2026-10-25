@@ -6,7 +6,7 @@ Every example below is a scene from the demo deck's catalog (the sections after 
 
 ## `chart`
 
-Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/slope/1`). A bar, stacked, line, waterfall, timeline, donut or slope chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
+Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/funnel/1`, `#/chart/slope/1`, `#/chart/sankey/1`). A bar, stacked, line, waterfall, timeline, donut, slope, funnel or sankey chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
 
 From `decks/demo/sections/110-chart/10-bars/scene.ts`:
 
@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero; each stage is a centred bar as wide as its share of the largest, with its name on the left, its value on the right and the conversion from the stage before between them (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in the series colours, bands in `--k-line`; see `highlight` |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -35,13 +35,15 @@ The first column labels the rows; every later column with a number in any row is
 | Handle | Step |
 | --- | --- |
 | `axes` | title, legend and axes fade in |
-| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right |
+| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right; funnel stages grow from the centre, top to bottom; sankey nodes grow, then the bands draw left to right |
 | `values` | the value labels fade in and count up |
+| `highlight(row)` | sankey only: the flow in that data row (0 is the first row after the header) turns `--k-accent`; the flow lit before goes back. Another chart type, or a row that does not exist, reports a deck problem |
 
 ### Limits
 
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
+- A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason). A funnel reveals all stages in one `grow` step, not one stage per step.
 
 ## `kpi`, `waffle`, `progress`
 
@@ -116,6 +118,14 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `waterfallSteps`
 
 `waterfallSteps(deltas)` gives each delta's bar as `[from, to]`: the running total before it and after it. `waterfallSteps([5, -2])` is `[[0, 5], [5, 3]]`.
+
+## `funnelLayout`
+
+`funnelLayout(values)` gives each stage as `{ share, conversion }`: its width as a share of the largest stage, and its value over the stage before (`null` for the first stage and after a zero stage). `funnelLayout([200, 100, 25])` is `[{ share: 1, conversion: null }, { share: 0.5, conversion: 0.5 }, { share: 0.125, conversion: 0.25 }]`. The funnel chart (`#/chart/funnel/1`) uses it.
+
+## `sankeyLayout`
+
+`sankeyLayout(links, gap)` lays out `{ source, target, value }` links: `{ nodes, links, columns }`. Each node has `name`, `depth` (its column), `value` (the larger of its inflow and outflow) and `y0`, `y1` in 0..1 of the height; each link has its node indices `s` and `t`, the band's top at each end `sy`, `ty` and its thickness `w`. `gap` is the space between nodes in a column, as a share of the height. The same links always give the same layout. It returns a string instead when the links have a cycle, a self-loop, or more nodes or columns than the sankey reads. The sankey chart (`#/chart/sankey/1`) uses it.
 
 ## `chartDomain`
 
