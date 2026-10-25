@@ -9,6 +9,18 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
+Helpers wanted by the training deck (2026-10-25 harvest; counts are greps over its `sections/` and `shared/`):
+
+- `title(ctx, text)`: a scene with `build()` shows no title; 81 of 93 build scenes call a deck-own `frame()`.
+- `show` and `hide` step adders that fade any element in or out: the deck calls its own `fadeIn` 291 times in 76 files.
+- A positioned `text()` box (x, y, w, size, token colour): 37 local `text` helpers.
+- `focus`: one item lights up in place while the rest dim, with no dark layer over the scene (unlike `spotlight`).
+- `shape` and `arrow` (connector) primitives on `ctx.svg`: `createElementNS` 59 times in 48 files.
+- `token()` export or a `tint()` step adder, so a colour tween can start and end on theme tokens (GSAP cannot tween `var()`).
+- Scene reuse with options: 36 scenes are two-line copies of a shared scene function.
+- Self-test checks for ink outside a safe area (margins, footer) and for text clipped by its box; the most frequent look finding.
+- Smaller: an exercise card, Likert scale rows, one chart bar per step, a typewriter in the brand font, a heading-font token.
+
 New effects, proposed 2026-10-24, not yet specified:
 
 - `video` options `autoplay` and `muted` for YouTube and Vimeo embeds: with `autoplay: true` the player starts when its step arrives (the URL's `autoplay=1` plus `allow="autoplay"` on the iframe); `muted` defaults to `true`. `muted: false` asks for sound, which a browser may still block; say what happens then. Default stays: the viewer starts the player. Local files already play on their step.
