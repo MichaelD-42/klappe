@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { addCameraMove, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
+import { addCameraMove, followView, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
 import { code, LANGS } from "../fx/code";
 import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
@@ -378,6 +378,18 @@ export function renderWorld(
         const pose = parallaxPose(target, layout.size);
         if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
         cam = target;
+      },
+      follow(t, point, o) {
+        const from = cam; // read when the step is added: the camera's view at this step's start
+        const view = (s: number) => followView(from, point(s), o?.zoom ?? 1.6, s);
+        const end = view(1);
+        const duration = o?.duration ?? motion.camera;
+        // The pose is a pure function of this tween's progress (onUpdate fires on a seek too), so seek equals play.
+        if (opts.reducedMotion) t.set(world, frame(end), o?.at);
+        else t.to({}, { duration, ease: "none", onUpdate(this: gsap.core.Tween) { gsap.set(world, frame(view(this.progress()))); } }, o?.at);
+        const pose = parallaxPose(end, layout.size);
+        if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration, ease: "power2.inOut" }, "<");
+        cam = end;
       },
     };
     const ctxAt = (rect: Rect, attr: string, id: string, cls: string): Ctx => {

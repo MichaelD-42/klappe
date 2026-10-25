@@ -65,6 +65,7 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
+- Use `follow(ctx, travel(…))` to keep a travelling element centred, and `impactShake(ctx)` for a jolt when it lands: see [camera](elements/camera.md).
 - Keep one master timeline per canvas. The engine owns it.
 
 ## section.ts
