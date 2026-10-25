@@ -1,10 +1,11 @@
 import { assembleDeck } from "../assemble";
-import { chart, type ChartOpts } from "klappe/fx";
-import type { SceneModule } from "../../types";
+import { chart, type ChartHandle, type ChartOpts } from "klappe/fx";
+import type { SceneModule, StepAdder } from "../../types";
 
 // One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING), one bad
 // cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default
-// media slot; a donut and a slope chart.
+// media slot; a donut, a slope, a funnel with a zero stage, and a sankey whose highlight adders are made out of
+// step order (row 2 made first, lit last).
 // All numbers are made-up sample data. Each bar from the handle's bars carries its index as data-bar.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -33,6 +34,8 @@ export default () => {
       "sections/10-a/90-null/scene.md": md("Null JSON"),
       "sections/10-a/92-donut/scene.md": md("Donut"),
       "sections/10-a/94-slope/scene.md": md("Slope"),
+      "sections/10-a/96-funnel/scene.md": md("Funnel"),
+      "sections/10-a/98-sankey/scene.md": md("Sankey") + "- Light row 1.\n- Light row 3.\n",
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -54,6 +57,21 @@ export default () => {
       "sections/10-a/90-null/scene.ts": scene({ src: "data/null.json", title: "Never drawn" }),
       "sections/10-a/92-donut/scene.ts": scene({ src: "data/share.csv", type: "donut", title: "Hours by activity", sample: true }),
       "sections/10-a/94-slope/scene.ts": scene({ src: "data/change.csv", type: "slope", title: "Lead time, days", sample: true }),
+      "sections/10-a/96-funnel/scene.ts": scene({ src: "data/stages.csv", type: "funnel", title: "Sign-up funnel" }),
+      "sections/10-a/98-sankey/scene.ts": {
+        build: (ctx) => {
+          const c = chart(ctx, { rect, src: "data/flow.csv", type: "sankey", title: "Where visitors go" });
+          c.bars.forEach((b, i) => b.setAttribute("data-bar", String(i)));
+          return { c, later: c.highlight(2), first: c.highlight(0) };
+        },
+        steps: [
+          (tl, x: { c: ChartHandle }) => x.c.axes(tl),
+          (tl, x: { c: ChartHandle }) => x.c.grow(tl),
+          (tl, x: { c: ChartHandle }) => x.c.values(tl),
+          (tl, x: { first: StepAdder }) => x.first(tl),
+          (tl, x: { later: StepAdder }) => x.later(tl),
+        ],
+      } satisfies SceneModule,
     },
   );
   r.deck.files = {
@@ -75,6 +93,9 @@ export default () => {
       "data/share.csv": "# source: klappe demo sample\nactivity,hours\nBuild,50\nReview,20\nWait,25\nRework,5\n",
       // Three rows end within a day of each other: their right-hand labels must be spread apart.
       "data/change.csv": "# source: klappe demo sample\nteam,before,after\nNorth,30,12\nSouth,22,13\nEast,15,12.5\nWest,9,18\n",
+      // Trial to Paid converts at 0 %; Paid to Renew has no conversion.
+      "data/stages.csv": "# source: klappe demo sample\nstage,people\nVisit,1000\nSignup,400\nTrial,100\nPaid,0\nRenew,0\n",
+      "data/flow.csv": "# source: klappe demo sample\nfrom,to,users\nAds,Signup,40\nSearch,Signup,30\nSearch,Bounce,20\nSignup,Paid,25\nSignup,Churn,45\n",
     },
     media: {},
   };

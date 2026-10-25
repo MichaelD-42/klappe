@@ -1,0 +1,11 @@
+# source: klappe demo sample
+from,to,visitors
+Search,Landing page,420
+Ads,Landing page,260
+Referral,Pricing,140
+Landing page,Pricing,380
+Landing page,Bounce,300
+Pricing,Trial,310
+Pricing,Left,210
+Trial,Paid,120
+Trial,Lapsed,190

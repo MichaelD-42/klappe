@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, dataError, donutSlices, parseCsv, raceRanks, showsSample, spread, waterfallSteps } from "../../src/fx/chart";
+import { chartDomain, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -183,5 +183,80 @@ describe("raceRanks", () => {
   test("ranks by value, largest first; ties keep column order", () => {
     expect(raceRanks([10, 30, 20])).toEqual([2, 0, 1]);
     expect(raceRanks([5, 5, 9])).toEqual([1, 2, 0]);
+  });
+});
+
+describe("funnel", () => {
+  test("widths are shares of the largest stage, conversion is from the stage before", () => {
+    expect(funnelLayout([200, 100, 25])).toEqual([
+      { share: 1, conversion: null },
+      { share: 0.5, conversion: 0.5 },
+      { share: 0.125, conversion: 0.25 },
+    ]);
+  });
+
+  test("a stage after a zero stage has no conversion, never a division by zero", () => {
+    expect(funnelLayout([10, 0, 0])).toEqual([
+      { share: 1, conversion: null },
+      { share: 0, conversion: 0 },
+      { share: 0, conversion: null },
+    ]);
+  });
+
+  test("dataError: no stage below zero, not all zero, up to 8 stages", () => {
+    expect(dataError([{ s: "A", n: 5 }, { s: "B", n: 3 }], "funnel")).toBe("");
+    expect(dataError([{ s: "A", n: 5 }, { s: "B", n: -1 }], "funnel")).toBe("row 2, n below zero");
+    expect(dataError([{ s: "A", n: 0 }], "funnel")).toBe("every stage is zero");
+    expect(dataError(Array.from({ length: 9 }, (_, i) => ({ s: String(i), n: 1 })), "funnel")).toBe("9 stages; a funnel reads up to 8");
+  });
+});
+
+describe("sankey", () => {
+  const link = (source: string, target: string, value: number) => ({ source, target, value });
+  const laid = (links: ReturnType<typeof link>[], gap = 0) => sankeyLayout(links, gap) as SankeyLayout;
+
+  test("nodes sit in columns by their longest path from a root, in order of first appearance", () => {
+    const r = laid([link("A", "B", 4), link("A", "C", 6), link("B", "C", 4), link("C", "D", 10)]);
+    expect(r.nodes.map((n) => [n.name, n.depth, n.value])).toEqual([["A", 0, 10], ["B", 1, 4], ["C", 2, 10], ["D", 3, 10]]);
+    expect(r.columns).toBe(4);
+  });
+
+  test("a band is as thick at both ends, stacked at each node in order without overlap", () => {
+    const r = laid([link("A", "X", 3), link("B", "X", 1), link("A", "Y", 1)], 0.1);
+    const [aX, bX, aY] = r.links;
+    expect(aX.w).toBeCloseTo(aY.w * 3);
+    // At A: to X (upper target) first, then to Y.
+    expect(aY.sy).toBeCloseTo(aX.sy + aX.w);
+    // At X: from A (upper source) first, then from B.
+    expect(bX.ty).toBeCloseTo(aX.ty + aX.w);
+    const [A, , B] = r.nodes; // in order of first appearance: A, X, B, Y
+    expect(B.y0).toBeCloseTo(A.y1 + 0.1);
+    // The fullest column fills the height.
+    expect(A.y0).toBeCloseTo(0);
+    expect(B.y1).toBeCloseTo(1);
+  });
+
+  test("the same links give the same layout", () => {
+    const links = [link("A", "B", 2), link("A", "C", 3), link("C", "D", 1)];
+    expect(sankeyLayout(links, 0.05)).toEqual(sankeyLayout(links, 0.05));
+  });
+
+  test("cycles, self-loops and too many nodes or columns are refused", () => {
+    expect(sankeyLayout([link("A", "B", 1), link("B", "C", 1), link("C", "B", 1)], 0)).toBe("a cycle through B; a sankey flows one way");
+    expect(sankeyLayout([link("A", "A", 1)], 0)).toBe("row 1, A flows into itself");
+    const chain = Array.from({ length: 6 }, (_, i) => link(String(i), String(i + 1), 1));
+    expect(sankeyLayout(chain, 0)).toBe("7 columns; a sankey reads up to 6");
+    const fan = Array.from({ length: 9 }, (_, i) => link("hub", String(i), 1));
+    expect(sankeyLayout(fan, 0)).toBe("9 nodes in column 2; a sankey reads up to 8");
+    const wide = Array.from({ length: 17 }, (_, i) => link(`s${i}`, `t${i}`, 1));
+    expect(sankeyLayout(wide, 0)).toBe("34 nodes; a sankey reads up to 16");
+  });
+
+  test("dataError reads source, target and value by position", () => {
+    expect(dataError(parseCsv("from,to,users\nAds,2024,5\n"), "sankey")).toBe("");
+    expect(dataError([{ from: "A", to: "B" }], "sankey")).toBe("needs source, target and value columns");
+    expect(dataError(parseCsv("from,to,users\nA,B,0\n"), "sankey")).toBe("row 1, users not a number above zero");
+    expect(dataError(parseCsv("from,to,users\nA,,3\n"), "sankey")).toBe("row 1, no source or target");
+    expect(dataError(parseCsv("from,to,users\nA,B,3\nB,A,1\n"), "sankey")).toBe("a cycle through A; a sankey flows one way");
   });
 });

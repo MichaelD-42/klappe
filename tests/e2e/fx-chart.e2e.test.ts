@@ -30,7 +30,7 @@ for (const vp of [
       'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
       'chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(32)
+    expect(r.steps).toBe(40)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -184,4 +184,54 @@ test('a slope draws rising lines apart from falling ones and keeps close labels 
   expect(r.overlap).toBe(false)
   expect(r.values).toEqual(['12.0', '13.0', '12.5', '18.0']) // one decimal for all, as every chart does
   await page.close()
+})
+
+// A chart does nothing of its own under reduced motion: its fades and grows are short and stay in place.
+test('walk: charts pass under reduced motion too', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-chart&reducedmotion=1`, { w: 1920, h: 1080 })
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+}, 120_000)
+
+test('a funnel sizes stages by value and gives the conversion between them', async () => {
+  const page = await open('/a/funnel/3')
+  await page.waitForFunction(() => window.klappe.stepper.index === 34)
+  await page.waitForTimeout(1500)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-k-chart="funnel"]')!
+    return {
+      widths: [...g.querySelectorAll<SVGRectElement>('[data-bar]')].map((b) => +b.getAttribute('width')!),
+      values: [...g.querySelectorAll('[data-k-text]')].map((e) => e.textContent),
+    }
+  })
+  const [w0, w1, w2, w3] = r.widths
+  expect(w1 / w0).toBeCloseTo(0.4)
+  expect(w2 / w0).toBeCloseTo(0.1)
+  expect(w3).toBe(2) // a zero stage is a hairline, not nothing
+  expect(r.values).toEqual(['1,000', '400', '40 %', '100', '25 %', '0', '0 %', '0', '–'])
+  await page.close()
+})
+
+test('a sankey lays nodes in columns and lights one flow at a time, by step order', async () => {
+  const lit = async (step: number, index: number) => {
+    const page = await open(`/a/sankey/${step}`)
+    await page.waitForFunction((i) => window.klappe.stepper.index === i, index)
+    await page.waitForTimeout(1500)
+    const r = await page.evaluate(() => {
+      const g = document.querySelector('[data-k-chart="sankey"]')!
+      const accents = [...g.querySelectorAll<SVGPathElement>('path')].filter((p) => p.style.fill === 'var(--k-accent)')
+      return {
+        nodes: [...g.querySelectorAll<SVGRectElement>('[data-bar]')].map((b) => +b.getAttribute('x')!),
+        shown: accents.map((p) => +getComputedStyle(p).opacity),
+      }
+    })
+    await page.close()
+    return r
+  }
+  const four = await lit(4, 38)
+  // Ads, Signup, Search, Bounce, Paid, Churn: columns 0, 1, 0, 1, 2, 2.
+  const [ads, signup, search, bounce, paid, churn] = four.nodes
+  expect([ads === search, signup === bounce, paid === churn, ads < signup && signup < paid]).toEqual([true, true, true, true])
+  expect(four.shown).toEqual([1, 0, 0, 0, 0])
+  expect((await lit(5, 39)).shown).toEqual([0, 0, 1, 0, 0])
 })
