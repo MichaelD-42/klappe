@@ -14,7 +14,7 @@
   - [focus](elements/focus.md): lights one item in place while the rest dim, with no layer over the scene.
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
-  - [camera](elements/camera.md): `follow`, the camera rides along with a travelling element, and `impactShake`, a jolt of the whole scene when something lands.
+  - [camera](elements/camera.md): `follow`, the camera rides along with a travelling element, and `impactShake`, a jolt of the whole scene when something lands; `rackFocus`, all but one item blurs and dims; `tilt`, a camera flight with a slight 3D lean; `dollyZoom`, the vertigo move for a big reveal.
   - [flipCard](elements/flipCard.md): a card that turns over to show its back.
   - [cardStack](elements/cardStack.md): a fanned hand of cards; one is pulled out, the rest dim behind it.
   - [shape](elements/shape.md): `shape` and `arrow` on `ctx.svg` that draw on; `tint` and `token` for colour tweens between theme tokens.
