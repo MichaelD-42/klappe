@@ -79,6 +79,49 @@ test('delay holds the reveal before its first unit rises', async () => {
   await page.close()
 })
 
+// The key words of the stress scene: text, scale (from the transform matrix) and colour; and the accent's colour.
+const keys = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => {
+    const p = document.body.appendChild(document.createElement('div'))
+    p.style.color = 'var(--k-accent)'
+    const accent = getComputedStyle(p).color
+    const root = document.querySelectorAll<HTMLElement>('[data-k-reveal]')[2]
+    const ks = [...root.querySelectorAll<HTMLElement>('[data-k-key]')].map((k) => {
+      const m = new DOMMatrix(getComputedStyle(k).transform)
+      return { text: k.textContent, scale: Math.round(m.a * 100) / 100, accent: getComputedStyle(k).color === accent }
+    })
+    return { ks, plain: [...root.children].map((u) => u.textContent).join(' ') }
+  })
+
+test('**bold** words grow and take the accent as they rise; the markers never show', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.clock.install()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal#/a/text/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.clock.runFor(500)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  // The camera flies 1.6 s; "small" (word 3) starts to grow 0.6 s into the step, "very often" later.
+  await page.clock.runFor(1600 + 400)
+  const before = await keys(page)
+  expect(before.plain).toBe('We ship small and very often.')
+  expect(before.ks.map((k) => k.text)).toEqual(['small', 'very', 'often'])
+  expect(before.ks.every((k) => k.scale === 0.87 && !k.accent)).toBe(true)
+  await page.clock.runFor(3000)
+  const end = await keys(page)
+  expect(end.ks.every((k) => k.scale === 1 && k.accent)).toBe(true)
+  await page.close()
+}, 60_000)
+
+test('a deep link to the stress step shows the key words grown and in the accent; reduced motion too', async () => {
+  for (const q of ['', '&reducedmotion=1']) {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal${q}#/a/stress/1`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    expect((await keys(page)).ks.every((k) => k.scale === 1 && k.accent)).toBe(true)
+    await page.close()
+  }
+}, 60_000)
+
 test('with reduced motion the whole text fades in, every line already in place', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-reveal&reducedmotion=1#/a/text/1`)

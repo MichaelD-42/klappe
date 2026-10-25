@@ -18,6 +18,7 @@ const ALLOW = [
   'cycleLayout', 'vModelLayout', // cycle task: the cycle and vModel layouts, for their unit test
   'pyramidLayout', 'vennLayout', // venn-pyramid task
   'NOTE_MIX', 'fanPose', 'stickyLayout', // notes-cards: the note colour mix and the two layouts, for their unit tests
+  'cloudLayout', // cloud-quote task: the word cloud layout, for its unit test
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
