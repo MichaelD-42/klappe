@@ -17,6 +17,17 @@ New effects, proposed 2026-10-24, not yet specified:
 - Sticky notes: notes appear, then move into groups (an affinity map), for workshop decks.
 - Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with `reveal`.
 - Word cloud: words sized by weight from a `data/` file, placed without overlap, revealed step by step. Placement must be deterministic (seek equals play, same picture in CI).
+- Cycle: a loop (PDCA, a feedback loop) with arrows round a circle and the current phase lit. For process training.
+- V cycle: the V model, left leg down (requirements to design), right leg up (integration to validation), each level linked across to the test that checks it; steps light a level or a link.
+- Venn: two or three circles whose overlaps light up step by step.
+- Pyramid or layer stack: layers build bottom-up (a test pyramid, a capability stack).
+- Comparison table: rows build one at a time, ticks and crosses land per cell (a feature matrix).
+- Chat: a messenger thread; messages arrive, a typing indicator shows, the answer streams in. Seek must equal play, so the stream is a pure function of progress, like `typed`.
+- Redline: prose changes as strike-through and insert, the text cousin of `code().diff()`.
+- Split-flap: an airport-board flip to a number or a word, in the `scramble` family.
+- Handwriting: a short phrase writes itself stroke by stroke (needs glyph paths; check fonts and licence).
+- Loupe: a magnifying lens slides over a picture and enlarges one detail.
+- Card stack: a fanned stack; one card is pulled out, the rest stay behind.
 
 New transitions, proposed 2026-10-24:
 
@@ -24,6 +35,8 @@ New transitions, proposed 2026-10-24:
 - `iris`: a circle opens from a point (default the centre) with an animated `clip-path`.
 - Magic move: an element with the same id in both sections flies to its new place while the rest fades. The hardest of these.
 - `glitch`: a short digital break-up, for the bold theme.
+- Cube: the old section turns away as one face of a cube.
+- Page turn: the old section peels off like a page.
 
 New camera moves, proposed 2026-10-24:
 
@@ -31,6 +44,7 @@ New camera moves, proposed 2026-10-24:
 - Focus pull: all but the target blurs and dims, a depth-of-field cousin of `spotlight`. Mind the blur cost (perf notes).
 - Impact shake: a short jolt of the whole scene when something lands; the camera-level twin of `shake`.
 - Tilt: a slight 3D lean during a camera flight, so long flights feel less flat.
+- Dolly zoom: the "vertigo" move (zoom in while the camera pulls back), for a big reveal.
 
 Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): `timer` separate T groups (needs the deck's use case: how the presenter picks a group); a `dotGrid` helper (needs the deck's use case).
 
