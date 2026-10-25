@@ -20,6 +20,7 @@ export * from "./focus";
 export * from "./icons";
 export * from "./map";
 export * from "./matrix";
+export * from "./pyramid";
 export * from "./qr";
 export * from "./roadmap";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
@@ -44,6 +45,7 @@ export * from "./terminal";
 export * from "./timer";
 export * from "./transitions";
 export * from "./travel";
+export * from "./venn";
 export * from "./tree";
 export * from "./wipe";
 export * from "./zoom";
