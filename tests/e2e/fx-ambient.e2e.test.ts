@@ -43,8 +43,9 @@ const go = (page: Page, hash: string) =>
     const k = window.klappe
     const i = k.steps.findIndex((s: any) => `#/${s.section.replace(/^\d+-/, '')}/${s.scene.replace(/^\d+-/, '')}/${s.step}` === h)
     await k.stepper.goto(i, 'play')
-    await new Promise((r) => setTimeout(r, 1700)) // past the stop of the background left behind, a camera flight after the move
   }, hash)
+// The background left behind stops a camera flight after the move: poll for it, up to well past that.
+const soon = { timeout: 5000 }
 
 test.each([
   { w: 1920, h: 1080 },
@@ -78,13 +79,13 @@ test('only the background on screen moves; the one left behind stops once the ca
   const page = await open('#/a/loop/1')
   expect(await state(page)).toEqual({ video: true, ownAurora: false, aurora: false })
   await go(page, '#/a/same-loop/1')
-  expect(await state(page)).toEqual({ video: true, ownAurora: false, aurora: false })
+  await expect.poll(() => state(page), soon).toEqual({ video: true, ownAurora: false, aurora: false })
   await go(page, '#/a/own-aurora/1')
-  expect(await state(page)).toEqual({ video: false, ownAurora: true, aurora: false })
+  await expect.poll(() => state(page), soon).toEqual({ video: false, ownAurora: true, aurora: false })
   await go(page, '#/b/aurora/1')
-  expect(await state(page)).toEqual({ video: false, ownAurora: false, aurora: true })
+  await expect.poll(() => state(page), soon).toEqual({ video: false, ownAurora: false, aurora: true })
   await go(page, '#/c/plain/1')
-  expect(await state(page)).toEqual({ video: false, ownAurora: false, aurora: false })
+  await expect.poll(() => state(page), soon).toEqual({ video: false, ownAurora: false, aurora: false })
   await page.close()
 }, 60_000)
 
@@ -170,9 +171,9 @@ test('a background the deck draws and an animated SVG file play only while on sc
   const page = await open('#/d/own/1')
   expect(await dState(page)).toEqual({ own: true, svg: false })
   await go(page, '#/d/svg-loop/1')
-  expect(await dState(page)).toEqual({ own: false, svg: true })
+  await expect.poll(() => dState(page), soon).toEqual({ own: false, svg: true })
   await go(page, '#/c/plain/1')
-  expect(await dState(page)).toEqual({ own: false, svg: false })
+  await expect.poll(() => dState(page), soon).toEqual({ own: false, svg: false })
   await page.close()
 }, 60_000)
 
@@ -180,6 +181,7 @@ test('the deck\'s own and SVG backgrounds stay still with reduced motion', async
   const page = await open('#/d/own/1', '&reducedmotion=1')
   expect(await dState(page)).toEqual({ own: false, svg: false })
   await go(page, '#/d/svg-loop/1')
+  await page.waitForTimeout(1700) // nothing may start, even after the camera has landed
   expect(await dState(page)).toEqual({ own: false, svg: false })
   await page.close()
 }, 60_000)
