@@ -7,6 +7,7 @@ export * from "./basics";
 // Not burstPoint: math for its unit test.
 export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./callout";
+export * from "./camera";
 export * from "./cardstack";
 export * from "./chart";
 export * from "./chat";

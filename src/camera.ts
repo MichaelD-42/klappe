@@ -47,6 +47,19 @@ export function flight(from: Rect, to: Rect): Pose[] {
   return [start, mid, end];
 }
 
+// How far into a follow (share of its time) the camera has closed in on the element; after that it holds it centred.
+export const FOLLOW_LEAD = 0.3;
+
+// The camera's view at time share t of a follow that starts on view `from`: it closes in from `from` to a box
+// zoom times smaller centred on `pt` (world units), with a soft start and stop, then keeps `pt` centred.
+export function followView(from: Rect, pt: { x: number; y: number }, zoom: number, t: number): Rect {
+  const k = Math.min(1, t / FOLLOW_LEAD);
+  const s = k * k * (3 - 2 * k);
+  const [w, h] = [from.w / zoom, from.h / zoom];
+  const mix = (a: number, b: number) => a + (b - a) * s;
+  return { x: mix(from.x, pt.x - w / 2), y: mix(from.y, pt.y - h / 2), w: mix(from.w, w), h: mix(from.h, h) };
+}
+
 export function addCameraMove(
   tl: gsap.core.Timeline,
   world: HTMLElement,
