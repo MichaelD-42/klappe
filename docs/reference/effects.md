@@ -37,6 +37,7 @@ The first column labels the rows; every later column with a number in any row is
 | `axes` | title, legend and axes fade in |
 | `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right |
 | `values` | the value labels fade in and count up |
+| `bar(i)` | `bar` and `waterfall` only: bar `i` (0-based, data order; a waterfall's total is the last) grows and its value counts up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type or a bar that does not exist reports `chart: bar(…)` |
 
 ### Limits
 
@@ -58,6 +59,65 @@ progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Serv
 | `kpi` | `x`, `y`, `w` (480), `value`, `label`, `unit?`, `previous?`, `better?` (`"up"`), `spark?`, `source?` | a `--k-surface` tile: the label, the number (112 px, its unit smaller on the same line), the change against `previous` (`▲ 12 %`, in `--k-ok` when it goes the `better` way, else `--k-bad`; against 0 it is in units), and a sparkline of `spark` (oldest first) that draws on, its last point in `--k-accent` |
 | `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label |
 | `progress` | `x`, `y`, `size`, `value`, `target`, `label?`, `source?` | a ring that closes to `value / target` in `--k-accent` (full and `--k-ok` at or past the target); the share in % and "of <target>" in its centre, the label under it |
+
+## `gauge`
+
+Catalog: section `115-numbers` (`#/numbers/gauge/1`). One reading against a fixed range, as a half-circle dial: load, use of capacity, a score. Sits beside `kpi` and `progress`.
+
+From `decks/demo/sections/115-numbers/30-gauge/scene.ts`:
+
+```ts
+build: (ctx) => gauge(ctx, { x: 560, y: 140, size: 800, value: 68, max: 100, unit: "%", label: "Build farm load" }),
+steps: [(tl, g) => g.show(tl), (tl, g) => g.to(91)(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `x`, `y` | number | required | the top-left corner |
+| `size` | number | required | the dial's width; it is half as high, with the number and the label under it |
+| `value` | number | required | where `show` swings the needle to |
+| `min`, `max` | number | `min` 0, `max` required | the dial's range, written at its ends |
+| `label`, `unit`, `source` | string | none | as for `kpi` |
+
+| Handle | Step |
+| --- | --- |
+| `show` | the gauge fades in; the needle and the `--k-accent` arc swing from `min` to `value` over the `--k-line` track, and the number counts up |
+| `to(value)` | the needle swings on, from where the steps before left it, to `value`; the number counts there. Call it once per step for each new reading |
+
+Numbers use the deck language's format (`72,5` in a German deck). A value outside the range parks the needle at the end, and the number still shows the real value. With reduced motion the needle jumps. No coloured bands.
+
+## `likert`
+
+Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`) to agree (`--k-ok`), and the agree share (the top two points) at its end. One person's answer is a row with a single count of 1.
+
+From `decks/demo/sections/115-numbers/40-likert/scene.ts`:
+
+```ts
+build: (ctx) => likert(ctx, { x: 160, y: 200, w: 1600, rows: [{ statement: "Releases are predictable", counts: [3, 5, 8, 22, 12] }, …] }),
+steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl), (tl, l) => l.row(2)(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `x`, `y`, `w` | number | required | the top-left corner and the width |
+| `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each of the 5 points, disagree first |
+| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the 5 point names in the legend |
+| `source` | string | none | as for `kpi` |
+
+| Handle | Step |
+| --- | --- |
+| `show` | the legend, the statements and their empty tracks fade in |
+| `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
+
+A row whose counts are not 5 numbers of 0 or more reports `likert: row <n> needs 5 counts of 0 or more` and stays empty. The default point names are English in every deck language.
+
+## `gaugeAngle`
+
+`gaugeAngle(value, min, max)` gives the needle's angle in degrees from straight up: -90 at `min`, 90 at `max`, clamped to the dial.
+
+## `likertShares`
+
+`likertShares(counts)` gives each point's share of the row's answers, 0 to 1; all 0 when nobody answered.
 
 ## `kpiDelta`
 

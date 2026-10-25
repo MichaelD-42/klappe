@@ -22,6 +22,8 @@ export interface ChartHandle {
   axes: StepAdder;
   grow: StepAdder;
   values: StepAdder;
+  // Bar and waterfall only: bar i grows and its value counts up. One per step, instead of grow and values.
+  bar(i: number): StepAdder;
   // The bar rects in data order: waterfall then its total, stacked series by series, none for a line or a placeholder.
   bars: SVGElement[];
 }
@@ -222,7 +224,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bars: [] };
+  return { axes: show, grow: show, values: show, bar: () => show, bars: [] };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -526,6 +528,20 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         },
       };
       tl.to({}, count, "<");
+    },
+    // In a bar or waterfall chart, bars[i], grown[i] and values[i] are the same category.
+    bar: (i) => (tl) => {
+      if (type !== "bar" && type !== "waterfall") return ctx.problem(`chart: bar(${i}) is for bar and waterfall charts, not ${type}`);
+      if (!(i >= 0 && i < bars.length)) return ctx.problem(`chart: no bar ${i}; the bars are 0 to ${bars.length - 1}`);
+      const [g, val] = [grown[i], values[i]];
+      tl.to(g.el, { [g.scale]: 1, duration: motion.step, ease: "power2.out" });
+      tl.to(val.el, { autoAlpha: 1, duration: motion.step / 2 }, "<");
+      tl.to({}, {
+        duration: motion.step * 2,
+        onUpdate(this: gsap.core.Tween) {
+          val.el.textContent = val.show(val.from + (val.to - val.from) * ease(this.progress()));
+        },
+      }, "<");
     },
   };
 }
