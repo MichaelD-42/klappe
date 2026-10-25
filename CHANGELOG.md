@@ -2,6 +2,8 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.5.1 (unreleased)
+
 ## 0.5.0 (2026-10-25)
 
 Tooling for building decks with agents, the architecture doc and a glossary, a scrim fix for moving backgrounds, and look and motion polish.
