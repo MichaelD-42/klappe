@@ -39,6 +39,22 @@ test('the swarm canvas sits in the world and ends its step at progress 1', async
   await page.close()
 })
 
+// A camera that closes in on a swarm sees sharp dots: the canvas backing store grows with the zoom, at the same progress.
+test('the swarm canvas re-rasterises when the camera zooms in', async () => {
+  const page = await open('?fixture=fx-swarm#/a/stream/1')
+  const before = await page.evaluate(() => document.querySelector('canvas')!.width)
+  // Twice as close, as a camera.to on half the frame would leave it.
+  await page.evaluate(() => {
+    const world = document.querySelector('canvas')!.closest('.k-world') as HTMLElement
+    world.style.transform = `${world.style.transform} scale(2)`
+  })
+  await page.waitForFunction((w) => document.querySelector('canvas')!.width >= w * 1.8, before, { timeout: 5_000 }).catch(() => {})
+  const after = await page.evaluate(() => ({ w: document.querySelector('canvas')!.width, p: document.querySelector('canvas')!.getAttribute('data-k-progress') }))
+  expect(after.p).toBe('1')
+  expect(after.w).toBeGreaterThan(before * 1.8)
+  await page.close()
+})
+
 test('each counter shows from before its step and to after it', async () => {
   const page = await open('?fixture=fx-motion#/a/talk/4')
   const texts = () => page.evaluate(() => [...document.querySelectorAll('[data-k-text]')].map((e) => e.textContent))
