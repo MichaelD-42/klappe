@@ -33,13 +33,22 @@ test('walk fails when onUpdate writes wall-clock time into data-k-text', async (
   expect(r.checks.find((c) => !c.ok)?.detail).toContain('text=')
 })
 
-// The snapshot also covers dash draw-ons, glows and tints.
-for (const prop of ['strokeDasharray', 'strokeDashoffset', 'filter', 'fillOpacity', 'color'])
+// The snapshot covers every property it records: break any one and the walk fails. Not visibility: with two
+// values, a count written into it can land the same on play and seek; it is read as opacity is.
+const RECORDED = ['opacity', 'transform', 'transformAttr', 'progress', 'strokeDasharray', 'strokeDashoffset', 'filter', 'fillOpacity', 'color', 'stroke', 'outlineColor', 'borderColor', 'zIndex']
+for (const prop of RECORDED)
   test(`walk fails when onUpdate writes wall-clock state into ${prop}`, async () => {
     const r = await walk(`style-clock&prop=${prop}`)
     expect(r.ok).toBe(false)
     expect(r.checks.find((c) => !c.ok)?.name).toContain('play≠seek')
   })
+
+// A step back must land where the deep link does, even when play and seek agree.
+test('walk fails when a step back leaves the next step\'s state behind', async () => {
+  const r = await walk('back-stale')
+  expect(r.ok).toBe(false)
+  expect(r.checks.filter((c) => !c.ok).map((c) => c.name)).toEqual(['step #/a/back/1: back≠seek'])
+})
 
 test('an unknown fixture fails the walk instead of walking another deck', async () => {
   const r = await walk('no-such-fixture')
