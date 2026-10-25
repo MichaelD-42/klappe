@@ -331,10 +331,10 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
     const ok = row.counts.length === 5 && row.counts.every((c) => Number.isFinite(c) && c >= 0);
     if (!ok) ctx.problem(`likert: row ${i + 1} needs 5 counts of 0 or more, got [${row.counts.join(", ")}]`);
     const shares = ok ? likertShares(row.counts) : [0, 0, 0, 0, 0];
-    const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "36px" });
+    const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "40px" });
     line.dataset.kLikertRow = String(i);
     el(line, "div", { flex: "0 0 30%" }, row.statement);
-    const track = el(line, "div", { flex: "1", height: "56px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
+    const track = el(line, "div", { flex: "1", height: "64px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
     const bar = el(track, "div", { display: "flex", height: "100%" });
     shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: LIKERT_FILL[k] }));
     const num = el(line, "div", { flex: "0 0 96px", textAlign: "right", color: "var(--k-ok)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" });
