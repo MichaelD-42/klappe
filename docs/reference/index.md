@@ -22,6 +22,8 @@
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
   - [checklist](elements/checklist.md): boxes that tick.
+  - [compareTable](elements/compareTable.md): a feature matrix whose rows build one per step, with ticks and crosses.
+  - [exerciseCard](elements/exerciseCard.md): a task card with time box, group, tasks and optional items revealed per step.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
   - [timer](elements/timer.md): a countdown on the wall clock.
