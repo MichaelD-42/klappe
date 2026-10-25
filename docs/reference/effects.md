@@ -937,11 +937,11 @@ steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to(
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt` and `shatter` play a fade.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter` and `push` play a fade.
 
 ## `registry`
 
-`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
+`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
 
 ## `playTransition`
 
@@ -972,3 +972,23 @@ const section: SectionModule = { transition: "shatter", transitionOptions: { sha
 ## `transitionCrt`
 
 Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "soft"` opens the new canvas less bright (see [crt](elements/crt.md)).
+
+## `push` and `iris`
+
+Catalog: section `266-focus` (`push`) and `296-cycles` (`iris`). `push`: the new canvas pushes the old one off the frame in 0.7 s. `transitionOptions: { direction: "up" }` sets the way the old canvas leaves: `left` (default), `right`, `up` or `down`. `iris`: a circle opens the new canvas from a point in 0.8 s; the old canvas shows only outside the circle. `transitionOptions: { origin: [300, 200] }` sets the centre of the circle in frame pixels (1920 x 1080); the default is the centre of the frame. A wrong `direction` or `origin` logs the error and plays `fade`. Both set `reveal` at their start: the first step of the new section plays while the canvas moves or opens in. With reduced motion `push` plays a fade; `iris` stays, as it moves no content. From `decks/demo/sections/266-focus/section.ts`:
+
+```ts
+const section: SectionModule = { transition: "push" };
+```
+
+## `pushOffset`
+
+`pushOffset(direction = "left")` returns `{ x, y }` in frame pixels: where the old canvas ends for a push, for example `{ x: -1920, y: 0 }` for `left`. The new canvas starts at the opposite offset. It throws on any other direction.
+
+## `irisRadius`
+
+`irisRadius(x, y)` returns the radius in pixels that covers the 1920 x 1080 frame from `(x, y)`: the distance to the farthest corner.
+
+## `irisHole`
+
+`irisHole(x, y, r)` returns the `clip-path` for the old canvas during an iris: the frame minus a circle of radius `r` at `(x, y)`, as an even-odd `path()`. The canvases are transparent, so without the hole the old canvas would show through the circle.

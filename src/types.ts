@@ -112,7 +112,7 @@ export interface SceneModule {
   overviewLabel?: string;
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
-export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
+export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris";
 export interface SectionModule {
   // Behind every scene of this section, pinned to the screen: the camera moves the content over it.
   background?: Background;
