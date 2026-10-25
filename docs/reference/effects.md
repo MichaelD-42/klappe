@@ -937,11 +937,11 @@ steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to(
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter` and `push` play a fade.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube` and `pageTurn` play a fade.
 
 ## `registry`
 
-`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
+`registry` maps each transition name (`cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`) to its function `(from, to, opts) => timeline`. `from` and `to` are the old and new canvas; the timeline ends with `from` hidden and `to` shown. A timeline with a label `reveal` lets the new section's first step start there.
 
 ## `playTransition`
 
@@ -949,7 +949,7 @@ Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the c
 
 ## `loadTransitions`
 
-`loadTransitions(kinds)` loads the code of `zoom`, `shatter` and `crt` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
+`loadTransitions(kinds)` loads the code of `zoom`, `shatter`, `crt`, `glitch`, `cube` and `pageTurn` for the kinds given; the others are always there. The engine awaits it at start with the kinds the deck's `section.ts` files name, so a deck that never asks for a shatter does not fetch it. A lazy kind that was not loaded throws `<kind>: not loaded`, and `playTransition` plays `fade`.
 
 ## `transitionZoom`
 
@@ -992,3 +992,35 @@ const section: SectionModule = { transition: "push" };
 ## `irisHole`
 
 `irisHole(x, y, r)` returns the `clip-path` for the old canvas during an iris: the frame minus a circle of radius `r` at `(x, y)`, as an even-odd `path()`. The canvases are transparent, so without the hole the old canvas would show through the circle.
+
+## `transitionGlitch`
+
+Catalog: section `297-venn-pyramid`. A short digital break-up, 0.5 s, for the bold theme. Both canvases show in horizontal bands that jump sideways, with a colour split in the theme's two accents (`--k-accent`, `--k-accent-2`); the bands turn from old to new. The pattern is seeded: `transitionOptions: { seed: 3 }` picks another. From `decks/demo/sections/297-venn-pyramid/section.ts`:
+
+```ts
+const section: SectionModule = { transition: "glitch" };
+```
+
+## `glitchFrame`
+
+`glitchFrame(p, seed = 1)` gives the glitch at progress `p` (0 to 1): `bands` (`{ y, h, fresh }`, which tile the 1080 px frame; a `fresh` band shows the new canvas), `dx` (the sideways offset of the old and the new canvas, px) and `split` (the colour split, px). It is pure, so a seek shows the same frame as play. The first frame is all old, the last all new, and each frame between shows both.
+
+## `transitionCube`
+
+Catalog: section `298-table-card`. The old canvas turns away to the left as one face of a cube, and the new canvas turns in as the next face, over black, in 1 s. Sets `reveal` at 60 %, so the new step starts while the face lands. From `decks/demo/sections/298-table-card/section.ts`:
+
+```ts
+const section: SectionModule = { transition: "cube" };
+```
+
+## `transitionPageTurn`
+
+Catalog: section `299-notes-cards`. The old canvas peels off like a page from its bottom-right corner, in 0.9 s. The back of the page, in `--k-surface`, folds over it, and the new canvas comes out of the page's shadow. Sets `reveal` at 60 %. From `decks/demo/sections/299-notes-cards/section.ts`:
+
+```ts
+const section: SectionModule = { transition: "pageTurn" };
+```
+
+## `pagePeel`
+
+`pagePeel(p)` gives the peel at progress `p` (0 to 1) as two polygons in frame pixels: `page`, the part of the old canvas that still lies flat, and `flap`, the peeled part folded back over it. The fold runs from the bottom-right corner to the top-left one. It is pure; `transitionPageTurn` draws it as clip paths.

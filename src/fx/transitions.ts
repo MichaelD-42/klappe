@@ -104,13 +104,16 @@ const iris: Transition = (from, to, opts) => {
     .set(to.el, { clearProps: "clipPath" });
 };
 
-// zoom, shatter and crt load only when a section asks for them: main.ts awaits loadTransitions first.
+// zoom, shatter, crt, glitch, cube and pageTurn load only when a section asks for them: main.ts awaits loadTransitions first.
 const table = lazyTable({
   zoom: () => import("./zoom").then((m) => m.transitionZoom as Transition),
   shatter: () => import("./shatter").then((m) => m.transitionShatter as Transition),
   crt: () => import("./crt").then((m) => m.transitionCrt as Transition),
+  glitch: () => import("./glitch").then((m) => m.transitionGlitch as Transition),
+  cube: () => import("./turn").then((m) => m.transitionCube as Transition),
+  pageTurn: () => import("./turn").then((m) => m.transitionPageTurn as Transition),
 });
-const lazy = (kind: "zoom" | "shatter" | "crt"): Transition => (from, to, opts) => table.get(kind)(from, to, opts);
+const lazy = (kind: "zoom" | "shatter" | "crt" | "glitch" | "cube" | "pageTurn"): Transition => (from, to, opts) => table.get(kind)(from, to, opts);
 
 export const registry = {
   cut,
@@ -121,6 +124,9 @@ export const registry = {
   crt: lazy("crt"),
   push,
   iris,
+  glitch: lazy("glitch"),
+  cube: lazy("cube"),
+  pageTurn: lazy("pageTurn"),
 } satisfies Record<TransitionKind, Transition>;
 
 export async function loadTransitions(kinds: Iterable<TransitionKind>): Promise<void> {

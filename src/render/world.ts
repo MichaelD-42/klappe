@@ -328,7 +328,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   return { el: d, push: bg.kenBurns ? img : undefined, loop };
 }
 
-const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter", "push"];
+const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter", "push", "glitch", "cube", "pageTurn"];
 
 export function renderWorld(
   deck: Deck,

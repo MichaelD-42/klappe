@@ -23,6 +23,7 @@ const ALLOW = [
   'barInk', 'sankeyPalette', 'scatterIn', // fix-w3: funnel value ink, sankey node colours, sticky-note scatter, for their unit tests
   'loupeOffset', // loupe task: the lens offset, for its unit test
   'irisHole', 'irisRadius', 'pushOffset', // push-iris: the transition geometry, for its unit test
+  'glitchFrame', 'pagePeel', 'transitionCube', 'transitionGlitch', 'transitionPageTurn', // glitch-cube-page: the transitions (covered by their kinds); the glitch frame and the peel, for their unit test
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
