@@ -245,8 +245,11 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
         const at = tl.duration();
         const shown = (j: number) => (j < vis(next.length) ? "inherit" : "hidden");
         for (const o of ops) {
-          // autoAlpha: a collapsed line ends hidden and leaves no trace.
-          if (o.op === "del") fade(tl, at, [before[o.from]], { height: 0, autoAlpha: 0 });
+          // A collapsed line ends hidden and leaves no trace. Not autoAlpha: rewound, it would show a clipped line.
+          if (o.op === "del") {
+            fade(tl, at, [before[o.from]], { height: 0, opacity: 0 });
+            tl.set(before[o.from], { visibility: "hidden" }, at + motion.step);
+          }
           else if (o.op === "keep") {
             tl.set(before[o.from], { visibility: shown(o.to) }, at);
             fade(tl, at, [before[o.from]], { y: o.to * lh, opacity: 1, "--dim": 0 });

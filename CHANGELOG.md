@@ -4,6 +4,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ## 0.5.1 (unreleased)
 
+### Fixed
+
+- `code`: a step back over a `diff()` on clipped code no longer shows a clipped line over the "+N more lines" row.
+
 ## 0.5.0 (2026-10-25)
 
 Tooling for building decks with agents, the architecture doc and a glossary, a scrim fix for moving backgrounds, and look and motion polish.

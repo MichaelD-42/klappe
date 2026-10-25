@@ -29,12 +29,15 @@ const lines = (page: Page, scene: string) =>
     scene,
   )
 
-// The problems the fixture means to cause: the 40-line block, and the bad groups' line 0, reversed range and huge range.
+// The problems the fixture means to cause: the 40-line block, the bad groups' line 0, reversed range and huge range,
+// and the grow scene's 40 and 50 lines (raised from scene.ts, so without a file name).
 const PROBLEMS = [
   'sections/10-a/40-long/scene.md step 1: code: 40 lines do not fit; max 26',
+  'code: 40 lines do not fit; max 26',
   'sections/10-a/50-bad/scene.md step 1: code: line 0 out of range (1-20)',
   'sections/10-a/50-bad/scene.md step 1: code: lines 4, 3, 2 out of order; write ranges low to high',
   'sections/10-a/50-bad/scene.md step 1: code: lines 21-999, 99999999 out of range (1-20)',
+  'code: 50 lines do not fit; max 26',
 ]
 
 for (const vp of [
@@ -47,7 +50,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual(PROBLEMS)
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(13)
+    expect(r.steps).toBe(16)
   })
 
 // Review focus 2: a deep link onto group 3 equals playing to it, line by line.
@@ -102,6 +105,28 @@ test('clipped code shows a +N more lines row and stays at 14 px or more at 1366'
   expect(r.more).toBe('+15 more lines')
   expect(r.inside).toBe(true)
   await page.close()
+})
+
+// A diff on clipped code swaps the "+N more lines" row for one with the new count, and drops it once the code fits.
+test('a diff swaps the +N more lines row for the new count, and drops it when the code fits', async () => {
+  const markers = (page: Page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('[data-scene="grow"] .k-code-more')]
+        .filter((e) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true }))
+        .map((e) => e.textContent),
+    )
+  const want = [['+15 more lines'], ['+25 more lines'], []]
+  for (const [k, shown] of want.entries()) {
+    const page = await open(`#/a/grow/${k + 1}`)
+    expect(await markers(page), `deep link to step ${k + 1}`).toEqual(shown)
+    await page.close()
+  }
+  const played = await open('#/a/grow/1')
+  for (const shown of want.slice(1)) {
+    await played.evaluate(() => window.klappe.stepper.next())
+    expect(await markers(played)).toEqual(shown)
+  }
+  await played.close()
 })
 
 // Dimmed lines must stay readable on a projector: every token of a dimmed line at least 3:1 on the panel.

@@ -50,6 +50,13 @@ test('walk fails when a step back leaves the next step\'s state behind', async (
   expect(r.checks.filter((c) => !c.ok).map((c) => c.name)).toEqual(['step #/a/back/1: back≠seek'])
 })
 
+// The timeline rule at build time: a step that opens with "-=" reaches into the step before it.
+test('a step whose first tween starts before the step is a deck problem naming the scene and step', async () => {
+  const r = await walk('early-step')
+  expect(r.problems).toEqual(['sections/10-a/10-early/scene.md step 2: 1 tween(s) start before the step; do not begin a step with "<" or "-="'])
+  expect(r.ok).toBe(false)
+})
+
 test('an unknown fixture fails the walk instead of walking another deck', async () => {
   const r = await walk('no-such-fixture')
   expect(r.ok).toBe(false)

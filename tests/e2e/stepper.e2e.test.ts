@@ -62,6 +62,21 @@ test('a repeat, a key with a modifier and Enter or Space on a button do not step
   await page.close()
 })
 
+test('A starts autoplay and A again stops it; T leaves it running, a step key stops it', async () => {
+  const page = await open()
+  const press = (key: string) =>
+    page.evaluate((key) => {
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+      return window.klappe.autoplay.running as boolean
+    }, key)
+  expect(await press('a')).toBe(true)
+  expect(await press('A')).toBe(false)
+  expect(await press('a')).toBe(true)
+  expect(await press('t')).toBe(true) // the timer is not a step
+  expect(await press('ArrowLeft')).toBe(false)
+  await page.close()
+})
+
 test('a same-tick burst of 3 presses lands exactly 3 steps on', async () => {
   const page = await open()
   const ms = await page.evaluate(async () => {
