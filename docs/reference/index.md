@@ -21,6 +21,7 @@
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [checklist](elements/checklist.md): boxes that tick.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.

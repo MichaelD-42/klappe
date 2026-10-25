@@ -11,6 +11,7 @@ export * from "./chart";
 export * from "./checklist";
 export * from "./code";
 export * from "./crt";
+export * from "./cycle";
 export * from "./draw";
 export * from "./figure";
 export * from "./flipcard";
