@@ -2,14 +2,14 @@ import { gsap } from "gsap";
 import type { Ctx, SceneModule, StepFn } from "klappe/types";
 
 // The gallery caption: what the effect is and which call makes it, in a strip under the effect
-// (scene-local y 960 and below, so effects keep the frame above it). Every gallery caption comes from here.
+// (scene-local y 940 and below, so effects keep the frame above it). Every gallery caption comes from here.
 // It lives outside sections/, so the loader does not take it for a scene or section module.
 const caps = new WeakMap<HTMLElement, HTMLElement>();
 // transition: name it on the first scene of a section whose entry the viewer sees (not the first section).
 function caption(ctx: Ctx, text: string, transition?: string): HTMLElement {
   const box = document.createElement("div");
   // z-index 6: above shout's layer (z-index 5), so the caption stays readable while its dim is up.
-  Object.assign(box.style, { position: "absolute", left: "160px", top: "960px", width: "1600px", zIndex: "6" });
+  Object.assign(box.style, { position: "absolute", left: "160px", top: "940px", width: "1600px", zIndex: "6" });
   const main = box.appendChild(document.createElement("div"));
   main.textContent = text;
   Object.assign(main.style, { fontSize: "36px", fontWeight: "600", color: "var(--k-accent)" });

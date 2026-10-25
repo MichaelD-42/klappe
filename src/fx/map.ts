@@ -63,7 +63,7 @@ const hiddenStroke = { pathLength: 1, "stroke-dasharray": 1, "stroke-dashoffset"
 export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
   const proj = fitProjection(opts.rect);
   const path = geoPath(proj);
-  const g = node(ctx.svg, "g", { "data-k-map": "" });
+  const g = node(ctx.svg, "g", { "data-k-map": "", "data-k-bleed": "" }); // zoomTo runs the land off the frame by design
   // Rings drawn as lines, not polygons: a polygon closes Antarctica along the map's bottom edge.
   const land = LAND.coordinates.map((coordinates) =>
     node(g, "path", {

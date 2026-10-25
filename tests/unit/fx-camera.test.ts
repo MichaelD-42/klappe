@@ -93,3 +93,11 @@ test('with reduced motion, impactShake adds nothing', () => {
   impactShake(ctx)(tl)
   expect(tl.duration()).toBe(0)
 })
+
+test('follow marks the travel route as an intended bleed for the look checks', () => {
+  const { ctx } = setup()
+  const marks: string[] = []
+  const route = { setAttribute: (k: string) => marks.push(k) } as unknown as SVGPathElement
+  follow(ctx, Object.assign(() => {}, { route }))
+  expect(marks).toEqual(['data-k-bleed'])
+})

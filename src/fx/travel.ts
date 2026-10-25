@@ -15,7 +15,7 @@ const EASE = "power1.inOut";
 
 // travel's step adder, with its move as a pure function for follow: where the element is at time share t (0..1)
 // of the move, in scene units, and the move's start on the timeline (set when the step is added).
-export type TravelHandle = StepAdder & { point?(t: number): { x: number; y: number }; duration?: number; start?: number };
+export type TravelHandle = StepAdder & { point?(t: number): { x: number; y: number }; duration?: number; start?: number; route?: SVGPathElement };
 
 // One step: el moves along the path, start to end. Like flow's packets, el must sit at the scene origin
 // (left 0, top 0) with its visual centred there: the path moves that point. It waits at the path's start until its step.
@@ -62,5 +62,5 @@ export function travel(ctx: Ctx, el: Element, opts: TravelOpts): TravelHandle {
     if (line && route === "draw")
       tl.fromTo(line, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration, ease: EASE, autoRound: false, immediateRender: false }, t);
   };
-  return Object.assign(handle, { point: (s: number) => at(ease(s)), duration });
+  return Object.assign(handle, { point: (s: number) => at(ease(s)), duration, route: line });
 }

@@ -13,6 +13,7 @@ export interface FollowOpts {
 // Add it after the travel's step adder, in the same step. It reads the travel's path at the move's progress, not the
 // element's place: on a seek back GSAP renders a step's tweens in reverse order, so the element would still be stale.
 export function follow(ctx: Ctx, mover: TravelHandle, opts: FollowOpts = {}): StepAdder {
+  mover.route?.setAttribute("data-k-bleed", ""); // the camera runs the route off the frame by design
   return (tl) => {
     const { point, duration, start } = mover;
     if (!point || start === undefined) return ctx.problem("follow: add the travel's step before follow, in the same step");

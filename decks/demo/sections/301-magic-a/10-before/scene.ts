@@ -1,6 +1,6 @@
 import { iconTile } from "klappe/fx";
 import { captioned } from "../../../caption";
-import { planChip } from "../section";
+import { planChip } from "../../../shared/plan-chip";
 
 export default captioned('el.dataset.kMatch = "plan" — an element with the same key in the next section flies there', {
   build(ctx) {

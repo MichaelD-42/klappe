@@ -256,7 +256,7 @@ These are not checked:
 - Section layers and backgrounds.
 - Anything inside an element with `data-k-ignore` or `data-k-bleed`.
 
-To mark an intended bleed, set `data-k-bleed` on its element, for example `el.setAttribute("data-k-bleed", "")`. Use it for a picture that runs off the edge or a map the camera zooms into. It turns off both checks for that element and everything inside it.
+To mark an intended bleed, set `data-k-bleed` on its element, for example `el.setAttribute("data-k-bleed", "")`. Use it for a picture that runs off the edge. It turns off both checks for that element and everything inside it. `worldMap`, the shards of `shatter` and the route of a `travel` that `follow` rides along mark themselves.
 
 ## Deep links
 

@@ -8,15 +8,16 @@ interface Refs {
   back: StepAdder;
 }
 
-// The scene sits below the row of scenes; the far tile is two frames to its left, so the flight is long.
+// The scene sits far below the row of scenes, so the zoomed-out flight shows empty stage round the lean;
+// the far tile is 1.25 frames to its left: long enough to lean, short enough that the tiles stay big.
 export default captioned("tilt(ctx, rect) flies the camera with a slight 3D lean that lands flat", {
-  place: () => ({ x: 3840, y: 1300, w: 1920, h: 1080 }),
+  place: () => ({ x: 3840, y: 3000, w: 1920, h: 1080 }),
   build(ctx): Refs {
-    const far = { ...ctx.rect, x: ctx.rect.x - 3840 };
+    const far = { ...ctx.rect, x: ctx.rect.x - 2400 };
     return {
       tiles: [
         iconTile(ctx, "house", { x: 960, y: 480, size: 220, tone: "accent" }),
-        iconTile(ctx, "warehouse", { x: 960 - 3840, y: 480, size: 220, tone: "ok" }),
+        iconTile(ctx, "warehouse", { x: 960 - 2400, y: 480, size: 220, tone: "ok" }),
       ],
       there: tilt(ctx, far),
       back: tilt(ctx, ctx.rect),

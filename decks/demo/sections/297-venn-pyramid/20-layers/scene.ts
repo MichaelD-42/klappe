@@ -5,7 +5,7 @@ export default captioned("pyramid(ctx, { layers, shape, … }) — next() builds
   build: (ctx) => ({
     h: title(ctx),
     p: pyramid(ctx, {
-      x: 510, y: 270, w: 900, h: 670,
+      x: 585, y: 300, w: 750, h: 560,
       layers: [
         { id: "unit", label: "Unit" },
         { id: "integration", label: "Integration" },

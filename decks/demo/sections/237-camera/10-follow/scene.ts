@@ -18,7 +18,6 @@ export default captioned("follow(ctx, travel(…)) keeps the parcel centred; imp
     const to = iconTile(ctx, "house", { x: 1660, y: 420, size: 140, tone: "ok" });
     const parcel = iconTile(ctx, "package", { x: 0, y: 0, size: 88, tone: "warn" });
     const ship = travel(ctx, parcel.el, { path: "M410 700 C 800 260, 1150 900, 1546 420", route: "draw", duration: 3 });
-    ctx.svg.setAttribute("data-k-bleed", ""); // the route runs off the frame while the camera follows
     return {
       tiles: [from, to, parcel],
       ship,

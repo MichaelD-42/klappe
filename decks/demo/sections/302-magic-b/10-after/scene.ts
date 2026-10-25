@@ -1,9 +1,9 @@
 import { iconTile } from "klappe/fx";
 import { captioned } from "../../../caption";
-import { planChip } from "../../301-magic-a/section";
+import { planChip } from "../../../shared/plan-chip";
 
 export default captioned(
-  'section.ts { transition: "magicMove" } — matched elements fly, the rest fades',
+  'Elements with the same data-k-match key fly to their new place; the rest fades',
   {
     build(ctx) {
       const tile = iconTile(ctx, "rocket", { x: 480, y: 560, size: 320, tone: "accent" });
