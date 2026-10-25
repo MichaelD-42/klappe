@@ -821,10 +821,44 @@ Reduced motion: the words fade in at full size, all at once. A missing file or b
 ## `cloudLayout`
 
 `cloudLayout(words, rect, max?)` places `{ text, weight }` words for `wordCloud`: `{ text, weight, size, x, y, w, h }` each, heaviest first, ties in input order. A word's font size follows the square root of its weight, so its area follows the weight; the smallest is 24. Each word goes on an Archimedean spiral out from the centre of `rect`, as wide as `rect`, at the first spot where its box is inside `rect` and touches no other box. A box is estimated, not measured, from character classes (font sizes per character: 1 for W, M, m, w and @; 0.36 for i, l, j, t, f, r, I and punctuation; 0.72 for capitals and digits; 0.62 for the rest) plus 0.3 font sizes, by 1.3 font sizes. So the layout is the same on every machine and in CI, whatever fonts and rasteriser the browser has. If a word does not fit, every size shrinks by 10 % and the layout starts again, up to 12 times; words that still do not fit are left out. Nothing is random: the same words always give the same layout.
+## `redline`
+
+Catalog: section `218-redline-flap` (`#/redline-flap/redline/1`). Prose changes as a redline, the text cousin of `code().diff()`: deleted words struck through in `--k-bad`, new words underlined on a `--k-ok` tint, then the clean text.
+
+From `decks/demo/sections/218-redline-flap/10-redline/scene.ts`:
+
+```ts
+build: (ctx) => redline(ctx, { before: "Every release is tested by hand on Friday …", after: "Every release is tested automatically on each commit …", x: 160, y: 300, w: 1600, size: 64 }),
+steps: [(tl, r) => r.show(tl), (tl, r) => r.apply(tl), (tl, r) => r.clean(tl)],
+```
+
+`redline(ctx, { before, after, x, y, w?, size? })`: `before` and `after` the two texts, diffed by words (`wordDiff`); `x`, `y` the top-left corner; `w` the width it wraps at (default to the scene's right edge); `size` the font size (default 48, weight 600). `show(tl)` fades in the before text. `apply(tl)` draws a strike through each deleted word and dims it to 0.6, and grows each new word in with its tint and underline, over 0.9 s. `clean(tl)` collapses the deleted words and fades the marks, which leaves the after text. Every word of both texts is laid out at build; a word grows and collapses by its `max-width`, so the text reflows only as a function of the tween and seek equals play. `el` is the text box; screen readers get the after text. Reduced motion: the marks and words fade in and out at full length, with no growing or collapsing.
+
+## `splitFlap`
+
+Catalog: section `218-redline-flap` (`#/redline-flap/board/1`). An airport board: a row of cells that flip to a new word or number, in the `scramble` family.
+
+From `decks/demo/sections/218-redline-flap/20-board/scene.ts`:
+
+```ts
+build: (ctx) => splitFlap(ctx, { x: 437, y: 360, cells: 10, text: "On time", size: 120 }),
+steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to("98.6% up")(tl)],
+```
+
+`splitFlap(ctx, { x, y, cells, text, size? })`: `x`, `y` the top-left corner; `cells` how many characters the board holds; `text` what it shows first; `size` the font size (default 96, weight 700; a cell is 0.8 by 1.3 times it). Text is upper-cased and left-aligned; a text longer than `cells` logs `splitFlap: '<text>' has <n> characters for <cells> cells; the rest is cut`. `show(tl)` fades the board in. `to(text)` gives a step that flips each cell forward through the drum (space, A to Z, 0 to 9, `.,:-+%/€## `scrambleGlyphs`
+?!`) to its new character over 1.8 s, each cell a little after the one to its left; a character not on the drum changes in one flip at its cell's end. Each cell's character is written from `onUpdate` as a pure function of progress (`flapGlyphs`), and the text a step flips from is read when the step is added, so `to` steps may be built in any order. A line across each cell's middle gives the split look. `el` is the row of cells. Reduced motion: the board cuts to the new text.
 
 ## `scrambleGlyphs`
 
 `scrambleGlyphs(text, p, seed)` gives what each character shows at progress `p`: a glyph while it decodes, `null` once it has settled. Spaces are always `null`; all are `null` at `p = 1`.
+
+## `wordDiff`
+
+`wordDiff(before, after)` gives the word diff `redline` draws: a list of `{ op: "keep" | "del" | "add", word }`, by longest common subsequence (`lineDiff` on the words). Words split on any whitespace; at a fork, deletions come before additions.
+
+## `flapGlyphs`
+
+`flapGlyphs(from, to, p, cells)` gives what each cell of a `splitFlap` shows at progress `p`: the upper-cased, padded `from` text at `p = 0`, the `to` text at `p = 1`.
 
 ## `counterText`
 

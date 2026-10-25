@@ -25,6 +25,7 @@ export * from "./map";
 export * from "./matrix";
 export * from "./pyramid";
 export * from "./qr";
+export * from "./redline";
 export * from "./roadmap";
 // Not STEP_LABEL, FULL_FRAME_PROMPT or clampPose: engine internals.
 export { KEN_BURNS, image, video, type ImageHandle, type ImageOpts, type KenBurnsPose, type VideoOpts } from "./media";
@@ -42,6 +43,7 @@ export * from "./shout";
 export * from "./stats";
 export * from "./stickynotes";
 export * from "./spotlight";
+export * from "./splitflap";
 // Not rand: the seeded hash swarm and burst share.
 export { swarm, swarmPoint, type SwarmHandle, type SwarmOpts } from "./swarm";
 export * from "./swimlanes";
