@@ -21,7 +21,7 @@ Steps:
 1. Read the task and the spec sections it names.
 2. Implement exactly what the task says.
 3. Run `npm test`. Fix failures.
-4. If the change is visible, run `npm run dev` (background) and save screenshots at 1920x1080 and 1366x768. Use `chromium` from `@playwright/test`. Stop the server after.
+4. If the change is visible, take screenshots with `npm run shot -- <section>/<scene>` for each scene you changed (PNGs at 1920x1080 and 1366x768 in `dist/shots/<deck>/`), and read them.
 5. Commit with a clear message. Stage by path. Other builders may share the worktree: never amend, reset or rebase; fix a mistake with a new commit.
 
 Hand back:

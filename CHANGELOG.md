@@ -2,6 +2,43 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.5.0 (unreleased)
+
+Tooling for building decks with agents, the architecture doc and a glossary, a scrim fix for moving backgrounds, and look and motion polish.
+
+### Added
+
+- `klappe shot` (`npm run shot`): PNGs of chosen steps at 1920x1080 and 1366x768, each step as it ends with no UI on top, in `dist/shots/<id>/`. A target is `<section>`, `<section>/<scene>` or `<section>/<scene>/<step>`, as in a deep link; no target shoots every step. `--last` keeps each scene's last step, `--sheet` adds one contact sheet per section, `--theme <name>` picks a theme. A target that names no step, or a page error, fails it. The builder and the look reviewer use it instead of their own Playwright scripts.
+- `klappe outline` (`npm run outline`): the deck as text, with no browser: every section and scene with its deep-link ids, every step with its note, and a timing estimate (notes at 130 words a minute, at least 15 s a step). A new `deck.md` key, `duration` in minutes, gives it a target to compare against.
+- A timeline lint (`tests/lint/timeline.test.ts`): deck code may not use `from()`.
+- The skill's "Choose the element by intent" is a table: intent, effect, reference page and the catalog scene to copy, for every effect a deck can call. `tests/lint/skill-catalog.test.ts` keeps it complete and its links and scenes real.
+- `CLAUDE.md` for agents working on klappe itself: where things are, the commands, and the rules the lints and the walk hold.
+- `docs/architecture.md`: the components, the path from deck folder to stage, a step press, and where the timeline rule is enforced, with Mermaid diagrams. `docs/glossary.md`: the terms klappe uses, each with one meaning and its relations.
+- `gitGraph`: a git history for developer trainings, one op per step: commits on one lane per branch, a new branch, a merge commit, and a rebase whose copies (`form′`) fly past the target's tip while the originals fade. Catalog `#/git/rebase/1`.
+- `semanticZoom`: boxes in boxes on the canvas. `into(path)` flies the camera into a box while the rest of its level fades, and its insides build as it lands; `out` flies back up. Each level's labels read 32 px at their own zoom. Catalog `#/semantic-zoom/system/1`.
+- `pointer`: a mouse pointer for UI walkthroughs. `move(target)` glides to an element or a point on a slight curve, `click` presses with an accent ripple, `type(field, text)` types into a focused field. Catalog `#/pointer/sign-in/1`.
+- `flow` works as a state machine: `fire(from, to)` draws that transition on in `--k-accent` and moves the ring to the new state, and an edge from a box to itself is a loop on its first free face. Catalog `#/flow/state-machine/1`.
+- `chart` types `scatter` (two number columns as x and y) and `bubble` (a third as the dot's area). With a `year`, `period` or similar column, `period(i)` moves the dots from period to period, as `barRace` does. Catalog `#/chart/scatter/1`, `#/chart/bubble/1`.
+- Parallax depths: `parallax` takes a depth (`2` drifts twice as far as `true`), and `layers: [{ href, alt, parallax }]` stacks transparent pictures over a background, each drifting by its own depth. Catalog `#/parallax/near/1` has a near layer of rings.
+- A speaker profile factory in the demo, `decks/demo/shared/speaker-profile.ts`, to copy into a deck: photo, name, role and company logo, CV, statements one per step, and a contact step with a QR code. Catalog `#/speaker/profile/1`.
+- The demo has a transition gallery: one section per transition kind, from `#/tr-cut/cut-card/1` to `#/tr-magicmove/magicmove-card/1`, each card naming its `section.ts` line.
+- The demo deck has a local clip, `media/sample.mp4` (six seconds, 65 KB, made for the demo), and a catalog scene for a video background (`#/fullscreen/video-loop/1`). The media scenes play it instead of a clip from the internet, so the demo runs offline.
+
+### Fixed
+
+- `annotate`: a ring on a code line flattens into the line gap and widens instead, so it no longer runs over the lines above and below.
+- `swarm` stays sharp when the camera closes in: its canvas re-rasterises at the zoom it is shown at, up to 4096 device pixels a side (about 2x for a full-frame swarm).
+- `shatter`: the impact frame is lighter. Each shard is cut to its polygon's bounds instead of a full-frame clone, and its layer exists from load, so less is rastered at the impact (a long frame of 83 ms became 67 ms on a desktop GPU; see `docs/perf-m2.md`).
+- Demo: the camera catalog's tilt and dolly scenes raised a deck problem with reduced motion (a caption timed 0.6 s before a flight's end, which is a cut there). A test now loads the demo with reduced motion and expects no problem.
+- Demo: the value-stream band clears the bottom safe area, and the flight to Analysis runs straight into the document stream (`auto`), so its first step is no longer an empty frame.
+- A video, aurora, animated SVG or own-loop background with a `scrim` showed the scrim at full strength, so the stage was black: the scrim now keeps its value.
+
+### Changed
+
+- The `crt` transition opens the new canvas at 1.4 times its brightness by default, so the phosphor tint shows; `transitionOptions: { flash: "full" }` brings back the old bright open at 3 times. A look change for decks that use it.
+- Building a deck from a storyboard: before the fan-out, the agent asks the deck owner whether to build the sections inline in its own session, with a checkpoint after each, or with one `klappe-builder` subagent per section, and recommends one.
+- `Point` (`{ x, y }`) is in `klappe/types`; `flow`, `swimlanes` and `shatter` use it instead of their own, and `magicMove`'s `Box` is `Rect`.
+
 ## 0.4.0 (2026-10-25)
 
 The M4 effects so far: moving backgrounds, spotlight and marks, board numbers and charts, five new themes, bundled fonts, `klappe pdf`, and the effect backlog (30+ effects, six transitions, five camera moves, safe-area checks in the self-test).

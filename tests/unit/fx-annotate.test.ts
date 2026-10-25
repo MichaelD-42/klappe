@@ -121,3 +121,16 @@ test.each(Object.entries(themes))('--k-fg stays readable on a highlight in %s', 
   const mix = `rgb(${a.map((v, i) => Math.round(v * MARKER_MIX + b[i] * (1 - MARKER_MIX))).join(', ')})`
   expect(contrast(t['--k-fg'], mix)).toBeGreaterThanOrEqual(6.3)
 })
+
+// On a code line the ring flattens to the line gap: it never reaches the next line's text, and still goes round the line.
+test('a circle with room stays inside it and still rings the box', () => {
+  const line = { x: 100, y: 100, w: 600, h: 34 }
+  const room = 42 - line.h / 2 // a 42-unit row: from the line's middle to the next line's text top
+  const [ring] = scribble('circle', line, { pad: PAD, seed: 1, room })
+  const cy = line.y + line.h / 2
+  for (const p of ring) expect(Math.abs(p.y - cy)).toBeLessThanOrEqual(room)
+  for (const c of [{ x: line.x, y: line.y }, { x: line.x + line.w, y: line.y }, { x: line.x, y: line.y + line.h }, { x: line.x + line.w, y: line.y + line.h }])
+    expect(inside(c, ring)).toBe(true)
+  // Wider, not taller: the ends stay within a third of the half-width past the line.
+  expect(Math.max(...ring.map((p) => p.x))).toBeLessThan(line.x + line.w + PAD + line.w / 6)
+})

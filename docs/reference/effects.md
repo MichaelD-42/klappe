@@ -6,7 +6,7 @@ Every example below is a scene from the demo deck's catalog (the sections after 
 
 ## `chart`
 
-Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/funnel/1`, `#/chart/slope/1`, `#/chart/sankey/1`). A bar, stacked, line, waterfall, timeline, donut, slope, funnel or sankey chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
+Catalog: section `110-chart` (`#/chart/bars/1`, `#/chart/donut/1`, `#/chart/funnel/1`, `#/chart/slope/1`, `#/chart/sankey/1`, `#/chart/scatter/1`, `#/chart/bubble/1`). A bar, stacked, line, waterfall, timeline, donut, slope, funnel, sankey, scatter or bubble chart from a `data/` file. In Markdown, a list item linking to `data/x.csv` or `data/x.json` makes a bar chart (see [markdown](markdown.md)).
 
 From `decks/demo/sections/110-chart/10-bars/scene.ts`:
 
@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero, not all zero; each stage is a centred bar as wide as its share of the largest, with its name on the left and its value inside the bar's right end in `--k-bg` or `--k-fg`, whichever contrasts more with the bar (on a `--k-bg` halo when neither reaches 4.5:1), or just right of the bar when it is too narrow; the conversion from the stage before sits centred on the line between the two stages (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in `--k-series-2` to `--k-series-6` (series 1 is the accent in most themes, which `highlight` uses), less the one nearest `--k-accent` when it is close (`sankeyPalette`), so past four or five nodes the colours repeat; bands in `--k-line`; see `highlight` |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"`, `"scatter"`, `"bubble"` | `"bar"` | the chart form. `scatter`: the first two number columns as x and y, one dot per row named by the first column, both axes spanning the data (not zero), each named by its column; a name sits right of its dot, or left of it near the right edge. `bubble`: the same with a third number column as the dot's area (none below zero), noted as `Size: <column>`. Either may have a time column named `period`, `year`, `date`, `month`, `quarter` or `week`: then each name needs exactly one row per period, the dots show the first period, `period()` moves them, the axes and sizes span every period, and the period shows under the plot. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero, not all zero; each stage is a centred bar as wide as its share of the largest, with its name on the left and its value inside the bar's right end in `--k-bg` or `--k-fg`, whichever contrasts more with the bar (on a `--k-bg` halo when neither reaches 4.5:1), or just right of the bar when it is too narrow; the conversion from the stage before sits centred on the line between the two stages (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in `--k-series-2` to `--k-series-6` (series 1 is the accent in most themes, which `highlight` uses), less the one nearest `--k-accent` when it is close (`sankeyPalette`), so past four or five nodes the colours repeat; bands in `--k-line`; see `highlight` |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -38,12 +38,14 @@ The first column labels the rows; every later column with a number in any row is
 | `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right; funnel stages grow from the centre, top to bottom; sankey nodes grow with their names, then the bands draw left to right |
 | `values` | the value labels fade in and count up |
 | `highlight(row)` | sankey only: the flow in that data row (0 is the first row after the header) turns `--k-accent`; the flow lit before goes back. Add it after `grow`: before it the bands are not drawn, so the lit flow does not show. Another chart type, or a row that does not exist, reports a deck problem |
+| `period(p)` | `scatter` and `bubble` with a time column: the dots and their names move to period `p`, by index (0 is the first) or by its name (`"2025"`); a numeric period counts on the way, a named one switches halfway. Catalog: `#/chart/bubble/2`. Without a time column it reports `chart: period() is for a scatter or bubble chart with a period column`; a period that is not there `chart: no period "<p>"; the periods are …` |
 | `bar(i)` | `bar` and `waterfall` only: bar `i` (0-based, data order; a waterfall's total is the last) grows and its value counts up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type reports `chart: bar(<i>) is for bar and waterfall charts`; a bar that does not exist reports `chart: no bar <i>` |
 
 ### Limits
 
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
+- Scatter and bubble names are not moved apart: dots that sit close together overlap their names. Every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
 - A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason). A funnel reveals all stages in one `grow` step, not one stage per step.
 
 ## `kpi`, `waffle`, `progress`
@@ -167,6 +169,10 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 
 `dataError(rows, type)` returns why the rows cannot be drawn as that chart type (`"row 3, Q2 not a number"`, `"needs a start and an end column"`, `"row 2, end before start"`), or `""`. `chart` calls it; call it yourself to check data before you pass it as `data`.
 
+
+## `scatterTracks`
+
+`scatterTracks(rows)` gives `{ period?, periods, names, at, keys }`: the time column's name (if any) and its periods in order, the point names, `at[p][i]` the number values of point `i` in period `p`, and `keys` the number columns other than the time, in order (x, y, size). Without a time column every row is a point and `at` has one period. What `scatter` and `bubble` draw; tests use it.
 ## `donutSlices`
 
 `donutSlices(values)` gives each value's slice as `{ start, end, share }`, fractions of a turn from 12 o'clock, clockwise, in row order.
@@ -952,7 +958,7 @@ steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to(
 
 ## Transitions
 
-Set in `section.ts` with `transition` (see [deck format](deck-format.md)); the catalog sections show each one. You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube`, `pageTurn` and `magicMove` play a fade.
+Set in `section.ts` with `transition` (see [deck format](deck-format.md)). The demo's transition gallery has one section per kind, from `#/tr-cut/cut-card/1` to `#/tr-magicmove/magicmove-card/1`: step forward through it to see each one (a jump is a cut). You rarely call these functions yourself. With reduced motion (the system setting or `?reducedmotion=1`), `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube`, `pageTurn` and `magicMove` play a fade.
 
 ## `registry`
 
@@ -986,7 +992,7 @@ const section: SectionModule = { transition: "shatter", transitionOptions: { sha
 
 ## `transitionCrt`
 
-Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "soft"` opens the new canvas less bright (see [crt](elements/crt.md)).
+Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a bright line and a dot, then a line flashes across and opens into the new canvas. `transitionOptions: { color: "amber" }` uses the amber phosphor; the default is green. `flash: "full"` opens the new canvas brighter (see [crt](elements/crt.md)).
 
 ## `push` and `iris`
 

@@ -10,6 +10,7 @@
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
+  - [pointer](elements/pointer.md): a mouse pointer that moves, clicks with a ripple and types, for a UI walkthrough.
   - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
   - [focus](elements/focus.md): lights one item in place while the rest dim, with no layer over the scene.
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
@@ -22,6 +23,8 @@
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [gitGraph](elements/gitGraph.md): a git history, one commit, branch, merge or rebase per step.
+  - [semanticZoom](elements/semanticZoom.md): boxes in boxes; the camera flies into one and its insides build, level by level.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
@@ -37,4 +40,6 @@
   - [chat](elements/chat.md): a messenger thread; typing dots, then the answer streams in.
   - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.
   - [mesh3d](elements/mesh3d.md): a self-running 3D dot mesh with moods.
+- [Architecture](../architecture.md): the components, the path from deck folder to stage, and where the timeline rule is enforced.
+- [Glossary](../glossary.md): the terms klappe uses, each with one meaning.
 - [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
+import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, scatterTracks, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
 import { contrast, parseTokens } from "../../src/theme";
 
 describe("parseCsv", () => {
@@ -284,4 +284,35 @@ test("sankey nodes skip the series colour nearest the accent, only when it is ne
   expect(nodes(css("daylight"))).toEqual([0, 1, 2, 4]);
   expect(nodes(css("bold"))).toEqual([0, 1, 2, 3, 4]);
   expect(sankeyPalette("oklch(0.5 0.1 20)", ["#000", "#fff"])).toEqual([0, 1]);
+});
+
+describe("scatter and bubble", () => {
+  const plain = parseCsv("team,lead time,deploys,people\nWeb,3,12,8\nMobile,5,6,5\nData,2,9,4\n");
+  const timed = parseCsv("team,year,lead time,deploys,people\nWeb,2023,6,4,6\nMobile,2023,8,2,4\nWeb,2024,3,12,8\nMobile,2024,5,6,5\n");
+
+  test("a scatter needs two number columns, a bubble three, sizes not below zero", () => {
+    expect(dataError(plain, "scatter")).toBe("");
+    expect(dataError(plain, "bubble")).toBe("");
+    expect(dataError(parseCsv("team,x\nA,1\n"), "scatter")).toBe("needs an x and a y column");
+    expect(dataError(parseCsv("team,x,y\nA,1,2\n"), "bubble")).toBe("needs an x, a y and a size column");
+    expect(dataError(parseCsv("team,x,y,s\nA,1,2,-1\n"), "bubble")).toBe("row 1, s below zero");
+  });
+
+  test("rows are points; with a period column, one track per name and one row per period", () => {
+    expect(scatterTracks(plain)).toEqual({
+      period: undefined,
+      periods: [],
+      names: ["Web", "Mobile", "Data"],
+      at: [[[3, 12, 8], [5, 6, 5], [2, 9, 4]]],
+      keys: ["lead time", "deploys", "people"],
+    });
+    const t = scatterTracks(timed);
+    expect([t.period, t.periods, t.names, t.keys]).toEqual(["year", ["2023", "2024"], ["Web", "Mobile"], ["lead time", "deploys", "people"]]);
+    expect(t.at[1]).toEqual([[3, 12, 8], [5, 6, 5]]);
+  });
+
+  test("a name missing from a period, or twice in one, is an error", () => {
+    expect(dataError(parseCsv("team,year,x,y\nWeb,2023,1,2\nMobile,2023,1,2\nWeb,2024,1,2\n"), "scatter")).toBe('"Mobile" has no row for year 2024');
+    expect(dataError(parseCsv("team,year,x,y\nWeb,2023,1,2\nWeb,2023,3,4\n"), "scatter")).toBe('"Web" has two rows for year 2023');
+  });
 });

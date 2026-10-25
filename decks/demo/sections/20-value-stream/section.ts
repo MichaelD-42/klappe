@@ -24,8 +24,13 @@ const centre = (name: string) => {
   return X0 + GAP * i;
 };
 
+// A stage frame sits this far below the canvas top, so the band clears its bottom safe area (48 px) while the
+// band keeps its place on the canvas, where the overview frames it.
+const FRAME_DROP = 36;
 // A full stage-sized frame around a stage box, so default scene text still fits above it.
-export const stageFrame = (name: string): Rect => ({ x: centre(name) - (FRAME_AT[name] ?? 960), y: 0, w: 1920, h: 1080 });
+export const stageFrame = (name: string): Rect => ({ x: centre(name) - (FRAME_AT[name] ?? 960), y: FRAME_DROP, w: 1920, h: 1080 });
+// The stream line in a stage frame's own coordinates.
+export const LINE_Y = Y - FRAME_DROP;
 
 export const svgEl = (tag: string, attrs: Record<string, string | number>) => {
   const e = document.createElementNS(SVG, tag);

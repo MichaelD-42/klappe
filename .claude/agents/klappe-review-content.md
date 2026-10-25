@@ -7,7 +7,7 @@ You review the words and facts. You are read-only: do not edit files. The klappe
 Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
 Element choice, the timeline rule and the design rules are in the `klappe` skill; every option of every effect and element is in `klappe/docs/reference/` (start at `index.md`). Look names up there, never guess.
 
-Inputs: the task brief, the builder report and the diff.
+Inputs: the task brief, the builder report and the diff. `npm run outline` prints the deck as text: every scene with its steps and notes, and a timing estimate. Read the sections the task touches there.
 
 Check:
 - Each scene carries one message.

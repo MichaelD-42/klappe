@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
-import type { Ctx, Rect, StepAdder } from "../types";
+import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 import type { TransitionOpts } from "./transitions";
 
 export interface ShatterOpts {
@@ -18,10 +18,6 @@ export interface ShatterHandle {
   fall: StepAdder;
 }
 
-interface Pt {
-  x: number;
-  y: number;
-}
 export interface ShatterGeometry {
   cells: Pt[][]; // shard polygons; they tile the box
   cracks: { pts: Pt[]; r: number }[]; // crack lines (shard borders), r: distance of their start from the impact
@@ -232,14 +228,18 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
   }
 
   const cut = (frame: HTMLElement) => geo.cells.map((P) => {
+    // Each shard's box is its polygon's bounds (plus the edge stroke), not the whole frame: 30 full-frame layers
+    // rastered at once made the impact frame long. Inside, the frame and its clip keep frame coordinates.
+    const [bx, by] = [Math.max(0, Math.floor(Math.min(...P.map((v) => v.x)) - 2)), Math.max(0, Math.floor(Math.min(...P.map((v) => v.y)) - 2))];
+    const [bw, bh] = [Math.ceil(Math.max(...P.map((v) => v.x)) + 2) - bx, Math.ceil(Math.max(...P.map((v) => v.y)) + 2) - by];
     const wrap = document.createElement("div");
-    abs(wrap);
+    abs(wrap, { left: `${bx}px`, top: `${by}px`, width: `${bw}px`, height: `${bh}px`, overflow: "hidden" });
     const inner = document.createElement("div");
-    abs(inner, { background: fill, clipPath: `polygon(${P.map((v) => `${v.x.toFixed(1)}px ${v.y.toFixed(1)}px`).join(",")})` });
+    abs(inner, { left: `${-bx}px`, top: `${-by}px`, background: fill, clipPath: `polygon(${P.map((v) => `${v.x.toFixed(1)}px ${v.y.toFixed(1)}px`).join(",")})` });
     inner.append(frame.cloneNode(true));
     const edge = document.createElementNS(SVG, "svg");
     edge.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    abs(edge as unknown as HTMLElement, { overflow: "visible" });
+    abs(edge as unknown as HTMLElement, { left: `${-bx}px`, top: `${-by}px`, overflow: "visible" });
     const poly = document.createElementNS(SVG, "polygon");
     poly.setAttribute("points", pts(P));
     Object.assign(poly.style, { fill: "none", stroke: "color-mix(in srgb, var(--k-fg) 55%, transparent)", strokeWidth: "1.5" });
@@ -248,7 +248,9 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     field.append(wrap);
     const cx = P.reduce((s, v) => s + v.x, 0) / P.length;
     const cy = P.reduce((s, v) => s + v.y, 0) / P.length;
-    gsap.set(wrap, { autoAlpha: 0, transformOrigin: `${cx}px ${cy}px` });
+    // Transparent, not hidden: a hidden layer is rastered on the impact frame, which made it long on a cold GPU. Its own
+    // layer from load, so it is rastered while the scene is still; visibility written as a seek back leaves it.
+    gsap.set(wrap, { opacity: 0, visibility: "inherit", willChange: "transform, opacity", transformOrigin: `${cx - bx}px ${cy - by}px` });
     return { el: wrap, cx, cy, d: Math.hypot(cx - o.impact.x, cy - o.impact.y) };
   });
 
@@ -278,7 +280,8 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     const near = new Set([...shards].sort((a, b) => a.d - b.d).slice(0, Math.round(o.toViewer * shards.length)));
     const t0 = tl.duration() + 0.02;
     tl.set([...hide, svg], { autoAlpha: 0 }, t0);
-    tl.fromTo([gaps, ...shards.map((s) => s.el)], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0, immediateRender: false }, t0);
+    tl.fromTo(gaps, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0, immediateRender: false }, t0);
+    tl.fromTo(shards.map((s) => s.el), { opacity: 0 }, { opacity: 1, duration: 0, immediateRender: false }, t0);
     tl.fromTo(flash, { opacity: 0.9 }, { opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, t0);
     tl.to(gaps, { autoAlpha: 0, duration: 0.35, ease: "power1.in" }, t0 + 0.12); // after the shards part
     tl.to(field, shake(16, 6), t0);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { frame, flight, parallaxPose, PARALLAX } from "../../src/camera";
+import { frame, flight, parallaxPose, parallaxScale, PARALLAX } from "../../src/camera";
 
 const A = { x: 0, y: 0, w: 1920, h: 1080 };
 const A_neighbour = { x: 1920, y: 0, w: 1920, h: 1080 };
@@ -46,5 +46,11 @@ describe("parallaxPose", () => {
   });
   it("never drifts further than PARALLAX, however far the camera goes", () => {
     for (const x of [-20000, 20000]) expect(Math.abs(parallaxPose({ x, y: 0, w: 1920, h: 1080 }, canvas).x)).toBeLessThanOrEqual(PARALLAX);
+  });
+});
+
+describe("parallaxScale", () => {
+  it("covers the stage at the layer's full drift on both sides", () => {
+    for (const d of [1, 2.5, 4]) expect(parallaxScale(d) * 1080).toBeCloseTo(1080 + 2 * d * PARALLAX)
   });
 });

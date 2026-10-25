@@ -10,8 +10,10 @@ import type { Ctx, Rect, StepAdder } from "../types";
 // series; stacked and line use all of them; slope the first two (before, after); timeline reads a start and an
 // end per row (for example years): the columns named start/from/begin and end/to/until, else the first two.
 // funnel uses the first series as stages; sankey reads its columns by position: source, target, value.
+// scatter and bubble use the first two (x, y) and three (x, y, size) series; a column named period, year, date,
+// month, quarter or week is not a series but the time, one row per name and period (see scatterTracks).
 export type Row = Record<string, string | number>;
-export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope" | "funnel" | "sankey";
+export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope" | "funnel" | "sankey" | "scatter" | "bubble";
 export interface ChartOpts {
   src: string; // the data file, as in the Markdown link: "data/x.csv"
   data?: Row[] | null; // null: the file is missing; left out: read src from ctx.files.data
@@ -31,6 +33,8 @@ export interface ChartHandle {
   bars: SVGElement[];
   // A sankey only: the flow in that data row turns --k-accent; the one shown before goes back.
   highlight(row: number): StepAdder;
+  // A scatter or bubble with a period column only: the dots move to that period, by index or by its name.
+  period(p: number | string): StepAdder;
 }
 
 // shortcut: no quoted commas, upgrade to d3-dsv if decks need it
@@ -73,6 +77,23 @@ function span(series: string[]): [string, string] {
   return s && e ? [s, e] : [series[0], series[1]];
 }
 
+const PERIOD = /^(period|year|date|month|quarter|week)$/i;
+
+// A scatter's or bubble's rows as tracks. Without a period column every row is a point (at has one period). With
+// one, a point per name (in order of first appearance) and at[p][i] the values of name i in period p, undefined
+// where it has no row. keys: the number columns other than the period, in order: x, y, size.
+export function scatterTracks(rows: Row[]): { period?: string; periods: string[]; names: string[]; at: number[][][]; keys: string[] } {
+  const { label, series } = columns(rows);
+  const period = Object.keys(rows[0] ?? {}).slice(1).find((k) => PERIOD.test(k));
+  const keys = series.filter((k) => k !== period);
+  const vals = (r: Row) => keys.map((k) => num(r, k));
+  if (!period) return { period, periods: [], names: rows.map((r) => String(r[label])), at: [rows.map(vals)], keys };
+  const periods = [...new Set(rows.map((r) => String(r[period])))];
+  const names = [...new Set(rows.map((r) => String(r[label])))];
+  const at = periods.map((p) => names.map((n) => rows.find((r) => String(r[period]) === p && String(r[label]) === n)).map((r) => r && vals(r))) as number[][][];
+  return { period, periods, names, at, keys };
+}
+
 // Why rows cannot be drawn as this type, or "". Never plot around a bad cell: that would invent numbers.
 export function dataError(rows: unknown[], type: ChartType): string {
   const bad = rows.findIndex((r) => !r || typeof r !== "object" || Array.isArray(r));
@@ -88,6 +109,21 @@ export function dataError(rows: unknown[], type: ChartType): string {
     }
     const laid = sankeyLayout(sankeyLinks(data), 0);
     return typeof laid === "string" ? laid : "";
+  }
+  if (type === "scatter" || type === "bubble") {
+    const tr = scatterTracks(data);
+    if (tr.keys.length < (type === "bubble" ? 3 : 2)) return type === "bubble" ? "needs an x, a y and a size column" : "needs an x and a y column";
+    for (const [i, r] of data.entries()) for (const k of tr.keys) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
+    const size = tr.keys[2];
+    const neg = type === "bubble" ? data.findIndex((r) => num(r, size) < 0) : -1;
+    if (neg >= 0) return `row ${neg + 1}, ${size} below zero`;
+    const { label } = columns(data);
+    for (const p of tr.periods)
+      for (const n of tr.names) {
+        const k = data.filter((r) => String(r[tr.period!]) === p && String(r[label]) === n).length;
+        if (k !== 1) return `"${n}" has ${k ? "two rows" : "no row"} for ${tr.period} ${p}`;
+      }
+    return "";
   }
   const { series } = columns(data);
   if (type === "timeline" && series.length < 2) return "needs a start and an end column";
@@ -340,7 +376,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bar: () => show, bars: [], highlight: () => show };
+  return { axes: show, grow: show, values: show, bar: () => show, bars: [], highlight: () => show, period: () => show };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -374,7 +410,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
   const keys =
-    type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : type === "sankey" ? [Object.keys(data[0])[2]] : [series[0]];
+    type === "scatter" || type === "bubble" ? [] : type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : type === "sankey" ? [Object.keys(data[0])[2]] : [series[0]];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
@@ -408,7 +444,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
             ? 0
             : 90,
     right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : type === "sankey" ? 0 : 30,
-    bottom: 56,
+    bottom: type === "scatter" || type === "bubble" ? 96 : 56, // room for the x axis's name
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
 
@@ -461,6 +497,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   };
 
   let accents: SVGElement[] = []; // a sankey's links again in --k-accent, hidden until highlight()
+  let moveTo: ((p: number | string, tl: gsap.core.Timeline) => void) | undefined; // a scatter's period()
+  let scatterAxes = false; // a scatter's axes keep their ticks; the frame draws their lines
   let xAxis: d3.Axis<any> | undefined;
   let yAxis: d3.Axis<any> | undefined;
   if (type === "donut") {
@@ -585,6 +623,74 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
     });
     grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
+  } else if (type === "scatter" || type === "bubble") {
+    // Two value axes and a dot per point, a bubble's area by its size. With a period column the dots start at the
+    // first period and period() moves them; the axes span every period, so a place compares across time.
+    const tr = scatterTracks(data);
+    const all = tr.at.flat();
+    const maxR = type === "bubble" ? Math.min(P.w, P.h) * 0.07 : 10;
+    const size = d3.scaleSqrt().domain([0, d3.max(all, (q) => q[2]) || 1]).range([0, maxR]);
+    const rOf = (q: number[]) => (type === "bubble" ? size(q[2]) : maxR);
+    const ext = (k: number): [number, number] => {
+      const [a, b] = d3.extent(all, (q) => q[k]) as [number, number];
+      return a === b ? [a - 1, b + 1] : [a, b];
+    };
+    // Inset by the largest dot and a margin, so no dot or name crosses an axis.
+    const inset = maxR + 16;
+    const x = d3.scaleLinear().domain(ext(0)).nice().range([P.x + inset, P.x + P.w - inset]);
+    const y = d3.scaleLinear().domain(ext(1)).nice().range([P.y + P.h - inset, P.y + inset]);
+    // One frame for both axes, the full plot's height and width: their own lines stop at the inset ranges.
+    const frame = svg(root, "path", { d: `M${P.x} ${P.y}V${P.y + P.h}H${P.x + P.w}`, fill: "none", "stroke-width": 2 });
+    frame.style.stroke = "var(--k-line)";
+    labels.push(frame);
+    const pose = (p: number) => tr.at[p].map((q) => ({ cx: x(q[0]), cy: y(q[1]), r: rOf(q) }));
+    labels.push(text(root, tr.keys[0], { x: P.x + P.w, y: P.y + P.h + 84, "text-anchor": "end", "font-weight": 700 }));
+    labels.push(text(root, tr.keys[1], { x: P.x - 8, y: P.y - 24, "font-weight": 700 }));
+    if (type === "bubble") labels.push(text(root, `${t("size", ctx.deck.lang)}: ${tr.keys[2]}`, { x: P.x + P.w, y: P.y - 24, "text-anchor": "end" }));
+    // The period under the plot, left of the x axis's name: inside the plot it could cover a dot.
+    const stamp = text(root, tr.periods[0] ?? "", { x: P.x, y: P.y + P.h + 92, "font-weight": 700 }, 56);
+    stamp.style.fill = "var(--k-muted)";
+    stamp.setAttribute("data-k-text", "");
+    if (tr.period) labels.push(stamp);
+    // A name sits right of its dot, or left of it where the dot comes near the right edge in any period.
+    const poses = tr.at.map((_, p) => pose(p));
+    const tagAt = (q: { cx: number; cy: number; r: number }, left: boolean) => ({ x: left ? q.cx - q.r - 8 : q.cx + q.r + 8, y: q.cy + FONT * 0.35 });
+    const dots = tr.names.map((name, i) => {
+      const left = Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w;
+      const q = poses[0][i];
+      const c = svg(marks, "circle", { cx: q.cx, cy: q.cy, r: q.r });
+      Object.assign(c.style, { fill: color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
+      grown.push({ el: c, origin: "50% 50%", scale: "scale" });
+      const tag = valueAt({ ...tagAt(q, left), "text-anchor": left ? "end" : "start" }, 0, 0, () => name);
+      return { c, tag, left };
+    });
+    xAxis = d3.axisBottom(x).ticks(6).tickSizeOuter(0).tickFormat(d3.format(",~f"));
+    yAxis = d3.axisLeft(y).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
+    scatterAxes = true;
+    let at = 0; // the period the steps added so far end on
+    const numeric = tr.periods.every((p) => Number.isFinite(+p));
+    if (tr.period)
+      moveTo = (p, tl) => {
+        const to = typeof p === "number" ? p : tr.periods.indexOf(p);
+        if (!(to >= 0 && to < tr.periods.length)) return ctx.problem(`chart: no period ${JSON.stringify(p)}; the periods are ${tr.periods.join(", ")}`);
+        const [a, b, from] = [poses[at], poses[to], at];
+        const d = { duration: motion.step * 2, ease: "power1.inOut", immediateRender: false };
+        dots.forEach(({ c, tag, left }, i) => {
+          tl.fromTo(c, { attr: a[i] }, { attr: b[i], ...d }, i ? "<" : undefined);
+          tl.fromTo(tag, { attr: tagAt(a[i], left) }, { attr: tagAt(b[i], left), ...d }, "<");
+        });
+        // A numeric period counts as a pure function of progress; a named one switches halfway.
+        tl.to({}, {
+          duration: d.duration,
+          ease: d.ease,
+          onUpdate(this: gsap.core.Tween) {
+            const q = this.ratio;
+            const [pa, pb] = [tr.periods[from], tr.periods[to]];
+            stamp.textContent = numeric ? String(Math.round(+pa + (+pb - +pa) * q)) : q < 0.5 ? pa : pb;
+          },
+        }, "<");
+        at = to;
+      };
   } else if (type === "timeline") {
     const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
@@ -679,7 +785,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     return g;
   };
   const axesEls: SVGElement[] = [...(xAxis ? [axisAt(xAxis, 0, P.y + P.h)] : []), ...(yAxis ? [axisAt(yAxis, P.x, 0)] : []), ...labels];
-  if (!["timeline", "donut", "slope", "funnel", "sankey"].includes(type)) {
+  if (scatterAxes) axesEls.slice(0, 2).forEach((g) => g.querySelector(".domain")?.remove());
+  if (!["timeline", "donut", "slope", "funnel", "sankey", "scatter", "bubble"].includes(type)) {
     axesEls[0].querySelector(".domain")?.remove();
     const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
     z.style.stroke = "var(--k-fg)";
@@ -731,6 +838,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       if (lit >= 0) tl.fromTo(accents[lit], { autoAlpha: 1 }, { autoAlpha: 0, ...d });
       tl.fromTo(accents[row], { autoAlpha: 0 }, { autoAlpha: 1, ...d }, lit >= 0 ? "<" : undefined);
       lit = row;
+    },
+    period: (p) => (tl) => {
+      if (!moveTo) return ctx.problem(`chart: period() is for a scatter or bubble chart with a period column: ${opts.src}`);
+      moveTo(p, tl);
     },
     // In a bar or waterfall chart, bars[i], grown[i] and values[i] are the same category.
     bar: (i) => (tl) => {

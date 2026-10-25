@@ -1,13 +1,14 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import { registry, type TransitionOpts } from "./transitions";
+import type { Rect } from "../types";
 
 const STAGE = { w: 1920, h: 1080 };
 const FLY = 0.9;
 const SVG = "http://www.w3.org/2000/svg";
 const EASE = "power2.inOut";
 
-export interface Box { x: number; y: number; w: number; h: number }
+export type Box = Rect;
 type ScreenRect = { left: number; top: number; width: number; height: number };
 
 // A screen rect in stage pixels. The stage's own screen rect gives the offset and the scale the window fit applied.

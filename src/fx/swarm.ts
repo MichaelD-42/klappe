@@ -15,7 +15,10 @@ export interface SwarmHandle {
 
 const UNIT: Rect = { x: 0, y: 0, w: 1, h: 1 };
 const FLIGHT = 0.4; // each object flies for this share of the stream; start times spread over the rest
-const MAX_BACKING = 2560; // canvas side limit in device pixels
+// shortcut: canvas side limit in device pixels, so a full-frame swarm stays sharp to about 2x zoom (37 MB at the cap);
+// past that the dots soften. Upgrade to drawing only the part in view if decks zoom deeper.
+const MAX_BACKING = 4096;
+const SHARPEN_EVERY = 10; // frames between checks of the on-screen size
 
 // A seeded number in [0, 1) for object i, draw k. Integer hash, no state. Also used by burst.
 export function rand(seed: number, i: number, k: number): number {
@@ -60,15 +63,22 @@ export function swarm(ctx: Ctx, opts: SwarmOpts): SwarmHandle {
   });
   // Device pixels per scene unit when the camera rests on this scene, capped so the backing store stays small.
   const cam = Math.min(1920 / ctx.rect.w, 1080 / ctx.rect.h);
-  const scale = Math.min((globalThis.devicePixelRatio || 1) * cam, MAX_BACKING / Math.max(rect.w, rect.h));
-  canvas.width = Math.round(rect.w * scale);
-  canvas.height = Math.round(rect.h * scale);
+  const cap = MAX_BACKING / Math.max(rect.w, rect.h);
+  let scale = 0;
+  const size = (s: number) => {
+    scale = s;
+    canvas.width = Math.round(rect.w * scale);
+    canvas.height = Math.round(rect.h * scale);
+  };
+  size(Math.min((globalThis.devicePixelRatio || 1) * cam, cap));
   ctx.html.append(canvas);
   gsap.set(canvas, { autoAlpha: 0 });
   const c2d = canvas.getContext("2d");
 
   // A pure function of p: the whole frame is redrawn from swarmPoint.
+  let drawn = 0; // the progress on the canvas, to redraw it at a new size
   const draw = (p: number) => {
+    drawn = p;
     canvas.setAttribute("data-k-progress", String(p));
     if (!c2d) return;
     // Theme colours, read each frame; before the stylesheet applies, the inherited text colour.
@@ -94,6 +104,29 @@ export function swarm(ctx: Ctx, opts: SwarmOpts): SwarmHandle {
     }
   };
   draw(0);
+
+  // A camera that closes in shows the canvas larger than its backing store: grow the store and redraw at the same
+  // progress, so the dots stay sharp. Checked a few times a second while its scene is current on the active canvas.
+  const root = canvas.closest(".k-canvas");
+  let frame = 0;
+  let loop = 0;
+  const sharpen = () => {
+    loop = 0;
+    if (!current || (root && !root.hasAttribute("data-k-active"))) return;
+    if (++frame % SHARPEN_EVERY === 0 && canvas.style.visibility !== "hidden") {
+      const want = Math.min(((globalThis.devicePixelRatio || 1) * canvas.getBoundingClientRect().width) / rect.w, cap);
+      if (want > scale * 1.2) {
+        size(want);
+        draw(drawn);
+      }
+    }
+    loop = requestAnimationFrame(sharpen);
+  };
+  let current = true;
+  ctx.onStep(({ scene }) => {
+    current = !ctx.scene || scene === ctx.scene;
+    if (current && !loop) loop = requestAnimationFrame(sharpen);
+  });
 
   return {
     stream(tl, { duration }) {

@@ -11,37 +11,77 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 
 ## Choose the element by intent
 
-- A title or a text box in a `scene.ts` scene: `title`, `text`. Fade any element in or out: `show`, `hide`. [basics](klappe/docs/reference/elements/basics.md)
-- Show code, one part at a time: a fenced block with `{1-2|4}` groups in `scene.md`. Code changing: `code` with `diff`. [code](klappe/docs/reference/elements/code.md)
-- Show a command and its output: a ```` ```console ```` fence. [terminal](klappe/docs/reference/elements/terminal.md)
-- Point at one thing: `callout`. Make the room look at one part, then the next: `spotlight`; light one item in place while the rest dim, with no dark layer: `focus`. Mark words as a pen would: `annotate`. [callout](klappe/docs/reference/elements/callout.md), [spotlight](klappe/docs/reference/elements/spotlight.md), [focus](klappe/docs/reference/elements/focus.md), [annotate](klappe/docs/reference/elements/annotate.md)
-- Nudge one element (a glow, a pulse, a shake): `glow`, `pulse`, `shake`. [attention](klappe/docs/reference/elements/attention.md)
-- Hold back an answer, then reveal it (question and answer, myth and fact): `flipCard`. [flipCard](klappe/docs/reference/elements/flipCard.md)
-- Show a system and what flows through it: `flow`. [flow](klappe/docs/reference/elements/flow.md)
-- Draw a small diagram of your own (boxes, a ring, a connector): `shape`, `arrow`. Change a colour to a theme token in a step: `tint`, or `token` for your own tween. [shape](klappe/docs/reference/elements/shape.md)
-- Move something along a route (a parcel to a customer): `travel`. [travel](klappe/docs/reference/effects.md#travel)
-- Show who talks to whom, in order: `sequence`. [sequence](klappe/docs/reference/elements/sequence.md)
-- Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
-- Show how a decision was made: `decisionTree`. [decisionTree](klappe/docs/reference/elements/decisionTree.md)
-- Sort things on two axes (effort against impact) and move one when the view changes: `matrix`. [matrix](klappe/docs/reference/elements/matrix.md)
-- Show a loop of phases (PDCA, a feedback loop) with the current one lit: `cycle`. Show the V model, each level linked to its test: `vModel`. [cycle](klappe/docs/reference/elements/cycle.md)
-- Show what two or three groups share, one overlap at a time: `venn`. [venn](klappe/docs/reference/elements/venn.md)
-- Build a layered model from the base up (a test pyramid, a capability stack): `pyramid`. [pyramid](klappe/docs/reference/elements/pyramid.md)
-- Compare options feature by feature (plans, tools), one row at a time: `compareTable`. Give the room a hands-on task with a time box and group: `exerciseCard`. [compareTable](klappe/docs/reference/elements/compareTable.md), [exerciseCard](klappe/docs/reference/elements/exerciseCard.md)
-- Replay a conversation with an assistant or a colleague (typing dots, then the answer streams in): `chat`, one `scene.md` list item per message. [chat](klappe/docs/reference/elements/chat.md)
-- Sort what the room wrote into themes (an affinity map): `stickyNotes`. Talk through a hand of cards, one at a time: `cardStack`. [stickyNotes](klappe/docs/reference/elements/stickyNotes.md), [cardStack](klappe/docs/reference/elements/cardStack.md)
-- Tick off items, or show the day: task list, time-range rows. [checklist](klappe/docs/reference/elements/checklist.md), [agenda](klappe/docs/reference/elements/agenda.md)
-- Show a plan over months, with where we are now: `roadmap`. [roadmap](klappe/docs/reference/elements/roadmap.md)
-- Time an exercise: `timer` with `minutes`; count to a clock time (end of a break): `timer` with `until`. [timer](klappe/docs/reference/elements/timer.md)
-- An 80s computer screen that boots and types: `crt`. [crt](klappe/docs/reference/elements/crt.md) A character who speaks: `bubble`. [bubble](klappe/docs/reference/elements/bubble.md) A quiet companion with moods that runs by itself: `mesh3d`. [mesh3d](klappe/docs/reference/elements/mesh3d.md)
-- Compare numbers: `chart` from a `data/` file; drop-off through stages: `type: "funnel"`; where a total goes: `type: "sankey"`. Show where: `worldMap`. A person moving: `figure`.
-- One reading against a fixed range (load, a score), maybe changing on a later step: `gauge`. Answers on an agree scale: `likert`. A bar chart told one bar at a time: `chart` + `bar(i)`.
-- A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A milestone reached: `burst`. A picture: `image`; one detail of it, step by step: `loupe`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. A clip that should run as its scene arrives: `video` with `autoplay: true` (muted unless `muted: false`). Before and after: `wipe`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
-- Words that land: one line, `scramble`; a statement or a quote, line by line or word by word, `reveal`, key words in `**bold**`; a personal aside in hand, `handwrite`; what changed in a text, `redline`; a word or number flipped like an airport board, `splitFlap`; what a group said, weighted, `wordCloud` from a `data/` file. [effects](klappe/docs/reference/effects.md)
-- Between sections, `transition` in `section.ts`: slide in with `"push"` or open from a point with `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element into the next section (a logo, a title chip), `"magicMove"`, with the same `el.dataset.kMatch` on both. [transitions](klappe/docs/reference/effects.md#transitions)
-- Move the camera inside a scene: ride along with a moving element with `follow`, jolt the scene on a landing with `impactShake`, pull focus to one item with `rackFocus`, lean a long flight with `tilt`, make a big reveal with `dollyZoom`. [camera](klappe/docs/reference/elements/camera.md)
-- Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
-- What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys, and many scenes with one shape from a factory in `shared/`: [deck-format](klappe/docs/reference/deck-format.md).
+Find the intent, read the reference entry, then copy the catalog scene (a folder under `klappe/decks/demo/sections/`; open it at `#/<section>/<scene>/1` without the number prefixes). Every effect a deck can call has a row; a test keeps it so.
+
+| Intent | Use | Reference | Catalog scene |
+|---|---|---|---|
+| A title or a text box in a `scene.ts` scene; fade any element in or out | `title`, `text`; `show`, `hide` | [basics](klappe/docs/reference/elements/basics.md) | `106-basics/10-text-and-fades` |
+| Show code, one part at a time; code changing | a fence with `{1-2\|4}` groups in `scene.md`; `code` with `diff` | [code](klappe/docs/reference/elements/code.md) | `240-code/10-walkthrough`, `240-code/20-diff` |
+| Show a command and its output | a ```` ```console ```` fence; `terminal` in `scene.ts` | [terminal](klappe/docs/reference/elements/terminal.md) | `250-terminal/10-replay` |
+| Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
+| Walk through a screen: move, click, type (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in` |
+| Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
+| Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
+| Mark words as a pen would (ring, underline, frame, strike, arrow) | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
+| Nudge one element | `glow`, `pulse`, `shake` | [attention](klappe/docs/reference/elements/attention.md) | `268-attention/10-nudges` |
+| Hold back an answer, then reveal it (question and answer, myth and fact) | `flipCard` | [flipCard](klappe/docs/reference/elements/flipCard.md) | `275-flipcard/10-cards` |
+| Show a system and what flows through it | `flow` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/10-pipeline`, `270-flow/20-send` |
+| Draw a small diagram of your own (boxes, a ring, a connector); change a colour to a theme token in a step | `shape`, `arrow`; `tint`, or `token` for your own tween | [shape](klappe/docs/reference/elements/shape.md) | `125-shapes/10-diagram` |
+| Move something along a route (a parcel to a customer) | `travel` | [travel](klappe/docs/reference/effects.md#travel) | `285-travel/10-parcel` |
+| A state machine: the current state lit, one transition firing per step | `flow` with `highlight` and `fire` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/50-state-machine` |
+| Show who talks to whom, in order | `sequence` | [sequence](klappe/docs/reference/elements/sequence.md) | `280-sequence/10-order` |
+| Zoom into a system level by level (systems, containers, components) | `semanticZoom` | [semanticZoom](klappe/docs/reference/elements/semanticZoom.md) | `172-semantic-zoom/10-system` |
+| Show who does what in a process | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process` |
+| Show how a decision was made | `decisionTree` | [decisionTree](klappe/docs/reference/elements/decisionTree.md) | `300-tree/10-route` |
+| Teach git: commits, branches, a merge, a rebase, one per step | `gitGraph` | [gitGraph](klappe/docs/reference/elements/gitGraph.md) | `304-git/10-rebase` |
+| Sort things on two axes (effort against impact) and move one when the view changes | `matrix` | [matrix](klappe/docs/reference/elements/matrix.md) | `295-matrix/10-priorities` |
+| A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
+| What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
+| A layered model from the base up (a test pyramid, a capability stack) | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers` |
+| Compare options feature by feature, one row at a time | `compareTable` | [compareTable](klappe/docs/reference/elements/compareTable.md) | `298-table-card/10-compare` |
+| A hands-on task for the room with a time box and group | `exerciseCard` | [exerciseCard](klappe/docs/reference/elements/exerciseCard.md) | `298-table-card/20-exercise-card` |
+| Replay a conversation (typing dots, then the answer streams in) | `chat`, one `scene.md` list item per message through `chatMessage` | [chat](klappe/docs/reference/elements/chat.md) | `217-chat/10-thread` |
+| Sort what the room wrote into themes (an affinity map) | `stickyNotes` | [stickyNotes](klappe/docs/reference/elements/stickyNotes.md) | `299-notes-cards/10-affinity` |
+| Talk through a hand of cards, one at a time | `cardStack` | [cardStack](klappe/docs/reference/elements/cardStack.md) | `299-notes-cards/20-stack` |
+| Tick off items | a task list (`- [ ]`) in `scene.md`; `checklist` | [checklist](klappe/docs/reference/elements/checklist.md) | `310-checklist-agenda/10-checklist` |
+| Show the day | time-range list items in `scene.md`; `agenda` | [agenda](klappe/docs/reference/elements/agenda.md) | `310-checklist-agenda/20-day-agenda` |
+| A plan over months, with where we are now | `roadmap` | [roadmap](klappe/docs/reference/elements/roadmap.md) | `305-roadmap/10-release` |
+| Time an exercise; count to a clock time (end of a break) | `timer` with `minutes`; `timer` with `until` | [timer](klappe/docs/reference/elements/timer.md) | `320-timer/10-countdown`, `320-timer/30-until` |
+| An 80s computer screen that boots and types | `crt` | [crt](klappe/docs/reference/elements/crt.md) | `180-crt/10-power-on` |
+| A character who speaks | `bubble` | [bubble](klappe/docs/reference/elements/bubble.md) | `160-motion/30-talk` |
+| A quiet companion with moods that runs by itself | `mesh3d` | [mesh3d](klappe/docs/reference/elements/mesh3d.md) | `340-mesh3d/10-avatar` |
+| Compare numbers from a `data/` file: bar, stacked, line, waterfall, timeline, donut, slope; drop-off through stages, `type: "funnel"`; where a total goes, `type: "sankey"`; two numbers per item, `type: "scatter"`, a third as size, `type: "bubble"`, moving year by year with `period(i)`; one bar at a time, `bar(i)` | `chart` | [chart](klappe/docs/reference/effects.md#chart) | `110-chart/10-bars`, `110-chart/70-bar-steps`, `110-chart/76-bubble` |
+| Who led, who climbed, period by period | `barRace` | [barRace](klappe/docs/reference/effects.md#barrace) | `110-chart/59-race` |
+| One number for a board slide: a KPI with a sparkline, a share, progress | `kpi`, `waffle`, `progress` | [kpi](klappe/docs/reference/effects.md#kpi-waffle-progress) | `115-numbers/10-kpis`, `115-numbers/20-shares` |
+| One reading against a fixed range (load, a score), maybe changing on a later step | `gauge` | [gauge](klappe/docs/reference/effects.md#gauge) | `115-numbers/30-gauge` |
+| Answers on an agree scale | `likert` | [likert](klappe/docs/reference/effects.md#likert) | `115-numbers/40-likert` |
+| A number that counts up or down | `counter` | [counter](klappe/docs/reference/effects.md#counter) | `160-motion/40-counts` |
+| Show where | `worldMap` | [worldMap](klappe/docs/reference/effects.md#worldmap) | `150-map/10-world` |
+| A person moving | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk` |
+| A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
+| An icon, or an icon on a tile | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles` |
+| A picture; one detail of it, step by step | `image`; `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
+| A clip; full screen with no `rect`; running as its scene arrives with `autoplay: true` (muted unless `muted: false`) | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
+| Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
+| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
+| A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
+| A hard question for the room | `### Question?` in `scene.md`; `shout` in `scene.ts` | [shout](klappe/docs/reference/effects.md#shout) | `210-shout/10-calm` |
+| Break with the old way | `shatter` | [shatter](klappe/docs/reference/effects.md#shatter) | `200-shatter/10-card` |
+| Volume | `swarm` | [swarm](klappe/docs/reference/effects.md#swarm) | `220-swarm/10-stream` |
+| A milestone reached | `burst` | [burst](klappe/docs/reference/effects.md#burst) | `220-swarm/20-burst` |
+| One thing becomes the next (document to fact to card) | `morph` | [morph](klappe/docs/reference/effects.md#morph) | `160-motion/10-chain` |
+| One line that lands | `scramble` | [scramble](klappe/docs/reference/effects.md#scramble) | `160-motion/50-decode` |
+| A statement or a quote, line by line or word by word, key words in `**bold**` | `reveal` | [reveal](klappe/docs/reference/effects.md#reveal) | `215-reveal/10-quote` |
+| A personal aside in hand | `handwrite` | [handwrite](klappe/docs/reference/effects.md#handwrite) | `238-handwriting/10-note` |
+| What changed in a text | `redline` | [redline](klappe/docs/reference/effects.md#redline) | `218-redline-flap/10-redline` |
+| A word or number flipped like an airport board | `splitFlap` | [splitFlap](klappe/docs/reference/effects.md#splitflap) | `218-redline-flap/20-board` |
+| What a group said, weighted, from a `data/` file | `wordCloud` | [wordCloud](klappe/docs/reference/effects.md#wordcloud) | `216-words/10-cloud` |
+| A background: a picture, a looping video, `animate: "aurora"`, optionally `parallax` | `background` in `section.ts` or `scene.ts` | [section.ts](klappe/docs/reference/deck-format.md#sectionts) | `230-fullscreen/20-background`, `230-fullscreen/45-aurora`, `230-fullscreen/46-video-loop`, `235-parallax/10-near` |
+| Between sections: slide in, `"push"`; open from a point, `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element across (a logo, a title chip), `"magicMove"` with the same `el.dataset.kMatch` on both | `transition` in `section.ts` | [transitions](klappe/docs/reference/effects.md#transitions) | the gallery, one section per kind: `350-tr-cut/10-cut-card` to `361-tr-magicmove/10-magicmove-card`; a zoom into a named target, `170-zoom/10-dive`; a magic move with two keys, `301-magic-a/10-before` |
+| Move the camera inside a scene: ride along, `follow`; jolt on a landing, `impactShake`; pull focus to one item, `rackFocus`; lean a long flight, `tilt`; a big reveal, `dollyZoom` | `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom` | [camera](klappe/docs/reference/elements/camera.md) | `237-camera/10-follow`, `237-camera/20-rack-focus`, `237-camera/30-tilt`, `237-camera/40-dolly` |
+| Anything else | your own tween | [motion](klappe/docs/reference/motion.md) | `330-tweens/10-boxes` |
+
+What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys, and many scenes with one shape from a factory in `shared/`: [deck-format](klappe/docs/reference/deck-format.md).
 
 ## The timeline rule
 
@@ -78,6 +118,6 @@ One master GSAP timeline per canvas; seek must equal play.
 
 ## Check your work
 
-Run `npm test`, then open the deck at 1920x1080 and 1366x768 (`npm run dev`, `?theme=calm` and `?theme=bold`) and run `?selftest=walk`. Deep-link each scene's last step. Fix every deck problem the page shows.
+Run `npm test`. Shoot each scene's last step at 1920x1080 and 1366x768 with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
 
 Building a whole deck from a storyboard: read [building a deck](.claude/skills/klappe/references/building-a-deck.md).

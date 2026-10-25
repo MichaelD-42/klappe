@@ -36,14 +36,14 @@ steps: [(tl, r) => r.ring.show(tl), (tl, r) => r.arrow.show(tl)],
 ### Limits
 
 - An element target is measured when `show` is added: it must be in its final place by then. One with no size reports `annotate: <kind> target has no size to measure`.
-- On dense code, a ring reaches the lines above and below; use `box`, `underline` or `strike` with a small `pad` there.
+- A ring on a code line (`code`'s `line(n)` or a span in it) flattens to the line gap and widens instead, so it stays off the lines above and below. Elsewhere a ring is as tall as its pad makes it: on dense prose it can reach the lines around it, so use `box`, `underline` or `strike` with a small `pad` there.
 - A target that wraps: `underline`, `strike` and `highlight` follow each line; `circle`, `box` and `arrow` frame the whole.
 - A highlight paints behind its target's top-level element in the scene. That element must be positioned (`position: absolute` or `relative`); scene text already is. On an element with its own background, such as a card, the band is hidden. On a rect target it goes behind everything in the scene.
 - `--k-fg` on a highlight holds 6.3:1 or more in every built-in theme; a custom theme with a very bright `--k-accent` should check its own.
 
 ## `scribble`
 
-`scribble(kind, box, { pad, seed, side? })` gives the mark's polylines, `{ x, y }[][]`, in drawing order: one for most kinds, three for an arrow (shaft, then the two head strokes). It is pure; tests use it to check the shapes.
+`scribble(kind, box, { pad, seed, side?, room? })` gives the mark's polylines, `{ x, y }[][]`, in drawing order: one for most kinds, three for an arrow (shaft, then the two head strokes). `room` caps a ring's reach above and below the box's middle (`annotate` passes a code line's gap). It is pure; tests use it to check the shapes.
 
 ## `MARKER_MIX`
 

@@ -1,12 +1,14 @@
 {
   "name": "klappe",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "",
   "scripts": {
     "test": "vitest run",
     "dev": "node bin/klappe.mjs dev --deck demo",
     "build": "node bin/klappe.mjs build --deck demo",
     "pdf": "node bin/klappe.mjs pdf --deck demo",
+    "shot": "node bin/klappe.mjs shot --deck demo",
+    "outline": "node bin/klappe.mjs outline --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e"
   },

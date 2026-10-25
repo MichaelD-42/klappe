@@ -8,10 +8,8 @@ Run commands from the repo root; npm scripts work in both the klappe repo and de
 Element choice, the timeline rule and the design rules are in the `klappe` skill; every option of every effect and element is in `klappe/docs/reference/` (start at `index.md`). Look names up there, never guess.
 
 Steps:
-1. Start the dev server in the background: `npm run dev`. Note the port.
-2. Take screenshots with `chromium` from `@playwright/test` at 1920x1080 and 1366x768. Cover the states the task affects. Use `?instant=1` and deep links `#/<section>/<scene>/<step>`.
-3. Read every screenshot PNG.
-4. Stop the dev server.
+1. Take screenshots with `npm run shot -- <targets>` (add `-- --deck <id>` in a repo with several decks). A target is `<section>`, `<section>/<scene>` or `<section>/<scene>/<step>`, as in a deep link. Cover the states the task affects; `--last` keeps each scene's last step, `--sheet` adds one contact sheet per section, `--theme bold` shoots another theme. It writes PNGs at 1920x1080 and 1366x768 under `dist/shots/<deck>/` (ignored by git) and prints their paths, the deck problems and any page error.
+2. Read every screenshot PNG.
 
 Check:
 - Design rules (spec section 2): no cream or off-white backgrounds, no italic accent words in headlines, no numbered "01/02/03" section labels, no monospace labels, no pill-shaped buttons.

@@ -26,6 +26,6 @@ export default captioned("dollyZoom(ctx, { target }) — the vertigo move: the t
     (tl, r: Refs) => r.tiles.forEach((t, i) => t.draw(tl, i ? "<" : undefined)),
     // The caption would shrink with the scene: it fades for the move and comes back with the frame.
     (tl, r: Refs, ctx) => (r.out(tl), tl.to(captionOf(ctx), { autoAlpha: 0, duration: 0.3 }, "<")),
-    (tl, r: Refs, ctx) => (r.back(tl), tl.to(captionOf(ctx), { autoAlpha: 1, duration: 0.6 }, ">-0.6")),
+    (tl, r: Refs, ctx) => (r.back(tl), tl.to(captionOf(ctx), { autoAlpha: 1, duration: 0.6 }, ">")), // after the landing: with reduced motion the flight is a cut
   ],
 });

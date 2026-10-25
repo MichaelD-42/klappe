@@ -2,7 +2,7 @@ import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn } from "./draw";
 import { motion } from "../theme";
-import type { Ctx, Rect, StepAdder } from "../types";
+import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -33,7 +33,6 @@ const DIM = 0.4; // lanes that are not active
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-type Pt = { x: number; y: number };
 // Offsets along the faces: out on a's exit face, in on b's entry face (from the face middle), mid shifts the middle run.
 interface Ports { out?: number; in?: number; mid?: number }
 

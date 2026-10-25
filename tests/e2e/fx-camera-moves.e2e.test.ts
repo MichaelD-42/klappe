@@ -123,6 +123,25 @@ test('tilt: the canvas leans mid-flight and lands flat; a deep link and a step b
   await deep.close()
 }, 60_000)
 
+// A review harness once hung after pausing a tilt ~50 ms in and seeking the lean tween with .time().
+test('a tilt paused mid-flight can be seeked with time() without hanging', async () => {
+  const page = await open('#/a/lean/1')
+  await next(page)
+  await page.waitForTimeout(50)
+  const seek = page.evaluate(() => {
+    const tl = window.klappe.canvases.find((c: any) => c.el.hasAttribute('data-k-active')).tl
+    const lean = tl.getChildren(true, true, false).find((t: any) => 'rotationX' in t.vars)
+    lean.pause()
+    for (const t of [0.05, 0.4, 0, lean.duration(), 0.8]) lean.time(t)
+    tl.pause()
+    tl.time(tl.time() + 0.05)
+    return 'done'
+  })
+  const hung = new Promise((r) => setTimeout(() => r('hung'), 5_000))
+  expect(await Promise.race([seek, hung])).toBe('done')
+  await page.close()
+})
+
 test('with reduced motion, nothing leans, the dolly cuts to its end and the focus still blurs', async () => {
   const page = await open('#/a/lean/1', '&reducedmotion=1', true)
   await next(page)

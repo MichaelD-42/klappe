@@ -209,8 +209,8 @@ test('flash soft lowers the power-on peak and tints the beam', async () => {
   await page.close()
 })
 
-// transitionOptions.flash "soft": the new canvas opens at brightness(1.4), not 3.
-test('the crt transition opens the new canvas softer with flash soft', async () => {
+// The crt transition opens the new canvas at brightness(1.4) by default; flash "full" opens it at 3, which washes out the tint.
+test('the crt transition opens the new canvas soft unless flash is full', async () => {
   const page = await open('#/a/green/1')
   await page.evaluate("import('/src/fx/crt.ts').then((m) => { window.__transitionCrt = m.transitionCrt })")
   const open_ = (flash?: string) =>
@@ -226,7 +226,8 @@ test('the crt transition opens the new canvas softer with flash soft', async () 
       stage.remove()
       return f
     }, flash)
-  expect(await open_()).toBe('brightness(3)')
+  expect(await open_()).toBe('brightness(1.4)')
   expect(await open_('soft')).toBe('brightness(1.4)')
+  expect(await open_('full')).toBe('brightness(3)')
   await page.close()
 })

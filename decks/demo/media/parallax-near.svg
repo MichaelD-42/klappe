@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <!-- A near layer for the parallax catalog: open rings at the frame's edges, clear of the text, on a transparent ground. -->
+  <g fill="none" stroke="#4da3ff" stroke-linecap="round">
+    <circle cx="140" cy="980" r="190" stroke-width="10" opacity="0.35"/>
+    <circle cx="140" cy="980" r="120" stroke-width="6" opacity="0.25"/>
+    <circle cx="1780" cy="160" r="150" stroke-width="10" opacity="0.3"/>
+    <circle cx="1700" cy="960" r="90" stroke-width="8" opacity="0.3"/>
+  </g>
+</svg>

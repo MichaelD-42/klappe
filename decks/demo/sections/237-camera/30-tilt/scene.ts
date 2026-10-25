@@ -27,6 +27,6 @@ export default captioned("tilt(ctx, rect) flies the camera with a slight 3D lean
     (tl, r: Refs) => r.tiles.forEach((t, i) => t.draw(tl, i ? "<" : undefined)),
     // The caption fades as the camera leaves (it would fly off with the scene), and comes back on the way home.
     (tl, r: Refs, ctx) => (r.there(tl), tl.to(captionOf(ctx), { autoAlpha: 0, duration: 0.3 }, "<")),
-    (tl, r: Refs, ctx) => (r.back(tl), tl.to(captionOf(ctx), { autoAlpha: 1, duration: 0.6 }, ">-0.6")),
+    (tl, r: Refs, ctx) => (r.back(tl), tl.to(captionOf(ctx), { autoAlpha: 1, duration: 0.6 }, ">")), // after the landing: with reduced motion the flight is a cut
   ],
 });
