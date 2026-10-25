@@ -6,6 +6,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `chart` types `funnel` and `sankey`. A funnel sizes each stage by value and shows the conversion between stages. A sankey lays nodes out in columns, with bands as thick as their flow; `highlight(row)` lights one flow in `--k-accent`. A sankey refuses cycles and reads up to 16 nodes in 6 columns.
+- `gauge` (a half-circle dial whose needle swings to a value; `to(value)` swings it again), `likert` (survey answers on a 5-point agree scale, one bar per statement, `row(i)` per step), and `chart` `bar(i)` to show one bar and its value per step.
+- `cycle` and `vModel`: process diagrams for training. `cycle` puts phases round a ring (PDCA, a feedback loop), an arrow from each to the next, and `phase(i)` lights the current one in `--k-accent`. `vModel` draws the V model with each design level linked across to the test that checks it; `level(i)` or `link(i)` lights one, and it settles when the next one lights.
 - `title`, `text`, `show` and `hide`: the basics of a `scene.ts` scene. `title(ctx)` builds the `scene.md` title as a hidden `h2`, placed as in a Markdown scene; `text(ctx, { text, x, y, w })` builds a hidden text box in a `--k-*` token colour; `show(el)` and `hide(el)` fade any element or list in or out.
 - `focus`: one item of a list stays lit while the others dim in place; `on` again moves the focus, `clear` brings all back. No layer over the scene (unlike `spotlight`); reduced motion keeps the fade.
 - `shape` and `arrow`: a rectangle, circle, line or connector on `ctx.svg` in `--k-line` (or `--k-accent`), 4 px, hidden until it draws on (`draw`) or fades in (`show`); an arrow can bow with `curve`, and its head draws when the shaft arrives. `tint(el, { to, prop })` tweens a colour to a theme token, and `token(el, name)` reads a token's colour for a tween of your own (GSAP cannot tween `var()`).

@@ -13,17 +13,13 @@ Helpers wanted by the training deck (2026-10-25 harvest; counts are greps over i
 
 - Scene reuse with options: 36 scenes are two-line copies of a shared scene function.
 - Self-test checks for ink outside a safe area (margins, footer) and for text clipped by its box; the most frequent look finding.
-- Smaller: an exercise card, Likert scale rows, one chart bar per step, a typewriter in the brand font, a heading-font token.
+- Smaller: an exercise card, a typewriter in the brand font, a heading-font token.
 
 New effects, proposed 2026-10-24, not yet specified:
 
-- Chart types `funnel` and `sankey`: common in business decks, missing from `chart`.
-- `gauge`: a needle swings to a value; sits beside `kpi` and `progress`.
 - Sticky notes: notes appear, then move into groups (an affinity map), for workshop decks.
 - Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with `reveal`.
 - Word cloud: words sized by weight from a `data/` file, placed without overlap, revealed step by step. Placement must be deterministic (seek equals play, same picture in CI).
-- Cycle: a loop (PDCA, a feedback loop) with arrows round a circle and the current phase lit. For process training.
-- V cycle: the V model, left leg down (requirements to design), right leg up (integration to validation), each level linked across to the test that checks it; steps light a level or a link.
 - Venn: two or three circles whose overlaps light up step by step.
 - Pyramid or layer stack: layers build bottom-up (a test pyramid, a capability stack).
 - Comparison table: rows build one at a time, ticks and crosses land per cell (a feature matrix).

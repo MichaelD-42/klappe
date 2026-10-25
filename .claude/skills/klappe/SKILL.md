@@ -24,11 +24,13 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - Show who does what in a process: `swimlanes`. [swimlanes](klappe/docs/reference/elements/swimlanes.md)
 - Show how a decision was made: `decisionTree`. [decisionTree](klappe/docs/reference/elements/decisionTree.md)
 - Sort things on two axes (effort against impact) and move one when the view changes: `matrix`. [matrix](klappe/docs/reference/elements/matrix.md)
+- Show a loop of phases (PDCA, a feedback loop) with the current one lit: `cycle`. Show the V model, each level linked to its test: `vModel`. [cycle](klappe/docs/reference/elements/cycle.md)
 - Tick off items, or show the day: task list, time-range rows. [checklist](klappe/docs/reference/elements/checklist.md), [agenda](klappe/docs/reference/elements/agenda.md)
 - Show a plan over months, with where we are now: `roadmap`. [roadmap](klappe/docs/reference/elements/roadmap.md)
 - Time an exercise: `timer` with `minutes`; count to a clock time (end of a break): `timer` with `until`. [timer](klappe/docs/reference/elements/timer.md)
 - An 80s computer screen that boots and types: `crt`. [crt](klappe/docs/reference/elements/crt.md) A character who speaks: `bubble`. [bubble](klappe/docs/reference/elements/bubble.md) A quiet companion with moods that runs by itself: `mesh3d`. [mesh3d](klappe/docs/reference/elements/mesh3d.md)
-- Compare numbers: `chart` from a `data/` file. Show where: `worldMap`. A person moving: `figure`.
+- Compare numbers: `chart` from a `data/` file; drop-off through stages: `type: "funnel"`; where a total goes: `type: "sankey"`. Show where: `worldMap`. A person moving: `figure`.
+- One reading against a fixed range (load, a score), maybe changing on a later step: `gauge`. Answers on an agree scale: `likert`. A bar chart told one bar at a time: `chart` + `bar(i)`.
 - A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A milestone reached: `burst`. A picture: `image`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. A clip that should run as its scene arrives: `video` with `autoplay: true` (muted unless `muted: false`). Before and after: `wipe`. One line that lands: `scramble`. A statement or a quote, line by line or word by word: `reveal`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
 - Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
 - What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys: [deck-format](klappe/docs/reference/deck-format.md).
