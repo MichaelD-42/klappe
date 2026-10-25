@@ -9,16 +9,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-Open review findings on the 2026-10-24 effects (round 3, not fixed yet):
-
-- `roadmap` `move(date)` updates the marker date when called, not inside its step adder (`src/fx/roadmap.ts:194`). Adders built out of step order make the marker jump. Fix as matrix did in 65d987a: move `from`/`todayMs` into the returned adder; add an out-of-order fixture scene and a deep-link assert. Defect, so first.
-- `roadmap` still animates with reduced motion (marker slide, dot pop) while `travel` jumps. Jump, or say so in `roadmap.md`.
-- `roadmap`: the today line cuts through month tick labels (it rests on "Dec" at the demo's last step). Give tick labels the `--k-bg` knockout the milestone labels have.
-- `tests/e2e/fx-travel.e2e.test.ts:46` waits on the wall clock mid-travel; use `page.clock` as `fx-reveal` does.
-- Travel demo (`285-travel/10-parcel`): the parcel stops beside the house (end the path at the tile edge, y 420); the plane draws for 1 s before it flies and stops above the warehouse.
-- Matrix: the left column has two insets (names 32 px, chips 16 px). Accept, or use one inset.
-- Docs: `roadmap.md:47` (only dot, stem and title take the accent; the date stays `--k-muted`; it settles on the next roadmap step, not the next step); `effects.md` burst canvas is "a square, 2 × radius wide, centred on `origin`"; `docs/reference/index.md:23` drop "; demo section `305-roadmap`".
-
 New effects, proposed 2026-10-24, not yet specified:
 
 - `video` options `autoplay` and `muted` for YouTube and Vimeo embeds: with `autoplay: true` the player starts when its step arrives (the URL's `autoplay=1` plus `allow="autoplay"` on the iframe); `muted` defaults to `true`. `muted: false` asks for sound, which a browser may still block; say what happens then. Default stays: the viewer starts the player. Local files already play on their step.
