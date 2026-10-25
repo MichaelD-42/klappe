@@ -50,3 +50,11 @@ Run them with `npx vitest run tests/e2e/fx-shatter.e2e.test.ts tests/e2e/fx-swar
 - **Shatter fall, software:** too slow (about 10 fps). The fall moves 30 clones of the slide with 3D transforms and blur. A CPU renderer cannot keep up.
 - **Shard count:** `shatter(ctx, { shards })` lowers it if the laptop stutters. The demo uses the default 30.
 - **Not measured:** a real headed browser and a weaker laptop. The user's manual check covers both.
+
+## Re-measure, 2026-10-25
+
+Linux, NVIDIA GeForce RTX 4070 Ti SUPER over Vulkan (`--enable-gpu --use-angle=vulkan`), headless, 1920 x 1080, demo deck. Each run in a fresh browser, so every GPU cache starts cold, as on stage.
+
+- **Swarm stream** (analysis 1 to 2): 209 frames, max 17 ms, no long frame, in 5 of 5 runs. The stall of the first M2 round did not come back.
+- **Shatter fall** (old-way 2 to 3): one long frame per run, about 35 ms into the step, where the shards first show. A trace puts it on the GPU process: about 30 ms of rasterising the new layers. Each shard was a clone of the whole frame; it is now cut to its polygon's bounds and kept transparent (not hidden) from load, so its layer exists before the impact. That took the raster to about 22 ms and the long frame from 67 to 133 ms (median 83) to 50 to 67 ms (median 67). The blur on the near shards was not the cost: removing it changed nothing.
+- **Still open:** one long frame of about 67 ms at the impact on a fast desktop GPU; on the M2 laptop it will be longer. Check it in a headed browser on the presenting laptop.
