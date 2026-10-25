@@ -28,6 +28,15 @@ for (const vp of [
     expect(r.ok).toBe(true)
   })
 
+// Reduced motion: the push plays a fade, the iris still runs; the walk stays clean.
+test('walk passes across a push and an iris with reduced motion', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-push-iris&reducedmotion=1`, { w: 1366, h: 768 })
+  expect(r.errors).toEqual([])
+  expect(r.problems).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.ok).toBe(true)
+})
+
 // Steps forward onto the next canvas, freezes the transition at `at` of its length, reads both canvases, then lets it end.
 async function across(page: Page, at: number) {
   return page.evaluate(async (at) => {
