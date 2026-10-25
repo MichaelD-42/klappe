@@ -61,13 +61,13 @@ test('before their step the boxes are hidden; hide hides, a later show brings th
   const page = await open('#/a/boxes/1')
   const at1 = (await read(page, 'boxes')).els
   expect(at1.map((e) => e.vis)).toEqual(['visible', 'visible', 'hidden', 'hidden'])
-  await page.goto(`${inject('BASE_URL')}/?fixture=fx-basics#/a/boxes/3`)
-  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  expect((await read(page, 'boxes')).els[1].vis).toBe('hidden')
-  await page.goto(`${inject('BASE_URL')}/?fixture=fx-basics#/a/boxes/4`)
-  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  expect((await read(page, 'boxes')).els[1]).toMatchObject({ vis: 'visible', o: '1' })
   await page.close()
+  const p3 = await open('#/a/boxes/3')
+  expect((await read(p3, 'boxes')).els[1].vis).toBe('hidden')
+  await p3.close()
+  const p4 = await open('#/a/boxes/4')
+  expect((await read(p4, 'boxes')).els[1]).toMatchObject({ vis: 'visible', o: '1' })
+  await p4.close()
 }, 60_000)
 
 test('a colour that is not a token falls back to --k-fg; a given title wins over scene.md', async () => {
