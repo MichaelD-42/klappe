@@ -32,6 +32,11 @@ export const strings = {
     timesUp: "Time's up",
     pressT: "Press T to start",
     moreLines: "more lines", // "+12 more lines" under clipped code
+    stronglyDisagree: "Strongly disagree", // the likert scale, disagree first
+    disagree: "Disagree",
+    neutral: "Neutral",
+    agree: "Agree",
+    stronglyAgree: "Strongly agree",
   },
 };
 

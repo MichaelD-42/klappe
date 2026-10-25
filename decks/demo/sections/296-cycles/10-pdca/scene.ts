@@ -1,7 +1,7 @@
 import { cycle, type CycleHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
-export default captioned("cycle(ctx, { x, y, r, phases }) — phase(i) lights one; the last one settles", {
+export default captioned("cycle(ctx, { x, y, r, phases }) — phase(i) lights one; the one lit before settles", {
   build: (ctx) => ({ c: cycle(ctx, { x: 960, y: 490, r: 330, phases: ["Plan", "Do", "Check", "Act"] }) }),
   steps: [
     (tl, r: { c: CycleHandle }) => r.c.show(tl),

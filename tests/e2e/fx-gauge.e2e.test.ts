@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-// The Likert row with three counts is the fixture's only problem.
+// The Likert scale with four names and the row with three counts are the fixture's problems.
 for (const [vp, q] of [
   [{ w: 1920, h: 1080 }, ''],
   [{ w: 1366, h: 768 }, ''],
@@ -16,7 +16,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-gauge${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
+    expect(r.problems).toEqual(['likert: scale needs 5 point names, got 4', 'likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {
@@ -45,6 +45,16 @@ test('the needle swings to the value, then on to each new value in step order, n
     expect(await dial(page)).toEqual(want)
     await page.close()
   }
+}, 60_000)
+
+test('a step back over a swing to a whole number shows the decimals again', async () => {
+  const page = await open('#/a/dial/2')
+  await page.keyboard.press('ArrowRight')
+  await page.waitForTimeout(1500)
+  await page.keyboard.press('ArrowLeft')
+  await page.waitForTimeout(1500)
+  expect(await dial(page)).toEqual({ text: '95,5', angle: 81.9 })
+  await page.close()
 }, 60_000)
 
 test('with reduced motion the needle still ends on the value', async () => {

@@ -386,7 +386,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
           : type === "sankey"
             ? 0
             : 90,
-    right: type === "timeline" ? 130 : type === "slope" || type === "funnel" ? 40 + valW : type === "sankey" ? 0 : 30,
+    right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : type === "sankey" ? 0 : 30,
     bottom: 56,
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
@@ -418,7 +418,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
 
   const v = d3.scaleLinear().domain(chartDomain(data, type)).nice();
   const marks = svg(root, "g", {});
-  const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number }[] = [];
+  // label: a name that fades in with its mark during grow (a sankey node's)
+  const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number; label?: SVGElement }[] = [];
   const bars: SVGElement[] = [];
   const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string }[] = [];
   const labels: SVGElement[] = []; // names and headers that show with the axes step
@@ -500,7 +501,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       valueAt({ x: xR + 20, y: right[i] }, 0, vb, fmt);
     });
   } else if (type === "funnel") {
-    // One centred bar per stage, width by value; the name left, the value right, the conversion between stages.
+    // One centred bar per stage, width by value; the name left, the value inside the bar's right end when it fits
+    // (in --k-bg, no halo), else just right of the bar; the conversion between stages.
     const k = keys[0];
     const stages = funnelLayout(data.map((r) => num(r, k)));
     const rowH = P.h / data.length;
@@ -515,7 +517,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       grown.push({ el: rect, origin: "50% 50%", scale: "scaleX" });
       const yc = top + bh / 2 + FONT * 0.35;
       labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
-      valueAt({ x: R.x + R.w, y: yc, "text-anchor": "end" }, 0, num(r, k), fmt);
+      const inside = w >= 13 * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
+      const val = valueAt({ x: inside ? cx + w / 2 - 16 : cx + w / 2 + 16, y: yc, "text-anchor": inside ? "end" : "start" }, 0, num(r, k), fmt);
+      if (inside) Object.assign(val.style, { fill: "var(--k-bg)", stroke: "none" });
       const c = stages[i].conversion;
       if (i)
         valueAt({ x: cx, y: P.y + i * rowH + FONT * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
@@ -545,15 +549,14 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     lay.nodes.forEach((n, i) => {
       const x = xAt(n.depth);
       const rect = svg(marks, "rect", { x, y: Y(n.y0), width: NW, height: Math.max(2, (n.y1 - n.y0) * P.h) });
-      rect.style.fill = SLICES[i % SLICES.length];
+      rect.style.fill = SLICES[1 + (i % (SLICES.length - 1))];
       bars.push(rect);
-      grown.push({ el: rect, origin: "50% 50%", scale: "scaleY" });
       const last = n.depth === lay.columns - 1;
       const at = { x: last ? x - 12 : x + NW + 12, "text-anchor": last ? "end" : "start" };
       const yc = Y((n.y0 + n.y1) / 2);
       const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
       Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
-      labels.push(name);
+      grown.push({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
       valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
     });
     grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
@@ -660,7 +663,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
 
   for (const { el, from, show } of values) el.textContent = show(from);
   for (const e of values) e.el.setAttribute("data-k-text", "");
-  gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents], { autoAlpha: 0 });
+  gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents, ...grown.flatMap((g) => g.label ?? [])], { autoAlpha: 0 });
   for (const { el, origin, scale } of grown) gsap.set(el, { [scale]: 0, transformOrigin: origin });
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
   let lit = -1; // the sankey flow the steps added so far end on
@@ -677,9 +680,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       );
       if (!grown.length) return;
       const step = Math.min(0.12, 1 / grown.length);
-      grown.forEach(({ el, scale, dur }, i) =>
-        tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, i ? `<${step}` : ">"),
-      );
+      grown.forEach(({ el, scale, dur, label }, i) => {
+        tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, i ? `<${step}` : ">");
+        if (label) tl.to(label, { autoAlpha: 1, duration: motion.step }, "<");
+      });
     },
     values(tl) {
       tl.to(values.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 });

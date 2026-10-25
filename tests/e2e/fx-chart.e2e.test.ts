@@ -202,8 +202,15 @@ test('a funnel sizes stages by value and gives the conversion between them', asy
     return {
       widths: [...g.querySelectorAll<SVGRectElement>('[data-bar]')].map((b) => +b.getAttribute('width')!),
       values: [...g.querySelectorAll('[data-k-text]')].map((e) => e.textContent),
+      // Each stage value: is it inside its bar, or does it start just right of it?
+      beside: [...g.querySelectorAll<SVGRectElement>('[data-bar]')].map((b, i) => {
+        const v = [...g.querySelectorAll<SVGTextElement>('[data-k-text]')].filter((e) => !e.textContent!.includes('%') && e.textContent !== '–')[i].getBBox()
+        const [x0, x1] = [+b.getAttribute('x')!, +b.getAttribute('x')! + +b.getAttribute('width')!]
+        return v.x > x0 && v.x + v.width < x1 ? 'inside' : v.x - x1 > 0 && v.x - x1 < 24 ? 'right' : 'far'
+      }),
     }
   })
+  expect(r.beside).toEqual(['inside', 'inside', 'inside', 'right', 'right'])
   const [w0, w1, w2, w3] = r.widths
   expect(w1 / w0).toBeCloseTo(0.4)
   expect(w2 / w0).toBeCloseTo(0.1)
@@ -227,6 +234,18 @@ test('a sankey lays nodes in columns and lights one flow at a time, by step orde
     })
     await page.close()
     return r
+  }
+  // Node names fade in with their nodes on grow (step 2), not with the axes (step 1).
+  for (const [step, index, shown] of [[1, 35, false], [2, 36, true]] as const) {
+    const page = await open('/a/sankey/' + step)
+    await page.waitForFunction((i) => window.klappe.stepper.index === i, index)
+    await page.waitForTimeout(1500)
+    const names = await page.evaluate(() =>
+      [...document.querySelectorAll<SVGTextElement>('[data-k-chart="sankey"] text[font-weight="700"]')].slice(1).map((e) => getComputedStyle(e).visibility === 'visible'),
+    )
+    expect(names.length).toBe(6)
+    expect(names.every((v) => v === shown), 'step ' + step).toBe(true)
+    await page.close()
   }
   const four = await lit(4, 38)
   // Ads, Signup, Search, Bounce, Paid, Churn: columns 0, 1, 0, 1, 2, 2.

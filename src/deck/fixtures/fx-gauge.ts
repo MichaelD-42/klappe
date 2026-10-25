@@ -3,8 +3,9 @@ import { chart, gauge, likert, type ChartHandle, type GaugeHandle, type LikertHa
 import type { SceneModule, StepAdder } from "../../types";
 
 // A German deck (number format 72,5). A gauge whose swing adders are built out of step order: the swing to
-// 95,5 is built after the swing to 40 but plays first. A Likert block with one bad row (the fixture's only
-// problem), its rows one per step. A bar chart revealed one bar per step. All numbers are made-up sample data.
+// 95,5 is built after the swing to 40 but plays first. A Likert block with a four-name scale and one bad row
+// (the fixture's two problems), its rows one per step. A bar chart revealed one bar per step. All numbers are
+// made-up sample data.
 const md = (title: string, n: number) => `## ${title}\n\n${Array.from({ length: n }, (_, i) => `- Schritt ${i + 1}.\n`).join("")}`;
 type G = { g: GaugeHandle; low: StepAdder; high: StepAdder };
 
@@ -28,6 +29,7 @@ const survey: SceneModule = {
         { statement: "Ich weiß, wer entscheidet", counts: [9, 12, 8, 7, 4] },
         { statement: "Ein Eintrag mit drei Zahlen", counts: [1, 2, 3] },
       ],
+      scale: ["Nein", "Eher nein", "Eher ja", "Ja"], // four names: a problem, the default five show
     }),
   steps: [(tl, l: LikertHandle) => l.show(tl), (tl, l: LikertHandle) => l.row(0)(tl), (tl, l: LikertHandle) => l.row(1)(tl)],
 };

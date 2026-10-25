@@ -261,11 +261,12 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
     const d = { duration: ctx.reducedMotion ? 0 : motion.step * 2, ease: "power2.out", immediateRender: false };
     tl.fromTo(needle, { rotation: gaugeAngle(from, min, max) }, { rotation: gaugeAngle(to, min, max), ...d }, at);
     tl.fromTo(arc, { strokeDashoffset: 1 - frac(from) }, { strokeDashoffset: 1 - frac(to), autoRound: false, ...d }, "<");
-    const dec = decimals(to);
+    // Each end shows its own decimals (a step back over to(40) shows 95,5 again); in between the finer of the two.
+    const dec = (p: number) => (p >= 1 ? decimals(to) : p <= 0 ? decimals(from) : Math.max(decimals(from), decimals(to)));
     tl.to({}, {
       ...d,
       onUpdate(this: gsap.core.Tween) {
-        num.textContent = counterText(from, to, this.ratio, lang, dec);
+        num.textContent = counterText(from, to, this.ratio, lang, dec(this.ratio));
       },
     }, "<");
   };
@@ -288,7 +289,7 @@ export interface LikertOpts {
   y: number;
   w: number;
   rows: { statement: string; counts: number[] }[]; // counts: how many gave each of the 5 points, disagree first
-  scale?: string[]; // the 5 point names; default "Strongly disagree" … "Strongly agree"
+  scale?: string[]; // the 5 point names; default "Strongly disagree" … "Strongly agree" in the deck language
   source?: string;
 }
 export interface LikertHandle {
@@ -296,8 +297,7 @@ export interface LikertHandle {
   row(i: number): StepAdder; // row i's answers grow in and its agree share counts up
 }
 
-// shortcut: English point names; move them to strings.ts when it has a second language.
-const LIKERT_SCALE = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"];
+const LIKERT_SCALE = ["stronglyDisagree", "disagree", "neutral", "agree", "stronglyAgree"] as const;
 // Diverging: --k-bad for disagree, through --k-line for neutral, to --k-ok for agree.
 const LIKERT_FILL = [
   "var(--k-bad)",
@@ -319,7 +319,10 @@ export function likertShares(counts: number[]): number[] {
 export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
   const root = block(ctx, "likert", opts.x, opts.y, opts.w, opts.source);
   const legend = el(root, "div", { display: "flex", flexWrap: "wrap", gap: "8px 28px", marginBottom: "28px", fontSize: "24px", color: "var(--k-muted)" });
-  (opts.scale ?? LIKERT_SCALE).forEach((name, i) => {
+  const ok5 = !opts.scale || opts.scale.length === 5;
+  if (!ok5) ctx.problem(`likert: scale needs 5 point names, got ${opts.scale!.length}`);
+  // A scale of another length falls back to the deck language names.
+  (ok5 && opts.scale ? opts.scale : LIKERT_SCALE.map((k) => t(k, ctx.deck.lang))).forEach((name, i) => {
     const item = el(legend, "span", { display: "flex", alignItems: "center", gap: "10px" });
     el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: LIKERT_FILL[i] });
     el(item, "span", {}, name);
@@ -328,10 +331,10 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
     const ok = row.counts.length === 5 && row.counts.every((c) => Number.isFinite(c) && c >= 0);
     if (!ok) ctx.problem(`likert: row ${i + 1} needs 5 counts of 0 or more, got [${row.counts.join(", ")}]`);
     const shares = ok ? likertShares(row.counts) : [0, 0, 0, 0, 0];
-    const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "24px" });
+    const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "36px" });
     line.dataset.kLikertRow = String(i);
-    el(line, "div", { flex: "0 0 38%" }, row.statement);
-    const track = el(line, "div", { flex: "1", height: "44px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
+    el(line, "div", { flex: "0 0 30%" }, row.statement);
+    const track = el(line, "div", { flex: "1", height: "56px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
     const bar = el(track, "div", { display: "flex", height: "100%" });
     shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: LIKERT_FILL[k] }));
     const num = el(line, "div", { flex: "0 0 96px", textAlign: "right", color: "var(--k-ok)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" });

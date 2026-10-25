@@ -32,6 +32,7 @@ const HEAD = 20; // each head stroke's length
 const V_W = 320;
 const V_GAP = 80; // the narrowest link, at the bottom level
 const TURN = 90; // below the bottom level, for the arrow that turns the V
+const LEG_GAP = 10; // clear space between a box border and a leg arrow end
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // The phase box centres, clockwise from the top, and the arc (with its head) from each box to the next.
@@ -192,21 +193,23 @@ export function vModel(ctx: Ctx, opts: VModelOpts): VModelHandle {
     on.setAttribute("data-k-v-link", String(i));
     return { base, on };
   });
-  const mid = (b: Rect, side: "top" | "bottom") => ({ x: b.x + b.w / 2, y: side === "top" ? b.y : b.y + b.h });
+  const mid = (b: Rect, side: "top" | "bottom") => ({ x: b.x + b.w / 2, y: side === "top" ? b.y - LEG_GAP : b.y + b.h + LEG_GAP });
   const legs = [
     ...lay.left.slice(1).map((b, i) => arrow(ctx, { from: mid(lay.left[i], "bottom"), to: mid(b, "top") })),
     ...(n ? [arrow(ctx, { from: mid(lay.left[n - 1], "bottom"), to: mid(lay.right[n - 1], "bottom"), curve: -0.3 })] : []),
     ...lay.right.slice(1).map((b, i) => arrow(ctx, { from: mid(b, "top"), to: mid(lay.right[i], "bottom") })).reverse(),
   ];
   const fit = fitter(ctx, pairs.flat(), "vModel");
-  // The level or link lit by the latest level() or link() step, set when the step is added; it settles when the next starts.
+  // The level or link lit by the latest level() or link() step, set when the step is added; it settles when the next
+  // starts. A link right after its own level keeps that pair lit, and the pair settles with the link.
   let lit: { kind: "level" | "link"; i: number } | undefined;
   const light = (kind: "level" | "link", i: number): StepAdder => {
-    if (i < 0 || i >= n || !Number.isInteger(i)) throw new Error(`vModel: no level ${i}`);
+    if (i < 0 || i >= n || !Number.isInteger(i)) throw new Error(`vModel: no ${kind} ${i}`);
     return (tl) => {
       fit();
       const t = tl.duration();
-      if (lit?.kind === "level") lightBoxes(tl, pairs[lit.i].map((b) => b.el), false, t);
+      const keepPair = kind === "link" && lit?.kind === "level" && lit.i === i;
+      if (lit && !keepPair) lightBoxes(tl, pairs[lit.i].map((b) => b.el), false, t); // after a link: off, or already off
       if (lit?.kind === "link") tl.set(links[lit.i].on, { autoAlpha: 0, immediateRender: false }, t);
       lit = { kind, i };
       if (kind === "level") return void (lightBoxes(tl, pairs[i].map((b) => b.el), true, t), hold(tl, t));

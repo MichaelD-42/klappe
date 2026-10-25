@@ -54,10 +54,10 @@ test('a phase stays lit until the next phase step, and the ring comes back round
   }
 }, 60_000)
 
-test('a level lights both its boxes, a link its line; either settles when the next one lights', async () => {
+test('a level lights both its boxes, a link its line (its own pair stays lit); either settles when the next one lights', async () => {
   for (const [step, want] of [
     [2, { boxes: ['0-left', '0-right'], links: [] }],
-    [3, { boxes: [], links: ['0'] }],
+    [3, { boxes: ['0-left', '0-right'], links: ['0'] }],
     [4, { boxes: [], links: ['3'] }],
     [5, { boxes: ['3-left', '3-right'], links: [] }],
     [6, { boxes: ['3-left', '3-right'], links: [] }],
