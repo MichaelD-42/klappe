@@ -547,9 +547,9 @@ import { loupe } from "klappe/fx";
 
 build: (ctx) => {
   const lens = loupe(ctx, { href: "media/fullscreen-hero.png", alt: "…", rect: { x: 160, y: 60, w: 1600, h: 860 }, fit: "cover", r: 160, zoom: 1.7, at: { x: 1328, y: 557 } });
-  return { lens, chart: lens.to(1595, 404), drawing: lens.to(973, 748) };
+  return { lens, chart: lens.to(1595, 404), sketch: lens.to(1165, 330) };
 },
-steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.drawing(tl)],
+steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.sketch(tl)],
 ```
 
 | Name | Type | Default | Meaning |

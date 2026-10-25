@@ -77,7 +77,7 @@ Limits:
 ```ts
 import { tilt } from "klappe/fx";
 
-build: (ctx) => ({ there: tilt(ctx, { ...ctx.rect, x: ctx.rect.x - 3840 }), back: tilt(ctx, ctx.rect) }),
+build: (ctx) => ({ there: tilt(ctx, { ...ctx.rect, x: ctx.rect.x - 2400 }), back: tilt(ctx, ctx.rect) }),
 steps: [null, (tl, r) => r.there(tl), (tl, r) => r.back(tl)],
 ```
 

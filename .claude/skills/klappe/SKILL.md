@@ -38,8 +38,8 @@ Before you write anything, read the entry for each element you use: `klappe/docs
 - One reading against a fixed range (load, a score), maybe changing on a later step: `gauge`. Answers on an agree scale: `likert`. A bar chart told one bar at a time: `chart` + `bar(i)`.
 - A hard question for the room: `### Question?` in `scene.md`. Break with the old way: `shatter`. Volume: `swarm`. A milestone reached: `burst`. A picture: `image`; one detail of it, step by step: `loupe`; a background: `section.ts` (a picture, a looping video or `animate: "aurora"`, optionally `parallax`); a full-screen clip: `video` with no `rect`. A clip that should run as its scene arrives: `video` with `autoplay: true` (muted unless `muted: false`). Before and after: `wipe`. A link to take home: `qr`. [effects](klappe/docs/reference/effects.md)
 - Words that land: one line, `scramble`; a statement or a quote, line by line or word by word, `reveal`, key words in `**bold**`; a personal aside in hand, `handwrite`; what changed in a text, `redline`; a word or number flipped like an airport board, `splitFlap`; what a group said, weighted, `wordCloud` from a `data/` file. [effects](klappe/docs/reference/effects.md)
-- Between sections, `transition` in `section.ts`: slide in with `"push"` or open from a point with `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`. [transitions](klappe/docs/reference/effects.md#transitions)
-- The camera rides along with something moving, or the scene jolts when it lands: `follow` with `travel`, then `impactShake`. [camera](klappe/docs/reference/elements/camera.md)
+- Between sections, `transition` in `section.ts`: slide in with `"push"` or open from a point with `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element into the next section (a logo, a title chip), `"magicMove"`, with the same `el.dataset.kMatch` on both. [transitions](klappe/docs/reference/effects.md#transitions)
+- Move the camera inside a scene: ride along with a moving element with `follow`, jolt the scene on a landing with `impactShake`, pull focus to one item with `rackFocus`, lean a long flight with `tilt`, make a big reveal with `dollyZoom`. [camera](klappe/docs/reference/elements/camera.md)
 - Anything else: your own tween. [motion](klappe/docs/reference/motion.md)
 - What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys, and many scenes with one shape from a factory in `shared/`: [deck-format](klappe/docs/reference/deck-format.md).
 
@@ -74,7 +74,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
 - Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample data" label (`chart` with `sample: true` shows it).
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
-- Convention, not checked by klappe: state the deck's safe area once (side margins, a floor above any logo or footer) and keep all ink inside it at both sizes. Measure the ink, not left plus width.
+- Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
 
 ## Check your work
 

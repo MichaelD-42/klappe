@@ -9,20 +9,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `annotate` on dense code: a ring reaches the lines around it. Documented; a ring that flattens to the line gap would need the code panel's line height.
 - Parallax moves one layer, the background. Several depths (a near and a far layer) would need a layer list on the background.
 
-Helpers wanted by the training deck (2026-10-25 harvest; counts are greps over its `sections/` and `shared/`):
-
-- Self-test checks for ink outside a safe area (margins, footer) and for text clipped by its box; the most frequent look finding.
-
-New transitions, proposed 2026-10-24:
-
-- Magic move: an element with the same id in both sections flies to its new place while the rest fades. The hardest of these.
-
-New camera moves, proposed 2026-10-24:
-
-- Focus pull: all but the target blurs and dims, a depth-of-field cousin of `spotlight`. Mind the blur cost (perf notes).
-- Tilt: a slight 3D lean during a camera flight, so long flights feel less flat.
-- Dolly zoom: the "vertigo" move (zoom in while the camera pulls back), for a big reveal.
-
 Wanted by the training deck, not built (from `docs/contrib/2026-10-24-deck-helpers.md`): `timer` separate T groups (needs the deck's use case: how the presenter picks a group); a `dotGrid` helper (needs the deck's use case).
 
 Not on this list, because they exist: code morph (`code().diff()`) and packets along flow edges (`flow().send()`).
@@ -40,6 +26,7 @@ Effects:
 - Figure: no seated pose; the meeting-room figures read as seated behind the table. A real seated pose (a chair, bent legs) would be a new `figure` option.
 - Swarm: the canvas is not re-rasterised on a deeper zoom, so a camera that zooms into a swarm sees soft dots.
 - Perf (`docs/perf-m2.md`): with a GPU, the shatter fall lost 0.2 to 1.2 s of a 2.2 s step to long frames (worst 667 ms), the swarm stream about 1 s (worst 467 ms). Not proven; check in a manual 60 fps run.
+- Tilt: pausing a tilt tween ~50 ms in and seeking it with `.time()` hung the page in a review harness; live play is fine. Not reproduced in the app.
 
 Demo story:
 

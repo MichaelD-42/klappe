@@ -13,7 +13,7 @@ import { pyramid, type PyramidHandle } from "klappe/fx";
 
 build: (ctx) => ({
   p: pyramid(ctx, {
-    x: 510, y: 270, w: 900, h: 670,
+    x: 585, y: 300, w: 750, h: 560,
     layers: [{ id: "unit", label: "Unit" }, { id: "integration", label: "Integration" }, { id: "e2e", label: "End to end" }],
   }),
 }),
