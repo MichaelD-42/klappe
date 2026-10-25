@@ -841,7 +841,7 @@ Catalog: section `140-icons` and `210-shout`. The old canvas collapses to a brig
 
 ## `push` and `iris`
 
-Catalog: section `266-focus` (`push`) and `296-cycles` (`iris`). `push`: the new canvas pushes the old one off the frame in 0.7 s. `transitionOptions: { direction: "up" }` sets the way the old canvas leaves: `left` (default), `right`, `up` or `down`. `iris`: a circle opens the new canvas over the old one in 0.8 s. `transitionOptions: { origin: [300, 200] }` sets the centre of the circle in frame pixels (1920 x 1080); the default is the centre of the frame. A wrong `direction` or `origin` logs the error and plays `fade`. With reduced motion `push` plays a fade; `iris` stays, as it moves no content. From `decks/demo/sections/266-focus/section.ts`:
+Catalog: section `266-focus` (`push`) and `296-cycles` (`iris`). `push`: the new canvas pushes the old one off the frame in 0.7 s. `transitionOptions: { direction: "up" }` sets the way the old canvas leaves: `left` (default), `right`, `up` or `down`. `iris`: a circle opens the new canvas from a point in 0.8 s; the old canvas shows only outside the circle. `transitionOptions: { origin: [300, 200] }` sets the centre of the circle in frame pixels (1920 x 1080); the default is the centre of the frame. A wrong `direction` or `origin` logs the error and plays `fade`. Both set `reveal` at their start: the first step of the new section plays while the canvas moves or opens in. With reduced motion `push` plays a fade; `iris` stays, as it moves no content. From `decks/demo/sections/266-focus/section.ts`:
 
 ```ts
 const section: SectionModule = { transition: "push" };
@@ -854,3 +854,7 @@ const section: SectionModule = { transition: "push" };
 ## `irisRadius`
 
 `irisRadius(x, y)` returns the radius in pixels that covers the 1920 x 1080 frame from `(x, y)`: the distance to the farthest corner.
+
+## `irisHole`
+
+`irisHole(x, y, r)` returns the `clip-path` for the old canvas during an iris: the frame minus a circle of radius `r` at `(x, y)`, as an even-odd `path()`. The canvases are transparent, so without the hole the old canvas would show through the circle.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { irisRadius, pushOffset } from '../../src/fx/transitions'
+import { irisHole, irisRadius, pushOffset } from '../../src/fx/transitions'
 
 describe('push offset', () => {
   test('the old canvas leaves by one frame in the direction, left by default', () => {
@@ -19,5 +19,11 @@ describe('iris radius', () => {
     expect(irisRadius(960, 540)).toBeCloseTo(Math.hypot(960, 540))
     expect(irisRadius(0, 0)).toBeCloseTo(Math.hypot(1920, 1080))
     expect(irisRadius(1500, 200)).toBeCloseTo(Math.hypot(1500, 880))
+  })
+})
+
+describe('iris hole', () => {
+  test('is the frame minus a circle of radius r at (x, y), as two arcs', () => {
+    expect(irisHole(300, 200, 50)).toBe('path(evenodd, "M0 0H1920V1080H0Z M250 200a50 50 0 1 0 100 0a50 50 0 1 0 -100 0Z")')
   })
 })

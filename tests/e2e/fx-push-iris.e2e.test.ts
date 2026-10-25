@@ -39,12 +39,13 @@ async function across(page: Page, at: number) {
     await new Promise((r) => requestAnimationFrame(r))
     const tl = k.stepper.running[0]
     const to = k.canvases[k.stepper.steps[k.stepper.index].canvas].el as HTMLElement
+    const reveal = tl.labels.reveal
     tl.pause().progress(at)
     const read = (e: HTMLElement) => ({ transform: e.style.transform, clip: e.style.clipPath, z: e.style.zIndex, shown: getComputedStyle(e).visibility })
     const mid = { from: read(from), to: read(to) }
     tl.play()
     await forward
-    return { kinds, mid, end: { from: read(from), to: read(to) } }
+    return { kinds, reveal, mid, end: { from: read(from), to: read(to) } }
   }, at)
 }
 
@@ -54,6 +55,7 @@ test('push moves both canvases up together inside the frame, then leaves no tran
   const page = await open('#/a/two/1')
   const r = await across(page, 0.5)
   expect(r.kinds).toEqual(['push'])
+  expect(r.reveal).toBe(0) // the first step plays while the canvas moves in
   // Half way, with an ease that is symmetric: the old canvas is half a frame up, the new one half a frame below.
   expect(r.mid.from.transform).toBe('translate3d(0px, -540px, 0px)')
   expect(r.mid.to.transform).toBe('translate3d(0px, 540px, 0px)')
@@ -64,12 +66,14 @@ test('push moves both canvases up together inside the frame, then leaves no tran
   await page.close()
 })
 
-test('iris opens a circle from its origin over the old canvas, then clears the clip', async () => {
+test('iris opens a circle from its origin and a matching hole in the old canvas, then clears both clips', async () => {
   const page = await open('#/b/pushed/1')
   const start = await across(page, 0)
   expect(start.kinds).toEqual(['iris'])
+  expect(start.reveal).toBe(0)
   expect(start.mid.to.clip).toBe('circle(0px at 300px 200px)')
-  expect(start.mid.to.z).toBe('1')
+  // The old canvas gets the matching hole, so inside the circle only the new one shows.
+  expect(start.mid.from.clip).toContain('evenodd')
   expect(start.mid.from.shown).toBe('visible')
   expect(start.end.from).toEqual({ transform: '', clip: '', z: '', shown: 'hidden' })
   expect(start.end.to).toEqual({ transform: '', clip: '', z: '', shown: 'visible' })

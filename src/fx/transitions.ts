@@ -59,11 +59,13 @@ export function pushOffset(direction: unknown = "left"): { x: number; y: number 
 // The iris radius that just covers the frame from (x, y): the distance to the farthest corner.
 export const irisRadius = (x: number, y: number): number => Math.hypot(Math.max(x, STAGE.w - x), Math.max(y, STAGE.h - y));
 
-// The new canvas pushes the old one off the frame, both moving together.
+// The new canvas pushes the old one off the frame, both moving together. "reveal" at 0: the first step plays
+// while it moves in, so an empty new canvas does not slide in.
 const push: Transition = (from, to, opts) => {
   const { x, y } = pushOffset(opts.direction ?? "left");
   return gsap
     .timeline({ defaults: { duration: PUSH, ease: "power2.inOut" } })
+    .addLabel("reveal", 0)
     .set(from.el, { clipPath: FRAME })
     .set(to.el, { autoAlpha: 1, clipPath: FRAME, x: -x, y: -y })
     .to(from.el, { x, y }, 0)
@@ -72,18 +74,34 @@ const push: Transition = (from, to, opts) => {
     .set(to.el, { clearProps: "transform,clipPath" });
 };
 
-// A circle on top of the old canvas opens the new one from origin [x, y] in frame pixels (default the centre).
+// The old canvas with a hole of radius r at (x, y): the frame minus the circle, as an even-odd path.
+export const irisHole = (x: number, y: number, r: number): string =>
+  `path(evenodd, "M0 0H${STAGE.w}V${STAGE.h}H0Z M${x - r} ${y}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z")`;
+
+// A circle opens the new canvas from origin [x, y] in frame pixels (default the centre). The canvases are
+// transparent, so the old one gets the matching hole: inside the circle only the new one shows.
+// "reveal" at 0, as for push: the first step plays inside the opening circle.
 const iris: Transition = (from, to, opts) => {
   const o = opts.origin ?? [STAGE.w / 2, STAGE.h / 2];
   if (!Array.isArray(o) || o.length !== 2 || !o.every(Number.isFinite)) throw new Error(`iris: origin must be [x, y] in pixels`);
   const [x, y] = o as [number, number];
-  const at = `at ${x}px ${y}px`;
+  const clip = (r: number) => ({ to: `circle(${r}px at ${x}px ${y}px)`, from: irisHole(x, y, r) });
+  const s = { r: 0 };
+  // Plain style writes from the tweened radius: GSAP need not parse the path() string each frame.
+  const draw = () => {
+    const c = clip(s.r);
+    to.el.style.clipPath = c.to;
+    from.el.style.clipPath = c.from;
+  };
+  draw(); // now, as the set below shows the new canvas at once, before the first tick
   return gsap
     .timeline()
-    .set(to.el, { autoAlpha: 1, zIndex: 1, clipPath: `circle(0px ${at})` })
-    .to(to.el, { clipPath: `circle(${irisRadius(x, y)}px ${at})`, duration: IRIS, ease: "power2.inOut" })
-    .set(from.el, { autoAlpha: 0 })
-    .set(to.el, { clearProps: "zIndex,clipPath" });
+    .addLabel("reveal", 0)
+    .set(to.el, { autoAlpha: 1 })
+    .call(draw)
+    .fromTo(s, { r: 0 }, { r: irisRadius(x, y), duration: IRIS, ease: "power2.inOut", onUpdate: draw, immediateRender: false })
+    .set(from.el, { autoAlpha: 0, clearProps: "clipPath" })
+    .set(to.el, { clearProps: "clipPath" });
 };
 
 // zoom, shatter and crt load only when a section asks for them: main.ts awaits loadTransitions first.
