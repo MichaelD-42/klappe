@@ -10,7 +10,8 @@ for (const vp of [
   { w: 1366, h: 768 },
   { w: 1024, h: 768 },
 ]) {
-  test(`walk passes at ${vp.w}x${vp.h}`, async () => {
+  // Concurrent: each walks the whole demo in its own browser, and one after another they are the slowest file.
+  test.concurrent(`walk passes at ${vp.w}x${vp.h}`, async ({ expect }) => {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk`, vp)
     expect(r.problems).toEqual([])
     expect(r.errors).toEqual([])
