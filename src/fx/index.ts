@@ -22,6 +22,7 @@ export * from "./flipcard";
 export * from "./flow";
 export * from "./focus";
 export * from "./icons";
+export * from "./loupe";
 export * from "./map";
 export * from "./matrix";
 export * from "./pyramid";

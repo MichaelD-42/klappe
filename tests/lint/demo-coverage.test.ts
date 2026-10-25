@@ -21,6 +21,7 @@ const ALLOW = [
   'cloudLayout', // cloud-quote task: the word cloud layout, for its unit test
   'wordDiff', 'flapGlyphs', // redline-flap task: the word diff and the board glyphs, for their unit test
   'barInk', 'sankeyPalette', 'scatterIn', // fix-w3: funnel value ink, sankey node colours, sticky-note scatter, for their unit tests
+  'loupeOffset', // loupe task: the lens offset, for its unit test
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
