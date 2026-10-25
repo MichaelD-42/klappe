@@ -10,6 +10,7 @@
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
   - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
+  - [focus](elements/focus.md): lights one item in place while the rest dim, with no layer over the scene.
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
   - [flipCard](elements/flipCard.md): a card that turns over to show its back.
