@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero; each stage is a centred bar as wide as its share of the largest, with its name on the left, its value on the right and the conversion from the stage before between them (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in the series colours, bands in `--k-line`; see `highlight` |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero, not all zero; each stage is a centred bar as wide as its share of the largest, with its name on the left and its value inside the bar's right end (just right of the bar when it is too narrow); the conversion from the stage before sits centred on the line between the two stages (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in `--k-series-2` to `--k-series-6` (series 1 is the accent in most themes, which `highlight` uses), so past five nodes the colours repeat; bands in `--k-line`; see `highlight` |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -35,10 +35,10 @@ The first column labels the rows; every later column with a number in any row is
 | Handle | Step |
 | --- | --- |
 | `axes` | title, legend and axes fade in |
-| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right; funnel stages grow from the centre, top to bottom; sankey nodes grow, then the bands draw left to right |
+| `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right; funnel stages grow from the centre, top to bottom; sankey nodes grow with their names, then the bands draw left to right |
 | `values` | the value labels fade in and count up |
-| `highlight(row)` | sankey only: the flow in that data row (0 is the first row after the header) turns `--k-accent`; the flow lit before goes back. Another chart type, or a row that does not exist, reports a deck problem |
-| `bar(i)` | `bar` and `waterfall` only: bar `i` (0-based, data order; a waterfall's total is the last) grows and its value counts up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type or a bar that does not exist reports `chart: bar(…)` |
+| `highlight(row)` | sankey only: the flow in that data row (0 is the first row after the header) turns `--k-accent`; the flow lit before goes back. Add it after `grow`: before it the bands are not drawn, so the lit flow does not show. Another chart type, or a row that does not exist, reports a deck problem |
+| `bar(i)` | `bar` and `waterfall` only: bar `i` (0-based, data order; a waterfall's total is the last) grows and its value counts up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type reports `chart: bar(<i>) is for bar and waterfall charts`; a bar that does not exist reports `chart: no bar <i>` |
 
 ### Limits
 
@@ -95,7 +95,7 @@ Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on a 5-poi
 From `decks/demo/sections/115-numbers/40-likert/scene.ts`:
 
 ```ts
-build: (ctx) => likert(ctx, { x: 160, y: 200, w: 1600, rows: [{ statement: "Releases are predictable", counts: [3, 5, 8, 22, 12] }, …] }),
+build: (ctx) => likert(ctx, { x: 160, y: 320, w: 1600, rows: [{ statement: "Releases are predictable", counts: [3, 5, 8, 22, 12] }, …] }),
 steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl), (tl, l) => l.row(2)(tl)],
 ```
 
@@ -103,7 +103,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl),
 | --- | --- | --- | --- |
 | `x`, `y`, `w` | number | required | the top-left corner and the width |
 | `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each of the 5 points, disagree first |
-| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the 5 point names in the legend |
+| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the 5 point names in the legend; another number of names reports a deck problem and the default names show |
 | `source` | string | none | as for `kpi` |
 
 | Handle | Step |
@@ -111,7 +111,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl),
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports `likert: row <n> needs 5 counts of 0 or more` and stays empty. The default point names are English in every deck language.
+A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <i>; the rows are 0 to <n>`. The default point names come from the deck language; klappe has English names only, so every deck shows them in English for now.
 
 ## `gaugeAngle`
 
@@ -185,7 +185,7 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 
 ## `sankeyLayout`
 
-`sankeyLayout(links, gap)` lays out `{ source, target, value }` links: `{ nodes, links, columns }`. Each node has `name`, `depth` (its column), `value` (the larger of its inflow and outflow) and `y0`, `y1` in 0..1 of the height; each link has its node indices `s` and `t`, the band's top at each end `sy`, `ty` and its thickness `w`. `gap` is the space between nodes in a column, as a share of the height. The same links always give the same layout. It returns a string instead when the links have a cycle, a self-loop, or more nodes or columns than the sankey reads. The sankey chart (`#/chart/sankey/1`) uses it.
+`sankeyLayout(links, gap)` lays out `{ source, target, value }` links: `{ nodes, links, columns }`. Each node has `name`, `depth` (its column), `value` (the larger of its inflow and outflow) and `y0`, `y1` in 0..1 of the height; each link has its node indices `s` and `t`, its `value`, the band's top at each end `sy`, `ty` and its thickness `w`. `gap` is the space between nodes in a column, as a share of the height. The same links always give the same layout. It returns a string instead when the links have a cycle, a self-loop, or more nodes, columns or nodes per column than the sankey reads. The sankey chart (`#/chart/sankey/1`) uses it.
 
 ## `chartDomain`
 
@@ -501,9 +501,9 @@ steps: [(tl, v) => v.show(tl)],
 | `href` | string | required | a local `"media/x.mp4"`, a direct link, or a YouTube or Vimeo link |
 | `title` | string | required | the caption under the box; the player's title in a full frame |
 | `rect` | `{ x, y, w, h }` | the full scene frame | the area; the box is the largest 16:9 (later the clip's own ratio) inside it. Without `rect` the video fills the scene frame, cropped to cover, with no border or caption, and fades in over the camera flight like a full-frame picture (catalog `#/media/full-frame/1`) |
-| `fallback` | string | none | an image href in `media/`, shown instead of an online video when there is no network |
-| `autoplay` | boolean | `false` | a YouTube or Vimeo player starts when its step arrives; when the viewer leaves the step it stops and shows its thumbnail again (catalog `#/media/youtube-autoplay/1`). Without it the viewer starts the player. A local file plays on its step either way |
-| `muted` | boolean | `true` | with `autoplay` only: the player starts without sound. `false` asks for sound; a browser may block that, and then the player stays paused until the viewer starts it, or starts muted. Local files always play with sound |
+| `fallback` | string | none | an image href in `media/`, shown instead of an online video when there is no network; also the placeholder until the player loads; `?offline=1` forces it; offline without a usable fallback reports a deck problem |
+| `autoplay` | boolean | `false` | a YouTube or Vimeo player starts when its step arrives; when the viewer leaves the step it stops and shows its thumbnail again (catalog `#/media/youtube-autoplay/1`). Without it the viewer starts the player. A local file plays on its step either way. Both start under reduced motion too |
+| `muted` | boolean | `true` | with `autoplay` only: the player starts without sound. `false` asks for sound; a browser may block that, and the viewer then starts the player. Local files ignore `muted` |
 
 `show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer (or by its step, with `autoplay`), and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
 

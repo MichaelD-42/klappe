@@ -70,11 +70,11 @@ steps: [
 
 | Handle | Step |
 | --- | --- |
-| `show` | a step adder itself: down the left leg, round the turn and up the right leg, each box fades in and the arrow to the next draws on; then the dashed links draw on |
+| `show` | a step adder itself: down the left leg, round the turn and up the right leg, each box fades in and the arrow to the next draws on, its ends 10 px clear of the boxes; then the dashed links draw on |
 | `level(i)` | lights both boxes of level `i` (from 0), as `cycle` lights a phase |
 | `link(i)` | draws a solid 6 px `--k-accent` line over the dashed link of level `i` |
 
-One thing is lit at a time: whatever the latest `level` or `link` lit settles as the next `level` or `link` step starts. An index with no level throws `vModel: no level <i>`.
+One thing is lit at a time: whatever the latest `level` or `link` lit settles as the next `level` or `link` step starts. One exception: `link(i)` right after `level(i)` keeps that pair lit, and the pair settles with the link. An index with no level throws `vModel: no level <i>` from `level`, `vModel: no link <i>` from `link`.
 
 ## Limits
 
