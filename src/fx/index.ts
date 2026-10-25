@@ -40,6 +40,7 @@ export * from "./sequence";
 export { arrow, shape, tint, type ArrowOpts, type ShapeHandle, type ShapeOpts, type TintOpts, type TintProp } from "./shape";
 export * from "./shatter";
 export * from "./scramble";
+export * from "./handwrite";
 export * from "./shout";
 export * from "./stats";
 export * from "./stickynotes";
