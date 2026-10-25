@@ -84,7 +84,7 @@ steps: [(tl, g) => g.show(tl), (tl, g) => g.to(91)(tl)],
 | `show` | the gauge fades in; the needle and the `--k-accent` arc swing from `min` to `value` over the `--k-line` track, and the number counts up |
 | `to(value)` | the needle swings on, from where the steps before left it, to `value`; the number counts there. Call it once per step for each new reading |
 
-Numbers use the deck language's format (`72,5` in a German deck). A value outside the range parks the needle at the end, and the number still shows the real value. With reduced motion the needle jumps. No coloured bands.
+Numbers use the deck language's format (`72,5` in a German deck). A value outside the range parks the needle at the end, and the number still shows the real value. A `max` at or below `min` reports `gauge: max <max> must be above min <min>`. With reduced motion the needle jumps. No coloured bands.
 
 ## `likert`
 

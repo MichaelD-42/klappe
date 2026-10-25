@@ -227,6 +227,8 @@ export const gaugeAngle = (value: number, min: number, max: number): number =>
 // (deck language format) under the dial, min and max at the ends. With reduced motion the needle jumps.
 export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const min = opts.min ?? 0;
+  if (!(opts.max > min)) ctx.problem(`gauge: max ${opts.max} must be above min ${min}`);
+  const max = opts.max > min ? opts.max : min + 1; // a broken range still draws, the needle at an end
   const s = opts.size;
   const thick = s * 0.08;
   const [cx, cy, r] = [s / 2, s / 2, s / 2 - thick / 2];
@@ -240,14 +242,14 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" });
   needle.style.stroke = "var(--k-accent)";
   svgEl(svg, "circle", { cx, cy, r: thick * 0.5 }).style.fill = "var(--k-accent)";
-  const frac = (v: number) => (gaugeAngle(v, min, opts.max) + 90) / 180;
+  const frac = (v: number) => (gaugeAngle(v, min, max) + 90) / 180;
   gsap.set(arc, { strokeDashoffset: 1, autoRound: false });
   gsap.set(needle, { rotation: -90, svgOrigin: `${cx} ${cy}` });
   const lang = ctx.deck.lang;
   const small = `${Math.max(24, Math.round(s * 0.05))}px`;
   const ends = el(root, "div", { display: "flex", justifyContent: "space-between", color: "var(--k-muted)", fontSize: small });
   el(ends, "span", {}, counterText(min, min, 1, lang, decimals(min)));
-  el(ends, "span", {}, counterText(opts.max, opts.max, 1, lang, decimals(opts.max)));
+  el(ends, "span", {}, counterText(max, max, 1, lang, decimals(max)));
   const line0 = el(root, "div", { textAlign: "center", whiteSpace: "nowrap" });
   const num = el(line0, "span", { font: `700 ${Math.round(s * 0.16)}px/1.1 var(--k-font)`, fontVariantNumeric: "tabular-nums" });
   num.setAttribute("data-k-text", "");
@@ -257,7 +259,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
 
   const swing = (tl: gsap.core.Timeline, from: number, to: number, at?: string) => {
     const d = { duration: ctx.reducedMotion ? 0 : motion.step * 2, ease: "power2.out", immediateRender: false };
-    tl.fromTo(needle, { rotation: gaugeAngle(from, min, opts.max) }, { rotation: gaugeAngle(to, min, opts.max), ...d }, at);
+    tl.fromTo(needle, { rotation: gaugeAngle(from, min, max) }, { rotation: gaugeAngle(to, min, max), ...d }, at);
     tl.fromTo(arc, { strokeDashoffset: 1 - frac(from) }, { strokeDashoffset: 1 - frac(to), autoRound: false, ...d }, "<");
     const dec = decimals(to);
     tl.to({}, {
