@@ -328,7 +328,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
   return { el: d, push: bg.kenBurns ? img : undefined, loop };
 }
 
-const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter"];
+const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter", "push"];
 
 export function renderWorld(
   deck: Deck,
@@ -456,7 +456,7 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        // Reduced motion: the dive, the CRT flash and the shatter fade instead.
+        // Reduced motion: the dive, the CRT flash, the shatter and the push fade instead.
         const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
         return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),

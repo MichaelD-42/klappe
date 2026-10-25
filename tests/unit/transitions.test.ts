@@ -9,7 +9,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("transition registry", () => {
   it("names every transition", () => {
-    expect(Object.keys(registry).sort()).toEqual(["blackout", "crt", "cut", "fade", "shatter", "zoom"]);
+    expect(Object.keys(registry).sort()).toEqual(["blackout", "crt", "cut", "fade", "iris", "push", "shatter", "zoom"]);
   });
   it("plays the asked transition when it is built", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
