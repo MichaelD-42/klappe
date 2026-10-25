@@ -17,6 +17,7 @@
   --k-series-5: #9b3fb8;
   --k-series-6: #d9415f;
   --k-font: "Inter Variable", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --k-font-heading: var(--k-font);
   --k-font-code: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
   --k-code-foreground: #221a3d;
   --k-code-background: #f6f4ff;

@@ -58,6 +58,7 @@ body {
 }
 
 .k-scene h2 {
+  font-family: var(--k-font-heading);
   margin: 0 0 64px;
   font-size: 88px;
   font-weight: 700;

@@ -9,6 +9,7 @@ export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./callout";
 export * from "./cardstack";
 export * from "./chart";
+export * from "./chat";
 export * from "./checklist";
 export * from "./code";
 export * from "./comparetable";
