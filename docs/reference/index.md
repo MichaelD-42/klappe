@@ -37,4 +37,6 @@
   - [chat](elements/chat.md): a messenger thread; typing dots, then the answer streams in.
   - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.
   - [mesh3d](elements/mesh3d.md): a self-running 3D dot mesh with moods.
+- [Architecture](../architecture.md): the components, the path from deck folder to stage, and where the timeline rule is enforced.
+- [Glossary](../glossary.md): the terms klappe uses, each with one meaning.
 - [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

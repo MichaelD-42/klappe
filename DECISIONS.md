@@ -219,3 +219,12 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **`glow` is a blurred layer behind the target whose `opacity` alone tweens; the blur is fixed at build. It takes a token name (`color`, default `--k-accent`), so `lineArt().glow` keeps its warm `--k-warn`.**
   - Why: tweening `filter: drop-shadow` repaints the element every frame (`docs/perf-m2.md`). An HTML target gets a box before its top-level element in the scene, so DOM order paints it behind; an SVG target gets a copy of itself, because the HTML layer paints over all SVG.
   - `breathe` loops on the wall clock (Web Animations, on a leaf under `data-k-ignore`, as the crt blink does), not as a finite repeat on the timeline: a live marker must not stop after N breaths, and a long repeat would hold up auto-advance. The timeline only fades its layer in and out, so seek still equals play. With reduced motion the loop does not start.
+
+## 2026-10-25 (deck tooling)
+
+- **The timeline lint flags only `from()`; a `fromTo` without `immediateRender: false` is left to the walk.**
+  - Why: the demo has twelve such tweens whose start is the load state, and GSAP's default writes that state at load, as a seek back writes it. Adding the flag there without a `gsap.set` in `build` broke play = seek in the walk at every size. A static check cannot tell a start that is the load state from one that shows early.
+- **`klappe outline` parses the deck in Node through Vite's `runnerImport`, without a browser and without the scene modules.**
+  - Why: the steps, notes and titles all come from `scene.md`, and the TS parser is the one the browser runs, so the outline cannot drift from the deck. Loading `scene.ts` would need the DOM.
+- **`klappe shot` and `klappe pdf` share `openDeck` and `showStep` (`bin/pdf.mjs`): `?instant=1&reducedmotion=1`, no UI, a cut per step, fonts and one painted frame awaited.**
+  - Why: the agents wrote their own Playwright scripts for every review, each a little different. With reduced motion, moving backgrounds hold their first frame, so a shot is the same on every run.

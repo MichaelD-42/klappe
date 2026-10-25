@@ -2,6 +2,28 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## Unreleased
+
+Tooling for building decks with agents, the architecture doc and a glossary, and a scrim fix for moving backgrounds.
+
+### Added
+
+- `klappe shot` (`npm run shot`): PNGs of chosen steps at 1920x1080 and 1366x768, each step as it ends with no UI on top, in `dist/shots/<id>/`. A target is `<section>`, `<section>/<scene>` or `<section>/<scene>/<step>`, as in a deep link; no target shoots every step. `--last` keeps each scene's last step, `--sheet` adds one contact sheet per section, `--theme <name>` picks a theme. A target that names no step, or a page error, fails it. The builder and the look reviewer use it instead of their own Playwright scripts.
+- `klappe outline` (`npm run outline`): the deck as text, with no browser: every section and scene with its deep-link ids, every step with its note, and a timing estimate (notes at 130 words a minute, at least 15 s a step). A new `deck.md` key, `duration` in minutes, gives it a target to compare against.
+- A timeline lint (`tests/lint/timeline.test.ts`): deck code may not use `from()`.
+- The skill's "Choose the element by intent" is a table: intent, effect, reference page and the catalog scene to copy, for every effect a deck can call. `tests/lint/skill-catalog.test.ts` keeps it complete and its links and scenes real.
+- `docs/architecture.md`: the components, the path from deck folder to stage, a step press, and where the timeline rule is enforced, with Mermaid diagrams. `docs/glossary.md`: the terms klappe uses, each with one meaning and its relations.
+- The demo deck has a local clip, `media/sample.mp4` (six seconds, 65 KB, made for the demo), and a catalog scene for a video background (`#/fullscreen/video-loop/1`). The media scenes play it instead of a clip from the internet, so the demo runs offline.
+
+### Fixed
+
+- A video, aurora, animated SVG or own-loop background with a `scrim` showed the scrim at full strength, so the stage was black: the scrim now keeps its value.
+
+### Changed
+
+- Building a deck from a storyboard: before the fan-out, the agent asks the deck owner whether to build the sections inline in its own session, with a checkpoint after each, or with one `klappe-builder` subagent per section, and recommends one.
+- `Point` (`{ x, y }`) is in `klappe/types`; `flow`, `swimlanes` and `shatter` use it instead of their own, and `magicMove`'s `Box` is `Rect`.
+
 ## 0.4.0 (2026-10-25)
 
 The M4 effects so far: moving backgrounds, spotlight and marks, board numbers and charts, five new themes, bundled fonts, `klappe pdf`, and the effect backlog (30+ effects, six transitions, five camera moves, safe-area checks in the self-test).
