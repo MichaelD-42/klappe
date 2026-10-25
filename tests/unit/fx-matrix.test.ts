@@ -20,3 +20,12 @@ test('slots sit inside their quadrant and no two overlap', () => {
 test('a rect too low for one row has no slots', () => {
   expect(matrixLayout({ x: 0, y: 0, w: 800, h: 200 }).slots.tl).toEqual([])
 })
+
+test('the slot columns sit 32 px in from the quadrant sides, the inset of the quadrant names', () => {
+  const { quads, slots } = matrixLayout(rect)
+  for (const [q, list] of Object.entries(slots)) {
+    const b = quads[q as keyof typeof quads]
+    expect(Math.min(...list.map((s) => s.x)) - b.x, q).toBeCloseTo(32, 1)
+    expect(b.x + b.w - Math.max(...list.map((s) => s.x + s.w)), q).toBeCloseTo(32, 1)
+  }
+})

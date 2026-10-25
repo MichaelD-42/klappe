@@ -19,7 +19,7 @@ const QUADS: Quadrant[] = ["tl", "tr", "bl", "br"];
 const GUTTER = 56; // left of the plot for the y title, below it for the x title
 const NAME_H = 48; // the band at the top of a quadrant for its name
 const PAD = 16;
-const NAME_X = 2 * PAD; // a quadrant name's inset from its side, clear of the y arrowhead
+const NAME_X = 2 * PAD; // the inset of quadrant names and slot columns from the quadrant sides, clear of the y arrowhead
 const CHIP_H = 64;
 const COLS = 2;
 const ARROW = 20;
@@ -38,13 +38,13 @@ export function matrixLayout(rect: Rect): { plot: Rect; quads: Record<Quadrant, 
   const [qw, qh] = [plot.w / 2, plot.h / 2];
   const quad = (q: Quadrant) => ({ x: plot.x + (q[1] === "r" ? qw : 0), y: plot.y + (q[0] === "b" ? qh : 0), w: qw, h: qh });
   const quads = Object.fromEntries(QUADS.map((q) => [q, quad(q)])) as Record<Quadrant, Rect>;
-  const cw = (qw - (COLS + 1) * PAD) / COLS;
+  const cw = (qw - 2 * NAME_X - (COLS - 1) * PAD) / COLS;
   const rows = Math.max(0, Math.floor((qh - NAME_H - PAD) / (CHIP_H + PAD)));
   const slots = Object.fromEntries(
     QUADS.map((q) => {
       const b = quads[q];
       const list = Array.from({ length: rows * COLS }, (_, k) => ({
-        x: r2(b.x + PAD + (k % COLS) * (cw + PAD)), y: r2(b.y + NAME_H + Math.floor(k / COLS) * (CHIP_H + PAD)), w: r2(cw), h: CHIP_H,
+        x: r2(b.x + NAME_X + (k % COLS) * (cw + PAD)), y: r2(b.y + NAME_H + Math.floor(k / COLS) * (CHIP_H + PAD)), w: r2(cw), h: CHIP_H,
       }));
       return [q, list];
     }),
