@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
+import { counterText } from "./motion";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 
@@ -198,6 +199,159 @@ export function progress(ctx: Ctx, opts: ProgressOpts): StatHandle {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
       tl.to(arc, { strokeDashoffset: 0, duration: motion.step * 2, ease: "power2.out", autoRound: false }, ">");
       counting(tl, num, (opts.value / opts.target) * 100, show);
+    },
+  };
+}
+
+export interface GaugeOpts {
+  x: number;
+  y: number;
+  size: number; // the dial's width; it is about half as high, plus the number under it
+  value: number;
+  min?: number; // default 0
+  max: number;
+  label?: string;
+  unit?: string; // after the number, smaller
+  source?: string;
+}
+export interface GaugeHandle {
+  show: StepAdder; // fades in; the needle swings from min to value
+  to(value: number): StepAdder; // the needle swings on from where the steps before left it
+}
+
+// The needle's angle in degrees from straight up: -90 at min, 90 at max, clamped to the dial.
+export const gaugeAngle = (value: number, min: number, max: number): number =>
+  -90 + 180 * Math.max(0, Math.min(1, (value - min) / (max - min)));
+
+// A half-circle dial: the track in --k-line, the arc up to the value and the needle in --k-accent, the number
+// (deck language format) under the dial, min and max at the ends. With reduced motion the needle jumps.
+export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
+  const min = opts.min ?? 0;
+  if (!(opts.max > min)) ctx.problem(`gauge: max ${opts.max} must be above min ${min}`);
+  const max = opts.max > min ? opts.max : min + 1; // a broken range still draws, the needle at an end
+  const s = opts.size;
+  const thick = s * 0.08;
+  const [cx, cy, r] = [s / 2, s / 2, s / 2 - thick / 2];
+  const root = block(ctx, "gauge", opts.x, opts.y, s, opts.source);
+  const svg = svgEl(root, "svg", { width: s, height: s / 2 + thick, viewBox: `0 0 ${s} ${s / 2 + thick}` });
+  const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 };
+  svgEl(svg, "path", dial).style.stroke = "var(--k-line)";
+  const arc = svgEl(svg, "path", dial);
+  // Dash 1, gap 1: an offset of 1 - f shows the first f of the dial, so a swing is one offset tween.
+  Object.assign(arc.style, { stroke: "var(--k-accent)", strokeDasharray: "1 1" });
+  const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" });
+  needle.style.stroke = "var(--k-accent)";
+  svgEl(svg, "circle", { cx, cy, r: thick * 0.5 }).style.fill = "var(--k-accent)";
+  const frac = (v: number) => (gaugeAngle(v, min, max) + 90) / 180;
+  gsap.set(arc, { strokeDashoffset: 1, autoRound: false });
+  gsap.set(needle, { rotation: -90, svgOrigin: `${cx} ${cy}` });
+  const lang = ctx.deck.lang;
+  const small = `${Math.max(24, Math.round(s * 0.05))}px`;
+  const ends = el(root, "div", { display: "flex", justifyContent: "space-between", color: "var(--k-muted)", fontSize: small });
+  el(ends, "span", {}, counterText(min, min, 1, lang, decimals(min)));
+  el(ends, "span", {}, counterText(max, max, 1, lang, decimals(max)));
+  const line0 = el(root, "div", { textAlign: "center", whiteSpace: "nowrap" });
+  const num = el(line0, "span", { font: `700 ${Math.round(s * 0.16)}px/1.1 var(--k-font)`, fontVariantNumeric: "tabular-nums" });
+  num.setAttribute("data-k-text", "");
+  num.textContent = counterText(min, min, 1, lang, decimals(opts.value));
+  if (opts.unit) el(line0, "span", { font: `600 ${small}/1 var(--k-font)`, marginLeft: "8px" }, opts.unit.trim());
+  if (opts.label) el(root, "div", { marginTop: "12px", textAlign: "center" }, opts.label);
+
+  const swing = (tl: gsap.core.Timeline, from: number, to: number, at?: string) => {
+    const d = { duration: ctx.reducedMotion ? 0 : motion.step * 2, ease: "power2.out", immediateRender: false };
+    tl.fromTo(needle, { rotation: gaugeAngle(from, min, max) }, { rotation: gaugeAngle(to, min, max), ...d }, at);
+    tl.fromTo(arc, { strokeDashoffset: 1 - frac(from) }, { strokeDashoffset: 1 - frac(to), autoRound: false, ...d }, "<");
+    const dec = decimals(to);
+    tl.to({}, {
+      ...d,
+      onUpdate(this: gsap.core.Tween) {
+        num.textContent = counterText(from, to, this.ratio, lang, dec);
+      },
+    }, "<");
+  };
+  let at = min; // the value the steps added so far leave the needle on
+  return {
+    show(tl) {
+      tl.to(root, { autoAlpha: 1, duration: motion.step });
+      swing(tl, min, opts.value, ">");
+      at = opts.value;
+    },
+    to: (value) => (tl) => {
+      swing(tl, at, value);
+      at = value;
+    },
+  };
+}
+
+export interface LikertOpts {
+  x: number;
+  y: number;
+  w: number;
+  rows: { statement: string; counts: number[] }[]; // counts: how many gave each of the 5 points, disagree first
+  scale?: string[]; // the 5 point names; default "Strongly disagree" … "Strongly agree"
+  source?: string;
+}
+export interface LikertHandle {
+  show: StepAdder; // the legend, the statements and their empty tracks
+  row(i: number): StepAdder; // row i's answers grow in and its agree share counts up
+}
+
+// shortcut: English point names; move them to strings.ts when it has a second language.
+const LIKERT_SCALE = ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"];
+// Diverging: --k-bad for disagree, through --k-line for neutral, to --k-ok for agree.
+const LIKERT_FILL = [
+  "var(--k-bad)",
+  "color-mix(in srgb, var(--k-bad) 50%, var(--k-bg))",
+  "var(--k-line)",
+  "color-mix(in srgb, var(--k-ok) 50%, var(--k-bg))",
+  "var(--k-ok)",
+];
+
+// Each point's share of the row's answers, 0 to 1; all 0 for a row nobody answered.
+export function likertShares(counts: number[]): number[] {
+  const total = counts.reduce((a, b) => a + b, 0);
+  return counts.map((c) => (total > 0 ? c / total : 0));
+}
+
+// Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree
+// (left) to agree (right), and the agree share (the top two points) at its end. One person's answer is a row
+// with a single count of 1. A row whose counts are not 5 numbers of 0 or more is a deck problem and stays empty.
+export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
+  const root = block(ctx, "likert", opts.x, opts.y, opts.w, opts.source);
+  const legend = el(root, "div", { display: "flex", flexWrap: "wrap", gap: "8px 28px", marginBottom: "28px", fontSize: "24px", color: "var(--k-muted)" });
+  (opts.scale ?? LIKERT_SCALE).forEach((name, i) => {
+    const item = el(legend, "span", { display: "flex", alignItems: "center", gap: "10px" });
+    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: LIKERT_FILL[i] });
+    el(item, "span", {}, name);
+  });
+  const rows = opts.rows.map((row, i) => {
+    const ok = row.counts.length === 5 && row.counts.every((c) => Number.isFinite(c) && c >= 0);
+    if (!ok) ctx.problem(`likert: row ${i + 1} needs 5 counts of 0 or more, got [${row.counts.join(", ")}]`);
+    const shares = ok ? likertShares(row.counts) : [0, 0, 0, 0, 0];
+    const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "24px" });
+    line.dataset.kLikertRow = String(i);
+    el(line, "div", { flex: "0 0 38%" }, row.statement);
+    const track = el(line, "div", { flex: "1", height: "44px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
+    const bar = el(track, "div", { display: "flex", height: "100%" });
+    shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: LIKERT_FILL[k] }));
+    const num = el(line, "div", { flex: "0 0 96px", textAlign: "right", color: "var(--k-ok)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" });
+    const show = (v: number) => `${Math.round(v)} %`;
+    num.textContent = show(0);
+    gsap.set(num, { autoAlpha: 0 });
+    // With reduced motion the bar fades in instead of growing.
+    gsap.set(bar, ctx.reducedMotion ? { autoAlpha: 0 } : { scaleX: 0, transformOrigin: "0% 50%" });
+    return { bar, num, agree: (shares[3] + shares[4]) * 100, show };
+  });
+  return {
+    show(tl) {
+      tl.to(root, { autoAlpha: 1, duration: motion.step });
+    },
+    row: (i) => (tl) => {
+      const r = rows[i];
+      if (!r) return ctx.problem(`likert: no row ${i}; the rows are 0 to ${rows.length - 1}`);
+      tl.to(r.bar, ctx.reducedMotion ? { autoAlpha: 1, duration: motion.step } : { scaleX: 1, duration: motion.step * 2, ease: "power2.out" });
+      tl.to(r.num, { autoAlpha: 1, duration: motion.step / 2 }, "<");
+      counting(tl, r.num, r.agree, r.show);
     },
   };
 }
