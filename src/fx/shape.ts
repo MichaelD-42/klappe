@@ -28,6 +28,7 @@ export interface TintOpts {
 
 const SVG = "http://www.w3.org/2000/svg";
 const HEAD = 20; // each head stroke's length
+const SHAFT = 0.9; // seconds the shaft takes to draw on
 
 // The arrow's shaft (a quadratic curve) and its head of two strokes, as path data.
 export function arrowPath(from: P, to: P, curve = 0): { shaft: string; head: string } {
@@ -82,9 +83,9 @@ export function arrow(ctx: Ctx, opts: ArrowOpts): ShapeHandle {
   return {
     el: g,
     draw(tl) {
-      const start = drawOn(els[0])(tl);
-      tl.set(g, { autoAlpha: 1 }, start).set(els[1], { autoAlpha: 1 }, start + 0.8);
-      drawOn(els[1], { duration: 0.3, at: start + 0.8 })(tl);
+      const start = drawOn(els[0], { duration: SHAFT })(tl);
+      tl.set(g, { autoAlpha: 1 }, start).set(els[1], { autoAlpha: 1 }, start + SHAFT - 0.1);
+      drawOn(els[1], { duration: 0.3, at: start + SHAFT - 0.1 })(tl);
     },
     show(tl) {
       show(g)(tl);
@@ -99,14 +100,18 @@ const tinted = new WeakMap<Element, Map<string, string>>();
 // A step that tweens a colour property from its current colour to a theme token's colour. GSAP cannot tween
 // var(): both ends are read as resolved colours when the step is added, at load. A second tint on the same
 // element and property starts where the first ends.
-export function tint(el: Element, opts: TintOpts): StepAdder {
+export function tint(el: Element, opts: TintOpts, ctx?: Ctx): StepAdder {
   const prop = opts.prop ?? "color";
   return (tl) => {
     const seen = tinted.get(el) ?? new Map<string, string>();
     tinted.set(el, seen);
     const from = seen.get(prop) ?? getComputedStyle(el)[prop];
     // An unknown token resolves to "": the colour then stays as it is.
-    const to = token(el, opts.to) || from;
+    let to = token(el, opts.to);
+    if (!to) {
+      ctx?.problem(`tint: unknown token '${opts.to}'`);
+      to = from;
+    }
     seen.set(prop, to);
     tl.fromTo(el, { [prop]: from }, { [prop]: to, duration: motion.step, immediateRender: false });
   };

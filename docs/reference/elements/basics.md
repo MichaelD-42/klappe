@@ -6,7 +6,7 @@ Catalog: section `106-basics` (`#/basics/text-and-fades/2`).
 
 ## Example
 
-Only in `scene.ts`. From `decks/demo/sections/106-basics/10-text-and-fades/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/106-basics/10-text-and-fades/scene.ts`:
 
 ```ts
 import { hide, show, text, title } from "klappe/fx";
@@ -50,11 +50,11 @@ steps: [
 | `color` | string | `"--k-fg"` | a theme token name, for example `"--k-muted"` or `"--k-accent"` |
 | `weight` | number | 400 | font weight |
 
-A `color` that is not a `--k-*` name (for example `"red"`) reports `text: color "red" is not a --k-* token name` and the box uses `--k-fg`.
+A `color` that is not a `--k-*` name (for example `"red"`) reports `text: color "red" is not a --k-* token name` and the box uses `--k-fg`. So does a `--k-*` name the theme does not define (for example `"--k-nope"`), with `text: unknown token "--k-nope"`.
 
 ## Handle
 
-`title` and `text` return `{ el, show }`: `el` is the element, `show` is the step adder `show(el)`. To hide it again, call `hide(r.h.el)(tl)`.
+`title` and `text` return a `BasicHandle`: `{ el, show }`. `el` is the element, `show` is the step adder `show(el)`. To hide it again, call `hide(r.h.el)(tl)`.
 
 ## Reduced motion
 

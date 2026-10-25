@@ -26,10 +26,12 @@ test('a second tint starts where the first ends, even when its adder was made fi
   vi.stubGlobal('getComputedStyle', (e: typeof el) => ({ color: e.color, getPropertyValue: (n: string) => tokens[n] ?? '' }))
   const toWarn = tint(el as unknown as Element, { to: '--k-warn' })
   const toAccent = tint(el as unknown as Element, { to: '--k-accent' })
-  const toNowhere = tint(el as unknown as Element, { to: '--k-nope' })
+  const problem = vi.fn()
+  const toNowhere = tint(el as unknown as Element, { to: '--k-nope' }, { problem } as never)
   const tl = gsap.timeline({ paused: true })
   const ends: number[] = []
   for (const add of [toAccent, toWarn, toNowhere]) (add(tl), ends.push(tl.duration()))
+  expect(problem.mock.calls).toEqual([["tint: unknown token '--k-nope'"]])
   expect(el.color).toBe('rgb(255, 255, 255)') // nothing renders at load
   tl.seek(ends[1])
   expect(el.color).toBe('rgb(255, 0, 0)')
