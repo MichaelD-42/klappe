@@ -13,22 +13,17 @@ Helpers wanted by the training deck (2026-10-25 harvest; counts are greps over i
 
 - Scene reuse with options: 36 scenes are two-line copies of a shared scene function.
 - Self-test checks for ink outside a safe area (margins, footer) and for text clipped by its box; the most frequent look finding.
-- Smaller: an exercise card, a typewriter in the brand font, a heading-font token.
+- Smaller: a typewriter in the brand font, a heading-font token.
 
 New effects, proposed 2026-10-24, not yet specified:
 
-- Sticky notes: notes appear, then move into groups (an affinity map), for workshop decks.
 - Kinetic quote: a statement whose key words grow and take `--k-accent` as they are spoken. May share code with `reveal`.
 - Word cloud: words sized by weight from a `data/` file, placed without overlap, revealed step by step. Placement must be deterministic (seek equals play, same picture in CI).
-- Venn: two or three circles whose overlaps light up step by step.
-- Pyramid or layer stack: layers build bottom-up (a test pyramid, a capability stack).
-- Comparison table: rows build one at a time, ticks and crosses land per cell (a feature matrix).
 - Chat: a messenger thread; messages arrive, a typing indicator shows, the answer streams in. Seek must equal play, so the stream is a pure function of progress, like `typed`.
 - Redline: prose changes as strike-through and insert, the text cousin of `code().diff()`.
 - Split-flap: an airport-board flip to a number or a word, in the `scramble` family.
 - Handwriting: a short phrase writes itself stroke by stroke (needs glyph paths; check fonts and licence).
 - Loupe: a magnifying lens slides over a picture and enlarges one detail.
-- Card stack: a fanned stack; one card is pulled out, the rest stay behind.
 
 New transitions, proposed 2026-10-24:
 

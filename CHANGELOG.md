@@ -6,6 +6,11 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `venn`: two or three circles with names; `light(...ids)` lights the region in exactly those sets with a translucent `--k-accent` fill, clipped exactly. The region before it settles as it lights, and region labels stay once shown. With reduced motion the circles fade in instead of drawing on.
+- `pyramid`: a test pyramid or capability stack (`shape: "stack"`); `next()` builds the next layer up with its label inside, in the accent colour until the next layer builds. With reduced motion a layer fades in instead of growing.
+- `compareTable`: a feature matrix whose rows build one per step; ticks in `--k-ok` and crosses in `--k-bad` land cell by cell, and the newest row's label is lit in `--k-accent` until the next row. `exerciseCard`: a task card with a title, time box and group (with icons), numbered tasks, and optional items that `extra(i)` reveals one per step. Both shrink to a 20 px floor to fit. Reduced motion: marks and items fade without the pop or rise.
+- `stickyNotes` and `cardStack`: workshop notes that appear scattered and tilted, then fly into labelled group columns one `group(groupId, ids)` per step (an affinity map), in paper colours mixed from the series tokens; and a fanned hand of cards where `pull(i)` lifts and enlarges one while the rest dim behind it, and `back` returns it. With reduced motion notes and cards cut to their place.
+- The walk self-test also steps back: at each step it plays the next step, steps back, and compares the result with the deep link. Its snapshot now records stroke, outline and border colour and z-index too, read computed.
 - `chart` types `funnel` and `sankey`. A funnel sizes each stage by value and shows the conversion between stages. A sankey lays nodes out in columns, with bands as thick as their flow; `highlight(row)` lights one flow in `--k-accent`. A sankey refuses cycles and reads up to 16 nodes in 6 columns.
 - `gauge` (a half-circle dial whose needle swings to a value; `to(value)` swings it again), `likert` (survey answers on a 5-point agree scale, one bar per statement, `row(i)` per step), and `chart` `bar(i)` to show one bar and its value per step.
 - `cycle` and `vModel`: process diagrams for training. `cycle` puts phases round a ring (PDCA, a feedback loop), an arrow from each to the next, and `phase(i)` lights the current one in `--k-accent`. `vModel` draws the V model with each design level linked across to the test that checks it; `level(i)` or `link(i)` lights one, and it settles when the next one lights.
@@ -92,6 +97,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `checklist`: a `tick(i)` adder built out of step order lit the wrong box, because it noted the previous item when it was built; it now notes it when its step is added.
 - `morph`: the old shape ends inside the new one and the new one starts inside the old, so text no longer spills over its card mid-way; the new shape fades in before the old one fades out, so the middle frame is not two half-transparent shapes.
 - `shatter`: the black gaps between the shards fade as they start to fall, so they fall over the scene instead of over a black box (and its edge no longer shows as a strip).
 - A `ctx.problem` call made after load (a helper measuring text once its font is in, or during a play) shows in the on-screen problems list, not only in the self-test.
