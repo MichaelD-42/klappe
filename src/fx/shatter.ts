@@ -191,6 +191,7 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
 
   const layer = document.createElement("div");
   abs(layer, { left: `${box.x}px`, top: `${box.y}px`, pointerEvents: "none" });
+  layer.setAttribute("data-k-bleed", ""); // shards fly off the frame by design; cracks stay cut to the target, which is still checked
   host.append(layer);
 
   const svg = document.createElementNS(SVG, "svg");

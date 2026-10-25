@@ -1,24 +1,40 @@
 # Reference
 
-- [Deck format](deck-format.md): folders, `deck.md`, `scene.md` and its Markdown forms, `scene.ts`, `section.ts`, the effects, keys, URL flags and deep links.
+- [Deck format](deck-format.md): folders, `deck.md`, `scene.md` and its Markdown forms, `scene.ts`, `section.ts`, the effects, keys, URL flags and deep links, and reusing a scene with options, the `safe-area` key and the look checks.
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
-- [Effects](effects.md): `chart`, `worldMap`, `figure`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `qr`, `kpi`, `waffle`, `progress`, `barRace`, `shatter`, `shout`, `swarm`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, `scramble`, the transitions and their helpers.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `travel`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `loupe`, `qr`, `kpi`, `waffle`, `progress`, `gauge`, `likert`, `barRace`, `shatter`, `shout`, `swarm`, `burst`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, `scramble`, `handwrite`, `reveal`, `redline`, `splitFlap`, `wordCloud`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
+  - [basics](elements/basics.md): `title`, `text` boxes, and `show` and `hide` fades for any element.
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
   - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
-  - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike or arrow on a target.
+  - [focus](elements/focus.md): lights one item in place while the rest dim, with no layer over the scene.
+  - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
+  - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
+  - [camera](elements/camera.md): `follow`, the camera rides along with a travelling element, and `impactShake`, a jolt of the whole scene when something lands; `rackFocus`, all but one item blurs and dims; `tilt`, a camera flight with a slight 3D lean; `dollyZoom`, the vertigo move for a big reveal.
+  - [flipCard](elements/flipCard.md): a card that turns over to show its back.
+  - [cardStack](elements/cardStack.md): a fanned hand of cards; one is pulled out, the rest dim behind it.
+  - [shape](elements/shape.md): `shape` and `arrow` on `ctx.svg` that draw on; `tint` and `token` for colour tweens between theme tokens.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
+  - [venn](elements/venn.md): two or three circles whose regions light up one per step.
+  - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
+  - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.
+  - [compareTable](elements/compareTable.md): a feature matrix whose rows build one per step, with ticks and crosses.
+  - [exerciseCard](elements/exerciseCard.md): a task card with time box, group, tasks and optional items revealed per step.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
+  - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.
   - [timer](elements/timer.md): a countdown on the wall clock.
   - [crt](elements/crt.md): colour, settle, prompt lines and dim of the retro terminal.
+  - [chat](elements/chat.md): a messenger thread; typing dots, then the answer streams in.
   - [bubble](elements/bubble.md): side and maxWidth of the speech bubble.
   - [mesh3d](elements/mesh3d.md): a self-running 3D dot mesh with moods.
 - [Agent skill](../../.claude/skills/klappe/SKILL.md): the `klappe` skill for Claude Code. `klappe init` and `npm run klappe:sync` copy it into the deck repo's `.claude/skills/`.

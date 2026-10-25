@@ -38,7 +38,9 @@ const scene: SceneModule = {
     Object.assign(dim.style, { position: "absolute", inset: "0", background: "color-mix(in srgb, var(--k-bg) 40%, var(--k-blackout))" });
     gsap.set(dim, { autoAlpha: 0 });
     // A soft flash: the power-on keeps the phosphor green instead of a near-white card.
-    return { dim, h: crt(ctx, { lines: BOOT.map(([line]) => line), flash: "soft" }) };
+    const h = crt(ctx, { lines: BOOT.map(([line]) => line), flash: "soft" });
+    h.root.setAttribute("data-k-bleed", ""); // the bezel fills the frame by design
+    return { dim, h };
   },
   steps: [
     (tl, { dim, h }: Refs) => {

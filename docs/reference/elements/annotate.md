@@ -1,8 +1,8 @@
 # Hand-drawn marks: `annotate`
 
-A mark on a target, as a pen on a whiteboard would make it: a ring, an underline, a frame, a strike-through or an arrow, drawn on in `--k-accent` with a slight hand wobble. It sits above the scene's text, so it can mark words.
+A mark on a target, as a pen on a whiteboard would make it: a ring, an underline, a frame, a strike-through, an arrow or a highlighter band, drawn on in `--k-accent` with a slight hand wobble. It sits above the scene's text, so it can mark words; a highlight sits behind the text instead.
 
-Catalog: section `120-draw` (`#/draw/annotate/2`).
+Catalog: section `120-draw` (`#/draw/annotate/2`; the highlight is step 5, `#/draw/annotate/5`).
 
 ## `annotate`
 
@@ -19,26 +19,32 @@ steps: [(tl, r) => r.ring.show(tl), (tl, r) => r.arrow.show(tl)],
 
 ### Options
 
-| Name | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `kind` | `"circle"`, `"underline"`, `"box"`, `"strike"`, `"arrow"` | required | `circle`: a rounded loop round the target, a little over one turn. `underline` and `strike`: a stroke under or through each line of the target. `box`: a quick frame with overshooting corners. `arrow`: a 160-unit arrow from `side` to the target's edge |
-| `side` | `"left"`, `"right"`, `"top"`, `"bottom"` | `"left"` | `arrow` only: where it comes from |
-| `pad` | number | 12 | scene units between the target and the mark |
-| `seed` | number | 1 | picks the wobble; the same seed draws the same mark on every load |
+| Name   | Type                                                                     | Default  | Meaning                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------ | ------------------------------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind` | `"circle"`, `"underline"`, `"box"`, `"strike"`, `"arrow"`, `"highlight"` | required | `circle`: a rounded loop round the target, a little over one turn. `underline` and `strike`: a stroke under or through each line of the target. `box`: a quick frame with overshooting corners. `arrow`: a 160-unit arrow from `side` to the target's edge. `highlight`: a marker band behind each line of the target, 80 % of the line's height, its ends leaning like a chisel marker's, in `--k-accent` at 35 % over the stage |
+| `side` | `"left"`, `"right"`, `"top"`, `"bottom"`                                 | `"left"` | `arrow` only: where it comes from                                                                                                                                                                                                                                                                                                                                                        |
+| `pad`  | number                                                                   | 12       | scene units between the target and the mark                                                                                                                                                                                                                                                                                                                                              |
+| `seed` | number                                                                   | 1        | picks the wobble; the same seed draws the same mark on every load                                                                                                                                                                                                                                                                                                                        |
 
 ### Step adders
 
-| Handle | Step |
-| --- | --- |
+| Handle | Step                                                              |
+| ------ | ----------------------------------------------------------------- |
 | `show` | the mark draws on (`drawOn`), 0.45 s per stroke, 0.7 s for a ring |
-| `hide` | it fades out |
+| `hide` | it fades out                                                      |
 
 ### Limits
 
 - An element target is measured when `show` is added: it must be in its final place by then. One with no size reports `annotate: <kind> target has no size to measure`.
 - On dense code, a ring reaches the lines above and below; use `box`, `underline` or `strike` with a small `pad` there.
-- A target that wraps: `underline` and `strike` follow each line; `circle`, `box` and `arrow` frame the whole.
+- A target that wraps: `underline`, `strike` and `highlight` follow each line; `circle`, `box` and `arrow` frame the whole.
+- A highlight paints behind its target's top-level element in the scene. That element must be positioned (`position: absolute` or `relative`); scene text already is. On an element with its own background, such as a card, the band is hidden. On a rect target it goes behind everything in the scene.
+- `--k-fg` on a highlight holds 6.3:1 or more in every built-in theme; a custom theme with a very bright `--k-accent` should check its own.
 
 ## `scribble`
 
 `scribble(kind, box, { pad, seed, side? })` gives the mark's polylines, `{ x, y }[][]`, in drawing order: one for most kinds, three for an arrow (shaft, then the two head strokes). It is pure; tests use it to check the shapes.
+
+## `MARKER_MIX`
+
+`MARKER_MIX` is 0.35, the share of `--k-accent` in a highlight band over the stage. Tests use it to check that `--k-fg` on the band holds 6.3:1.

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import calm from "../../src/themes/calm.css?raw";
-import { contrast, parseTokens, resolveTheme } from "../../src/theme";
+import { contrast, loadFonts, parseTokens, resolveTheme } from "../../src/theme";
 
 // Every built-in theme, by name.
 const builtins = Object.fromEntries(
@@ -47,4 +47,19 @@ describe("theme", () => {
       for (const k of Object.keys(parseTokens(calm))) expect(t, k).toHaveProperty([k]);
     });
   }
+});
+
+describe("loadFonts", () => {
+  it("skips an empty font token", async () => {
+    const vals: Record<string, string> = { "--k-font": " Inter", "--k-font-heading": " ", "--k-font-code": "JetBrains Mono" };
+    const load = vi.fn(async (f: string) => (/^16px \S/.test(f) ? [] : Promise.reject(new Error(`bad ${f}`))));
+    vi.stubGlobal("document", { documentElement: {}, fonts: { load } });
+    vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: (v: string) => vals[v] ?? "" }));
+    try {
+      expect(await loadFonts()).toEqual([]);
+      expect(load.mock.calls.map((c) => c[0])).toEqual(["16px Inter", "16px JetBrains Mono"]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

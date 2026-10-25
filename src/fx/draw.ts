@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import type { Ctx, StepAdder } from "../types";
+import { glow } from "./attention";
 
 export interface DrawOnOpts {
   duration?: number; // default 0.9
@@ -82,7 +83,7 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
 }
 
 // The value of a theme token, for tweens: GSAP cannot tween to a var() string.
-const token = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
+export const token = (el: Element, name: string): string => getComputedStyle(el).getPropertyValue(name).trim();
 
 // Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
 // links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
@@ -126,20 +127,22 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
   for (const s of g.querySelectorAll<SVGElement>(SHAPES))
     if (!s.closest(UNDRAWN))
       Object.assign(s.style, { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" });
+  const glowing = new WeakSet<Element>();
   return {
     draw: drawOn(g),
     glow(tl, selector) {
-      const els = g.querySelectorAll(selector);
+      // Not a glow's own copies (or its wrap), which a tag selector matches too.
+      const els = [...g.querySelectorAll(selector)].filter((e) => !e.closest("[data-k-glow]"));
       if (!els.length) return ctx.problem(`lineArt glow: nothing matches '${selector}'`);
+      // A part that already glows keeps its glow: a repeat call adds nothing for it.
+      const fresh = els.filter((e) => !glowing.has(e));
+      if (!fresh.length) return;
+      fresh.forEach((e) => glowing.add(e));
       const [fg, warm] = [token(g, "--k-fg"), token(g, "--k-warn")];
+      // The shared glow in the warm colour, and the part itself turns warm with it.
+      glow(ctx, fresh, { color: "--k-warn" }).on(tl);
       // The start values equal the look at load, so rendering them at load changes nothing on screen.
-      tl.fromTo(els, { color: fg }, { color: warm, duration: 0.5 });
-      tl.fromTo(
-        els,
-        { filter: `drop-shadow(0 0 0px ${warm})` },
-        { filter: `drop-shadow(0 0 22px ${warm})`, duration: 0.6, ease: "power2.out" },
-        "<",
-      );
+      tl.fromTo(fresh, { color: fg }, { color: warm, duration: 0.5 }, "<");
     },
   };
 }

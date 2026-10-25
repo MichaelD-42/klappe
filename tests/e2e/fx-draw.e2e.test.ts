@@ -29,7 +29,8 @@ async function dashes(page: Page, i: number) {
   return page.evaluate(async (i) => {
     await window.klappe.stepper.goto(i, 'cut')
     const of = (scene: string) =>
-      [...document.querySelectorAll(`g[data-scene="${scene}"] :is(path, rect, circle)`)].map((s) => {
+      // Not the glow's blurred copies: they are never drawn on.
+      [...document.querySelectorAll(`g[data-scene="${scene}"] :is(path, rect, circle):not([data-k-glow] *)`)].map((s) => {
         const st = getComputedStyle(s)
         return [st.strokeDasharray, parseFloat(st.strokeDashoffset)] as const
       })
@@ -104,13 +105,45 @@ test('the glow turns the bulb warm', async () => {
       await window.klappe.stepper.goto(i, 'cut')
       const b = document.querySelector('g[data-scene="desk"] .bulb')!
       const root = getComputedStyle(document.documentElement)
-      return { color: getComputedStyle(b).color, filter: getComputedStyle(b).filter, warm: root.getPropertyValue('--k-warn').trim() }
+      const glow = document.querySelector('g[data-scene="desk"] [data-k-glow] > *')!
+      const shows = glow.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+      // lineArt's glow only comes on: no breathe, so no wall-clock loop exists.
+      const loops = [...document.querySelectorAll('[data-k-glow] *')].flatMap((e) => e.getAnimations()).length
+      return { color: getComputedStyle(b).color, glow: shows, glowColor: getComputedStyle(glow).color, warm: root.getPropertyValue('--k-warn').trim(), loops }
     }, i)
   const before = await bulb(0)
   const after = await bulb(1)
   expect(before.color).not.toBe(after.color)
   expect(after.color).toBe('rgb(255, 181, 71)') // --k-warn #ffb547
-  expect(after.filter).toContain('22px')
+  // The shared glow: a blurred copy in --k-warn behind the bulb, shown by the step.
+  expect([before.glow, after.glow]).toEqual([false, true])
+  expect(after.glowColor).toBe('rgb(255, 181, 71)')
+  expect([before.loops, after.loops]).toEqual([0, 0])
+  await page.close()
+})
+
+// A second glow on the same part, or a tag selector that also matches the first glow's copies, adds nothing.
+test('lineArt glow twice on one part keeps one glow', async () => {
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-draw`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const r = await page.evaluate(async () => {
+    const { lineArt } = await (new Function('p', 'return import(p)') as (p: string) => Promise<any>)('/src/fx/draw.ts') // a string: vitest would rewrite import()
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    document.body.append(svg)
+    const src = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" class="bulb"/><path d="M0 0 H100"/></svg>'
+    const problems: string[] = []
+    const art = lineArt({ svg, html: document.body, rect: { x: 0, y: 0, w: 100, h: 100 }, problem: (p: string) => problems.push(p) } as any, { src, x: 0, y: 0, w: 100 })
+    const tl: any = { fromTo: () => tl } // only the DOM is checked here
+    art.glow(tl, '.bulb')
+    art.glow(tl, '.bulb')
+    art.glow(tl, 'circle')
+    const out = { problems, wraps: svg.querySelectorAll('[data-k-glow]').length, circles: svg.querySelectorAll('circle').length }
+    svg.remove()
+    return out
+  })
+  // One wrap with two copies (the steady and the breathing layer) besides the bulb itself.
+  expect(r).toEqual({ problems: [], wraps: 1, circles: 3 })
   await page.close()
 })
 

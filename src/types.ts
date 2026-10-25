@@ -13,6 +13,7 @@ export interface DeckMeta {
   intensity: "calm" | "bold";
   confidential: boolean;
   sharedCanvas: string[][];
+  safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-fade" | "shout-answer";
@@ -54,7 +55,16 @@ export interface Ctx {
     to(
       tl: gsap.core.Timeline,
       target: Rect,
-      opts?: { duration?: number; at?: number | string },
+      // tilt: degrees of a 3D lean into the flight's direction, at its peak mid-flight; none by default, none
+      // with reduced motion (the flight is a cut).
+      opts?: { duration?: number; at?: number | string; tilt?: number },
+    ): void;
+    // Closes in on a moving point and keeps it centred: point(t) is where it is, in canvas units, at time share t
+    // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.
+    follow(
+      tl: gsap.core.Timeline,
+      point: (t: number) => { x: number; y: number },
+      opts?: { duration?: number; at?: number | string; zoom?: number },
     ): void;
   };
   // The deck's data/ files (raw text) and media/ files (URL), keyed like the Markdown link: "data/x.csv".
@@ -105,7 +115,7 @@ export interface SceneModule {
   overviewLabel?: string;
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
-export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt";
+export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
 export interface SectionModule {
   // Behind every scene of this section, pinned to the screen: the camera moves the content over it.
   background?: Background;
@@ -161,4 +171,5 @@ export interface SelftestResult {
   checks: SelftestCheck[];
   problems: string[];
   errors: string[];
+  warnings: string[]; // soft findings (safe area, clipped text): reported, never fail the self-test
 }

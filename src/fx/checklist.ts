@@ -81,11 +81,11 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
     tick(i) {
       const r = rows[i];
       if (!r) ctx.problem(`checklist: no item ${i}`);
-      const prev = last;
-      last = i;
       return (tl) => {
         const at = tl.duration();
         if (!r || !fit()) return void tl.set({}, {}, at + 0.4);
+        const prev = last; // step-order state, so adders made out of step order still light the latest tick
+        last = i;
         const set = (el: Element, vars: gsap.TweenVars, t = at) => tl.set(el, { ...vars, immediateRender: false }, t);
         if (rows[prev]) set(rows[prev].box, { stroke: "var(--k-line)" });
         set(r.box, { stroke: "var(--k-accent)" });

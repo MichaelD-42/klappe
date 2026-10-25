@@ -17,6 +17,7 @@ decks/<id>/
       10-old-way/
         scene.md
         scene.ts          # optional
+  shared/                 # optional: helpers and scene factories, not loaded as scenes
 ```
 
 ## deck.md
@@ -29,6 +30,7 @@ Frontmatter keys:
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
+- `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
 
 ## deck.css
 
@@ -65,7 +67,26 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - In a step, only add tweens to `tl`. Do not use `.from()`; use `fromTo`. Do not change the DOM in callbacks, with one exception: `onUpdate` may write the DOM as a pure function of the tween's progress. Mark such an element with `data-k-text` (text) or `data-k-progress` (a progress value), so the self-test compares it.
 - `"<"` is fine after a tween this step added. Never use `"-="` or `"<"` as a step's first position. A step starts at its own label, and an offset before it can pull the tween into the previous step.
 - Use `ctx.camera.to(tl, rect, { duration, at })` for camera moves inside a scene, after the entry.
+- Use `follow(ctx, travel(…))` to keep a travelling element centred, and `impactShake(ctx)` for a jolt when it lands: see [camera](elements/camera.md).
+- `ctx.camera.to` also takes `tilt` (degrees): the flight leans a little into its direction and lands flat. `tilt(ctx, rect)` is the step adder for it; see [camera](elements/camera.md).
 - Keep one master timeline per canvas. The engine owns it.
+
+### Reuse a scene with options
+
+When several scenes share one shape and differ only in their words or numbers, write the shape once as a function that takes options and returns a `SceneModule`. Put it in `decks/<id>/shared/`. klappe loads every `.ts` under `sections/` as a scene or section module, so a helper there would be taken for one. Each scene then needs two lines:
+
+```ts
+import { checkpoint } from "../../../shared/checkpoint";
+export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: "It is round." });
+```
+
+- Return a new object from each call. Keep no DOM or state at module level: two scenes that use the factory can be built at once.
+- The factory fixes the number of step functions, so every `scene.md` that uses it needs that many list items. A mismatch is a deck problem.
+- `scene.md` still gives the title, the step text and the notes. Read them in `build(ctx)` from `ctx.doc` (`title(ctx)` does), so the options carry only what differs.
+- A factory result is a plain `SceneModule`, so another wrapper can take it, as the demo's `captioned(text, scene)` does.
+- The path counts folders: from `sections/<section>/<scene>/scene.ts` it is `../../../shared/`.
+
+Catalog: `#/reuse/check-data/1` and `#/reuse/check-motion/1` both call `checkpoint()` from `decks/demo/shared/checkpoint.ts`.
 
 ## section.ts
 
@@ -88,9 +109,9 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `mesh3d`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`, among them [crt](elements/crt.md) (colour, `settle`, prompts, `cursorAt`), [bubble](elements/bubble.md) (`side`, `maxWidth`), [mesh3d](elements/mesh3d.md) and [timer](elements/timer.md). Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
-- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`. A transition that fails plays `fade` and logs the error. `fade` takes 0.4 s: the old canvas fades out in the first half, then the new one fades in, so two titles at the same spot do not overlap. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom` sets `reveal`, so the new content shows while the canvas grows in. A new transition in `src/fx` can set `reveal` the same way.
+- Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`, `magicMove`. `push` takes `transitionOptions: { direction }` (`left`, the default, `right`, `up` or `down`); `iris` takes `transitionOptions: { origin: [x, y] }` in frame pixels (default the centre). A transition that fails plays `fade` and logs the error. `fade` takes 0.4 s: the old canvas fades out in the first half, then the new one fades in, so two titles at the same spot do not overlap. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom`, `cube` and `pageTurn` set `reveal`, so the new content shows while the canvas grows or turns in. `push` and `iris` set it at their start, so the new content shows while it moves or opens in. `magicMove` flies each element that both sections show with the same `data-k-match` key from its old place to its new one, while the rest fades; a `scene.ts` sets the key in `build`, as in `el.dataset.kMatch = "logo"` (for an icon, `tile.el.dataset.kMatch`). It sets `reveal` when the flight lands. With no shared key it plays a fade. A new transition in `src/fx` can set `reveal` the same way.
 - Shout-out intensity: `intensity` in `deck.md` sets every shout-out, including one a `scene.ts` builds with `shout(ctx, { question, answer })`. Pass `intensity` to set it for one shout-out (see the example below).
-- `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `title(ctx, ctx.doc!.title)`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
+- `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `h: title(ctx)` in `build` builds the `scene.md` title as a hidden `h2`, then `r.h.show(tl)` in step 1 (see [basics](elements/basics.md)). With `build()`, klappe draws nothing for the scene, not even its title, so a scene that wants one calls `title`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
 - `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
 - `ctx.problem(msg)` reports a deck problem. One reported after load (once a web font is in, or while a step plays) joins the on-screen list too. `ctx.onStep(fn)` hears every move, as `{ play, span, scene, next }`: `next` is the scene of the step after it, for a helper that gets ready one step early. Video uses it to play, pause and load.
@@ -213,13 +234,29 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 ## URL flags
 
 - `?instant=1`: every play becomes a seek.
-- `?reducedmotion=1`: camera moves become cuts, pictures leave out the Ken Burns push, and the `zoom`, `crt` and `shatter` transitions play a fade. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
+- `?reducedmotion=1`: camera moves become cuts, pictures leave out the Ken Burns push, and the `zoom`, `crt`, `shatter`, `push`, `glitch`, `cube`, `pageTurn` and `magicMove` transitions play a fade. This is also the default when the system asks for reduced motion (on Linux, desktop animations turned off).
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion, for a presenter laptop with animations off.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
-- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`.
+- `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
+
+## Look checks
+
+`?selftest=walk` checks the look of the current scene at every step, once the step has settled. The findings are warnings: they go to `warnings` in the self-test result (the `script#klappe-selftest` JSON) and never fail the self-test. Each finding is listed once, at the first step that shows it.
+
+- Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the 1920x1080 frame). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
+- Clipped text: shown text that a parent's `overflow: hidden` or `clip` cuts off, which includes `text-overflow: ellipsis` and line clamps. Text that a mask hides completely is not counted.
+
+These are not checked:
+
+- Ink off the stage, and a stroke that is not drawn yet.
+- Ink that spans the whole frame width or height, such as a band or a full-frame picture.
+- Section layers and backgrounds.
+- Anything inside an element with `data-k-ignore` or `data-k-bleed`.
+
+To mark an intended bleed, set `data-k-bleed` on its element, for example `el.setAttribute("data-k-bleed", "")`. Use it for a picture that runs off the edge. It turns off both checks for that element and everything inside it. `worldMap`, the shards of `shatter` and the route of a `travel` that `follow` rides along mark themselves.
 
 ## Deep links
 

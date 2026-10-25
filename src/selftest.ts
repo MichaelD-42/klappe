@@ -35,8 +35,9 @@ function path(e: Element, root: Element, memo?: Map<Element, string>): string {
 // One line per element: the world camera pose, then every inline-styled or SVG-transformed element
 // under it. GSAP writes SVG transforms to the attribute, so that is recorded too. Effects that write
 // from onUpdate mark their output: data-k-text (its text) and data-k-progress (a progress value).
-// Dash, filter, fill-opacity and colour are recorded too, for draw-ons, glows and tints. They are read
-// computed: GSAP rewinds an unset inline filter to "none", which renders the same as unset.
+// Dash, filter, fill-opacity, colour, stroke, outline and border colour and z-index are recorded too, for
+// draw-ons, glows, tints and lit edges. They are read computed: GSAP rewinds an unset inline filter to "none",
+// which renders the same as unset, and an inline var() reads the same as its rgb().
 // Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.world, p)}`).join(" ");
@@ -49,7 +50,7 @@ export function snapshot(c: CanvasRuntime): string {
     const attr = e.getAttribute("transform") ?? "";
     const progress = e.getAttribute("data-k-progress") ?? "";
     const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
-    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}`)}${text}`);
+    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}|${k.stroke}|${k.outlineColor}|${k.borderColor}|${k.zIndex}`)}${text}`);
   }
   return lines.join("\n");
 }
@@ -58,10 +59,10 @@ export function snapshot(c: CanvasRuntime): string {
 const shown = (canvases: CanvasRuntime[]) =>
   canvases.map((c, k) => `canvas ${k}|${round(`${c.el.style.opacity}|${c.el.style.visibility}`)}`).join("\n");
 
-function firstDiff(a: string, b: string): string {
+function firstDiff(a: string, b: string, names = ["play", "seek"]): string {
   const [x, y] = [a.split("\n"), b.split("\n")];
   for (let k = 0; k < Math.max(x.length, y.length); k++)
-    if (x[k] !== y[k]) return `play "${x[k] ?? "(none)"}" vs seek "${y[k] ?? "(none)"}"`;
+    if (x[k] !== y[k]) return `${names[0]} "${x[k] ?? "(none)"}" vs ${names[1]} "${y[k] ?? "(none)"}"`;
   return "";
 }
 
@@ -102,7 +103,85 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
   return bad;
 }
 
-async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
+// The default safe area, top, right, bottom, left in scene px; deck.md safe-area overrides it.
+export const SAFE_AREA: [number, number, number, number] = [48, 64, 48, 64];
+const GRAPHICS = "img, video, canvas, path, circle, rect, line, polyline, polygon, ellipse, image, use";
+const hides = (o: string) => o === "hidden" || o === "clip";
+type Box = [number, number, number, number]; // left, top, right, bottom in client px
+const NONE: Box = [-Infinity, -Infinity, Infinity, Infinity];
+const cut = (a: Box, b: Box): Box => [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])];
+const boxOf = (r: DOMRect): Box => [r.left, r.top, r.right, r.bottom];
+
+// Soft look checks of the current scene at a settled step.
+// Ink: each text run (not its element's box), picture and SVG shape, and each HTML box with a fill or a
+// border, cut to its ancestors' overflow. Not ink: anything off stage, anything that spans the whole frame
+// width or height (a band or backdrop bleeds on purpose), anything under data-k-bleed or data-k-ignore, a
+// stroke not drawn yet, and the section layers and backgrounds, which are not in the scene.
+// Clipped text: a shown text run that an ancestor's overflow hidden or clip cuts (ellipsis and line clamp too).
+function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[]): string[] {
+  const box = stage.getBoundingClientRect();
+  const fit = box.width / 1920;
+  const [top, right, bottom, left] = safe;
+  const area = `[${[left, top, 1920 - right, 1080 - bottom]}]`;
+  const bad: string[] = [];
+  const skip = (e: Element) => !!e.closest("[data-k-ignore], [data-k-bleed]");
+  const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+  const memo = new Map<Element, Box>();
+  // The box an element's content is cut to: its own overflow and every ancestor's, up to the canvas.
+  const clipOf = (e: Element | null): Box => {
+    if (!e || e === c.el) return NONE;
+    let b = memo.get(e);
+    if (!b) {
+      const k = getComputedStyle(e);
+      const r = e.getBoundingClientRect();
+      const x = hides(k.overflowX), y = hides(k.overflowY);
+      b = cut(clipOf(e.parentElement), [x ? r.left : -Infinity, y ? r.top : -Infinity, x ? r.right : Infinity, y ? r.bottom : Infinity]);
+      memo.set(e, b);
+    }
+    return b;
+  };
+  const units = (r: Box) => [(r[0] - box.left) / fit, (r[1] - box.top) / fit, (r[2] - box.left) / fit, (r[3] - box.top) / fit];
+  const ink = (e: Element, r: Box, what: string) => {
+    const [x0, y0, x1, y1] = units(r);
+    if (x1 <= Math.max(x0, 0) || y1 <= Math.max(y0, 0) || x0 >= 1920 || y0 >= 1080) return; // cut away or off stage
+    if ((x0 <= 1 && x1 >= 1919) || (y0 <= 1 && y1 >= 1079)) return;
+    if (x0 < left - 1 || y0 < top - 1 || x1 > 1920 - right + 1 || y1 > 1080 - bottom + 1)
+      bad.push(`safe area: ${path(e, c.el)} ${what}: ink [${[x0, y0, x1, y1].map(Math.round)}] outside ${area}`);
+  };
+  const range = document.createRange();
+  for (const root of c.el.querySelectorAll(`[data-scene="${CSS.escape(scene)}"]`)) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+      const e = t.parentElement;
+      if (!e || !t.textContent?.trim() || skip(e) || !shows(e)) continue;
+      range.selectNodeContents(t);
+      const r = boxOf(range.getBoundingClientRect());
+      const shown = cut(r, clipOf(e));
+      const what = `"${t.textContent.trim().slice(0, 30)}"`;
+      if (shown[2] <= shown[0] || shown[3] <= shown[1]) continue; // hidden behind a mask, not clipped
+      const tol = 2 * fit; // sub-pixel layout of a moved track is not a clip
+      if (shown[0] > r[0] + tol || shown[1] > r[1] + tol || shown[2] < r[2] - tol || shown[3] < r[3] - tol)
+        bad.push(`clipped text: ${path(e, c.el)} ${what}: text [${units(r).map(Math.round)}] cut to [${units(shown).map(Math.round)}]`);
+      ink(e, shown, what);
+    }
+    for (const e of root.querySelectorAll(GRAPHICS)) {
+      if (skip(e) || !shows(e)) continue;
+      const k = getComputedStyle(e);
+      if (e instanceof SVGElement && k.fill === "none" && k.strokeDasharray !== "none" && parseFloat(k.strokeDashoffset) >= parseFloat(k.strokeDasharray)) continue;
+      ink(e, cut(boxOf(e.getBoundingClientRect()), clipOf(e.parentElement)), e.localName);
+    }
+    for (const e of root.querySelectorAll("*")) {
+      if (!(e instanceof HTMLElement) || skip(e)) continue;
+      const k = getComputedStyle(e);
+      const filled = !/^(transparent|rgba\(.*, 0\))$/.test(k.backgroundColor) || k.backgroundImage !== "none";
+      const bordered = (["Top", "Right", "Bottom", "Left"] as const).some((s) => parseFloat(k[`border${s}Width`]) > 0 && k[`border${s}Style`] !== "none");
+      if ((filled || bordered) && shows(e)) ink(e, cut(boxOf(e.getBoundingClientRect()), clipOf(e.parentElement)), e.localName);
+    }
+  }
+  return bad;
+}
+
+async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[]): Promise<void> {
   const { stepper, canvases, steps, stage } = ctx;
   const reset = () => {
     for (const c of canvases) {
@@ -127,14 +206,31 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
     gsap.globalTimeline.timeScale(1);
   }
 
-  for (let i = 0; i < steps.length; i++) {
-    reset();
-    await stepper.goto(i, "cut");
-    const hash = formatHash(steps[i]);
-    const diff = firstDiff(played[i], state(i));
-    checks.push({ name: `step ${hash}: ${diff ? "play≠seek" : "play=seek"}`, ok: !diff, detail: diff || undefined });
-    const bad = legibility(active(i), steps[i].scene, stage);
-    checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
+  // A step back is a cut from the step after; it must land where the deep link does. Play and seek alone miss
+  // tweens that rewind to a wrong start value.
+  const safe = window.klappe.deck.meta.safeArea ?? SAFE_AREA;
+  const seen = new Set<string>();
+  gsap.globalTimeline.timeScale(PLAY_SPEED);
+  try {
+    for (let i = 0; i < steps.length; i++) {
+      reset();
+      await stepper.goto(i, "cut");
+      const hash = formatHash(steps[i]);
+      const seek = state(i);
+      const diff = firstDiff(played[i], seek);
+      checks.push({ name: `step ${hash}: ${diff ? "play≠seek" : "play=seek"}`, ok: !diff, detail: diff || undefined });
+      const bad = legibility(active(i), steps[i].scene, stage);
+      checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
+      // Soft: each finding once, at the first step that shows it.
+      for (const w of look(active(i), steps[i].scene, stage, safe)) if (!seen.has(w)) seen.add(w), warnings.push(`step ${hash}: ${w}`);
+      if (i === steps.length - 1) continue; // next() on the last step only ends the deck
+      await stepper.next();
+      await stepper.prev();
+      const back = firstDiff(seek, state(i), ["seek", "back"]);
+      checks.push({ name: `step ${hash}: ${back ? "back≠seek" : "back=seek"}`, ok: !back, detail: back || undefined });
+    }
+  } finally {
+    gsap.globalTimeline.timeScale(1);
   }
 }
 
@@ -456,13 +552,14 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
   const mode = new URLSearchParams(location.search).get("selftest");
   if (!mode) return;
   const checks: SelftestCheck[] = [];
+  const warnings: string[] = [];
   // main copied each canvas's problems once; later ctx.problem calls (after a web font loads, during
   // the walk) land in the canvas arrays, so collect any that main has not, until the test ends. Not from
   // a count taken here: a problem raised between main's copy and this start would be lost.
   try {
     await document.fonts.ready; // helpers measure text once the web font loads
     await new Promise(requestAnimationFrame);
-    if (mode === "walk") await walk(ctx, checks);
+    if (mode === "walk") await walk(ctx, checks, warnings);
     else if (mode === "ac") {
       await ctx.stepper.goto(0, "cut"); // let main's first move land
       gsap.globalTimeline.timeScale(AC_SPEED);
@@ -485,6 +582,7 @@ export async function runSelftestIfAsked(ctx: SelftestCtx): Promise<void> {
     checks,
     problems: [...ctx.problems],
     errors: [...ctx.errors],
+    warnings,
   };
   const out = document.createElement("script");
   out.type = "application/json";

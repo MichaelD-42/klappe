@@ -213,3 +213,9 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: effects measure text while they build, so the system font made layout differ between the presenter's laptop, CI and the PDF export. Bundled, the deck needs no font CDN and works offline.
   - Variable fonts, so a deck can tween the weight; all three have fixed-width digits, set on the stage, so counters, timers and scrambles do not jitter. Code has ligatures off: `<=` reads as typed.
   - `main.ts` awaits `document.fonts.load` for the faces `--k-font` and `--k-font-code` name before the world renders; only the subsets the text uses download.
+
+## 2026-10-24 (glow, pulse and shake)
+
+- **`glow` is a blurred layer behind the target whose `opacity` alone tweens; the blur is fixed at build. It takes a token name (`color`, default `--k-accent`), so `lineArt().glow` keeps its warm `--k-warn`.**
+  - Why: tweening `filter: drop-shadow` repaints the element every frame (`docs/perf-m2.md`). An HTML target gets a box before its top-level element in the scene, so DOM order paints it behind; an SVG target gets a copy of itself, because the HTML layer paints over all SVG.
+  - `breathe` loops on the wall clock (Web Animations, on a leaf under `data-k-ignore`, as the crt blink does), not as a finite repeat on the timeline: a live marker must not stop after N breaths, and a long repeat would hold up auto-advance. The timeline only fades its layer in and out, so seek still equals play. With reduced motion the loop does not start.

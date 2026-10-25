@@ -238,3 +238,34 @@ test('YouTube and Vimeo iframes are created one step before their scene', async 
   expect(await frames()).toEqual(['youtube', 'vimeo'])
   await page.close()
 })
+
+// autoplay: the player loads its plain address one step early, its autoplay address on its step, the plain one after.
+test('an autoplay embed starts on its step, muted by default, and stops on leave', async () => {
+  const page = await open('?fixture=fx-media#/a/full-youtube/2')
+  for (const host of ['https://www.youtube.com/**', 'https://player.vimeo.com/**']) await page.route(host, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
+  const frame = (s: string) =>
+    page.evaluate((n) => {
+      const f = document.querySelector<HTMLIFrameElement>(`[data-scene$="${n}"] iframe`)
+      return f && { src: f.getAttribute('src'), allow: f.allow }
+    }, s)
+  const step = () => page.evaluate(() => window.klappe.stepper.next())
+  const until = (s: string, src: string) =>
+    page.waitForFunction(([n, v]) => document.querySelector(`[data-scene$="${n}"] iframe`)?.getAttribute('src') === v, [s, src], { timeout: 10_000 })
+  const yt = 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+  const vm = 'https://player.vimeo.com/video/76979871'
+  // Without autoplay the viewer starts the player, and the iframe gets no autoplay permission.
+  expect((await frame('full-youtube'))!.allow).not.toContain('autoplay')
+  expect(await frame('autoplay-muted')).toEqual({ src: yt, allow: 'autoplay; fullscreen; picture-in-picture' })
+  await step()
+  await until('autoplay-muted', `${yt}?autoplay=1&mute=1`)
+  await step()
+  await until('autoplay-muted', yt)
+  await step()
+  await until('autoplay-sound', `${vm}?autoplay=1&muted=0`)
+  // Back onto the muted player's step is a cut: both stay stopped, like a local file.
+  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index - 2, 'cut'))
+  await page.waitForTimeout(800)
+  expect((await frame('autoplay-muted'))!.src).toBe(yt)
+  expect((await frame('autoplay-sound'))!.src).toBe(vm)
+  await page.close()
+})

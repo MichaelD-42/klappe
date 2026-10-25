@@ -1,4 +1,4 @@
-import type { gsap } from "gsap";
+import { gsap } from "gsap";
 import type { Rect } from "./types";
 import { motion } from "./theme";
 
@@ -47,12 +47,25 @@ export function flight(from: Rect, to: Rect): Pose[] {
   return [start, mid, end];
 }
 
+// How far into a follow (share of its time) the camera has closed in on the element; after that it holds it centred.
+export const FOLLOW_LEAD = 0.3;
+
+// The camera's view at time share t of a follow that starts on view `from`: it closes in from `from` to a box
+// zoom times smaller centred on `pt` (world units), with a soft start and stop, then keeps `pt` centred.
+export function followView(from: Rect, pt: { x: number; y: number }, zoom: number, t: number): Rect {
+  const k = Math.min(1, t / FOLLOW_LEAD);
+  const s = k * k * (3 - 2 * k);
+  const [w, h] = [from.w / zoom, from.h / zoom];
+  const mix = (a: number, b: number) => a + (b - a) * s;
+  return { x: mix(from.x, pt.x - w / 2), y: mix(from.y, pt.y - h / 2), w: mix(from.w, w), h: mix(from.h, h) };
+}
+
 export function addCameraMove(
   tl: gsap.core.Timeline,
   world: HTMLElement,
   from: Rect,
   to: Rect,
-  opts: { duration?: number; at?: number | string; instant?: boolean } = {},
+  opts: { duration?: number; at?: number | string; instant?: boolean; tilt?: number } = {},
 ): void {
   const poses = flight(from, to).slice(1); // the camera is already at `from`
   // A cut is a set: keyframes of duration 0 make an empty nested timeline that a seek does not render.
@@ -62,5 +75,29 @@ export function addCameraMove(
     world,
     { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease: "power2.inOut" })) },
     opts.at,
+  );
+  if (opts.tilt) lean(tl, world.parentElement!, from, to, opts.tilt, duration);
+}
+
+const LEAN_PERSPECTIVE = 1600; // px
+
+// A 3D lean of the whole canvas into the flight's direction, peaking mid-flight at `deg` and exactly 0 at both ends.
+// It turns the canvas (always the 1920x1080 stage), about the screen centre: the world's origin may be far off screen.
+// The origin goes back to the canvas's own (0 0) at the end, which the zoom transition expects.
+function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg: number, duration: number): void {
+  const [dx, dy] = [to.x + to.w / 2 - (from.x + from.w / 2), to.y + to.h / 2 - (from.y + from.h / 2)];
+  const len = Math.hypot(dx, dy);
+  if (!len) return; // a pure zoom has no direction to lean into
+  const at = (tl.recent() as gsap.core.Tween).startTime(); // the flight's start, not "<": a lean must never start before its step
+  gsap.set(canvas, { rotationX: 0, rotationY: 0 }); // written at load: a seek back past the lean writes it too
+  tl.set(canvas, { transformOrigin: "960px 540px", transformPerspective: LEAN_PERSPECTIVE }, at);
+  tl.set(canvas, { transformOrigin: "0px 0px", transformPerspective: 0 }, at + duration); // flat again, no 3D context
+  // Added last, so a caller's "<" (the parallax drift, dollyZoom) still means the flight's start.
+  tl.fromTo(
+    canvas,
+    { rotationX: 0, rotationY: 0 },
+    // 4p(1-p): a hump that is exactly 0 at p = 0 and 1, so the flight lands flat.
+    { rotationX: (-deg * dy) / len, rotationY: (deg * dx) / len, duration, ease: (p) => 4 * p * (1 - p), immediateRender: false },
+    at,
   );
 }

@@ -40,7 +40,7 @@ test('each mark lands on its word and paints above the text', async () => {
 // An underline on a phrase that wraps runs under each of its lines, not under the paragraph's whole width.
 test('an underline on a wrapped phrase draws one stroke per line, each as wide as its line', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
-  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/8`)
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/9`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   await page.waitForTimeout(500)
   const r = await page.evaluate(() => {
@@ -66,5 +66,35 @@ test('an underline on a wrapped phrase draws one stroke per line, each as wide a
   const widest = Math.max(...r.line.map((q) => q.right - q.left))
   for (const p of r.paths) expect(p.right - p.left).toBeLessThan(widest + 40)
   expect(Math.abs(r.paths[0].right - r.paths[1].right)).toBeGreaterThan(10)
+  await page.close()
+}, 60_000)
+
+// A highlight on a phrase that wraps: one band per line, no wider than its line, and painted behind the text.
+test('a highlight on a wrapped phrase draws one band per line, behind the text', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/8`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.waitForTimeout(800)
+  const r = await page.evaluate(() => {
+    const span = document.querySelector('[data-word="wrapped"]')!
+    const range = document.createRange()
+    range.selectNodeContents(span)
+    const lines = [...range.getClientRects()].filter((q) => q.width > 1)
+    const paths = [...document.querySelectorAll<SVGPathElement>('[data-scene="marks"] svg[data-k-annotation="highlight"] path')]
+    // Paint order, not a z-index string: at a glyph's centre the text must come before the band.
+    paths.forEach((p) => (p.style.pointerEvents = 'auto'))
+    const q = lines[0]
+    const stack = document.elementsFromPoint(q.left + q.width / 2, q.top + q.height / 2)
+    return {
+      lines: new Set(lines.map((l) => Math.round(l.bottom))).size,
+      widths: paths.map((p) => p.getBoundingClientRect().width),
+      widest: Math.max(...lines.map((l) => l.width)),
+      textFirst: stack.indexOf(span) >= 0 && stack.indexOf(span) < stack.indexOf(paths[0]),
+    }
+  })
+  expect(r.lines).toBeGreaterThanOrEqual(2)
+  expect(r.widths).toHaveLength(r.lines)
+  for (const w of r.widths) expect(w).toBeLessThan(r.widest + 40)
+  expect(r.textFirst).toBe(true)
   await page.close()
 }, 60_000)

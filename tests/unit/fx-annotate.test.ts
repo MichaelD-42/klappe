@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
-import { scribble } from '../../src/fx/annotate'
+import { lean, MARKER_MIX, scribble } from '../../src/fx/annotate'
+import { contrast, parseTokens } from '../../src/theme'
 
 const box = { x: 400, y: 300, w: 240, h: 60 }
 const PAD = 12
@@ -88,4 +89,35 @@ test('an arrow comes from its side and ends at the box edge, with a two-stroke h
 test('the same seed draws the same stroke; another seed wobbles differently', () => {
   expect(scribble('circle', box, { pad: PAD, seed: 3 })).toEqual(scribble('circle', box, { pad: PAD, seed: 3 }))
   expect(scribble('circle', box, { pad: PAD, seed: 3 })).not.toEqual(scribble('circle', box, { pad: PAD, seed: 4 }))
+})
+
+test('a highlight runs level through the middle of the box, end to end', () => {
+  const [band] = scribble('highlight', box, { pad: PAD, seed: 1 })
+  for (const y of ys(band)) expect(Math.abs(y - (box.y + box.h / 2))).toBeLessThan(box.h / 8)
+  expect(Math.min(...xs(band))).toBeLessThanOrEqual(box.x)
+  expect(Math.max(...xs(band))).toBeGreaterThanOrEqual(box.x + box.w)
+  // Inside the pad: the band's slanted ends lean past its line's ends, and must stay out of the next word.
+  expect(Math.min(...xs(band))).toBeGreaterThan(box.x - PAD)
+  expect(Math.max(...xs(band))).toBeLessThan(box.x + box.w + PAD)
+})
+
+// Each end stops short by what the lean show gives that line adds (half the band times its slant), not the most lean.
+test('a highlight end stops short by its own lean', () => {
+  for (const seed of [1, 2, 5]) {
+    const [band] = scribble('highlight', box, { pad: PAD, seed })
+    const o = (box.h * 0.8 * lean(seed)) / 2
+    expect(band[0].x).toBeCloseTo(box.x - PAD + o)
+    expect(band.at(-1)!.x).toBeCloseTo(box.x + box.w + PAD - o)
+  }
+})
+
+// The band is --k-accent at MARKER_MIX over the stage (color-mix in srgb). The code and the reference page
+// promise 6.3:1 for text on it, above the 4.5:1 floor.
+const themes = import.meta.glob<string>('../../src/themes/*.css', { query: '?raw', import: 'default', eager: true })
+test.each(Object.entries(themes))('--k-fg stays readable on a highlight in %s', (_, css) => {
+  const t = parseTokens(css)
+  const rgb = (h: string) => (h.length === 4 ? [...h.slice(1)].map((c) => c + c) : [h.slice(1, 3), h.slice(3, 5), h.slice(5, 7)]).map((c) => parseInt(c, 16))
+  const [a, b] = [rgb(t['--k-accent']), rgb(t['--k-bg'])]
+  const mix = `rgb(${a.map((v, i) => Math.round(v * MARKER_MIX + b[i] * (1 - MARKER_MIX))).join(', ')})`
+  expect(contrast(t['--k-fg'], mix)).toBeGreaterThanOrEqual(6.3)
 })
