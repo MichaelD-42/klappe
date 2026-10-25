@@ -431,8 +431,11 @@ steps: [(tl, v) => v.show(tl)],
 | `href` | string | required | a local `"media/x.mp4"`, a direct link, or a YouTube or Vimeo link |
 | `title` | string | required | the caption under the box; the player's title in a full frame |
 | `rect` | `{ x, y, w, h }` | the full scene frame | the area; the box is the largest 16:9 (later the clip's own ratio) inside it. Without `rect` the video fills the scene frame, cropped to cover, with no border or caption, and fades in over the camera flight like a full-frame picture (catalog `#/media/full-frame/1`) |
+| `fallback` | string | none | an image href in `media/`, shown instead of an online video when there is no network |
+| `autoplay` | boolean | `false` | a YouTube or Vimeo player starts when its step arrives and stops when the viewer leaves the step (catalog `#/media/youtube-autoplay/1`). Without it the viewer starts the player. A local file plays on its step either way |
+| `muted` | boolean | `true` | with `autoplay` only: the player starts without sound. `false` asks for sound; a browser may block that, and then the player stays paused until the viewer starts it, or starts muted. Local files always play with sound |
 
-`show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer, and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
+`show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer (or by its step, with `autoplay`), and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
 
 ## `wipe`
 
