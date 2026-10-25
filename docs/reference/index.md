@@ -15,12 +15,14 @@
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
   - [flipCard](elements/flipCard.md): a card that turns over to show its back.
+  - [cardStack](elements/cardStack.md): a fanned hand of cards; one is pulled out, the rest dim behind it.
   - [shape](elements/shape.md): `shape` and `arrow` on `ctx.svg` that draw on; `tint` and `token` for colour tweens between theme tokens.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.
   - [agenda](elements/agenda.md): time ranges with the current row marked.
   - [roadmap](elements/roadmap.md): milestones on a time axis and a today marker that moves.

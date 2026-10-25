@@ -13,6 +13,7 @@ const ALLOW = [
   'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',
   // The transition functions: covered by the transition kinds below.
   'loadTransitions', 'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
+  'NOTE_MIX', 'fanPose', 'stickyLayout', // notes-cards: the note colour mix and the two layouts, for their unit tests
 ]
 // Every seek (a deep link, a step back, a jump from the speaker view) cuts, so no section asks for it.
 const SHOWN_BY_ENGINE = ['cut']
