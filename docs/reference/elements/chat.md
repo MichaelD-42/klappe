@@ -14,7 +14,7 @@ import { chat, chatMessage, type ChatHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
 export default captioned("chat(ctx, { messages }) — next() shows typing dots, then the answer streams in", {
-  build: (ctx) => chat(ctx, { x: 360, y: 100, w: 1200, h: 800, messages: ctx.doc!.steps.map((s) => chatMessage(s.text)) }),
+  build: (ctx) => chat(ctx, { x: 360, y: 140, w: 1200, h: 620, messages: ctx.doc!.steps.map((s) => chatMessage(s.text)) }),
   steps: [
     (tl, h: ChatHandle) => {
       h.show(tl);
@@ -43,7 +43,7 @@ export default captioned("chat(ctx, { messages }) — next() shows typing dots, 
 | Handle | Step |
 | --- | --- |
 | `show(tl, at?)` | the empty thread fades in. `at`: a GSAP position; default: the end |
-| `next()` | the next message, in step order. A user message fades in whole. Any other message shows typing dots that hop twice (about 1.2 s), then streams in at 50 characters a second. When the message would end below the thread, the thread first scrolls up by just enough |
+| `next()` | the next message, in step order. A user message fades in whole. Any other message shows typing dots that hop twice (about 1.2 s), then streams in at 50 characters a second. When the message would end below the thread, the thread first scrolls up: the oldest messages leave whole and fade out, never cut at the top edge |
 | `el` | the thread's element |
 
 The adder counts messages when the step is added, not when `next()` is called, so adders made out of step order still show the messages in step order. A `next()` past the last message shows the problem `chat: next() step N has no message (M messages)`.

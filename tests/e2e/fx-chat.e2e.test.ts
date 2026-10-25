@@ -47,7 +47,8 @@ const read = (page: import('@playwright/test').Page, scene: string) =>
   }, scene)
 
 // A deep link onto the last step: every message complete, no dots, the thread scrolled so the last one shows.
-test('a deep link onto the last message shows every message whole and scrolls the first one out', async () => {
+// The fixture panel is 520 high: messages 4 and 5 push messages 1 and 2 out whole.
+test('a deep link onto the last message shows every message whole; the first ones have scrolled out', async () => {
   const page = await open('thread/5')
   const r = await read(page, 'thread')
   expect(r.map((m) => m.text)).toEqual([
@@ -58,8 +59,10 @@ test('a deep link onto the last message shows every message whole and scrolls th
     'Any time. Tell me if a test fails and paste its output here.',
   ])
   expect(r.map((m) => m.user)).toEqual([true, false, false, true, false])
-  expect(r.every((m) => m.shown && !m.dots)).toBe(true)
-  expect(r[0].inside).toBe(false) // scrolled up out of the panel
+  expect(r.map((m) => m.shown)).toEqual([false, false, true, true, true]) // scrolled out whole and faded
+  expect(r.filter((m) => m.shown).every((m) => m.inside)).toBe(true)
+  expect(r.every((m) => !m.dots)).toBe(true)
+  expect(r[0].inside).toBe(false)
   expect(r[4].inside).toBe(true)
   expect(await page.locator('[data-scene="thread"] .k-chat-name').allTextContents()).toEqual(['Ana'])
   await page.close()

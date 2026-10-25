@@ -95,10 +95,16 @@ export function chat(ctx: Ctx, opts: ChatOpts): ChatHandle {
       // Layout is done when steps are added: offsetTop is in scene units, under the stage's scale.
       const bottom = r.row.offsetTop + r.row.offsetHeight;
       if (r.row.offsetHeight > opts.h) ctx.problem(`chat: message ${k + 1} is taller than the panel (${opts.h} px)`);
-      const to = Math.max(scroll, bottom - opts.h);
+      // Scroll whole messages out: the thread then starts at the first message that still fits above this one's end.
+      const top = (rows.slice(0, k + 1).find((o) => o.row.offsetTop >= bottom - opts.h) ?? r).row.offsetTop; // a too-tall message: its top
+      const to = Math.max(scroll, top);
       const t = tl.duration();
       if (to !== scroll) {
-        tl.fromTo(track, { y: -scroll }, { y: -to, duration: ctx.reducedMotion ? 0 : motion.step, ease: "power2.out", immediateRender: false }, t);
+        const d = ctx.reducedMotion ? 0 : motion.step;
+        tl.fromTo(track, { y: -scroll }, { y: -to, duration: d, ease: "power2.out", immediateRender: false }, t);
+        // The messages that leave fade out as they go: hidden, their text no longer counts as on the stage.
+        const gone = rows.filter((o) => o.row.offsetTop >= scroll && o.row.offsetTop < to).map((o) => o.row);
+        tl.to(gone, { autoAlpha: 0, duration: d }, t);
         scroll = to;
       }
       if (!r.dots) return void tl.fromTo(r.row, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false }, t);

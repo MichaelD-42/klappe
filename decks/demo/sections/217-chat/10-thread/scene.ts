@@ -4,7 +4,7 @@ import { captioned } from "../../../caption";
 
 // One message per list item in scene.md; the last ones scroll the first ones up.
 export default captioned("chat(ctx, { messages }) — next() shows typing dots, then the answer streams in", {
-  build: (ctx) => chat(ctx, { x: 360, y: 100, w: 1200, h: 800, messages: ctx.doc!.steps.map((s) => chatMessage(s.text)) }),
+  build: (ctx) => chat(ctx, { x: 360, y: 140, w: 1200, h: 620, messages: ctx.doc!.steps.map((s) => chatMessage(s.text)) }),
   steps: [
     (tl, h: ChatHandle) => {
       h.show(tl);
