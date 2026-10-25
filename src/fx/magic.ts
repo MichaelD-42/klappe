@@ -97,7 +97,7 @@ export function transitionMagicMove(from: CanvasRuntime, to: CanvasRuntime, opts
   const now = to.tl.time();
   const ends = Object.entries(to.tl.labels).filter(([n, t]) => n.startsWith("e:") && t > now).map(([, t]) => t);
   const end = ends.length ? Math.min(...ends) : now;
-  // Events on, on purpose: a step that builds its DOM in onUpdate or .call() must run for the boxes to be right.
+  // Events on, on purpose: effects write text from onUpdate (counters, typing), and the boxes must include it.
   to.tl.seek(end, false);
   gsap.set(to.el, { autoAlpha: 1 });
   const pairs = [...matches(to.world, box)].flatMap(([key, n]) => {
