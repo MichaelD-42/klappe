@@ -12,7 +12,8 @@ export interface FocusHandle {
 // One item stays lit while the others fade, in place: no layer over the scene (spotlight has one).
 // Only the items' opacity tweens. Nothing is set in build, so the items keep the look their owner gives them.
 // Reduced motion keeps the fade: nothing moves, so it is not motion.
-// shortcut: the owner must have shown the items before the first on, and must not tween their opacity after it.
+// shortcut: the owner must have shown the items before the first on, and must not tween their opacity after it;
+// read each item's start opacity when the step is added if a deck ever needs both.
 export function focus(ctx: Ctx, items: Element[], opts: FocusOpts = {}): FocusHandle {
   const { dim = 0.35 } = opts;
   const look = (lit: number | null, j: number) => (lit === null || lit === j ? 1 : dim);
