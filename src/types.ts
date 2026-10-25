@@ -56,6 +56,13 @@ export interface Ctx {
       target: Rect,
       opts?: { duration?: number; at?: number | string },
     ): void;
+    // Closes in on a moving point and keeps it centred: point(t) is where it is, in canvas units, at time share t
+    // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.
+    follow(
+      tl: gsap.core.Timeline,
+      point: (t: number) => { x: number; y: number },
+      opts?: { duration?: number; at?: number | string; zoom?: number },
+    ): void;
   };
   // The deck's data/ files (raw text) and media/ files (URL), keyed like the Markdown link: "data/x.csv".
   files: { data: Record<string, string>; media: Record<string, string> };
