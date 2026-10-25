@@ -95,8 +95,10 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   const axis: Element[] = [svgEl("line", { x1: opts.x, y1: ay, x2: opts.x + opts.w, y2: ay }, { stroke: "var(--k-line)", strokeWidth: "4" })];
   for (const t of L.ticks) {
     axis.push(svgEl("line", { x1: t.x, y1: ay - 10, x2: t.x, y2: ay + 10 }, { stroke: "var(--k-line)", strokeWidth: "2" }));
-    const e = div({ position: "absolute", left: `${t.x - 80}px`, top: `${ay + 14}px`, width: "160px", textAlign: "center", color: "var(--k-muted)", font: `500 ${FLOOR}px/1.2 var(--k-font)`, whiteSpace: "nowrap", zIndex: "1" });
-    e.textContent = t.label;
+    const e = div({ position: "absolute", left: `${t.x - 80}px`, top: `${ay + 14}px`, width: "160px", textAlign: "center", color: "var(--k-muted)", font: `500 ${FLOOR}px/1.2 var(--k-font)`, whiteSpace: "nowrap", zIndex: "3" });
+    // Knocked out of the today line like the milestone labels, hugging the text so the line shows beside it.
+    Object.assign(e.appendChild(document.createElement("span")).style, { background: "var(--k-bg)", padding: "0 6px" });
+    e.firstElementChild!.textContent = t.label;
     gsap.set(e, { autoAlpha: 0 });
     axis.push(e);
   }
@@ -181,7 +183,8 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
         set(tl, it.dot, { fill: "var(--k-accent)" }, t);
         set(tl, it.stem, { stroke: "var(--k-accent)" }, t);
         set(tl, it.inner, { color: "var(--k-accent)" }, t);
-        tl.fromTo(it.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, t);
+        if (ctx.reducedMotion) set(tl, it.dot, { autoAlpha: 1, scale: 1 }, t);
+        else tl.fromTo(it.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, t);
         tl.to([it.stem, it.box], { autoAlpha: 1, duration: 0.4 }, t + 0.2);
       };
     },
@@ -191,9 +194,10 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
         ctx.problem(`roadmap: today "${date}" is outside the axis`);
         to = Math.min(Math.max(to, L.start), L.end - DAY);
       }
-      const from = todayMs;
-      todayMs = to;
+      // The start date is read when the step is added, not here: adders built out of step order still move in step order.
       return (tl) => {
+        const from = todayMs;
+        todayMs = to;
         const t = begin(tl, (tl, t) => {
           set(tl, line, { backgroundColor: "var(--k-fg)" }, t);
           set(tl, head, { color: "var(--k-fg)" }, t);
@@ -202,7 +206,8 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
         set(tl, head, { color: "var(--k-accent)" }, t);
         // The date counts along with the marker: a pure function of the tween's eased progress.
         tl.fromTo(marker, { x: L.px(from) }, {
-          x: L.px(to), duration: motion.step * 2, ease: "power2.inOut", immediateRender: false,
+          // Reduced motion jumps: a zero-length tween still writes the date at ratio 1, and at ratio 0 on a seek back.
+          x: L.px(to), duration: ctx.reducedMotion ? 0 : motion.step * 2, ease: ctx.reducedMotion ? "none" : "power2.inOut", immediateRender: false,
           onUpdate(this: gsap.core.Tween) {
             when.textContent = long(Math.round((from + (to - from) * this.ratio) / DAY) * DAY);
           },

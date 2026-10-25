@@ -8,7 +8,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 - `travel`: one step moves an element along an SVG path, a `d` string or a path element of the scene; the route can show or draw on behind it, and `rotate` turns the element along it. With reduced motion it jumps to the end.
 - `burst`: seeded confetti pops once from a point, for a milestone reached, in the theme's series colours. Decoration under `data-k-ignore`; reduced motion leaves it out.
-- `roadmap`: a time axis with month ticks, milestones that appear one per step in `--k-accent`, and a "today" marker that moves step by step. The deck gives "today" (never the wall clock); dates are written in the deck language.
+- `roadmap`: a time axis with month ticks, milestones that appear one per step in `--k-accent`, and a "today" marker that moves step by step. The deck gives "today" (never the wall clock); dates are written in the deck language. With reduced motion the marker jumps and a milestone dot shows at once.
 - `reveal`: a statement or a quote whose lines, or words, rise in one after another. The lines are the source lines (a list item's line breaks, or a list of strings), never the lines the font wraps to. `delay` holds it for a first step that plays under the section fade. Reduced motion: the text fades in.
 - `matrix`: a 2×2 with axis titles and quadrant names; `place(id, quadrant)` puts an item in a quadrant, and placing it again moves it there, in the accent colour for its step.
 - `flipCard`: a card turns over in 3D to show its back (a question, then the answer; a myth, then the fact). Each `flip` turns it again; with reduced motion, and so in the PDF export, the sides crossfade.

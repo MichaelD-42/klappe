@@ -41,12 +41,12 @@ A date that is not a real `"YYYY-MM-DD"` throws `roadmap: date "<date>" is not Y
 
 ### Handle
 
-| Handle       | Step                                                                                                                                                                                                                                     |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `show`       | a step adder itself (`r.r.show(tl)`): the axis and its month ticks fade in, then the today marker. No milestone shows yet                                                                                                                |
-| `reveal(id)` | the milestone's dot pops onto the axis and its stem and label (date over title) fade in, all in `--k-accent`; they settle to `--k-line` and `--k-fg` when the next step starts. An unknown id throws `roadmap: unknown milestone "<id>"` |
-| `move(date)` | the today marker slides to `date` in 1.2 s, in `--k-accent` until the next step starts; its date counts along. A date off the axis shows `roadmap: today "<date>" is outside the axis` and the marker stops at the axis end              |
-| `el`         | the today marker's element                                                                                                                                                                                                               |
+| Handle       | Step                                                                                                                                                                                                                                                                                                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `show`       | a step adder itself (`r.r.show(tl)`): the axis and its month ticks fade in, then the today marker. No milestone shows yet                                                                                                                                                                             |
+| `reveal(id)` | the milestone's dot pops onto the axis and its stem and label (date over title) fade in. Dot, stem and title take `--k-accent`, the date stays `--k-muted`; they settle on the next roadmap step. With reduced motion the dot shows at once. An unknown id throws `roadmap: unknown milestone "<id>"` |
+| `move(date)` | the today marker slides to `date` in 1.2 s, in `--k-accent` until the next roadmap step; its date counts along. With reduced motion it jumps. A date off the axis shows `roadmap: today "<date>" is outside the axis` and the marker stops at the axis end                                            |
+| `el`         | the today marker's element                                                                                                                                                                                                                                                                            |
 
 ### Limits
 
