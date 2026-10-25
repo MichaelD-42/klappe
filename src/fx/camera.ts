@@ -74,8 +74,7 @@ export function dollyZoom(ctx: Ctx, opts: DollyZoomOpts): StepAdder {
     if (!pinned || !r) return ctx.problem("dollyZoom: the target has no size to measure");
     const a = dolly.get(ctx.html) ?? 1;
     if (a === b) return;
-    // Written at load: a seek back to before the first dolly writes these too, so the walk matches it.
-    if (!dolly.has(ctx.html)) gsap.set([target, pinned], { scale: 1 });
+    const first = !dolly.has(ctx.html);
     dolly.set(ctx.html, b);
     const { rect } = ctx;
     const c = { x: rect.x + r.x + r.w / 2, y: rect.y + r.y + r.h / 2 }; // the target's centre, in canvas units
@@ -85,15 +84,21 @@ export function dollyZoom(ctx: Ctx, opts: DollyZoomOpts): StepAdder {
     // The background grows about the target's place on screen, with the camera on the scene's frame.
     const f = frame(rect);
     const pin = { transformOrigin: `${f.x + c.x * f.scale}px ${f.y + c.y * f.scale}px` };
+    // An SVG target grows about its measured centre in scene units (the scene's group is the canvas offset):
+    // "50% 50%" reads its bounding box when the tween first renders, which a play and a seek do at different times.
+    // In both ends of each tween: a seek may render only the end, which would keep an origin from earlier.
+    const about = target instanceof SVGElement ? { svgOrigin: `${r.x + r.w / 2} ${r.y + r.h / 2}` } : { transformOrigin: "50% 50%" };
+    // Written at load: a seek back to before the first dolly writes these too, so the walk matches it.
+    if (first) gsap.set(target, { scale: 1, ...about }), gsap.set(pinned, { scale: 1, ...pin });
     if (ctx.reducedMotion) {
-      tl.set(target, { scale: b, transformOrigin: "50% 50%" }, "<");
+      tl.set(target, { scale: b, ...about }, "<");
       return void tl.set(pinned, { ...pin, scale: b }, "<");
     }
     // The world's scale runs from 1/a to 1/b on the flight's ease e; the target's scale is its inverse, so the
     // product stays 1 all the way. Written as an ease on a tween from a to b.
     const e = gsap.parseEase(EASE);
     const hold = (p: number) => (1 / (1 / a + (1 / b - 1 / a) * e(p)) - a) / (b - a);
-    tl.fromTo(target, { scale: a, transformOrigin: "50% 50%" }, { scale: b, duration, ease: hold, immediateRender: false }, "<");
-    tl.fromTo(pinned, { ...pin, scale: a }, { scale: b, duration, ease: EASE, immediateRender: false }, "<");
+    tl.fromTo(target, { scale: a, ...about }, { scale: b, ...about, duration, ease: hold, immediateRender: false }, "<");
+    tl.fromTo(pinned, { ...pin, scale: a }, { ...pin, scale: b, duration, ease: EASE, immediateRender: false }, "<");
   };
 }

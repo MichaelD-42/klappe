@@ -47,6 +47,7 @@ const state = (page: Page) =>
       cam: [m(world).a, m(world).e, m(world).f],
       // A rotateY leaves m13 non-zero; flat is 0.
       lean: Math.abs(lean.m13) + Math.abs(lean.m23),
+      flat: lean.isIdentity, // no perspective left behind either
       bg: m(canvas.firstElementChild!).a,
     }
   })
@@ -89,7 +90,7 @@ test('dollyZoom: box 1 holds its size and place while the camera pulls back and 
   const deep = await open('#/a/dolly/2')
   expect(await state(deep)).toEqual(walked)
   await next(deep)
-  await deep.waitForTimeout(2500)
+  await deep.waitForTimeout(3500) // a 2 s move, with room for a busy machine
   const back = await state(deep)
   expect([r2(back.cam[0]), r2(back.bg)]).toEqual([1, 1])
   await prev(deep)
@@ -110,7 +111,7 @@ test('tilt: the canvas leans mid-flight and lands flat; a deep link and a step b
   expect((await state(page)).lean).toBeGreaterThan(0.02)
   await page.clock.runFor(2500)
   const walked = await state(page)
-  expect(walked.lean).toBe(0)
+  expect([walked.lean, walked.flat]).toEqual([0, true])
   const deep = await open('#/a/lean/2')
   expect(await state(deep)).toEqual(walked)
   await next(deep)

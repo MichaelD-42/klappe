@@ -10,7 +10,7 @@ interface Refs {
 
 // The rocket holds its size while the camera pulls back from it: the tiles around it shrink, the background grows.
 export default captioned("dollyZoom(ctx, { target }) — the vertigo move: the target holds, the world around it shifts", {
-  background: { href: "media/fullscreen-background.png", alt: "Blue light waves on a dark background", scrim: 0.5 },
+  background: { href: "media/fullscreen-background.png", alt: "Blue light waves on a dark background", scrim: 0.6 },
   build(ctx): Refs {
     const rocket = iconTile(ctx, "rocket", { x: 960, y: 470, size: 240, tone: "accent" });
     const tiles = [

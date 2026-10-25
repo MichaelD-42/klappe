@@ -88,10 +88,10 @@ function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg
   const [dx, dy] = [to.x + to.w / 2 - (from.x + from.w / 2), to.y + to.h / 2 - (from.y + from.h / 2)];
   const len = Math.hypot(dx, dy);
   if (!len) return; // a pure zoom has no direction to lean into
-  const at = tl.recent().startTime(); // the flight's start, not "<": a lean must never start before its step
+  const at = (tl.recent() as gsap.core.Tween).startTime(); // the flight's start, not "<": a lean must never start before its step
   gsap.set(canvas, { rotationX: 0, rotationY: 0 }); // written at load: a seek back past the lean writes it too
   tl.set(canvas, { transformOrigin: "960px 540px", transformPerspective: LEAN_PERSPECTIVE }, at);
-  tl.set(canvas, { transformOrigin: "0px 0px" }, at + duration);
+  tl.set(canvas, { transformOrigin: "0px 0px", transformPerspective: 0 }, at + duration); // flat again, no 3D context
   // Added last, so a caller's "<" (the parallax drift, dollyZoom) still means the flight's start.
   tl.fromTo(
     canvas,
