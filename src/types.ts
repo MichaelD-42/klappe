@@ -1,8 +1,10 @@
 import type { gsap } from "gsap";
 
-export interface Rect {
+export interface Point {
   x: number;
   y: number;
+}
+export interface Rect extends Point {
   w: number;
   h: number;
 }
@@ -63,7 +65,7 @@ export interface Ctx {
     // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.
     follow(
       tl: gsap.core.Timeline,
-      point: (t: number) => { x: number; y: number },
+      point: (t: number) => Point,
       opts?: { duration?: number; at?: number | string; zoom?: number },
     ): void;
   };

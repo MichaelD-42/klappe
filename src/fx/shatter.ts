@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
-import type { Ctx, Rect, StepAdder } from "../types";
+import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 import type { TransitionOpts } from "./transitions";
 
 export interface ShatterOpts {
@@ -18,10 +18,6 @@ export interface ShatterHandle {
   fall: StepAdder;
 }
 
-interface Pt {
-  x: number;
-  y: number;
-}
 export interface ShatterGeometry {
   cells: Pt[][]; // shard polygons; they tile the box
   cracks: { pts: Pt[]; r: number }[]; // crack lines (shard borders), r: distance of their start from the impact
