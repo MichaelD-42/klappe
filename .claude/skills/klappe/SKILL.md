@@ -60,7 +60,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - No dead clicks: every press changes the picture and gives the speaker something to say. Chain motion that needs no words with `auto` (seconds per step), so one press runs it.
 - Before a large element or an answer lands, fade out what it would cover. Check each scene's last step for overlap.
 - A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
-- Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample" label.
+- Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample data" label.
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
 - Convention, not checked by klappe: state the deck's safe area once (side margins, a floor above any logo or footer) and keep all ink inside it at both sizes. Measure the ink, not left plus width.
 
@@ -68,4 +68,4 @@ One master GSAP timeline per canvas; seek must equal play.
 
 Run `npm test`, then open the deck at 1920x1080 and 1366x768 (`npm run dev`, `?theme=calm` and `?theme=bold`) and run `?selftest=walk`. Deep-link each scene's last step. Fix every deck problem the page shows.
 
-Building a whole deck from a storyboard: read [building a deck](references/building-a-deck.md).
+Building a whole deck from a storyboard: read [building a deck](.claude/skills/klappe/references/building-a-deck.md).
