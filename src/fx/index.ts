@@ -7,6 +7,7 @@ export * from "./basics";
 // Not burstPoint: math for its unit test.
 export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./callout";
+export * from "./cardstack";
 export * from "./chart";
 export * from "./checklist";
 export * from "./code";
@@ -39,6 +40,7 @@ export * from "./shatter";
 export * from "./scramble";
 export * from "./shout";
 export * from "./stats";
+export * from "./stickynotes";
 export * from "./spotlight";
 // Not rand: the seeded hash swarm and burst share.
 export { swarm, swarmPoint, type SwarmHandle, type SwarmOpts } from "./swarm";

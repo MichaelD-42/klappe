@@ -15,6 +15,7 @@
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
   - [flipCard](elements/flipCard.md): a card that turns over to show its back.
+  - [cardStack](elements/cardStack.md): a fanned hand of cards; one is pulled out, the rest dim behind it.
   - [shape](elements/shape.md): `shape` and `arrow` on `ctx.svg` that draw on; `tint` and `token` for colour tweens between theme tokens.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
@@ -24,6 +25,7 @@
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
   - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
+  - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.
   - [compareTable](elements/compareTable.md): a feature matrix whose rows build one per step, with ticks and crosses.
   - [exerciseCard](elements/exerciseCard.md): a task card with time box, group, tasks and optional items revealed per step.
