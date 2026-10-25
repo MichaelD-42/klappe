@@ -5,26 +5,39 @@ import { chromium } from '@playwright/test'
 const W = 1920 // the stage size, so a screenshot pixel is a scene pixel
 const H = 1080
 
+// The deck at url in a new page of browser, every play a seek to its end and no UI on top, ready for goto(i).
+// params: more URL flags (theme).
+export async function openDeck(browser, url, viewport = { width: W, height: H }, params = {}) {
+  const page = await browser.newPage({ viewport })
+  const u = new URL(url)
+  u.searchParams.set('instant', '1') // every play seeks to its end
+  u.searchParams.set('reducedmotion', '1') // camera cuts, and backgrounds hold still
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v)
+  await page.goto(u.href)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 60_000 })
+  await page.addStyleTag({ content: '.k-ui { display: none !important; }' })
+  return page
+}
+
+// Shows step i (0-based) as it ends, painted and with its fonts in.
+export async function showStep(page, i) {
+  await page.evaluate(async (i) => {
+    await window.klappe.stepper.goto(i, 'cut')
+    await document.fonts.ready
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))) // one painted frame
+  }, i)
+}
+
 // Prints the deck at url to the PDF out, one page per step: the step's end state, with no UI on top.
 // Returns the page count and the deck problems and page errors, for the terminal.
 export async function exportPdf(url, out) {
   const browser = await chromium.launch()
   try {
-    const page = await browser.newPage({ viewport: { width: W, height: H } })
-    const u = new URL(url)
-    u.searchParams.set('instant', '1') // every play seeks to its end
-    u.searchParams.set('reducedmotion', '1') // camera cuts, and backgrounds hold still
-    await page.goto(u.href)
-    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 60_000 })
-    await page.addStyleTag({ content: '.k-ui { display: none !important; }' })
+    const page = await openDeck(browser, url)
     const n = await page.evaluate(() => window.klappe.steps.length)
     const shots = []
     for (let i = 0; i < n; i++) {
-      await page.evaluate(async (i) => {
-        await window.klappe.stepper.goto(i, 'cut')
-        await document.fonts.ready
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))) // one painted frame
-      }, i)
+      await showStep(page, i)
       shots.push((await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64'))
     }
     const { problems, errors } = await page.evaluate(() => ({ problems: [...window.klappe.problems], errors: [...window.klappe.errors] }))

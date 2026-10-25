@@ -14,8 +14,8 @@ if (cmd === '--version' || cmd === '-v') {
   process.exit(0)
 }
 
-if (!['dev', 'build', 'test', 'pdf', 'init'].includes(cmd)) {
-  console.error('usage: klappe dev|build|test|pdf|init [--deck <id>] | --version')
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
+  console.error('usage: klappe dev|build|test|pdf|outline|init [--deck <id>] | klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] | --version')
   process.exit(1)
 }
 
@@ -60,6 +60,8 @@ if (cmd === 'init') {
     build: 'node klappe/bin/klappe.mjs build',
     test: 'node klappe/bin/klappe.mjs test',
     pdf: 'node klappe/bin/klappe.mjs pdf',
+    shot: 'node klappe/bin/klappe.mjs shot',
+    outline: 'node klappe/bin/klappe.mjs outline',
     'klappe:sync': 'node klappe/bin/sync-claude.mjs',
   }
   pkg.scripts ??= {}
@@ -128,6 +130,14 @@ if (cmd === 'test') {
   process.exit(vitest && vitest.state.getCountOfFailedTests() === 0 && !vitest.state.getUnhandledErrors().length ? 0 : 1)
 }
 
+if (cmd === 'outline') {
+  const { outline } = await import('./outline.mjs')
+  const r = await outline(klappeDir, deckDir)
+  for (const p of r.problems) console.warn(`deck problem: ${p}`)
+  process.stdout.write(r.text)
+  process.exit(0)
+}
+
 // Imported late: init runs before npm i, when vite is not installed yet.
 const { createServer, build } = await import('vite')
 const configFile = path.join(klappeDir, 'vite.config.ts')
@@ -146,6 +156,26 @@ if (cmd === 'build') {
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.pages} pages.`)
     process.exitCode = r.errors.length ? 1 : 0
+  } finally {
+    await server.close()
+  }
+} else if (cmd === 'shot') {
+  // Targets are the words that are neither a flag nor a flag's value.
+  const valued = new Set(['--deck', '--theme'])
+  const targets = rest.filter((a, k) => !a.startsWith('-') && !valued.has(rest[k - 1]))
+  const t = rest.lastIndexOf('--theme')
+  const { shoot } = await import('./shot.mjs')
+  const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
+  await server.listen()
+  const out = path.join(process.cwd(), 'dist', 'shots', id)
+  try {
+    const opts = { targets, last: rest.includes('--last'), sheet: rest.includes('--sheet'), theme: t >= 0 ? rest[t + 1] : undefined }
+    const r = await shoot(server.resolvedUrls.local[0], out, opts)
+    for (const u of r.unknown) console.error(`no step matches ${u}; a target is <section>, <section>/<scene> or <section>/<scene>/<step>`)
+    for (const p of r.problems) console.warn(`deck problem: ${p}`)
+    for (const e of r.errors) console.error(`page error: ${e}`)
+    for (const f of [...r.files, ...r.sheets]) console.log(path.relative(process.cwd(), f))
+    process.exitCode = r.unknown.length || r.errors.length ? 1 : 0
   } finally {
     await server.close()
   }
