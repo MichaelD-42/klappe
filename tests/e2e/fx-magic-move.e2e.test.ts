@@ -58,9 +58,10 @@ async function across(page: Page) {
         flies: flies().length,
         chip: flies().filter((e) => e.textContent === 'Chip').map(centre),
         hidden: document.querySelectorAll('[data-k-fly-hide]').length,
+        realShown: chips()[1].checkVisibility({ opacityProperty: true, visibilityProperty: true }),
       }
     }
-    const frames = { start: read(0), mid: read(tl.labels.reveal / 2), land: read(tl.labels.reveal) }
+    const frames = { start: read(0), mid: read(tl.labels.reveal / 2), land: read(tl.labels.reveal), park: read((tl.labels.reveal + tl.duration()) / 2) }
     tl.play()
     await forward
     return {
@@ -94,6 +95,9 @@ test('the chip and the dot fly from their old places to their new ones, and noth
   for (const c of r.frames.start.chip) near(c, r.from)
   for (const c of r.frames.mid.chip) near(c, [(r.from[0] + r.to[0]) / 2, (r.from[1] + r.to[1]) / 2])
   for (const c of r.frames.land.chip) near(c, r.to)
+  // While the first step plays, the landed stand-in stays and the real chip stays hidden, whatever the step writes inline.
+  expect(r.frames.park.flies).toBe(4)
+  expect(r.frames.park.realShown).toBe(false)
   expect(r.end).toEqual({ flies: 0, hidden: 0, shown: true, styles: ['', '', ''], visible: 1 })
   await page.close()
 })
