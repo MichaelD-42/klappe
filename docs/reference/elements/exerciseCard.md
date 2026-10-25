@@ -6,7 +6,7 @@ Catalog: section `298-table-card` (`#/table-card/exercise-card/1`).
 
 ## `exerciseCard`
 
-Only in `scene.ts`. From `decks/demo/sections/298-table-card/20-exercise-card/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/298-table-card/20-exercise-card/scene.ts`:
 
 ```ts
 import { exerciseCard, type ExerciseCardHandle } from "klappe/fx";

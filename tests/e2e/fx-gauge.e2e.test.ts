@@ -33,7 +33,7 @@ const dial = (page: Page, arc = false) =>
     const g = document.querySelector('div[data-scene="dial"] [data-k-gauge]')!
     const m = (g.querySelector('line') as SVGLineElement).transform.baseVal.consolidate()!.matrix
     const r = { text: g.querySelector('[data-k-text]')!.textContent, angle: Math.round((Math.atan2(m.b, m.a) * 1800) / Math.PI) / 10 }
-    return arc ? { ...r, arc: getComputedStyle(g.querySelectorAll('path')[1]).strokeDashoffset } : r
+    return { ...r, arc: arc ? getComputedStyle(g.querySelectorAll('path')[1]).strokeDashoffset : undefined } // toEqual skips an undefined arc
   }, arc)
 
 test('the needle swings to the value, then on to each new value in step order, numbers in German', async () => {

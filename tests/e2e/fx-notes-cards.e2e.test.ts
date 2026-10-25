@@ -120,3 +120,39 @@ test('with reduced motion a note cuts to its group', async () => {
   expect(await note(page, 'notes', 'a')).toEqual({ col: 'pain', tilt: 0 })
   await page.close()
 }, 60_000)
+
+// Visible notes as unrotated boxes (from their transform, so a lean does not grow them), each with whether it is
+// grouped (upright and inside a visible label's column), and the columns of the visible labels down to the scene's foot.
+const board = (page: Page, scene: string) =>
+  page.evaluate((scene) => {
+    const root = document.querySelector<HTMLElement>(`div[data-scene="${scene}"]`)!
+    const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+    const cols = [...root.querySelectorAll<HTMLElement>('[data-k-note-group]')].filter(shows).map((l) => ({ x: l.offsetLeft, y: l.offsetTop, w: l.offsetWidth, h: 2000 }))
+    const notes = [...root.querySelectorAll<HTMLElement>('[data-k-note]')].filter(shows).map((el) => {
+      const m = new DOMMatrix(getComputedStyle(el).transform)
+      return { id: el.dataset.kNote!, x: m.e, y: m.f, w: el.offsetWidth, h: el.offsetHeight, upright: Math.abs(m.b) < 1e-6 }
+    })
+    return { cols, notes }
+  }, scene)
+type Box = { x: number; y: number; w: number; h: number }
+const apart = (a: Box, b: Box) => a.x + a.w <= b.x + 0.5 || b.x + b.w <= a.x + 0.5 || a.y + a.h <= b.y + 0.5 || b.y + b.h <= a.y + 0.5
+
+// Scattered notes stay clear of each other and of every formed group's column; grouped notes do not overlap either.
+for (const [name, url, scene, steps] of [
+  ['fixture', '/?fixture=fx-notes-cards#/a/notes/', 'notes', 6],
+  ['demo', '/#/notes-cards/affinity/', 'affinity', 4],
+] as const)
+  test(`no note overlaps another or a formed group column (${name})`, async () => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    for (let step = 1; step <= steps; step++) {
+      await page.goto(`${inject('BASE_URL')}${url}${step}`)
+      await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+      await page.waitForTimeout(300)
+      const { cols, notes } = await board(page, scene)
+      const scattered = notes.filter((n) => !n.upright)
+      for (let i = 0; i < notes.length; i++)
+        for (let j = i + 1; j < notes.length; j++) expect(apart(notes[i], notes[j]), `step ${step}: ${notes[i].id} and ${notes[j].id}`).toBe(true)
+      for (const n of scattered) for (const c of cols) expect(apart(n, c), `step ${step}: ${n.id} in a column`).toBe(true)
+    }
+    await page.close()
+  }, 90_000)

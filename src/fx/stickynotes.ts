@@ -27,41 +27,77 @@ const LINE_H = 1.2;
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-// The note size, each note's scattered pose (a seeded jittered grid, so no two overlap while cells last), each
-// group's label band and each group's note slots, filled row by row under the label.
-export function stickyLayout(rect: Rect, n: number, groups: number, seed = 1): { note: { w: number; h: number }; scatter: NotePose[]; labels: Rect[]; slots: Rect[][] } {
+// The smallest scatter cell: a note's box at full lean, plus a margin.
+function cellOf(note: { w: number; h: number }) {
+  const [c, s] = [Math.cos((TILT * Math.PI) / 180), Math.sin((TILT * Math.PI) / 180)];
+  return { w: note.w * c + note.h * s + 8, h: note.h * c + note.w * s + 8 };
+}
+
+// Notes (by index) spread evenly over the areas: each area gets a share by its room; in an area, as few rows as
+// fit spread over its height, each row's notes over its width, each note in the middle of its cell with a seeded
+// nudge and lean. Notes do not overlap while the cells last.
+export function scatterIn(areas: Rect[], idx: number[], note: { w: number; h: number }, seed = 1): NotePose[] {
+  const cell = cellOf(note);
+  const fit = (a: Rect) => [Math.max(1, Math.floor(a.w / cell.w)), Math.max(1, Math.floor(a.h / cell.h))];
+  const room = areas.map((a) => fit(a)[0] * fit(a)[1]);
+  const per = areas.map((): number[] => []);
+  // A seeded order, so the scatter does not read as the note order.
+  for (const i of [...idx].sort((a, b) => rand(seed, a, 0) - rand(seed, b, 0))) {
+    let best = 0;
+    for (let k = 1; k < areas.length; k++) if ((per[k].length + 1) / room[k] < (per[best].length + 1) / room[best]) best = k;
+    per[best]?.push(i);
+  }
+  const out = new Map<number, NotePose>();
+  areas.forEach((a, k) => {
+    const list = per[k];
+    const [cols, maxRows] = fit(a);
+    const rows = Math.min(maxRows, Math.ceil(list.length / cols)); // shortcut: more notes than cells overlap; a bigger area is the fix
+    for (let r = 0, j = 0; r < rows; r++) {
+      const n = Math.ceil((list.length - j) / (rows - r));
+      const [cw, ch] = [a.w / n, a.h / rows];
+      const [fx, fy] = [Math.max(0, (cw - cell.w) / 2), Math.max(0, (ch - cell.h) / 2)];
+      for (let c = 0; c < n; c++, j++) {
+        const i = list[j];
+        out.set(i, {
+          x: r2(a.x + (c + 0.5) * cw - note.w / 2 + fx * (rand(seed, i, 1) * 2 - 1)),
+          y: r2(a.y + (r + 0.5) * ch - note.h / 2 + fy * (rand(seed, i, 2) * 2 - 1)),
+          rotation: r2((rand(seed, i, 3) * 2 - 1) * TILT),
+        });
+      }
+    }
+  });
+  return idx.map((i) => out.get(i)!);
+}
+
+// The note size, each note's scattered pose over the whole area below the label band, each group's label band,
+// each group's column below it (where its notes go, and where scattered notes stay until the group forms), each
+// group's note slots, filled row by row under the label, and the slots per row.
+export function stickyLayout(rect: Rect, n: number, groups: number, seed = 1): { note: { w: number; h: number }; scatter: NotePose[]; labels: Rect[]; columns: Rect[]; slots: Rect[][]; cols: number } {
   const cw = groups ? (rect.w - (groups - 1) * COL_GAP) / groups : rect.w;
   const cols = groups ? Math.max(1, Math.floor((cw + PAD) / (MIN_W + PAD))) : 1;
   const w = r2(groups ? Math.min(MAX_W, (cw - (cols - 1) * PAD) / cols) : MAX_W);
   const h = r2(w * 0.7);
   const labels = Array.from({ length: groups }, (_, g) => ({ x: r2(rect.x + g * (cw + COL_GAP)), y: rect.y, w: r2(cw), h: LABEL_H }));
+  const columns = labels.map((l) => ({ x: l.x, y: rect.y + LABEL_H, w: l.w, h: rect.h - LABEL_H }));
   const rows = Math.max(0, Math.floor((rect.h - LABEL_H) / (h + PAD)));
   const inset = (cw - (cols * w + (cols - 1) * PAD)) / 2;
   const slots = labels.map((l) =>
     Array.from({ length: rows * cols }, (_, k) => ({ x: r2(l.x + inset + (k % cols) * (w + PAD)), y: r2(l.y + LABEL_H + Math.floor(k / cols) * (h + PAD)), w, h })),
   );
-
   // Scattered notes keep out of the label band, so a label that fades in later is never under one.
   const top = groups ? rect.y + LABEL_H : rect.y;
   const area = { x: rect.x, y: top, w: rect.w, h: rect.y + rect.h - top };
-  const [cx, cy] = [Math.max(1, Math.floor(area.w / (w * 1.15))), Math.max(1, Math.floor(area.h / (h * 1.15)))];
-  const [cellW, cellH] = [area.w / cx, area.h / cy];
-  const cells = Array.from({ length: cx * cy }, (_, c) => c).sort((a, b) => rand(seed, a, 0) - rand(seed, b, 0));
-  const slack = 8; // room for the lean at each cell side
-  const scatter = Array.from({ length: n }, (_, i) => {
-    const c = cells[i % cells.length]; // shortcut: more notes than cells overlap; a bigger area is the fix
-    const jx = Math.max(0, cellW - w - 2 * slack) * rand(seed, i, 1);
-    const jy = Math.max(0, cellH - h - 2 * slack) * rand(seed, i, 2);
-    return { x: r2(area.x + (c % cx) * cellW + slack + jx), y: r2(area.y + Math.floor(c / cx) * cellH + slack + jy), rotation: r2((rand(seed, i, 3) * 2 - 1) * TILT) };
-  });
-  return { note: { w, h }, scatter, labels, slots };
+  const scatter = scatterIn([area], Array.from({ length: n }, (_, i) => i), { w, h }, seed);
+  return { note: { w, h }, scatter, labels, columns, slots, cols };
 }
 
 // Sticky notes for a workshop: they appear scattered, then fly into labelled group columns (an affinity map).
-// With reduced motion a note cuts to its group instead of flying.
+// Scattered notes stay out of the columns of formed groups: when a group forms, they spread again over the columns
+// still free. With reduced motion a note cuts to its place instead of flying.
 export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle {
   const groups = opts.groups ?? [];
-  const { note, scatter, labels, slots } = stickyLayout(opts, opts.notes.length, groups.length, opts.seed ?? 1);
+  const seed = opts.seed ?? 1;
+  const { note, scatter, labels, columns, slots, cols } = stickyLayout(opts, opts.notes.length, groups.length, seed);
   const fly = !ctx.reducedMotion;
 
   const labelEls = groups.map((g, i) => {
@@ -116,23 +152,69 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
 
   // Step-order state, written only inside the adders: adders built out of step order still play in step order.
   const where = new Map<string, { g?: number; k: number }>(); // shown notes; g undefined while scattered
+  const pose = new Map<string, NotePose>(); // where each shown note stands after the steps added so far
   const labelled = new Set<number>();
   let last: number | undefined; // the group of the latest group(), its label in the accent until the next one
+
+  // The columns of groups not formed yet, side by side ones as one area.
+  const free = () => {
+    const out: Rect[] = [];
+    columns.forEach((c, g) => {
+      if (labelled.has(g)) return;
+      const prev = out.at(-1);
+      if (prev && !labelled.has(g - 1) && g > 0) prev.w = c.x + c.w - prev.x;
+      else out.push({ ...c });
+    });
+    return out;
+  };
+
+  // Moves every shown note to where the state says, from time t: the step's own notes (order) 0.08 s apart.
+  const settle = (tl: gsap.core.Timeline, t: number, order: string[]) => {
+    const target = new Map<string, NotePose>();
+    const scattered = opts.notes.map((n) => n.id).filter((id) => where.get(id)?.g === undefined && where.has(id));
+    const areas = free();
+    if (!labelled.size) for (const id of scattered) target.set(id, scatter[notes.get(id)!.i]);
+    else if (areas.length) {
+      const to = scatterIn(areas, scattered.map((id) => notes.get(id)!.i), note, seed);
+      scattered.forEach((id, k) => target.set(id, to[k]));
+    } else for (const id of scattered) target.set(id, pose.get(id) ?? scatter[notes.get(id)!.i]); // shortcut: once every group formed, left-over notes stay put and may overlap a column
+    // A column's notes sit centred in the height under its label.
+    groups.forEach((_, g) => {
+      const members = [...where].filter(([, w]) => w.g === g);
+      if (!members.length) return;
+      const used = Math.ceil((Math.max(...members.map(([, w]) => w.k)) + 1) / cols) * (note.h + PAD) - PAD;
+      const off = r2(Math.max(0, (columns[g].h - used) / 2));
+      for (const [id, w] of members) {
+        const s = slots[g][w.k] ?? labels[g];
+        target.set(id, { x: s.x, y: s.y + off, rotation: 0 });
+      }
+    });
+    const step = fly ? 0.08 : 0.06;
+    for (const [id, to] of target) {
+      const from = pose.get(id);
+      pose.set(id, to);
+      if (from && from.x === to.x && from.y === to.y && from.rotation === to.rotation) continue;
+      const { el } = notes.get(id)!;
+      const at = order.includes(id) ? t + order.indexOf(id) * step : t;
+      const grouped = where.get(id)!.g !== undefined;
+      if (grouped && (!from || from.rotation !== 0)) tl.set(el, { zIndex: 3, immediateRender: false }, at); // grouped notes fly over the ones still scattered
+      if (!from && grouped) tl.fromTo(el, { ...to, scale: 1, autoAlpha: 0 }, { ...to, scale: 1, autoAlpha: 1, duration: 0.4, immediateRender: false }, at);
+      else if (!from && fly) tl.fromTo(el, { ...to, autoAlpha: 0, scale: 0.8 }, { ...to, autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, at);
+      else if (!from) tl.fromTo(el, { ...to, autoAlpha: 0 }, { ...to, autoAlpha: 1, duration: 0.3, immediateRender: false }, at);
+      else if (fly) tl.to(el, { ...to, duration: motion.step, ease: "power2.inOut" }, at);
+      else tl.set(el, { ...to, immediateRender: false }, at);
+    }
+    tl.set({}, {}, t + 0.4); // a step that moves nothing still takes a beat
+  };
 
   return {
     show(ids) {
       ids?.forEach(need);
       return (tl) => {
         fit();
-        const t = tl.duration();
         const list = (ids ?? opts.notes.map((n) => n.id)).filter((id) => !where.has(id));
-        list.forEach((id, j) => {
-          where.set(id, { k: -1 });
-          const { el } = notes.get(id)!;
-          if (fly) tl.fromTo(el, { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, t + j * 0.08);
-          else tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3, immediateRender: false }, t + j * 0.06);
-        });
-        tl.set({}, {}, t + 0.4); // a show of notes already out still takes a beat
+        for (const id of list) where.set(id, { k: -1 });
+        settle(tl, tl.duration(), list);
       };
     },
     group(groupId, ids) {
@@ -150,9 +232,8 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
           labelled.add(g);
           tl.fromTo(labelEls[g], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
         }
-        ids.forEach((id, j) => {
-          const from = where.get(id);
-          if (from?.g === g) return; // already in this group: it stays put
+        for (const id of ids) {
+          if (where.get(id)?.g === g) continue; // already in this group: it stays put
           const taken = new Set([...where].filter(([o, w]) => o !== id && w.g === g).map(([, w]) => w.k));
           let k = 0;
           while (taken.has(k)) k++;
@@ -161,16 +242,8 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
             k = Math.max(0, slots[g].length - 1); // shortcut: overlaps the last slot; a taller area is the fix
           }
           where.set(id, { g, k });
-          const s = slots[g][k] ?? labels[g];
-          const { el } = notes.get(id)!;
-          const at = t + j * 0.08;
-          const to = { x: s.x, y: s.y, rotation: 0 };
-          tl.set(el, { zIndex: 3, immediateRender: false }, at); // grouped notes fly over the ones still scattered
-          if (!from) tl.fromTo(el, { ...to, scale: 1, autoAlpha: 0 }, { ...to, scale: 1, autoAlpha: 1, duration: 0.4, immediateRender: false }, at);
-          else if (fly) tl.to(el, { ...to, duration: motion.step, ease: "power2.inOut" }, at);
-          else tl.set(el, to, at);
-        });
-        tl.set({}, {}, t + 0.4);
+        }
+        settle(tl, t, ids);
       };
     },
   };

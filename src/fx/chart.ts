@@ -1,7 +1,8 @@
 import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
-import { motion } from "../theme";
+import { contrast, motion } from "../theme";
+import { token } from "./draw";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
@@ -126,6 +127,26 @@ const SANKEY_MAX_PER_COLUMN = 8;
 
 // Each stage's width as a share of the largest, and its conversion from the stage before (null for the first
 // stage, or when the stage before is zero).
+// The ink for a value inside a bar: --k-bg or --k-fg, whichever contrasts more with the bar colour. null when
+// neither reaches 4.5:1 (or a colour is not one contrast() reads): the value keeps its --k-bg halo then.
+export function barInk(bar: string, bg: string, fg: string): "var(--k-bg)" | "var(--k-fg)" | null {
+  try {
+    const [b, f] = [contrast(bar, bg), contrast(bar, fg)];
+    return Math.max(b, f) < 4.5 ? null : b >= f ? "var(--k-bg)" : "var(--k-fg)";
+  } catch {
+    return null;
+  }
+}
+
+// Which of the sankey node colours to use (indices into series): all, less the one nearest the accent when it is
+// nearer than 64 in RGB, so a node never reads as a lit flow. Colours in another form than hex or RGB are kept.
+export function sankeyPalette(accent: string, series: string[]): number[] {
+  const toRgb = (c: string) => (/^(#|rgb)/i.test(c.trim()) ? (gsap.utils.splitColor(c) as number[]) : [NaN, NaN, NaN]);
+  const gap = series.map((c) => Math.hypot(...toRgb(accent).slice(0, 3).map((v, i) => v - toRgb(c)[i])));
+  const near = gap.indexOf(Math.min(...gap.filter((g) => !Number.isNaN(g))));
+  return series.map((_, i) => i).filter((i) => !(i === near && gap[i] < 64));
+}
+
 export function funnelLayout(values: number[]): { share: number; conversion: number | null }[] {
   const max = Math.max(...values);
   return values.map((v, i) => ({ share: max > 0 ? v / max : 0, conversion: i && values[i - 1] > 0 ? v / values[i - 1] : null }));
@@ -502,8 +523,11 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     });
   } else if (type === "funnel") {
     // One centred bar per stage, width by value; the name left, the value inside the bar's right end when it fits
-    // (in --k-bg, no halo), else just right of the bar; the conversion between stages.
+    // (in the ink that reads on the bar, no halo; with no such ink, --k-fg on its halo), else just right of the bar;
+    // the conversion between stages.
     const k = keys[0];
+    // Every bar is color(0), --k-series-1: one ink for all.
+    const on = barInk(token(ctx.html, "--k-series-1"), token(ctx.html, "--k-bg"), token(ctx.html, "--k-fg"));
     const stages = funnelLayout(data.map((r) => num(r, k)));
     const rowH = P.h / data.length;
     const bh = rowH * 0.62;
@@ -519,7 +543,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
       const inside = w >= 13 * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
       const val = valueAt({ x: inside ? cx + w / 2 - 16 : cx + w / 2 + 16, y: yc, "text-anchor": inside ? "end" : "start" }, 0, num(r, k), fmt);
-      if (inside) Object.assign(val.style, { fill: "var(--k-bg)", stroke: "none" });
+      if (inside) Object.assign(val.style, on ? { fill: on, stroke: "none" } : { strokeWidth: "4px" }); // a thinner halo reads cleaner on a bar
       const c = stages[i].conversion;
       if (i)
         valueAt({ x: cx, y: P.y + i * rowH + FONT * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
@@ -531,6 +555,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const gap = Math.min(FONT * 2 + 16, P.h / (2 * SANKEY_MAX_PER_COLUMN));
     const lay = sankeyLayout(sankeyLinks(data), gap / P.h) as SankeyLayout; // dataError has laid it out already
     const NW = 20;
+    const palette = sankeyPalette(token(ctx.html, "--k-accent"), SLICES.slice(1).map((v) => token(ctx.html, v.slice(4, -1))));
     const xAt = (d: number) => P.x + (d * (P.w - NW)) / Math.max(1, lay.columns - 1);
     const Y = (f: number) => P.y + f * P.h;
     const id = `k-chart-clip-${++clips}`;
@@ -549,13 +574,13 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     lay.nodes.forEach((n, i) => {
       const x = xAt(n.depth);
       const rect = svg(marks, "rect", { x, y: Y(n.y0), width: NW, height: Math.max(2, (n.y1 - n.y0) * P.h) });
-      rect.style.fill = SLICES[1 + (i % (SLICES.length - 1))];
+      rect.style.fill = SLICES[1 + palette[i % palette.length]];
       bars.push(rect);
       const last = n.depth === lay.columns - 1;
       const at = { x: last ? x - 12 : x + NW + 12, "text-anchor": last ? "end" : "start" };
       const yc = Y((n.y0 + n.y1) / 2);
       const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
-      Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+      Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "3px", strokeLinejoin: "round", paintOrder: "stroke" });
       grown.push({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
       valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
     });

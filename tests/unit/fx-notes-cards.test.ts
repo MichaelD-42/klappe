@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { NOTE_MIX, stickyLayout } from '../../src/fx/stickynotes'
+import { NOTE_MIX, scatterIn, stickyLayout } from '../../src/fx/stickynotes'
 import { fanPose } from '../../src/fx/cardstack'
 import { contrast, parseTokens } from '../../src/theme'
 
@@ -16,6 +16,22 @@ test('scattered notes sit inside the area below the labels, apart, and the same 
   for (const p of l.scatter) expect(Math.abs(p.rotation)).toBeLessThanOrEqual(4)
   expect(stickyLayout(rect, 10, 4, 7).scatter).toEqual(l.scatter)
   expect(stickyLayout(rect, 10, 4, 8).scatter).not.toEqual(l.scatter)
+})
+
+// After groups form, the notes left spread over the columns still free: each inside one, apart, evenly in rows.
+test('notes spread over free columns sit inside them, apart, in even rows', () => {
+  const { columns, note } = stickyLayout({ x: 160, y: 120, w: 1600, h: 800 }, 9, 3)
+  for (const areas of [[columns[2]], [columns[0], columns[2]], [{ ...columns[1], w: columns[2].x + columns[2].w - columns[1].x }]]) {
+    const poses = scatterIn(areas, [0, 2, 4, 6, 8, 7], note, 3)
+    const boxes = poses.map((p) => ({ ...p, ...note }))
+    for (const b of boxes) expect(areas.some((a) => inside(b, a))).toBe(true)
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) expect(apart(boxes[i], boxes[j]), `${i} ${j}`).toBe(true)
+  }
+  // Nine notes over the whole area: two rows of five and four, not a ragged pick of cells.
+  const l = stickyLayout({ x: 160, y: 120, w: 1600, h: 800 }, 9, 3)
+  const mid = 176 + 744 / 2 // the middle of the area below the label band
+  const top = l.scatter.filter((p) => p.y + l.note.h / 2 < mid).length
+  expect([top, 9 - top]).toEqual([5, 4])
 })
 
 test('group slots sit inside their column under its label, and no two overlap', () => {

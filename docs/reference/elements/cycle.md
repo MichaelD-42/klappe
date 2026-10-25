@@ -43,7 +43,7 @@ import { vModel, type VModelHandle } from "klappe/fx";
 
 build: (ctx) => ({
   v: vModel(ctx, {
-    x: 160, y: 110, w: 1600, h: 800,
+    x: 160, y: 280, w: 1600, h: 660,
     levels: [
       { left: "Requirements", right: "Acceptance test" },
       { left: "System design", right: "System test" },

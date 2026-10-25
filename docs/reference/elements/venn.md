@@ -6,14 +6,14 @@ Catalog: section `297-venn-pyramid` (`#/venn-pyramid/overlaps/1`).
 
 ## `venn`
 
-Only in `scene.ts`. From `decks/demo/sections/297-venn-pyramid/10-overlaps/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/297-venn-pyramid/10-overlaps/scene.ts`:
 
 ```ts
 import { venn, type VennHandle } from "klappe/fx";
 
 build: (ctx) => ({
   v: venn(ctx, {
-    x: 160, y: 100, w: 1600, h: 840,
+    x: 160, y: 270, w: 1600, h: 670,
     sets: [{ id: "design", label: "Design" }, { id: "code", label: "Code" }, { id: "data", label: "Data" }],
     regions: { design: "Taste", "design+code": "Prototypes", "design+code+data": "Products" },
   }),
@@ -48,6 +48,7 @@ With `?reducedmotion=1` (or the viewer's setting) the outlines fade in instead o
 ### Limits
 
 - `sets` must have 2 or 3 entries with distinct ids; otherwise `venn` throws.
+- An id that is not a set throws `venn: unknown set "<id>"`: in a `regions` key when the venn is built, in `light()` when the step is made. `light()` with no ids throws `venn: a region needs a set`.
 - Names and region labels are not fitted. Keep them to a word or two: a pair region in a three-set venn is about 0.6 × the radius wide (155 px in the catalog).
 
 ## `vennLayout`

@@ -22,7 +22,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | string | required | the data file as written in the Markdown link, `"data/x.csv"` |
-| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero, not all zero; each stage is a centred bar as wide as its share of the largest, with its name on the left and its value inside the bar's right end (just right of the bar when it is too narrow); the conversion from the stage before sits centred on the line between the two stages (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in `--k-series-2` to `--k-series-6` (series 1 is the accent in most themes, which `highlight` uses), so past five nodes the colours repeat; bands in `--k-line`; see `highlight` |
+| `type` | `"bar"`, `"stacked"`, `"line"`, `"waterfall"`, `"timeline"`, `"donut"`, `"slope"`, `"funnel"`, `"sankey"` | `"bar"` | the chart form. `bar` and `waterfall` use the first number column; `stacked` and `line` use all; `timeline` reads a start and an end per row: the columns named `start`, `from` or `begin` and `end`, `to` or `until`, else the first two number columns. `donut`: the first number column as parts of one whole, up to 6 rows, none below zero; the total sits in the centre and a legend gives each name, value and share. `slope`: the first two number columns as before and after, one line per row; its value axis spans the data, not zero; rising lines are `--k-ok`, falling ones muted, with a legend; labels that would touch are moved apart. `funnel`: the first number column as stages in row order, up to 8, none below zero, not all zero; each stage is a centred bar as wide as its share of the largest, with its name on the left and its value inside the bar's right end in `--k-bg` or `--k-fg`, whichever contrasts more with the bar (on a `--k-bg` halo when neither reaches 4.5:1), or just right of the bar when it is too narrow; the conversion from the stage before sits centred on the line between the two stages (`–` after a zero stage). `sankey`: the columns by position as source, target and value (a name like `2024` stays a name), values above zero; nodes sit in columns by their longest path from a node with no inflow, in order of first appearance; each band is as thick as its value; nodes in `--k-series-2` to `--k-series-6` (series 1 is the accent in most themes, which `highlight` uses), less the one nearest `--k-accent` when it is close (`sankeyPalette`), so past four or five nodes the colours repeat; bands in `--k-line`; see `highlight` |
 | `rect` | `{ x, y, w, h }` | required | where the chart sits |
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
@@ -92,11 +92,11 @@ Numbers use the deck language's format (`72,5` in a German deck). A value outsid
 
 Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`) to agree (`--k-ok`), and the agree share (the top two points) at its end. One person's answer is a row with a single count of 1.
 
-From `decks/demo/sections/115-numbers/40-likert/scene.ts`:
+Shortened from `decks/demo/sections/115-numbers/40-likert/scene.ts`:
 
 ```ts
-build: (ctx) => likert(ctx, { x: 160, y: 320, w: 1600, rows: [{ statement: "Releases are predictable", counts: [3, 5, 8, 22, 12] }, …] }),
-steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl), (tl, l) => l.row(2)(tl)],
+build: (ctx) => ({ h: title(ctx), l: likert(ctx, { x: 160, y: 320, w: 1600, rows: [{ statement: "Releases are predictable", counts: [3, 5, 8, 22, 12] }, …] }) }),
+steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl, r) => r.l.row(1)(tl), (tl, r) => r.l.row(2)(tl)],
 ```
 
 | Name | Type | Default | Meaning |
@@ -111,7 +111,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.row(0)(tl), (tl, l) => l.row(1)(tl),
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <i>; the rows are 0 to <n>`. The default point names come from the deck language; klappe has English names only, so every deck shows them in English for now.
+A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language; klappe has English names only, so every deck shows them in English for now.
 
 ## `gaugeAngle`
 
@@ -178,6 +178,14 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `waterfallSteps`
 
 `waterfallSteps(deltas)` gives each delta's bar as `[from, to]`: the running total before it and after it. `waterfallSteps([5, -2])` is `[[0, 5], [5, 3]]`.
+
+## `barInk`
+
+`barInk(bar, bg, fg)` takes three colours (`#rgb`, `#rrggbb` or `rgb()`) and gives `"var(--k-bg)"` or `"var(--k-fg)"`, whichever contrasts more with `bar`, or `null` when neither reaches 4.5:1 or a colour cannot be read. The funnel chart (`#/chart/funnel/1`) uses it for the values inside its bars; the unit test checks it on every built-in theme.
+
+## `sankeyPalette`
+
+`sankeyPalette(accent, series)` takes the accent and the node colours (`#rgb`, `#rrggbb` or `rgb()`) and gives the indices of the colours to use: all of them, less the one nearest the accent when it is nearer than 64 in RGB, so no node looks like a lit flow (daylight drops `--k-series-5`). Colours in another form are kept. The sankey chart (`#/chart/sankey/1`) uses it.
 
 ## `funnelLayout`
 

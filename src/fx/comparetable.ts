@@ -77,6 +77,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
     }
     root.style.fontSize = `${size}px`;
     fits = !over();
+    if (fits && opts.h !== undefined) root.style.top = `${opts.y + (opts.h - root.offsetHeight) / 2}px`; // centred in h
     if (!fits) ctx.problem(`compareTable: ${rows.length} rows do not fit ${opts.h}px at ${FLOOR}px text`);
     return fits;
   };

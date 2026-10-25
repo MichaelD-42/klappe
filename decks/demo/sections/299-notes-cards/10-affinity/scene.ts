@@ -1,10 +1,11 @@
-import { stickyNotes, type StickyNotesHandle } from "klappe/fx";
+import { stickyNotes, title, type BasicHandle, type StickyNotesHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
 export default captioned("stickyNotes(ctx, { notes, groups, … }) — show(ids?), then group(groupId, ids)", {
   build: (ctx) => ({
+    h: title(ctx),
     n: stickyNotes(ctx, {
-      x: 160, y: 120, w: 1600, h: 800,
+      x: 160, y: 270, w: 1600, h: 670,
       notes: [
         { id: "setup", text: "Setup took a day" },
         { id: "search", text: "Search is fast" },
@@ -24,7 +25,7 @@ export default captioned("stickyNotes(ctx, { notes, groups, … }) — show(ids?
     }),
   }),
   steps: [
-    (tl, r: { n: StickyNotesHandle }) => r.n.show()(tl),
+    (tl, r: { h: BasicHandle; n: StickyNotesHandle }) => (r.h.show(tl), r.n.show()(tl)),
     (tl, r) => r.n.group("start", ["setup", "access", "onboard"])(tl),
     (tl, r) => r.n.group("docs", ["examples", "outdated", "find"])(tl),
     (tl, r) => r.n.group("like", ["search", "cli", "team"])(tl),

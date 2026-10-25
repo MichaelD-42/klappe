@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { chartDomain, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
+import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
+import { contrast, parseTokens } from "../../src/theme";
 
 describe("parseCsv", () => {
   test("reads a header row, numbers and trimmed values", () => {
@@ -259,4 +260,28 @@ describe("sankey", () => {
     expect(dataError(parseCsv("from,to,users\nA,,3\n"), "sankey")).toBe("row 1, no source or target");
     expect(dataError(parseCsv("from,to,users\nA,B,3\nB,A,1\n"), "sankey")).toBe("a cycle through A; a sankey flows one way");
   });
+});
+
+// A funnel's value inside a bar: the ink that contrasts more with the bar (--k-series-1), when it reaches 4.5:1;
+// else null, and the value keeps its --k-bg halo. Lavender's series 1 reaches neither (4.29 on --k-bg).
+const themes = import.meta.glob<string>("../../src/themes/*.css", { query: "?raw", import: "default", eager: true });
+test.each(Object.entries(themes))("a funnel value inside a bar reads at 4.5:1 or keeps its halo in %s", (name, css) => {
+  const t = parseTokens(css);
+  const [bar, bg, fg] = [t["--k-series-1"], t["--k-bg"], t["--k-fg"]];
+  const ink = barInk(bar, bg, fg);
+  const best = Math.max(contrast(bar, bg), contrast(bar, fg));
+  if (ink) expect(contrast(bar, t[ink.slice(4, -1)])).toBe(best);
+  expect(ink === null).toBe(best < 4.5);
+  if (name.includes("lavender")) expect(ink).toBe(null);
+  if (name.includes("calm")) expect(ink).toBe("var(--k-bg)");
+});
+test("barInk gives null for a colour it cannot read", () => expect(barInk("oklch(0.5 0.1 200)", "#000", "#fff")).toBe(null));
+
+// Sankey nodes skip the series colour nearest the accent when it is near: daylight's series 5 (#2a6fd6) is next to its cobalt accent.
+test("sankey nodes skip the series colour nearest the accent, only when it is near", () => {
+  const nodes = (css: string) => { const t = parseTokens(css); return sankeyPalette(t["--k-accent"], [2, 3, 4, 5, 6].map((n) => t[`--k-series-${n}`])); };
+  const css = (n: string) => Object.entries(themes).find(([k]) => k.includes(n))![1];
+  expect(nodes(css("daylight"))).toEqual([0, 1, 2, 4]);
+  expect(nodes(css("bold"))).toEqual([0, 1, 2, 3, 4]);
+  expect(sankeyPalette("oklch(0.5 0.1 20)", ["#000", "#fff"])).toEqual([0, 1]);
 });

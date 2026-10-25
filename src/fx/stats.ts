@@ -351,7 +351,7 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
     },
     row: (i) => (tl) => {
       const r = rows[i];
-      if (!r) return ctx.problem(`likert: no row ${i}; the rows are 0 to ${rows.length - 1}`);
+      if (!r) return ctx.problem(`likert: no row ${i + 1} (row(${i})); there are ${rows.length} rows`);
       tl.to(r.bar, ctx.reducedMotion ? { autoAlpha: 1, duration: motion.step } : { scaleX: 1, duration: motion.step * 2, ease: "power2.out" });
       tl.to(r.num, { autoAlpha: 1, duration: motion.step / 2 }, "<");
       counting(tl, r.num, r.agree, r.show);

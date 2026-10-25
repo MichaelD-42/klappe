@@ -6,7 +6,7 @@ Catalog: section `298-table-card` (`#/table-card/compare/2`).
 
 ## `compareTable`
 
-Only in `scene.ts`. From `decks/demo/sections/298-table-card/10-compare/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/298-table-card/10-compare/scene.ts`:
 
 ```ts
 import { compareTable, type CompareTableHandle } from "klappe/fx";
@@ -37,7 +37,7 @@ steps: [
 | `columns` | `string[]` | required | the header of each value column; the label column has no header |
 | `rows` | `{ label, cells }[]` | required | one row per entry; each cell is `true` (a tick), `false` (a cross) or a string (that text) |
 | `x`, `y`, `w` | number | required | the table's top-left corner and width, scene units |
-| `h` | number | none | the height the table must fit |
+| `h` | number | none | the height the table must fit; the table sits centred in it |
 
 ### Step adders
 

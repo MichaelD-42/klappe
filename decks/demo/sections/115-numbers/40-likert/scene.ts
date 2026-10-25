@@ -1,9 +1,15 @@
-import { likert, type LikertHandle } from "klappe/fx";
+import { likert, title, type BasicHandle, type LikertHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
+interface Refs {
+  h: BasicHandle;
+  l: LikertHandle;
+}
+
 export default captioned("likert(ctx, { rows: [{ statement, counts }] }) — then l.row(i) per step", {
-  build: (ctx): LikertHandle =>
-    likert(ctx, {
+  build: (ctx): Refs => ({
+    h: title(ctx),
+    l: likert(ctx, {
       x: 160,
       y: 320,
       w: 1600,
@@ -14,5 +20,6 @@ export default captioned("likert(ctx, { rows: [{ statement, counts }] }) — the
       ],
       source: "klappe demo sample",
     }),
-  steps: [(tl, l: LikertHandle) => l.show(tl), (tl, l: LikertHandle) => l.row(0)(tl), (tl, l: LikertHandle) => l.row(1)(tl), (tl, l: LikertHandle) => l.row(2)(tl)],
+  }),
+  steps: [(tl, r: Refs) => (r.h.show(tl), r.l.show(tl)), (tl, r: Refs) => r.l.row(0)(tl), (tl, r: Refs) => r.l.row(1)(tl), (tl, r: Refs) => r.l.row(2)(tl)],
 });

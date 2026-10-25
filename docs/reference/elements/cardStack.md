@@ -6,12 +6,12 @@ Catalog: section `299-notes-cards` (`#/notes-cards/stack/2`).
 
 ## `cardStack`
 
-Only in `scene.ts`. From `decks/demo/sections/299-notes-cards/20-stack/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/299-notes-cards/20-stack/scene.ts`:
 
 ```ts
 import { cardStack, type CardStackHandle } from "klappe/fx";
 
-build: (ctx) => ({ c: cardStack(ctx, { x: 780, y: 340, cards: ["Speed", "Trust", "Focus", "Craft", "Fun"] }) }),
+build: (ctx) => ({ c: cardStack(ctx, { x: 780, y: 380, cards: ["Speed", "Trust", "Focus", "Craft", "Fun"] }) }),
 steps: [
   (tl, r: { c: CardStackHandle }) => r.c.show(tl),
   (tl, r) => r.c.pull(1)(tl),

@@ -6,14 +6,14 @@ Catalog: section `297-venn-pyramid` (`#/venn-pyramid/layers/1`).
 
 ## `pyramid`
 
-Only in `scene.ts`. From `decks/demo/sections/297-venn-pyramid/20-layers/scene.ts`:
+Only in `scene.ts`. Shortened from `decks/demo/sections/297-venn-pyramid/20-layers/scene.ts`:
 
 ```ts
 import { pyramid, type PyramidHandle } from "klappe/fx";
 
 build: (ctx) => ({
   p: pyramid(ctx, {
-    x: 460, y: 120, w: 1000, h: 800,
+    x: 510, y: 270, w: 900, h: 670,
     layers: [{ id: "unit", label: "Unit" }, { id: "integration", label: "Integration" }, { id: "e2e", label: "End to end" }],
   }),
 }),
@@ -36,7 +36,7 @@ steps: [
 
 | Handle | Step |
 | --- | --- |
-| `next()` | builds the next layer up: it grows from its base (0.6 s) and its label fades in. It is in the accent (a 4 px `--k-accent` edge and a `--k-accent` fill at `MARKER_MIX`, 35 %) until the next `next()` starts, then settles to a 2 px `--k-line` edge on `--k-surface`. The layer is picked when the step is added, so adders made out of step order still build bottom-up. One `next()` more than there are layers shows `pyramid: next() past the top layer (<n> layers)` |
+| `next()` | builds the next layer up: it grows from its base (0.6 s) and its label fades in. It is in the accent (a 4 px `--k-accent` edge and a `--k-accent` fill at `MARKER_MIX`, 35 %) until the next `next()` starts, then settles to a 2 px `--k-line` edge on `--k-surface`. The layer is picked when the step is added, so adders made out of step order still build bottom-up. One `next()` more than there are layers shows `pyramid: next() past the top layer (<n> layers)` and its step only takes a 0.4 s beat |
 
 ### Reduced motion
 
