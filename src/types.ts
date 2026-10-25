@@ -99,7 +99,10 @@ export interface Background {
   // Instead of href: "aurora", a slow drift of light in the theme's colours; or a function that draws into el
   // (the full stage, 1920x1080) and returns play and pause, for a background the deck makes itself.
   animate?: "aurora" | ((el: HTMLElement) => { play(): void; pause(): void });
-  parallax?: boolean; // drifts a little with each camera flight, as a far layer does
+  parallax?: boolean | number; // drifts a little with each camera flight, as a far layer does; a number is its depth (true is 1, up to 4)
+  // Pictures with transparent parts stacked over this one, each drifting by its own depth: a near layer (2, 3) moves
+  // further than the far background (1), so the frame reads as several planes.
+  layers?: { href: string; alt?: string; parallax: number }[];
   alt?: string; // describes the picture; a missing file then shows a prompt, and media/TODO.md gets one
   scrim?: number;
   scrimSide?: "left" | "right" | "top" | "bottom"; // full scrim on that side only, clear past the middle

@@ -22,12 +22,14 @@ export * from "./figure";
 export * from "./flipcard";
 export * from "./flow";
 export * from "./focus";
+export * from "./gitgraph";
 export * from "./glitch";
 export * from "./icons";
 export * from "./loupe";
 export * from "./magic";
 export * from "./map";
 export * from "./matrix";
+export * from "./pointer";
 export * from "./pyramid";
 export * from "./qr";
 export * from "./redline";
@@ -39,6 +41,7 @@ export { mesh3d, type Mesh3dHandle, type Mesh3dOpts, type Mood } from "./mesh3d"
 export * from "./motion";
 // Not revealUnits: the split, for its unit test.
 export { reveal, type RevealHandle, type RevealOpts } from "./reveal";
+export * from "./semanticzoom";
 export * from "./sequence";
 // Not arrowPath: the arrow geometry, for its unit test.
 export { arrow, shape, tint, type ArrowOpts, type ShapeHandle, type ShapeOpts, type TintOpts, type TintProp } from "./shape";

@@ -14,7 +14,10 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-parallax`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual([])
+    expect(r.problems).toEqual([
+      'sections/20-b/section.ts: background: parallax 9 out of range; use a depth above 0, up to 4',
+      'sections/20-b/section.ts: background: layer 1: parallax 0 out of range; use a depth above 0, up to 4',
+    ])
   }, 120_000)
 
 async function open(hash: string, flags = ''): Promise<Page> {
@@ -58,5 +61,25 @@ test('with reduced motion the picture still takes its place, at once', async () 
   const page = await open('#/a/one/1', '&reducedmotion=1')
   await page.evaluate(() => window.klappe.stepper.next())
   expect((await pose(page)).x).toBe(0)
+  await page.close()
+})
+
+// The near layer's centre moves three times as far as the background's, and its edges stay out of view too.
+test('a layer at depth 3 drifts three times as far as the background', async () => {
+  const page = await open('#/a/three/1')
+  const r = await page.evaluate(() => {
+    const s = document.querySelector('.k-stage')!.getBoundingClientRect()
+    const off = (sel: string) => {
+      const b = document.querySelector(sel)!.getBoundingClientRect()
+      return { x: b.left + b.width / 2 - (s.left + s.width / 2), covers: b.left <= s.left && b.right >= s.right && b.top <= s.top && b.bottom >= s.bottom }
+    }
+    // The layer's frame is see-through: only its picture covers the background.
+    const fills = [...document.querySelectorAll('[data-k-background="a"] [data-k-layer="1"] *')].map((e) => getComputedStyle(e).backgroundColor)
+    return { base: off('[data-k-background="a"]'), near: off('[data-k-background="a"] [data-k-layer="1"]'), fills: [...new Set(fills)] }
+  })
+  expect(r.fills).toEqual(['rgba(0, 0, 0, 0)'])
+  expect(r.base.x).toBeCloseTo(-40, 0)
+  expect(r.near.x).toBeCloseTo(-120, 0)
+  expect([r.base.covers, r.near.covers]).toEqual([true, true])
   await page.close()
 })

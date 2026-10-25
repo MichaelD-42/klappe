@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { addCameraMove, followView, frame, parallaxPose, PARALLAX_SCALE } from "../camera";
+import { addCameraMove, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
 import { code, LANGS } from "../fx/code";
 import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
@@ -249,6 +249,7 @@ interface Pinned {
   el: HTMLElement;
   push?: ImageHandle; // set while its Ken Burns push has not been put on the timeline yet
   loop?: { play(): void; pause(): void };
+  layers: { el: HTMLElement; depth: number }[]; // the background's parallax layers, inside el
 }
 // An SVG file with its own animation: SMIL elements or CSS keyframes. A still one stays an <img>.
 const ANIMATED_SVG = /<(?:animate|animateTransform|animateMotion|set)\b|@keyframes|\banimation\s*:/;
@@ -325,8 +326,21 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     const s = d.appendChild(el("div", ""));
     Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(bg.scrimSide), opacity: String(bg.scrim) });
   }
+  // Parallax layers: each its own full-frame picture over the background, inside it, so it fades with it.
+  const depthOk = (n: unknown) => typeof n === "number" && n > 0 && n <= MAX_DEPTH;
+  if (typeof bg.parallax === "number" && !depthOk(bg.parallax)) problem(`parallax ${bg.parallax} out of range; use a depth above 0, up to ${MAX_DEPTH}`);
+  const layers = (bg.layers ?? []).flatMap((l, i) => {
+    if (!depthOk(l.parallax)) return problem(`layer ${i + 1}: parallax ${l.parallax} out of range; use a depth above 0, up to ${MAX_DEPTH}`), [];
+    const e = d.appendChild(el("div", "k-layer"));
+    e.dataset.kLayer = String(i + 1);
+    Object.assign(e.style, { width: "1920px", height: "1080px" });
+    const pic = safe(`${source}: background`, () => image({ ...full, html: e }, { href: l.href, alt: l.alt ?? "", fit: "cover" }));
+    if (pic?.el && pic.el.querySelector("img")) pic.el.style.background = "transparent"; // a picture's frame is --k-bg; a layer shows through
+    gsap.set(e.children, { autoAlpha: 1 });
+    return [{ el: e, depth: l.parallax }];
+  });
   gsap.set(d, { autoAlpha: 0 });
-  return { el: d, push: bg.kenBurns ? img : undefined, loop };
+  return { el: d, push: bg.kenBurns ? img : undefined, loop, layers };
 }
 
 const INTENSE: TransitionKind[] = ["zoom", "crt", "shatter", "push", "glitch", "cube", "pageTurn", "magicMove"];
@@ -369,15 +383,18 @@ export function renderWorld(
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
     const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
     let cam = first;
-    const far: HTMLElement[] = []; // parallax backgrounds on this canvas
+    // Parallax backgrounds and layers on this canvas: k is the drift per unit of parallaxPose, in the parent's units.
+    const far: { el: HTMLElement; k: number }[] = [];
+    const drift = (p: { x: number; y: number }) => ({ x: (i: number) => far[i].k * p.x, y: (i: number) => far[i].k * p.y });
     const camera: Ctx["camera"] = {
       to(t, target, o) {
         if (["x", "y", "w", "h"].every((k) => cam[k as keyof Rect] === target[k as keyof Rect])) return; // already there
         // Reduced motion: camera flights become cuts (spec §7); the step padding keeps them off the labels.
         addCameraMove(t, world, cam, target, { ...o, instant: opts.reducedMotion });
         // Parallax backgrounds drift with the flight, from its start; a cut moves them at once.
-        const pose = parallaxPose(target, layout.size);
-        if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
+        const pose = drift(parallaxPose(target, layout.size));
+        const els = far.map((f) => f.el);
+        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
         cam = target;
       },
       follow(t, point, o) {
@@ -388,8 +405,9 @@ export function renderWorld(
         // The pose is a pure function of this tween's progress (onUpdate fires on a seek too), so seek equals play.
         if (opts.reducedMotion) t.set(world, frame(end), o?.at);
         else t.to({}, { duration, ease: "none", onUpdate(this: gsap.core.Tween) { gsap.set(world, frame(view(this.progress()))); } }, o?.at);
-        const pose = parallaxPose(end, layout.size);
-        if (far.length) opts.reducedMotion ? t.set(far, pose, "<") : t.to(far, { ...pose, duration, ease: "power2.inOut" }, "<");
+        const pose = drift(parallaxPose(end, layout.size));
+        const els = far.map((f) => f.el);
+        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration, ease: "power2.inOut" }, "<");
         cam = end;
       },
     };
@@ -433,11 +451,14 @@ export function renderWorld(
           const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
           const svgText = bg.href ? opts.svg?.[bg.href.replace(/^\.\//, "")] : undefined;
           pins.set(bg, (pin = background(ctx, pinned, bg, source, own ? sc.id : s.id, svgText)));
-          if (bg.parallax) {
-            // Scaled up so its edges stay out of view at full drift; at rest where the canvas opens.
-            gsap.set(pin.el, { scale: PARALLAX_SCALE, ...parallaxPose(first, layout.size) });
-            far.push(pin.el);
-          }
+          // Each scaled up so its edges stay out of view at its full drift; at rest where the canvas opens. A layer sits
+          // inside the background, so its own scale and drift are what it adds to the background's.
+          const base = bg.parallax === true ? 1 : typeof bg.parallax === "number" && bg.parallax > 0 ? Math.min(bg.parallax, MAX_DEPTH) : 0;
+          const sb = parallaxScale(base);
+          const at = parallaxPose(first, layout.size);
+          const add = (e: HTMLElement, scale: number, k: number) => (gsap.set(e, { scale, x: k * at.x, y: k * at.y }), far.push({ el: e, k }));
+          if (base) add(pin.el, sb, base);
+          for (const l of pin.layers) add(l.el, parallaxScale(l.depth) / sb, (l.depth - base) / sb);
         }
         const build = sc.module?.build;
         perScene.set(sc, {

@@ -19,6 +19,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Show code, one part at a time; code changing | a fence with `{1-2\|4}` groups in `scene.md`; `code` with `diff` | [code](klappe/docs/reference/elements/code.md) | `240-code/10-walkthrough`, `240-code/20-diff` |
 | Show a command and its output | a ```` ```console ```` fence; `terminal` in `scene.ts` | [terminal](klappe/docs/reference/elements/terminal.md) | `250-terminal/10-replay` |
 | Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
+| Walk through a screen: move, click, type (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in` |
 | Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
 | Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
 | Mark words as a pen would (ring, underline, frame, strike, arrow) | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
@@ -27,9 +28,12 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Show a system and what flows through it | `flow` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/10-pipeline`, `270-flow/20-send` |
 | Draw a small diagram of your own (boxes, a ring, a connector); change a colour to a theme token in a step | `shape`, `arrow`; `tint`, or `token` for your own tween | [shape](klappe/docs/reference/elements/shape.md) | `125-shapes/10-diagram` |
 | Move something along a route (a parcel to a customer) | `travel` | [travel](klappe/docs/reference/effects.md#travel) | `285-travel/10-parcel` |
+| A state machine: the current state lit, one transition firing per step | `flow` with `highlight` and `fire` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/50-state-machine` |
 | Show who talks to whom, in order | `sequence` | [sequence](klappe/docs/reference/elements/sequence.md) | `280-sequence/10-order` |
+| Zoom into a system level by level (systems, containers, components) | `semanticZoom` | [semanticZoom](klappe/docs/reference/elements/semanticZoom.md) | `172-semantic-zoom/10-system` |
 | Show who does what in a process | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process` |
 | Show how a decision was made | `decisionTree` | [decisionTree](klappe/docs/reference/elements/decisionTree.md) | `300-tree/10-route` |
+| Teach git: commits, branches, a merge, a rebase, one per step | `gitGraph` | [gitGraph](klappe/docs/reference/elements/gitGraph.md) | `304-git/10-rebase` |
 | Sort things on two axes (effort against impact) and move one when the view changes | `matrix` | [matrix](klappe/docs/reference/elements/matrix.md) | `295-matrix/10-priorities` |
 | A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
 | What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
@@ -46,7 +50,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | An 80s computer screen that boots and types | `crt` | [crt](klappe/docs/reference/elements/crt.md) | `180-crt/10-power-on` |
 | A character who speaks | `bubble` | [bubble](klappe/docs/reference/elements/bubble.md) | `160-motion/30-talk` |
 | A quiet companion with moods that runs by itself | `mesh3d` | [mesh3d](klappe/docs/reference/elements/mesh3d.md) | `340-mesh3d/10-avatar` |
-| Compare numbers from a `data/` file: bar, stacked, line, waterfall, timeline, donut, slope; drop-off through stages, `type: "funnel"`; where a total goes, `type: "sankey"`; one bar at a time, `bar(i)` | `chart` | [chart](klappe/docs/reference/effects.md#chart) | `110-chart/10-bars`, `110-chart/70-bar-steps` |
+| Compare numbers from a `data/` file: bar, stacked, line, waterfall, timeline, donut, slope; drop-off through stages, `type: "funnel"`; where a total goes, `type: "sankey"`; two numbers per item, `type: "scatter"`, a third as size, `type: "bubble"`, moving year by year with `period(i)`; one bar at a time, `bar(i)` | `chart` | [chart](klappe/docs/reference/effects.md#chart) | `110-chart/10-bars`, `110-chart/70-bar-steps`, `110-chart/76-bubble` |
 | Who led, who climbed, period by period | `barRace` | [barRace](klappe/docs/reference/effects.md#barrace) | `110-chart/59-race` |
 | One number for a board slide: a KPI with a sparkline, a share, progress | `kpi`, `waffle`, `progress` | [kpi](klappe/docs/reference/effects.md#kpi-waffle-progress) | `115-numbers/10-kpis`, `115-numbers/20-shares` |
 | One reading against a fixed range (load, a score), maybe changing on a later step | `gauge` | [gauge](klappe/docs/reference/effects.md#gauge) | `115-numbers/30-gauge` |
@@ -59,6 +63,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A picture; one detail of it, step by step | `image`; `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
 | A clip; full screen with no `rect`; running as its scene arrives with `autoplay: true` (muted unless `muted: false`) | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
+| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
 | A hard question for the room | `### Question?` in `scene.md`; `shout` in `scene.ts` | [shout](klappe/docs/reference/effects.md#shout) | `210-shout/10-calm` |
 | Break with the old way | `shatter` | [shatter](klappe/docs/reference/effects.md#shatter) | `200-shatter/10-card` |
@@ -72,7 +77,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A word or number flipped like an airport board | `splitFlap` | [splitFlap](klappe/docs/reference/effects.md#splitflap) | `218-redline-flap/20-board` |
 | What a group said, weighted, from a `data/` file | `wordCloud` | [wordCloud](klappe/docs/reference/effects.md#wordcloud) | `216-words/10-cloud` |
 | A background: a picture, a looping video, `animate: "aurora"`, optionally `parallax` | `background` in `section.ts` or `scene.ts` | [section.ts](klappe/docs/reference/deck-format.md#sectionts) | `230-fullscreen/20-background`, `230-fullscreen/45-aurora`, `230-fullscreen/46-video-loop`, `235-parallax/10-near` |
-| Between sections: slide in, `"push"`; open from a point, `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element across (a logo, a title chip), `"magicMove"` with the same `el.dataset.kMatch` on both | `transition` in `section.ts` | [transitions](klappe/docs/reference/effects.md#transitions) | `170-zoom/10-dive`, `301-magic-a/10-before` |
+| Between sections: slide in, `"push"`; open from a point, `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element across (a logo, a title chip), `"magicMove"` with the same `el.dataset.kMatch` on both | `transition` in `section.ts` | [transitions](klappe/docs/reference/effects.md#transitions) | the gallery, one section per kind: `350-tr-cut/10-cut-card` to `361-tr-magicmove/10-magicmove-card`; a zoom into a named target, `170-zoom/10-dive`; a magic move with two keys, `301-magic-a/10-before` |
 | Move the camera inside a scene: ride along, `follow`; jolt on a landing, `impactShake`; pull focus to one item, `rackFocus`; lean a long flight, `tilt`; a big reveal, `dollyZoom` | `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom` | [camera](klappe/docs/reference/elements/camera.md) | `237-camera/10-follow`, `237-camera/20-rack-focus`, `237-camera/30-tilt`, `237-camera/40-dolly` |
 | Anything else | your own tween | [motion](klappe/docs/reference/motion.md) | `330-tweens/10-boxes` |
 

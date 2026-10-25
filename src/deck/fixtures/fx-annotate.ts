@@ -1,11 +1,11 @@
 import { assembleDeck } from "../assemble";
-import { annotate, type AnnotateHandle } from "klappe/fx";
+import { annotate, code, type AnnotateHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule } from "../../types";
 
 // A paragraph with marked words: each kind of mark on its own step, one on a plain rect, a highlight and then an
 // underline on a phrase that wraps onto a second line, then all fade out.
-// A second scene marks an element with no size (the fixture's only problem).
+// A second scene marks an element with no size (the fixture's only problem); a third rings one line of dense code.
 const WORDS = ["circle", "underline", "box", "strike", "arrow"] as const;
 
 const marks: SceneModule = {
@@ -48,6 +48,15 @@ const noSize: SceneModule = {
   steps: [(tl, r: { a: AnnotateHandle }) => r.a.show(tl)],
 };
 
+const SRC = "const a = 1;\nconst b = 2;\nif (a < b) ship(build());\nconst c = 3;\nconst d = 4;\n";
+const onCode: SceneModule = {
+  build(ctx) {
+    const c = code(ctx, { src: SRC, lang: "text", x: 160, y: 200, w: 1200, h: 400 });
+    return { c, a: annotate(ctx, c.line(3), { kind: "circle" }) };
+  },
+  steps: [(tl, r: { c: ReturnType<typeof code> }) => r.c.show(tl), (tl, r: { a: AnnotateHandle }) => r.a.show(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -56,6 +65,7 @@ export default () =>
       "sections/10-a/10-marks/scene.md":
         "## Marks\n\n- The text.\n- Circle.\n- Underline.\n- Box.\n- Strike.\n- Arrow.\n- A rect.\n- A highlighted phrase.\n- A wrapped phrase.\n- All fade.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
+      "sections/10-a/30-code/scene.md": "## Code\n\n- The code.\n- Ring a line.\n",
     },
-    { "sections/10-a/10-marks/scene.ts": marks, "sections/10-a/20-no-size/scene.ts": noSize },
+    { "sections/10-a/10-marks/scene.ts": marks, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-code/scene.ts": onCode },
   );

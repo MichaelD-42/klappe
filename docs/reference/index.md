@@ -10,6 +10,7 @@
   - [code](elements/code.md): code walkthrough and diff.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
+  - [pointer](elements/pointer.md): a mouse pointer that moves, clicks with a ripple and types, for a UI walkthrough.
   - [spotlight](elements/spotlight.md): dims all but one target; moves on the next step.
   - [focus](elements/focus.md): lights one item in place while the rest dim, with no layer over the scene.
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
@@ -22,6 +23,8 @@
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [gitGraph](elements/gitGraph.md): a git history, one commit, branch, merge or rebase per step.
+  - [semanticZoom](elements/semanticZoom.md): boxes in boxes; the camera flies into one and its insides build, level by level.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.

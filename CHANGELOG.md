@@ -14,10 +14,19 @@ Tooling for building decks with agents, the architecture doc and a glossary, a s
 - The skill's "Choose the element by intent" is a table: intent, effect, reference page and the catalog scene to copy, for every effect a deck can call. `tests/lint/skill-catalog.test.ts` keeps it complete and its links and scenes real.
 - `CLAUDE.md` for agents working on klappe itself: where things are, the commands, and the rules the lints and the walk hold.
 - `docs/architecture.md`: the components, the path from deck folder to stage, a step press, and where the timeline rule is enforced, with Mermaid diagrams. `docs/glossary.md`: the terms klappe uses, each with one meaning and its relations.
+- `gitGraph`: a git history for developer trainings, one op per step: commits on one lane per branch, a new branch, a merge commit, and a rebase whose copies (`form′`) fly past the target's tip while the originals fade. Catalog `#/git/rebase/1`.
+- `semanticZoom`: boxes in boxes on the canvas. `into(path)` flies the camera into a box while the rest of its level fades, and its insides build as it lands; `out` flies back up. Each level's labels read 32 px at their own zoom. Catalog `#/semantic-zoom/system/1`.
+- `pointer`: a mouse pointer for UI walkthroughs. `move(target)` glides to an element or a point on a slight curve, `click` presses with an accent ripple, `type(field, text)` types into a focused field. Catalog `#/pointer/sign-in/1`.
+- `flow` works as a state machine: `fire(from, to)` draws that transition on in `--k-accent` and moves the ring to the new state, and an edge from a box to itself is a loop on its first free face. Catalog `#/flow/state-machine/1`.
+- `chart` types `scatter` (two number columns as x and y) and `bubble` (a third as the dot's area). With a `year`, `period` or similar column, `period(i)` moves the dots from period to period, as `barRace` does. Catalog `#/chart/scatter/1`, `#/chart/bubble/1`.
+- Parallax depths: `parallax` takes a depth (`2` drifts twice as far as `true`), and `layers: [{ href, alt, parallax }]` stacks transparent pictures over a background, each drifting by its own depth. Catalog `#/parallax/near/1` has a near layer of rings.
+- A speaker profile factory in the demo, `decks/demo/shared/speaker-profile.ts`, to copy into a deck: photo, name, role and company logo, CV, statements one per step, and a contact step with a QR code. Catalog `#/speaker/profile/1`.
+- The demo has a transition gallery: one section per transition kind, from `#/tr-cut/cut-card/1` to `#/tr-magicmove/magicmove-card/1`, each card naming its `section.ts` line.
 - The demo deck has a local clip, `media/sample.mp4` (six seconds, 65 KB, made for the demo), and a catalog scene for a video background (`#/fullscreen/video-loop/1`). The media scenes play it instead of a clip from the internet, so the demo runs offline.
 
 ### Fixed
 
+- `annotate`: a ring on a code line flattens into the line gap and widens instead, so it no longer runs over the lines above and below.
 - `swarm` stays sharp when the camera closes in: its canvas re-rasterises at the zoom it is shown at, up to 4096 device pixels a side (about 2x for a full-frame swarm).
 - `shatter`: the impact frame is lighter. Each shard is cut to its polygon's bounds instead of a full-frame clone, and its layer exists from load, so less is rastered at the impact (a long frame of 83 ms became 67 ms on a desktop GPU; see `docs/perf-m2.md`).
 - Demo: the camera catalog's tilt and dolly scenes raised a deck problem with reduced motion (a caption timed 0.6 s before a flight's end, which is a cut there). A test now loads the demo with reduced motion and expects no problem.

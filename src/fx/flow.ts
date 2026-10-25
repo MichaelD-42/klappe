@@ -16,6 +16,7 @@ export interface FlowHandle {
   show(ids?: string[]): StepAdder;
   highlight(ids: string[]): StepAdder;
   send(o: { path: string[]; count?: number; label?: string }): StepAdder;
+  fire(from: string, to: string): StepAdder;
   node(id: string): Element;
 }
 
@@ -82,11 +83,25 @@ export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: 
     return b;
   };
   const mid = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
+  // A self-loop (a state that stays where it is) leaves the box and comes back on its first face no other edge uses
+  // (top, right, bottom, left), in the cell's gap on that side, clockwise; it takes no port and no lane.
+  const loop = (id: string, b: Rect): Pt[] => {
+    const face = (["u", "r", "d", "l"] as const).find((f) => !faces.has(`${id}|${f}`)) ?? "u";
+    const [L, R, T, B] = [b.x, b.x + b.w, b.y, b.y + b.h];
+    const [gx, gy] = [((cw * (1 - FILL)) / 2) * 0.8, ((ch * (1 - FILL)) / 2) * 0.8];
+    const [x0, x1, y0, y1] = [L + b.w * 0.3, L + b.w * 0.7, T + b.h * 0.3, T + b.h * 0.7];
+    const p = (x: number, y: number) => ({ x, y });
+    if (face === "u") return [p(x0, T), p(x0, T - gy), p(x1, T - gy), p(x1, T)];
+    if (face === "r") return [p(R, y0), p(R + gx, y0), p(R + gx, y1), p(R, y1)];
+    if (face === "d") return [p(x1, B), p(x1, B + gy), p(x0, B + gy), p(x0, B)];
+    return [p(L, y1), p(L - gx, y1), p(L - gx, y0), p(L, y0)];
+  };
   const ports = opts.edges.map(() => ({ out: 0, in: 0, mid: 0 }));
   // face users: node id + face -> [edge index, role, position of the other end]
   const faces = new Map<string, { i: number; role: "out" | "in"; at: number; extent: number }[]>();
   opts.edges.forEach((e, i) => {
     const [a, b] = [box(e.from), box(e.to)];
+    if (e.from === e.to) return;
     const vertical = mid(a).x === mid(b).x;
     const [pa, pb] = [mid(a), mid(b)];
     const dir = vertical ? (pb.y >= pa.y ? "d" : "u") : pb.x > pa.x ? "r" : "l";
@@ -103,11 +118,11 @@ export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: 
     const step = Math.min(SPREAD, (users[0].extent * 0.6) / users.length);
     users.forEach((u, k) => (ports[u.i][u.role] = (k - (users.length - 1) / 2) * step));
   }
-  const route = () => opts.edges.map((e, i) => edgePoints(box(e.from), box(e.to), ports[i]));
+  const route = () => opts.edges.map((e, i) => (e.from === e.to ? loop(e.from, box(e.from)) : edgePoints(box(e.from), box(e.to), ports[i])));
   // Bent routes in the same lane (same middle line) get side-by-side lanes.
   const lanes = new Map<string, number[]>();
   route().forEach((pts, i) => {
-    if (pts.length === 4) {
+    if (pts.length === 4 && opts.edges[i].from !== opts.edges[i].to) {
       const k = pts[1].x === pts[2].x ? `v${pts[1].x}` : `h${pts[1].y}`;
       lanes.set(k, [...(lanes.get(k) ?? []), i]);
     }
@@ -174,10 +189,12 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     const base = { x: q.x - d.x * ARROW, y: q.y - d.y * ARROW };
     // The line stops at the arrowhead's base; the head is its own triangle that appears when the line arrives.
     const path = document.createElementNS(SVG, "path");
-    path.setAttribute("d", fmt([...pts.slice(0, -1), base]));
+    const line = fmt([...pts.slice(0, -1), base]);
+    path.setAttribute("d", line);
     Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
     const head = document.createElementNS(SVG, "path");
-    head.setAttribute("d", fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z");
+    const tip = fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z";
+    head.setAttribute("d", tip);
     Object.assign(head.style, { fill: "var(--k-line)" });
     ctx.svg.append(path, head);
     gsap.set([path, head], { autoAlpha: 0 });
@@ -195,7 +212,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       ctx.html.append(tag);
       gsap.set(tag, { autoAlpha: 0 });
     }
-    return { from: r.from, to: r.to, pts, path, head, tag, shown: false };
+    return { from: r.from, to: r.to, line, tip, pts, path, head, tag, shown: false };
   });
 
   // Labels are fitted on first use: the layout exists by then (like callout's measuring), not while building.
@@ -218,6 +235,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
 
   const shown = new Set<string>();
   const lit = new Set<string>();
+  let fired: SVGElement[] = []; // the accent line and head the last fire() drew, as the steps are added
 
   return {
     node: (id) => els.get(need(id))!,
@@ -254,6 +272,42 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
         if (on.length) tl.to(on.map((id) => rings.get(id)!), { autoAlpha: 1, duration: 0.3 }, at);
         if (off.length) tl.to(off.map((id) => rings.get(id)!), { autoAlpha: 0, duration: 0.3 }, at);
         if (!on.length && !off.length) tl.set({}, {}, at + 0.3);
+      };
+    },
+    fire(from, to) {
+      [from, to].forEach(need);
+      const e = edges.find((x) => x.from === from && x.to === to);
+      if (!e) ctx.problem(`flow: no edge from "${from}" to "${to}"`);
+      // Each fire draws its own accent copy of the edge, so firing one edge twice never redraws a shape a step back
+      // would have to undo.
+      const hot = e ? [e.line, e.tip].map((d, i) => {
+        const p = document.createElementNS(SVG, "path");
+        p.setAttribute("d", d);
+        Object.assign(p.style, i ? { fill: "var(--k-accent)" } : { fill: "none", stroke: "var(--k-accent)", strokeWidth: "6", strokeLinejoin: "round" });
+        ctx.svg.append(p);
+        gsap.set(p, { autoAlpha: 0 });
+        return p;
+      }) : [];
+      const was = fired;
+      const off = [...lit].filter((id) => id !== to);
+      const on = !lit.has(to);
+      lit.clear();
+      lit.add(to);
+      fired = hot;
+      return (tl) => {
+        fit();
+        const at = tl.duration();
+        // The edge fired before settles, the ring leaves the old state, this edge draws on in accent, and the
+        // ring lands on the new state as the line arrives.
+        if (was.length) tl.to(was, { autoAlpha: 0, duration: 0.3 }, at);
+        if (off.length) tl.to(off.map((id) => rings.get(id)!), { autoAlpha: 0, duration: 0.3 }, at);
+        if (e) {
+          tl.set([hot[0], e.path, e.head, ...(e.tag ? [e.tag] : [])], { autoAlpha: 1 }, at);
+          drawOn(hot[0], { duration: 0.5, each: 0, at })(tl);
+          tl.to(hot[1], { autoAlpha: 1, duration: 0.1 }, at + 0.45);
+        }
+        if (on) tl.to(rings.get(to)!, { autoAlpha: 1, duration: 0.3 }, at + 0.45);
+        else tl.set({}, {}, at + 0.75);
       };
     },
     send({ path, count = 1, label }) {

@@ -98,3 +98,26 @@ test('a highlight on a wrapped phrase draws one band per line, behind the text',
   expect(r.textFirst).toBe(true)
   await page.close()
 }, 60_000)
+
+// On dense code a ring flattens into the line gap: it rings its line and stays off the text of the lines around it.
+test('a ring on a code line stays clear of the lines above and below', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/code/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.waitForTimeout(1200)
+  const r = await page.evaluate(() => {
+    const text = (n: number) => {
+      const range = document.createRange()
+      range.selectNodeContents(document.querySelector(`[data-scene="code"] [data-line="${n}"]`)!)
+      return range.getBoundingClientRect()
+    }
+    const ring = document.querySelector('[data-scene="code"] svg[data-k-annotation="circle"] path')!.getBoundingClientRect()
+    const [above, line, below] = [text(2), text(3), text(4)]
+    return { ring: { top: ring.top, bottom: ring.bottom, left: ring.left, right: ring.right }, above: above.bottom, below: below.top, line: { left: line.left, right: line.right } }
+  })
+  expect(r.ring.top).toBeGreaterThanOrEqual(r.above - 1)
+  expect(r.ring.bottom).toBeLessThanOrEqual(r.below + 1)
+  expect(r.ring.left).toBeLessThan(r.line.left)
+  expect(r.ring.right).toBeGreaterThan(r.line.right)
+  await page.close()
+}, 60_000)

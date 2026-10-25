@@ -16,10 +16,11 @@ export function frame(t: Rect): Pose {
   return { x: -t.x * scale + (W - t.w * scale) / 2, y: -t.y * scale + (H - t.h * scale) / 2, scale };
 }
 
-// How far a parallax background drifts from its rest, at most, in screen px; it is scaled up enough to hide its
-// edges at that drift (PARALLAX_SCALE).
+// How far a parallax background drifts from its rest, at most, in screen px, at depth 1; a layer at depth d drifts d
+// times as far. Each is scaled up enough to hide its edges at its drift (parallaxScale).
 export const PARALLAX = 40;
-export const PARALLAX_SCALE = 1 + (2 * PARALLAX) / H;
+export const MAX_DEPTH = 4;
+export const parallaxScale = (depth: number) => 1 + (2 * depth * PARALLAX) / H;
 
 // A parallax background's offset with the camera on rect `at` of a canvas of `size`: it drifts the way the
 // content moves, PARALLAX at the canvas edges, so it reads as a far layer. Bounded, so it never shows an edge.

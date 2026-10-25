@@ -89,6 +89,25 @@ export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: 
 
 Catalog: `#/reuse/check-data/1` and `#/reuse/check-motion/1` both call `checkpoint()` from `decks/demo/shared/checkpoint.ts`.
 
+### A speaker profile
+
+`decks/demo/shared/speaker-profile.ts` is a factory to copy into a deck's `shared/`: a photo (or several, one per statement), the name, the role and company with a logo, a short CV, statements one per step, and a contact step with a QR code, an email and a web address. Catalog: `#/speaker/profile/1`. The words come from `scene.md`: the title is the name, then one list item each for the role line, the CV, every statement, and the contact step's label under the QR code. The options carry the rest:
+
+```ts
+import { speakerProfile } from "../../../shared/speaker-profile";
+
+export default speakerProfile({
+  photos: [{ href: "media/portrait.png", alt: "Carla Rivera on stage" }],
+  logo: { href: "media/logo.svg", alt: "Kestrel Labs" },
+  linkedin: "https://www.linkedin.com/in/<profile>",
+  email: "carla@example.com",
+  web: "example.com/talks",
+  statements: 2, // the statement items in scene.md
+});
+```
+
+It is a factory and not an effect because it only lays out `image`, `qr` and `text`, and each deck wants its own arrangement: change the copy, not an API.
+
 ## section.ts
 
 Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole canvas and returns refs. Scenes read them from `ctx.canvas.refs`. `ctx.canvas.rects` holds each scene's home frame, keyed by scene id. The layout supplies it, not the section.
@@ -99,7 +118,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`.
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) lays the theme's `--k-scrim` over it for text on top (black, or white in a light theme); use 0.6 or more, so theme text keeps 4.5:1 contrast over any picture. `scrimSide` (`"bottom"`, `"left"` and so on) lays it on that side only, full over 45% of the frame and clear by 85%, so the rest of the picture keeps its light; keep the text on that side. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
 - An animated background: an `href` to a `.mp4` or `.webm` file in `media/` plays muted in a loop and covers the stage (`kenBurns` is for pictures only); `{ animate: "aurora" }` instead of `href` draws a slow drift of light in the theme's accent colours, with no file. `scrim` works for both. They move on the wall clock, not with the steps: under `data-k-ignore`, so the self-test leaves them out. Only the background on screen moves; the one the camera leaves stops once the flight has landed. With reduced motion and in the self-test they stay still. Two more kinds move the same way. An `.svg` `href` whose file animates itself (CSS keyframes or SMIL) is inlined, sanitised as `lineArt` is but with its animations kept, in a shadow root, so its styles and ids stay its own; its `<style>` can use the theme tokens (`stroke: var(--k-line)`). A still `.svg` stays a picture. And `animate` takes a function, `(el) => ({ play, pause })`: it draws into `el` (the whole stage) and returns how to play and pause its loop, which it starts paused; klappe calls them. Catalog: `#/fullscreen/svg-loop/1`, `#/fullscreen/own-loop/1`. Catalog for a video: `#/fullscreen/video-loop/1`. A missing video shows VIDEO MISSING and a deck problem; a background with neither `href` nor `animate` reports `background: needs an href or animate`. Catalog: `#/fullscreen/aurora/1`.
-- `parallax: true` makes a background drift a little with each camera flight, the way the content moves: up to 40 px from rest at either end of the canvas, so it reads as a far layer. It is scaled up 7 % so its edges never show. A deep link lands it where the flights would have; with reduced motion it moves at once, as the camera does. Catalog: `#/parallax/near/1`.
+- `parallax: true` makes a background drift a little with each camera flight, the way the content moves: up to 40 px from rest at either end of the canvas, so it reads as a far layer. It is scaled up 7 % so its edges never show. A deep link lands it where the flights would have; with reduced motion it moves at once, as the camera does. A number instead of `true` is a depth: `parallax: 2` drifts twice as far (up to 4, 160 px). `layers: [{ href, alt, parallax }]` stacks pictures with transparent parts over the background, each drifting by its own depth, so a near layer (`parallax: 3`) moves further than the far background and the frame reads as several planes; each is scaled up enough to hide its edges, and fades with its background. A depth outside above 0 to 4 reports `background: parallax <n> out of range` (for a layer, `background: layer <i>: parallax …`) and the layer is left out. Keep near layers at the frame's edges: they sit over the scrim and can lower the contrast of text under them. Catalog: `#/parallax/near/1`.
 
 ## Effects
 

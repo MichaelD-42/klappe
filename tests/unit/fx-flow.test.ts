@@ -76,3 +76,41 @@ test('send reports a path under 2 nodes, a missing edge and a backward edge', ()
     'flow: edge between "api" and "web" runs from "web" to "api"',
   ])
 })
+
+// A state that stays where it is: the loop leaves the box's top face, runs above it in the cell's gap and comes back down.
+test('a self-loop rises out of the top face and returns to it, inside the cell', () => {
+  const grid = { x: 0, y: 0, w: 800, h: 400, cols: 2, rows: 1 }
+  const [r] = flowRoutes({ nodes: [{ id: 'a', label: 'A', col: 0, row: 0 }], edges: [{ from: 'a', to: 'a' }], grid })
+  const top = (400 - 400 * 0.7) / 2
+  expect(r.points).toHaveLength(4)
+  expect([r.points[0].y, r.points[3].y]).toEqual([top, top])
+  expect(r.points[1].y).toBeLessThan(top)
+  expect(r.points[1].y).toBeGreaterThan(0)
+  expect(r.points[3].x).toBeGreaterThan(r.points[0].x)
+})
+
+test('fire reports a transition with no edge', () => {
+  const problems: string[] = []
+  const el = () => ({ append() {}, setAttribute() {}, style: {}, appendChild: (c: unknown) => c })
+  ;(globalThis as any).document = { createElement: el, createElementNS: el }
+  const ctx: any = { svg: el(), html: el(), problem: (m: string) => problems.push(m) }
+  try {
+    flow(ctx, { nodes, edges, grid: { x: 0, y: 0, w: 1600, h: 760, cols: 4, rows: 2 } }).fire('web', 'db')
+  } finally {
+    delete (globalThis as any).document
+  }
+  expect(problems).toEqual(['flow: no edge from "web" to "db"'])
+})
+
+test('a self-loop takes a face no other edge uses', () => {
+  const grid = { x: 0, y: 0, w: 800, h: 800, cols: 2, rows: 2 }
+  const r = flowRoutes({
+    nodes: [{ id: 'a', label: 'A', col: 0, row: 0 }, { id: 'b', label: 'B', col: 0, row: 1 }],
+    edges: [{ from: 'a', to: 'b' }, { from: 'b', to: 'b' }],
+    grid,
+  })
+  // b's top face takes a's edge: the loop goes out of the right face instead.
+  const right = 200 + 400 * 0.7 / 2
+  expect(r[1].points.map((p) => p.x)).toEqual([right, expect.any(Number), expect.any(Number), right])
+  expect(r[1].points[1].x).toBeGreaterThan(right)
+})

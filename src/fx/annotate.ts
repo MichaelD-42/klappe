@@ -56,6 +56,7 @@ function line(a: P, b: P, n: number, bow: number, rnd: () => number): P[] {
 // The ring is a superellipse |x/rx|^4 + |y/ry|^4 = 1: a rounded loop, as a hand rings a line of text. An
 // ellipse round a long flat line must be tall enough to swallow the lines above and below it.
 const ROUND = 4;
+const WOBBLE = 0.035; // the most a ring's radius drifts from its mean: 0.02 drift and 0.015 tremble, below
 
 // The margin m that puts the padded corners (±a, ±b) on the ring with radii a + m, b + m: the tightest
 // ring with an even margin on both axes. Bisection on (a/(a+m))^4 + (b/(b+m))^4 = 1.
@@ -70,7 +71,8 @@ function margin(a: number, b: number): number {
 }
 
 // The polylines of a hand-drawn mark around box, in drawing order. Pure, for tests.
-export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; seed: number; side?: AnnotateOpts["side"] }): P[][] {
+// room: a circle's most reach above and below the box's middle (a code line's gap); the ring flattens to it and widens.
+export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; seed: number; side?: AnnotateOpts["side"]; room?: number }): P[][] {
   const rnd = random(opts.seed);
   const { pad } = opts;
   const [x0, y0, x1, y1] = [box.x - pad, box.y - pad, box.x + box.w + pad, box.y + box.h + pad];
@@ -80,7 +82,15 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
     // corner, drawn 1.12 turns from upper left, its radius drifting a little as a hand's would.
     const [a, b] = [box.w / 2 + pad, box.h / 2 + pad];
     const m = margin(a, b) * 1.06;
-    const [cx, rx, ry] = [box.x + box.w / 2, a + m, b + m];
+    let [cx, rx, ry] = [box.x + box.w / 2, a + m, b + m];
+    // Too tall for the room: as tall as the wobble allows, and as wide as it takes to keep the bare box's corners
+    // inside the ring at its smallest (WOBBLE under), with the pad on the sides only;
+    // a room smaller than the line caps the widening, and the corners may cross.
+    if (opts.room !== undefined && ry > opts.room) {
+      ry = opts.room / (1 + WOBBLE);
+      const lo = 1 - WOBBLE;
+      rx = Math.max(a, a / (lo * Math.max(0.5, 1 - (box.h / 2 / (lo * ry)) ** ROUND) ** (1 / ROUND)));
+    }
     const n = 64;
     const start = -Math.PI * 0.6;
     const drift = 0.04 * (rnd() - 0.5);
@@ -149,7 +159,11 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
       const boxes = perLine ? lines(ctx, target) : box ? [box] : [];
       if (!boxes.length) return ctx.problem(`annotate: ${opts.kind} target has no size to measure`);
       const seed = opts.seed ?? 1;
-      const marks = boxes.flatMap((b, i) => scribble(opts.kind, b, { pad: opts.pad ?? 12, seed: seed + i, side: opts.side }).map((pts) => ({ pts, b, i })));
+      // A ring on a code line stays in the line gap: from the line's middle to the next line's text.
+      const row = opts.kind === "circle" && target instanceof Element ? target.closest(".k-code [data-line]") : null;
+      const rowH = row && measure(ctx, row)?.h;
+      const room = rowH && box ? rowH - box.h / 2 : undefined;
+      const marks = boxes.flatMap((b, i) => scribble(opts.kind, b, { pad: opts.pad ?? 12, seed: seed + i, side: opts.side, room }).map((pts) => ({ pts, b, i })));
       const paths = marks.map(({ pts, b, i }) => {
         const p = document.createElementNS(SVG, "path");
         p.setAttribute("d", pts.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "));

@@ -26,6 +26,7 @@ export const strings = {
     originNotStated: "origin not stated",
     net: "net",
     total: "Total",
+    size: "Size", // "Size: people" over a bubble chart
     of: "of",
     increase: "Increase",
     decrease: "Decrease",

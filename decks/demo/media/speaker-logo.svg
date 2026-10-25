@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" width="320" height="100">
+  <!-- The logo of a made-up company, for the speaker profile catalog scene. -->
+  <path d="M20 70 L50 30 L80 70 L65 70 L50 50 L35 70 Z" fill="#4da3ff"/>
+  <text x="96" y="66" font-family="Inter, sans-serif" font-size="38" font-weight="700" fill="#e8eef7">Kestrel Labs</text>
+</svg>

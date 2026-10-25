@@ -1,0 +1,14 @@
+# source: klappe demo sample
+team,year,lead time in days,deploys a week,people
+Web,2023,7,4,6
+Mobile,2023,9,2,4
+Data,2023,8,3,3
+Platform,2023,10,2,5
+Web,2024,5,8,7
+Mobile,2024,7,4,5
+Data,2024,5,5,4
+Platform,2024,9,2,6
+Web,2025,3,12,8
+Mobile,2025,5,6,5
+Data,2025,2,9,6
+Platform,2025,8,3,6
