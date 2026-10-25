@@ -8,7 +8,7 @@ export type RoadmapOpts = {
 } & Rect;
 export interface RoadmapHandle {
   show: StepAdder; // the axis, its month ticks and the today marker
-  reveal(id: string): StepAdder; // one milestone appears in --k-accent; it settles when the next step starts
+  reveal(id: string): StepAdder; // one milestone appears in --k-accent; it settles on the next roadmap step
   move(date: string): StepAdder; // the today marker moves to date
   el: HTMLElement; // the today marker
 }

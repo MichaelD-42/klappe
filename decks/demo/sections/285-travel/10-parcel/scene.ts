@@ -21,7 +21,7 @@ export default captioned('travel(ctx, el, { path, route: "draw" }) — and { rot
       tiles: [from, to, parcel],
       plane,
       ship: travel(ctx, parcel.el, { path: "M410 700 C 800 260, 1150 900, 1546 420", route: "draw", duration: 2.5 }),
-      reply: travel(ctx, plane.el, { path: "M1600 280 C 1200 60, 700 120, 260 640", rotate: true, duration: 2 }),
+      reply: travel(ctx, plane.el, { path: "M1600 280 C 1200 60, 700 120, 260 690", rotate: true, duration: 2 }),
     };
   },
   steps: [
