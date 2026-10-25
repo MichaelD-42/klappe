@@ -13,6 +13,7 @@
   - [annotate](elements/annotate.md): a hand-drawn ring, underline, frame, strike, arrow or highlight on a target.
   - [attention](elements/attention.md): `glow`, `pulse` and `shake`, one-step nudges on any element.
   - [flipCard](elements/flipCard.md): a card that turns over to show its back.
+  - [shape](elements/shape.md): `shape` and `arrow` on `ctx.svg` that draw on; `tint` and `token` for colour tweens between theme tokens.
   - [flow](elements/flow.md): boxes and arrows with travelling packets.
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.

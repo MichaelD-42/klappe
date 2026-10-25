@@ -83,7 +83,7 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
 }
 
 // The value of a theme token, for tweens: GSAP cannot tween to a var() string.
-const token = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
+export const token = (el: Element, name: string): string => getComputedStyle(el).getPropertyValue(name).trim();
 
 // Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
 // links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
