@@ -48,6 +48,18 @@ describe("frontmatter lists, edge cases", () => {
   it("keeps a comma inside a quoted list item", () => {
     expect(parseFrontmatter('---\ntags: ["a, b", c]\n---\n').data).toEqual({ tags: ["a, b", "c"] });
   });
+  it("reads safe-area in CSS order and reports a bad one", () => {
+    expect(toDeckMeta({ title: "x" }).meta.safeArea).toBeUndefined();
+    expect(toDeckMeta({ title: "x", "safe-area": 40 }).meta.safeArea).toEqual([40, 40, 40, 40]);
+    expect(toDeckMeta({ title: "x", "safe-area": [48, 64] }).meta.safeArea).toEqual([48, 64, 48, 64]);
+    expect(toDeckMeta({ title: "x", "safe-area": [48, 120, 155] }).meta.safeArea).toEqual([48, 120, 155, 120]);
+    expect(toDeckMeta({ title: "x", "safe-area": [1, 2, 3, 4] }).meta.safeArea).toEqual([1, 2, 3, 4]);
+    for (const bad of [[1, 2, 3, 4, 5], ["wide"], -1, []]) {
+      const { meta, problems } = toDeckMeta({ title: "x", "safe-area": bad });
+      expect(meta.safeArea).toBeUndefined();
+      expect(problems).toContain("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
+    }
+  });
   it("reports a shared-canvas list that mixes ids and groups instead of flattening it", () => {
     const { meta, problems } = toDeckMeta({ title: "x", "shared-canvas": ["a", ["b", "c"]] });
     expect(meta.sharedCanvas).toEqual([]);

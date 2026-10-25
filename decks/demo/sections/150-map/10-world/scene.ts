@@ -15,7 +15,11 @@ const toHost = sites.slice(1).map((s) => ({ from: s.id, to: "s1" }));
 export default captioned(
   "worldMap(ctx, { rect, sites, arcs }) — m.draw, m.site, m.arc, m.zoomTo, m.world",
   {
-    build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 40, w: 1800, h: 880 }, sites, arcs: toHost }),
+    build: (ctx) => {
+      const m = worldMap(ctx, { rect: { x: 60, y: 40, w: 1800, h: 880 }, sites, arcs: toHost });
+      ctx.svg.querySelector("[data-k-map]")?.setAttribute("data-k-bleed", ""); // the zoom runs the land off the frame by design
+      return m;
+    },
     steps: [
       (tl, m: WorldMapHandle) => m.draw(tl),
       (tl, m: WorldMapHandle) => sites.forEach((s) => m.site(tl, s.id)),

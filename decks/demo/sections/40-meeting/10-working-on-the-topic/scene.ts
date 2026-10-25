@@ -7,8 +7,8 @@ const NOTE = { w: 160, h: 110, gap: 12 };
 // The eight travellers from the map: six behind the table, one at each end (feet, scene-local).
 const SEATS: [number, number][] = [
   ...[510, 690, 870, 1050, 1230, 1410].map((x): [number, number] => [x, 950]), // waist at the table top
-  [220, 1040],
-  [1700, 1040],
+  [220, 1028], // feet above the safe area's floor (y 1032)
+  [1700, 1028],
 ];
 const SCALE = 0.9; // a figure is about 230 * 0.9 = 207 units tall
 const THEMES = ["[Theme A]", "[Theme B]", "[Theme C]"];

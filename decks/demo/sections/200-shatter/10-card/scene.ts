@@ -8,7 +8,7 @@ export default captioned("shatter() — the card cracks, cracks to the edges, th
     const el = document.createElement("div");
     Object.assign(el.style, {
       position: "absolute",
-      inset: "60px 60px 160px",
+      inset: "64px 64px 160px", // the safe area's sides
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
