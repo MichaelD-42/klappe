@@ -50,7 +50,11 @@ test('the lens shows the detail under its centre, then slides to the next two in
   const page = await open('#/a/lens/1')
   expect(await state(page)).toEqual({ lens: [560, 390], shows: [560, 390] })
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.clock.runFor(600)
+  // The move starts where the lens is: a start read when the adders were made (the later one first) would jump.
+  await page.clock.runFor(20)
+  const early = await state(page)
+  expect(Math.abs(early.lens[0] - 560) + Math.abs(early.lens[1] - 390)).toBeLessThan(10)
+  await page.clock.runFor(580)
   const mid = await state(page)
   expect(mid.lens[0]).toBeGreaterThan(560)
   expect(mid.lens[0]).toBeLessThan(1360)

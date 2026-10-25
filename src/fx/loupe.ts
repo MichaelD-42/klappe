@@ -29,7 +29,8 @@ export function loupeOffset(p: { x: number; y: number }, rect: Rect, r: number, 
 export function loupe(ctx: Ctx, opts: LoupeOpts): LoupeHandle {
   const { r = 140, zoom = 2.5, fit } = opts;
   const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
-  const picture = image(ctx, { href: opts.href, alt: opts.alt, rect, fit });
+  // opts.rect, not rect: with none, a cover picture keeps image()'s full-frame fade over the camera flight.
+  const picture = image(ctx, { href: opts.href, alt: opts.alt, rect: opts.rect, fit });
   // A missing file: image() already shows IMAGE MISSING and reports it; no lens over the stand-in.
   if (ctx.files.media[opts.href.replace(/^\.\//, "")] === undefined)
     return { show: (tl) => picture.show(tl), to: () => (tl) => void tl.set({}, {}, tl.duration() + 0.1) };
