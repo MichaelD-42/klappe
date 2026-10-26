@@ -274,3 +274,15 @@ body {
 .k-ov-title {
   padding: 0 4px 4px;
 }
+
+/* ?review=1 on a built deck: review mode needs the dev server, and this line says so. */
+.k-review-off {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 48px;
+  background: var(--k-bg);
+  font-family: var(--k-font);
+  font-size: 24px;
+  color: var(--k-fg);
+}

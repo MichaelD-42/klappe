@@ -57,6 +57,16 @@ test('a POST from another origin is refused and writes nothing', async () => {
   expect(existsSync(inject('REVIEW_FILE'))).toBe(false)
 })
 
+test('a POST from an opaque origin (a sandboxed frame, a file: page) is refused with 403', async () => {
+  const r = await fetch(new URL(ROUTE, inject('BASE_URL')), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', origin: 'null' },
+    body: JSON.stringify({ hash: '#/a/first/2', quote: 'x', set: { content: 'pwned' }, order }),
+  })
+  expect(r.status).toBe(403)
+  expect(existsSync(inject('REVIEW_FILE'))).toBe(false)
+})
+
 test('a malformed body is refused', async () => {
   const page = await open()
   for (const body of [
@@ -223,5 +233,22 @@ test('a save the server refuses does not block the saves after it', async () => 
   await expect.poll(() => refused, { timeout: 10_000 }).toBeGreaterThan(0)
   await field(review, 'visuals').fill('Goes through.')
   await expect.poll(onDisk, { timeout: 10_000 }).toContain('Goes through.')
+  // The refused finding is not in the file: the status keeps saying so after later saves work.
+  await expect.poll(() => review.locator('.k-rv-status').textContent(), { timeout: 10_000 }).toContain('Refused')
+  await context.close()
+})
+
+// The server keeps the newest of a window's saves per step and category (fresh()): the window must say which is newer.
+test('each save names its window and a number that grows', async () => {
+  const { context, review } = await pair()
+  const sent: { from?: string; seq?: number }[] = []
+  review.on('request', (r) => r.method() === 'POST' && r.url().includes('/__klappe/review') && sent.push(JSON.parse(r.postData()!)))
+  await field(review, 'content').fill('One.')
+  await expect.poll(() => sent.length, { timeout: 10_000 }).toBe(1)
+  await field(review, 'visuals').fill('Two.')
+  await expect.poll(() => sent.length, { timeout: 10_000 }).toBe(2)
+  expect(typeof sent[0].from).toBe('string')
+  expect(sent[1].from).toBe(sent[0].from)
+  expect(sent[1].seq!).toBeGreaterThan(sent[0].seq!)
   await context.close()
 })

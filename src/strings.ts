@@ -13,12 +13,12 @@ export const strings = {
     problems: "Deck problems",
     timer: "Timer",
     // The review window (?review=1).
-    review: "Review",
     content: "Content",
     storytelling: "Storytelling",
     visuals: "Visuals",
     savedTo: "Saved to",
     saveFailed: "Not saved: is npm run dev still running?",
+    saveRefused: "Refused by the dev server, not saved",
     stepsWithFindings: "Steps with findings",
     notInDeck: "Entries for steps no longer in the deck",
     writtenFor: "Written for",

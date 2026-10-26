@@ -20,21 +20,20 @@ export interface Edit {
 // note: hand-written text between the quote and the first ###; extra: ### sections that are not a category.
 type Full = Entry & { note: string[]; extra: { heading: string; body: string }[] };
 interface Doc {
-  head: string;
+  head: string; // text before the first step, a ## that is not a deep link included
   entries: Full[];
-  rest: string[][]; // ## sections that are not a step, line by line as written
 }
 
 // A step's deep link: ids are free text after a folder's number ("einführung", "v1.2", "q&a"), never / or space.
 export const STEP_HASH = /^#\/[^/\s]+\/[^/\s]+\/\d+$/;
 const DEEP_LINK = new RegExp(`^## (${STEP_HASH.source.slice(1, -1)})\\s*$`);
 const trimLines = (lines: string[]) => lines.join("\n").replace(/^\s*\n|\s+$/g, "");
-// A finding line that could read as a heading (or as an escape) gets a backslash in front.
+// A finding line that could read as a heading (or as an escape) gets a backslash in front; reading drops only that.
 const escape = (text: string) => text.replace(/^(?=[#\\])/gm, "\\");
-const unescape = (text: string) => text.replace(/^\\/gm, "");
+const unescape = (text: string) => text.replace(/^\\(?=[#\\])/gm, "");
 
 function parse(text: string): Doc {
-  const doc: Doc = { head: "", entries: [], rest: [] };
+  const doc: Doc = { head: "", entries: [] };
   const head: string[] = [];
   let lines: string[] = head; // where the next line goes
   let entry: Full | undefined;
@@ -44,30 +43,25 @@ function parse(text: string): Doc {
     if (section && entry) {
       const body = trimLines(section.lines);
       const k = CATEGORIES.find((c) => HEADING[c] === section!.heading);
-      if (k) entry.findings[k] = unescape(body);
-      else entry.extra.push({ heading: section.heading, body });
+      if (!k) entry.extra.push({ heading: section.heading, body });
+      else if (body) entry.findings[k] = unescape(body); // a heading with nothing under it is no finding
     }
     section = undefined;
   };
-  for (const line of text.replace(/\r\n?/g, "\n").split("\n")) {
-    if (line.startsWith("## ")) {
+  for (const line of text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n")) {
+    // Only a deep link starts a step: any other ## line, typed into a finding by hand, stays where it is.
+    const m = DEEP_LINK.exec(line);
+    if (m) {
       close();
-      const m = DEEP_LINK.exec(line);
-      if (m) {
-        entry = { hash: m[1], quote: "", findings: {}, note: [], extra: [] };
-        doc.entries.push(entry);
-        quote = [];
-        lines = quote;
-      } else {
-        entry = undefined;
-        lines = [line];
-        doc.rest.push(lines);
-      }
+      entry = { hash: m[1], quote: "", findings: {}, note: [], extra: [] };
+      doc.entries.push(entry);
+      quote = [];
+      lines = quote;
     } else if (entry && line.startsWith("### ")) {
       close();
       section = { heading: line.slice(4).trim(), lines: [] };
       lines = section.lines;
-    } else if (lines === head && !head.length && /^# Review\s*$/.test(line)) {
+    } else if (lines === head && head.every((l) => !l.trim()) && /^# Review\s*$/.test(line)) {
       // the title line
     } else if (lines === quote) {
       if (line.startsWith(">") && !entry!.note.length) quote.push(line.replace(/^> ?/, ""));
@@ -90,7 +84,6 @@ function write(doc: Doc): string {
     for (const k of CATEGORIES) if (e.findings[k]) out += `\n### ${HEADING[k]}\n\n${escape(e.findings[k]!)}\n`;
     for (const x of e.extra) out += `\n### ${x.heading}\n${x.body ? `\n${x.body}\n` : ""}`;
   }
-  for (const r of doc.rest) out += `\n${trimLines(r)}\n`;
   return out;
 }
 
@@ -108,8 +101,8 @@ export function applyEdit(text: string, edit: Edit, order: string[]): string {
   e.quote = edit.quote;
   for (const k of CATEGORIES) {
     if (!(k in edit.set)) continue;
-    const v = (edit.set[k] ?? "").trim();
-    if (v) e.findings[k] = v;
+    const v = (edit.set[k] ?? "").replace(/^(\s*\n)+/, "").trimEnd(); // the first line's indent is part of it
+    if (v.trim()) e.findings[k] = v;
     else delete e.findings[k];
   }
   doc.entries = doc.entries.filter((x) => Object.keys(x.findings).length || x.extra.length || trimLines(x.note));

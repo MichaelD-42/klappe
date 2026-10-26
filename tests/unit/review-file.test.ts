@@ -101,3 +101,31 @@ test('a deep link with non-ASCII, dots or & in its ids is a step entry', () => {
   const t = applyEdit('', { hash, quote: 'Drei.', set: { content: 'C' } }, [hash, '#/q&a/x/1'])
   expect(parseReview(t)).toEqual([{ hash, quote: 'Drei.', findings: { content: 'C' } }])
 })
+
+test('a BOM or blank lines before "# Review" do not duplicate the title', () => {
+  const t = applyEdit('﻿\n\n# Review\n', { hash: T(1), quote: 'One.', set: { content: 'C' } }, order)
+  expect(t.match(/^# Review$/gm)).toHaveLength(1)
+  expect(t.startsWith('# Review\n')).toBe(true)
+})
+
+test('a category heading with nothing under it is no finding', () => {
+  const hand = '# Review\n\n## #/a/s/1\n\n> One.\n\n### Content\n\n### Visuals\n\nV\n\n## #/a/s/2\n\n> Two.\n\n### Content\n'
+  expect(parseReview(hand).map((e) => e.findings)).toEqual([{ visuals: 'V' }, {}])
+  expect(stepsWithFindings(hand)).toBe(1)
+  const t = applyEdit(hand, { hash: T(3), quote: 'Three.', set: { content: 'C' } }, order)
+  expect(parseReview(t).map((e) => e.hash)).toEqual([T(1), T(3)])
+})
+
+test('a hand-written "## " line inside a finding stays in it, and a hand-written leading backslash stays', () => {
+  const hand = '# Review\n\n## #/a/s/1\n\n> One.\n\n### Content\n\nFirst line\n## not a step\n\\n is a newline\n\n## #/a/s/2\n\n> Two.\n\n### Visuals\n\nV\n'
+  expect(parseReview(hand)[0].findings.content).toBe('First line\n## not a step\n\\n is a newline')
+  const t = applyEdit(hand, { hash: T(2), quote: 'Two.', set: { visuals: 'V2' } }, order)
+  expect(parseReview(t)[0].findings.content).toBe('First line\n## not a step\n\\n is a newline')
+  expect(parseReview(t).map((e) => e.hash)).toEqual([T(1), T(2)])
+})
+
+test('a finding keeps the indentation of its first line', () => {
+  const text = '    const x = 1;\n    return x;'
+  const t = applyEdit('', { hash: T(1), quote: 'One.', set: { content: `\n${text}\n\n` } }, order)
+  expect(parseReview(t)[0].findings.content).toBe(text)
+})

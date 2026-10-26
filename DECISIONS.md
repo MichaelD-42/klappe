@@ -249,6 +249,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 - **Review findings are saved through a dev-server route (`bin/review-plugin.mjs`), one step and only its changed categories per write.**
   - Why: the browser cannot write the deck folder, and the author reviews on the dev server anyway. Writing one step's changed categories means a save never brings back a finding Claude removed meanwhile, nor overwrites another step.
   - The route takes only the deck's own origin: any page the author visits can reach localhost.
+  - Each save carries its window's id and a growing number; the route skips a category that a newer save from that window already set on that step. Why: a closing window sends its last saves at once, beside one still in flight, and they land in any order. Per step and category, so a late save never drops another category's or step's text.
 - **Review mode exists where its route does: the plugin defines `import.meta.env.KLAPPE_REVIEW`, not `import.meta.env.DEV`.**
   - Why: a build made in a test run reports `DEV` true; the real condition is whether a server can save the file.
 - **Findings are keyed by deep link, which is a position; a skill rule and the quote guard it.**

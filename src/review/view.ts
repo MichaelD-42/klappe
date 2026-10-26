@@ -52,23 +52,32 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   view.append(place, said, moved, form, buttons, status);
   root.append(view);
 
+  let refused = 0; // findings the server would not take: not in the file, so the status keeps saying so
   const showStatus = (failed = false) => {
     const lost = parseReview(text).filter((e) => !order.includes(e.hash)).length;
     status.textContent = failed
       ? t("saveFailed", lang)
-      : [path && `${t("savedTo", lang)} ${path}`, `${t("stepsWithFindings", lang)}: ${stepsWithFindings(text)}`, lost && `${t("notInDeck", lang)}: ${lost}`]
+      : [
+          path && `${t("savedTo", lang)} ${path}`,
+          `${t("stepsWithFindings", lang)}: ${stepsWithFindings(text)}`,
+          lost && `${t("notInDeck", lang)}: ${lost}`,
+          refused && `${t("saveRefused", lang)}: ${refused}`,
+        ]
           .filter(Boolean)
           .join(" · ");
-    status.classList.toggle("k-rv-failed", failed);
+    status.classList.toggle("k-rv-failed", failed || refused > 0);
   };
 
   // Saving: the categories typed in since the last save, taken with their step when the save is asked for.
   const dirty = new Set<Category>();
-  const queue: Edit[] = [];
+  // from and seq let the server keep the newest of this window's saves when they land out of order (on close).
+  const from = Math.random().toString(36).slice(2);
+  let seq = 0;
+  const queue: (Edit & { seq: number })[] = [];
   let timer = 0;
   let flushing: Promise<void> = Promise.resolve();
-  const post = (edit: Edit, keepalive = false) =>
-    fetch(ROUTE, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...edit, order }), keepalive });
+  const post = (edit: Edit & { seq: number }, keepalive = false) =>
+    fetch(ROUTE, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...edit, order, from }), keepalive });
   const flush = (): Promise<void> =>
     (flushing = flushing.then(async () => {
       while (queue.length) {
@@ -77,7 +86,8 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
           // Refused (4xx): a retry would be refused too, and would hold up every save after it.
           if (r.status >= 400 && r.status < 500) {
             queue.shift();
-            showStatus(true);
+            refused++;
+            showStatus();
             continue;
           }
           if (!r.ok) throw new Error(String(r.status));
@@ -96,7 +106,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     const set: Edit["set"] = {};
     for (const k of dirty) set[k] = fields[k].value;
     dirty.clear();
-    queue.push({ hash: order[index], quote: stepText(steps[index]), set });
+    queue.push({ hash: order[index], quote: stepText(steps[index]), set, seq: seq++ });
     return true;
   };
   const save = () => {
