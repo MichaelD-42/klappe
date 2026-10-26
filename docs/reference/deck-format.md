@@ -249,7 +249,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Next: Right arrow, Space, Page Down, Enter, click.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 
 ## URL flags
 
@@ -258,9 +258,30 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion, for a presenter laptop with animations off.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
+- `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
+
+## Review mode
+
+To review your own deck, run it with `npm run dev` and press `R`. A review window opens beside the deck, like the speaker view, and follows it: stepping in either window moves both. For the step shown it gives its place and text and a field each for **Content** (text to correct), **Storytelling** (another effect, another storyline) and **Visuals**. Whatever you type is saved as you type, with no Save button, to `decks/<id>/review.md`; coming back to a step shows what you wrote there. Review one section by going to it and stepping through.
+
+```markdown
+# Review
+
+## #/value-stream/analysis/2
+
+> Thousands of documents stream in.
+
+### Content
+
+"stream" should be "value stream" in the caption.
+```
+
+One entry per step with findings, in deck order, each with the step's text as a quote. Then ask Claude Code to work through the review: it fixes each finding, deletes it from the file, and asks in the chat when one is unclear (the klappe skill says how). When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
+
+Review mode exists only on the dev server, which saves the file: a built deck has no `R`, and `?review=1` says so. The deck does not load `review.md`, so a save never reloads it.
 
 ## Look checks
 

@@ -116,6 +116,16 @@ One master GSAP timeline per canvas; seek must equal play.
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
 - Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
 
+## Work through a review
+
+When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so.
+
+- Work a scene's entries from its last step to its first, so your own changes do not move a deep link still open.
+- For each finding, open the scene its deep link names (`npm run outline` lists the ids), make the change it asks for, and check it: `npm test` for the walk, and `npm run shot -- <section>/<scene>/<step>` for anything on screen.
+- Then delete that finding from the file, and the step's entry once it has no finding left. Leave text you do not understand in place. With nothing open, the file is `# Review` alone.
+- When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries still open, so each names its step again; the quote tells you which step it was.
+- When a finding is unclear, ask in the chat and leave it in the file until the author answers. Never add to the file.
+
 ## Check your work
 
 Run `npm test`. Shoot each scene's last step at 1920x1080 and 1366x768 with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.

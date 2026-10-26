@@ -243,3 +243,13 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: they share loading, the data checks, the title, the sample label and the source note with the other types. A year column holds numbers, so it can only be told apart from a series by its name.
 - **The speaker profile is a demo factory to copy (`decks/demo/shared/speaker-profile.ts`), not a `klappe/fx` effect.**
   - Why: it only lays out `image`, `qr` and `text`, and every deck wants its own arrangement and house style. A fixed effect would grow an option per taste; a copied factory is edited in place.
+
+## 2026-10-26 (review mode)
+
+- **Review findings are saved through a dev-server route (`bin/review-plugin.mjs`), one step and only its changed categories per write.**
+  - Why: the browser cannot write the deck folder, and the author reviews on the dev server anyway. Writing one step's changed categories means a save never brings back a finding Claude removed meanwhile, nor overwrites another step.
+  - The route takes only the deck's own origin: any page the author visits can reach localhost.
+- **Review mode exists where its route does: the plugin defines `import.meta.env.KLAPPE_REVIEW`, not `import.meta.env.DEV`.**
+  - Why: a build made in a test run reports `DEV` true; the real condition is whether a server can save the file.
+- **Findings are keyed by deep link, which is a position; a skill rule and the quote guard it.**
+  - Why: a stable step id would need authors to name steps. Claude rewrites the links of open entries when it changes a scene's step count and works a scene from its last step; the review window shows "Written for" when an entry's quote no longer matches its step.

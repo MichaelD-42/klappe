@@ -4,6 +4,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ## 0.6.0 (unreleased)
 
+### Added
+
+- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
+
 ## 0.5.1 (unreleased)
 
 ### Fixed
