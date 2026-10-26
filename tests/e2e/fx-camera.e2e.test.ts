@@ -53,9 +53,14 @@ test('the camera follows the parcel, holds it centred, and the scene jolts when 
   const mid = await state(page)
   expect(mid.cam[0]).toBeCloseTo(1.6)
   expect(mid.parcel.map((v, i) => Math.abs(v - [960, 540][i]) <= 2)).toEqual([true, true])
-  await page.clock.runFor(900) // the move has ended; the shake runs
-  const jolt = await state(page)
-  expect(Math.max(...jolt.shake.map(Math.abs))).toBeGreaterThan(1)
+  // The shake is a damped wave: one sample can land near a zero crossing if the play starts a frame late on a busy
+  // machine, so take its peak over the window the shake runs in.
+  let peak = 0
+  for (let t = 0; t < 1500; t += 50) {
+    await page.clock.runFor(50)
+    peak = Math.max(peak, ...(await state(page)).shake.map(Math.abs))
+  }
+  expect(peak).toBeGreaterThan(1)
   await page.clock.runFor(1000)
   const walked = await state(page)
   expect(walked.shake).toEqual([0, 0])
