@@ -16,10 +16,11 @@ export interface SplitFlapHandle {
 }
 
 // The drum every cell turns through, in order. A character not on it changes in one flip at the cell's end.
-const DRUM = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:-+%/€$&?!";
+const DRUM = " ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789.,:-+%/€$&?!";
 const FLIP = 1.8; // seconds for the whole board
 
-const fit = (s: string, cells: number) => s.toUpperCase().slice(0, cells).padEnd(cells, " ");
+// ß upper-cases to SS, two cells; ẞ keeps the word's length.
+const fit = (s: string, cells: number) => s.replaceAll("ß", "ẞ").toUpperCase().slice(0, cells).padEnd(cells, " ");
 
 // What each cell shows at progress p (0..1) of a flip from one text to another. Texts are upper-cased and
 // left-aligned in the cells. Each cell steps forward through the drum from its old character to its new one;

@@ -14,6 +14,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `splitFlap`: Ä, Ö and Ü are on the drum, so a German word flips through them instead of changing in one cut; ß shows as ẞ instead of SS, which pushed the rest of the word one cell on.
 - `chart` scatter and bubble: names of dots that sit close together no longer overlap; they move apart, in each period.
 
 ## 0.5.1 (unreleased)

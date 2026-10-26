@@ -38,3 +38,13 @@ test('a character not on the drum changes in one flip at the end; an unchanged c
   expect(flapGlyphs('#', 'A', 1, 1)).toEqual(['A'])
   expect(new Set(Array.from({ length: 11 }, (_, k) => flapGlyphs('K', 'K', k / 10, 1)[0]))).toEqual(new Set(['K']))
 })
+
+test('Ä, Ö and Ü are on the drum, after Z: a German word flips through, not in one cut', () => {
+  const seen = new Set(Array.from({ length: 101 }, (_, k) => flapGlyphs('Z', 'Ü', k / 100, 1)[0]))
+  expect([...seen]).toEqual(['Z', 'Ä', 'Ö', 'Ü'])
+  expect(flapGlyphs('', 'Übung', 1, 5).join('')).toBe('ÜBUNG')
+})
+
+test('ß upper-cases to ẞ, one cell, so a word keeps its length', () => {
+  expect(flapGlyphs('', 'Straße', 1, 6).join('')).toBe('STRAẞE')
+})
