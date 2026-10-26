@@ -9,6 +9,7 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 - `compareTable`: no column highlight. `column(i)` lights "our plan" across all rows, the usual end of a pricing or option comparison.
 - `code`: no line numbers (`lineNumbers: true`, so a speaker can say "line 12"), and no typing: `type(lines)` that types new lines in, for live-coding beats.
 - `chat`: no Markdown form, though the scene already takes its messages from list items. A fence or a `chat:` marker in `scene.md` would cover the common case without `scene.ts`.
+- `chat`: no avatars. An image per sender from `media/` (`avatars: { Ana: "media/ana.png" }`), round, beside the bubble, with the sender's initials as the fallback when there is none, so a thread reads as people talking.
 - `annotate`: no `bracket` (a curly brace beside a run of lines) and no `cross` (an X over a box), and the colour is fixed to `--k-accent`; a `color` token (`--k-bad` for a cross) would cover "wrong".
 - `checklist`: done or not only. `fail(i)`: a cross in `--k-bad`, for a pre-mortem or an audit.
 - `pyramid`: once built, a layer cannot be lit again. `light(id)` for "we are weak here", and `shape: "inverted"` for a funnel-shaped stack.
