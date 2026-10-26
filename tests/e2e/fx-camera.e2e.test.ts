@@ -87,3 +87,16 @@ test('with reduced motion, the camera cuts to the end frame and nothing shakes',
   expect(s.shake).toEqual([0, 0])
   await page.close()
 }, 60_000)
+
+// Reduced motion cuts the follow; the parallax picture under it still lands where the full follow takes it.
+test('after a follow, the parallax background sits where it does with full motion, also with reduced motion', async () => {
+  const drift = async (query: string) => {
+    const page = await open('#/a/ride/2', query, true)
+    const m = await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('[data-k-background="a"]')!).transform))
+    await page.close()
+    return [m.e, m.f].map((v) => Math.round(v))
+  }
+  const full = await drift('')
+  expect(full).not.toEqual([0, 0]) // the follow moved it
+  expect(await drift('&reducedmotion=1')).toEqual(full)
+})

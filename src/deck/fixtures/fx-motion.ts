@@ -123,6 +123,12 @@ const wrap: SceneModule = {
   ],
 };
 
+// A mesh that shows, then hides: it fades out and its loop stops drawing.
+const gone: SceneModule = {
+  build: (ctx) => ({ m: mesh3d(ctx, { x: 760, y: 440, size: 360 }) }),
+  steps: [(tl, { m }) => m.show(tl), (tl, { m }) => m.hide(tl)],
+};
+
 const md = (title: string, steps: string[]) => `## ${title}\n\n${steps.map((s) => `- ${s}`).join("\n")}\n`;
 
 export default () =>
@@ -136,6 +142,7 @@ export default () =>
       "sections/10-a/40-counts/scene.md": md("Counts", ["Questions shrink to zero.", "Documents count up."]),
       "sections/10-a/50-wrap/scene.md": md("Wrap", ["Show the mesh.", "A bubble beside it.", "A bubble below it."]),
       "sections/10-a/60-after/scene.md": md("After", ["The next scene on the same canvas."]), // the mesh on wrap stops drawing here
+      "sections/10-a/70-gone/scene.md": md("Gone", ["Show the mesh.", "The mesh hides."]),
       "sections/20-b/section.md": "# B\n", // another canvas: the mesh on a stops drawing there
       "sections/20-b/10-other/scene.md": md("Other", ["Another canvas."]),
     },
@@ -145,5 +152,6 @@ export default () =>
       "sections/10-a/30-talk/scene.ts": talk,
       "sections/10-a/40-counts/scene.ts": counts,
       "sections/10-a/50-wrap/scene.ts": wrap,
+      "sections/10-a/70-gone/scene.ts": gone,
     },
   );

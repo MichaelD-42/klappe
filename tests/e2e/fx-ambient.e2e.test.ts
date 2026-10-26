@@ -57,17 +57,17 @@ test.each([
   expect(r.problems).toEqual([MISSING, EMPTY, BAD_SVG])
 }, 120_000)
 
-test('a video background is muted, loops, covers the stage and sits outside the timeline', async () => {
+test('a video background is muted, loops, covers the stage, sits outside the timeline and names its alt', async () => {
   const page = await open('#/a/loop/1')
   const v = await page.evaluate(() => {
     const v = document.querySelector<HTMLVideoElement>('[data-k-background="a"] video')!
-    return { muted: v.muted, loop: v.loop, inline: v.playsInline, fit: getComputedStyle(v).objectFit, ignored: !!v.closest('[data-k-ignore]'), covers: v.getBoundingClientRect().width === document.querySelector('.k-stage')!.getBoundingClientRect().width }
+    return { muted: v.muted, loop: v.loop, inline: v.playsInline, fit: getComputedStyle(v).objectFit, ignored: !!v.closest('[data-k-ignore]'), covers: v.getBoundingClientRect().width === document.querySelector('.k-stage')!.getBoundingClientRect().width, label: v.getAttribute('aria-label') }
   })
-  expect(v).toEqual({ muted: true, loop: true, inline: true, fit: 'cover', ignored: true, covers: true })
+  expect(v).toEqual({ muted: true, loop: true, inline: true, fit: 'cover', ignored: true, covers: true, label: 'Light moving on water' })
   await page.close()
 })
 
-// The fixture's section background is { href: "media/loop.mp4", scrim: 0.6 }: the scrim dims the clip, not hides it.
+// The fixture's section background is { href: "media/loop.mp4", alt, scrim: 0.6 }: the scrim dims the clip, not hides it.
 test('a moving background keeps its scrim at the scrim value', async () => {
   const page = await open('#/a/loop/1')
   const opacity = await page.evaluate(() => getComputedStyle(document.querySelector('[data-k-background="a"]')!.lastElementChild!).opacity)

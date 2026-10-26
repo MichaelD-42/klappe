@@ -156,6 +156,29 @@ test('a shown mesh3d stops drawing on the next scene of its canvas and resumes o
   await page.close()
 })
 
+test('hide fades the mesh out and its loop stops drawing', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.addInitScript(() => {
+    const clear = CanvasRenderingContext2D.prototype.clearRect
+    ;(window as any).draws = 0
+    CanvasRenderingContext2D.prototype.clearRect = function (...a: [number, number, number, number]) {
+      ;(window as any).draws++
+      return clear.apply(this, a)
+    }
+  })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-motion#/a/gone/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  const draws = () => page.evaluate(() => (window as any).draws as number)
+  const shown = () => page.evaluate(() => getComputedStyle(document.querySelector('[data-scene="gone"] canvas')!).visibility)
+  expect(await shown()).toBe('visible')
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect(await shown()).toBe('hidden')
+  const d1 = await draws()
+  await page.waitForTimeout(500)
+  expect(await draws()).toBe(d1)
+  await page.close()
+})
+
 test('morph keeps a transform the author set', async () => {
   const page = await open('?fixture=fx-motion#/a/shapes/1')
   const placed = () => page.evaluate(() => document.querySelector('rect')!.getBoundingClientRect().toJSON())
