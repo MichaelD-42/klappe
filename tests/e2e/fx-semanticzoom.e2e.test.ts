@@ -16,9 +16,9 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
-      'semanticZoom: "Billing" has nothing inside',
-      'semanticZoom: into "Shop/API" from the top; go one level at a time',
-      'semanticZoom: out at the top level',
+      'sections/10-a/20-wrong/scene.ts step 1: semanticZoom: "Billing" has nothing inside',
+      'sections/10-a/20-wrong/scene.ts step 1: semanticZoom: into "Shop/API" from the top; go one level at a time',
+      'sections/10-a/20-wrong/scene.ts step 1: semanticZoom: out at the top level',
     ])
   }, 120_000)
 

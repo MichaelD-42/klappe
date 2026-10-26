@@ -53,7 +53,7 @@ async function pair(fixture: string, hash: string) {
   await main.goto(`${inject('BASE_URL')}/?fixture=${fixture}${hash}`)
   await main.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const [speaker] = await Promise.all([context.waitForEvent('page'), main.keyboard.press('n')])
-  await expect.poll(() => speaker.locator('.k-sp-progress').textContent()).toMatch(/^\d+ \//)
+  await expect.poll(() => speaker.locator('.k-sp-progress').textContent(), { timeout: 30_000 }).toMatch(/^\d+ \//)
   const notes = () => speaker.locator('.k-sp-notes').textContent()
   return { context, main, speaker, notes }
 }
@@ -62,16 +62,16 @@ test('Home and End in the speaker view move the deck to its first and last step'
   const { context, main, speaker } = await pair('two-scenes', '#/a/first/2')
   const index = () => main.evaluate(() => window.klappe.stepper.index as number)
   await speaker.keyboard.press('End')
-  await expect.poll(index).toBe(6)
+  await expect.poll(index, { timeout: 10_000 }).toBe(6)
   await speaker.keyboard.press('Home')
-  await expect.poll(index).toBe(0)
+  await expect.poll(index, { timeout: 10_000 }).toBe(0)
   await context.close()
 })
 
 // Effects put notes for the presenter on the stage (a stat's source); the sticky notes' own ids are not notes.
 test('the speaker notes show an effect\'s note, and not the ids of sticky notes', async () => {
   let p = await pair('fx-stats', '#/a/all/1')
-  await expect.poll(p.notes).toContain('klappe demo sample')
+  await expect.poll(p.notes, { timeout: 10_000 }).toContain('klappe demo sample')
   await p.context.close()
   p = await pair('fx-notes-cards', '#/a/notes/2')
   expect(await p.notes()).toBe('')

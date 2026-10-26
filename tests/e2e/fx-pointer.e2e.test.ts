@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pointer`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['pointer: type field has no size to measure'])
+    expect(r.problems).toEqual(['sections/10-a/20-no-size/scene.ts step 1: pointer: type field has no size to measure'])
   }, 120_000)
 
 // The tip lands on the field's centre, the text is typed into it, then the tip moves on to the button point.

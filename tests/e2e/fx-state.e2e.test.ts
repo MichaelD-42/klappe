@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-state`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['flow: no edge from "done" to "idle"'])
+    expect(r.problems).toEqual(['sections/10-a/10-machine/scene.ts step 8: flow: no edge from "done" to "idle"'])
   }, 120_000)
 
 // After each fire exactly one state is ringed, the one fired into.

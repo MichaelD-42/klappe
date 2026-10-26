@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const BAD = 'barRace: no period "2030"; the periods are 2021, 2022, 2023, 2024'
+const BAD = 'sections/10-a/20-bad/scene.ts step 2: barRace: no period "2030"; the periods are 2021, 2022, 2023, 2024'
 
 for (const vp of [
   { w: 1920, h: 1080 },

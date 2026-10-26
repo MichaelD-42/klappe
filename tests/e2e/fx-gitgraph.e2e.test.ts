@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-gitgraph`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['gitGraph: next() after the last op'])
+    expect(r.problems).toEqual(['sections/10-a/20-all/scene.ts step 2: gitGraph: next() after the last op'])
   }, 120_000)
 
 // After the rebase the originals are gone and their copies sit on the feature lane past main's tip; the merge lands on main.

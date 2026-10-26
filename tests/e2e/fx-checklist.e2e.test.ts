@@ -12,7 +12,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-checklist`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['checklist: no item 7', 'checklist: 30 items do not fit 600px at 20px text'])
+    expect(r.problems).toEqual(['sections/10-a/20-missing/scene.ts step 2: checklist: no item 7', 'sections/10-a/30-tall/scene.ts step 1: checklist: 30 items do not fit 600px at 20px text'])
   })
 
 // The order scene makes its tick adders out of step order: only the box of the latest tick is lit.

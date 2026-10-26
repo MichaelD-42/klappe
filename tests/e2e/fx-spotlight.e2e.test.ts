@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const NO_SIZE = 'spotlight: target has no size to measure'
+const NO_SIZE = 'sections/10-a/20-no-size/scene.ts step 1: spotlight: target has no size to measure'
 
 for (const vp of [
   { w: 1920, h: 1080 },

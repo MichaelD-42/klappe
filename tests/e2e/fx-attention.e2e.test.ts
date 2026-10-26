@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const NO_SIZE = 'glow: target has no size to measure'
+const NO_SIZE = 'sections/10-a/20-no-size/scene.ts step 1: glow: target has no size to measure'
 
 // Reduced motion too: breathe then holds steady, and camera moves cut.
 for (const [vp, q] of [

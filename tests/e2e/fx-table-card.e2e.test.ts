@@ -7,11 +7,11 @@ beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
 const PROBLEMS = [
-  'compareTable: row 1 has 2 cells for 3 columns',
-  'compareTable: no row 9',
-  'compareTable: 30 rows do not fit 600px at 20px text',
-  'exerciseCard: no extra 4',
-  'exerciseCard: "Too tall" does not fit 300px at 20px text',
+  'sections/10-a/20-broken/scene.ts: compareTable: row 1 has 2 cells for 3 columns',
+  'sections/10-a/20-broken/scene.ts step 3: compareTable: no row 9',
+  'sections/10-a/30-tall/scene.ts step 1: compareTable: 30 rows do not fit 600px at 20px text',
+  'sections/10-a/40-card/scene.ts step 4: exerciseCard: no extra 4',
+  'sections/10-a/50-card-tall/scene.ts step 1: exerciseCard: "Too tall" does not fit 300px at 20px text',
 ]
 
 // Reduced motion too: the marks and extras fade without the pop and slide.

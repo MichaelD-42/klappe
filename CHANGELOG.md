@@ -8,6 +8,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 - `code`: a step back over a `diff()` on clipped code no longer shows a clipped line over the "+N more lines" row.
 - The speaker view no longer lists the ids of `stickyNotes` as presenter notes; a sticky note now carries its id in `data-k-sticky`.
+- A deck problem raised from a scene's `scene.ts` (its own `ctx.problem` or an effect it built) names that file, and the step while one is being added: `…/scene.ts step 2: code: 50 lines do not fit; max 26`. Before, it had no file name; the tweens-before-the-step problem named `scene.md`.
 
 ## 0.5.0 (2026-10-25)
 

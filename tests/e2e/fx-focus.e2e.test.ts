@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const STRAY = 'focus: the item is not in the list'
+const STRAY = 'sections/10-a/30-stray/scene.ts step 2: focus: the item is not in the list'
 
 // Reduced motion too: the fade stays, so it must leave the same states.
 for (const [vp, q] of [

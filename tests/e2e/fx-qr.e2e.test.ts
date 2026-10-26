@@ -7,7 +7,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const TOO_LONG = 'qr: the text is too long for a QR code (8000 characters)'
+const TOO_LONG = 'sections/10-a/20-too-long/scene.ts: qr: the text is too long for a QR code (8000 characters)'
 const JSQR = createRequire(import.meta.url).resolve('jsqr/dist/jsQR.js')
 
 for (const vp of [

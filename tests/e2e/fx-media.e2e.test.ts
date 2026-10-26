@@ -119,7 +119,7 @@ test('offline, a video shows its fallback image and caption; one without a fallb
   expect(r.img).toMatch(/^data:image/)
   const problems: string[] = await page.evaluate(() => window.klappe.problems)
   expect(problems.some((p) => p.includes('vimeo') && p.includes('Video needs a network connection'))).toBe(true)
-  expect(problems.some((p) => p.includes('youtube'))).toBe(false)
+  expect(problems.some((p) => p.includes('A YouTube talk'))).toBe(false) // it has a fallback
   await page.close()
 })
 

@@ -30,14 +30,14 @@ const lines = (page: Page, scene: string) =>
   )
 
 // The problems the fixture means to cause: the 40-line block, the bad groups' line 0, reversed range and huge range,
-// and the grow scene's 40 and 50 lines (raised from scene.ts, so without a file name).
+// and the grow scene's 40 and 50 lines, raised from its scene.ts.
 const PROBLEMS = [
   'sections/10-a/40-long/scene.md step 1: code: 40 lines do not fit; max 26',
-  'code: 40 lines do not fit; max 26',
+  'sections/10-a/60-grow/scene.ts: code: 40 lines do not fit; max 26',
   'sections/10-a/50-bad/scene.md step 1: code: line 0 out of range (1-20)',
   'sections/10-a/50-bad/scene.md step 1: code: lines 4, 3, 2 out of order; write ranges low to high',
   'sections/10-a/50-bad/scene.md step 1: code: lines 21-999, 99999999 out of range (1-20)',
-  'code: 50 lines do not fit; max 26',
+  'sections/10-a/60-grow/scene.ts step 2: code: 50 lines do not fit; max 26',
 ]
 
 for (const vp of [

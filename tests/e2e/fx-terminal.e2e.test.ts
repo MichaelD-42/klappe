@@ -8,7 +8,7 @@ beforeAll(async () => {
 })
 afterAll(() => browser?.close())
 
-const PROBLEMS = ['terminal: 30 lines do not fit; max 16']
+const PROBLEMS = ['sections/10-a/30-long/scene.ts: terminal: 30 lines do not fit; max 16']
 
 for (const vp of [
   { w: 1920, h: 1080 },

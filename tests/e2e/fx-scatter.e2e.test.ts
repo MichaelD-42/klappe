@@ -15,8 +15,8 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
-      'chart: period() is for a scatter or bubble chart with a period column: data/scatter.csv',
-      'chart: no period "2030"; the periods are 2023, 2024, 2025',
+      'sections/10-a/10-scatter/scene.ts step 2: chart: period() is for a scatter or bubble chart with a period column: data/scatter.csv',
+      'sections/10-a/20-bubble/scene.ts step 4: chart: no period "2030"; the periods are 2023, 2024, 2025',
     ])
   }, 120_000)
 

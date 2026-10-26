@@ -68,9 +68,9 @@ test('the problems panel lists problems raised after load and during a play', as
         summary: document.querySelector('.k-problems summary')?.textContent ?? '',
         items: [...document.querySelectorAll('.k-problems li')].map((li) => li.textContent),
       }))
-    await expect.poll(async () => (await panel()).items).toContain('late: after fonts.ready')
+    await expect.poll(async () => (await panel()).items).toContainEqual(expect.stringContaining('late: after fonts.ready'))
     await page.evaluate(() => window.klappe.stepper.next())
-    await expect.poll(async () => (await panel()).items).toContain('late: during the walk')
+    await expect.poll(async () => (await panel()).items).toContainEqual(expect.stringContaining('late: during the walk'))
     const r = await panel()
     expect(r.summary).toContain(`(${r.items.length})`)
   } finally {

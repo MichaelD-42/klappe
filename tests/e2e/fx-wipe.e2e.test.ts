@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const MISSING = 'IMAGE MISSING: media/gone.png — A picture not made yet'
+const MISSING = 'sections/10-a/30-missing/scene.ts: IMAGE MISSING: media/gone.png — A picture not made yet'
 
 for (const vp of [
   { w: 1920, h: 1080 },

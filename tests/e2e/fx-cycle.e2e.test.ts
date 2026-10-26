@@ -17,7 +17,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-cycle${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['cycle: label "An extraordinarily long phase name that cannot fit two lines" too long'])
+    expect(r.problems).toEqual(['sections/10-a/40-long/scene.ts step 1: cycle: label "An extraordinarily long phase name that cannot fit two lines" too long'])
   }, 120_000)
 
 async function open(hash: string): Promise<Page> {

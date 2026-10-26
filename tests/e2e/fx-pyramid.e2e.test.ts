@@ -17,7 +17,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pyramid${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['pyramid: label of "long" too long', 'pyramid: next() past the top layer (2 layers)'])
+    expect(r.problems).toEqual(['sections/10-a/20-stack/scene.ts step 1: pyramid: label of "long" too long', 'sections/10-a/20-stack/scene.ts step 3: pyramid: next() past the top layer (2 layers)'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {

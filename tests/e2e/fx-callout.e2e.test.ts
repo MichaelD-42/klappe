@@ -19,7 +19,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     // The label that does not fit is not drawn, so the walk finds nothing out of the stage.
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['callout: "Out of the frame" does not fit the frame on side left'])
+    expect(r.problems).toEqual(['sections/10-a/40-far/scene.ts step 1: callout: "Out of the frame" does not fit the frame on side left'])
   })
 
 test('the leader ends at the code line edge and the label follows it', async () => {

@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-annotate`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['annotate: circle target has no size to measure'])
+    expect(r.problems).toEqual(['sections/10-a/20-no-size/scene.ts step 1: annotate: circle target has no size to measure'])
   }, 120_000)
 
 // Each mark is drawn on its word, measured through the stage scale, and sits above the text.

@@ -16,7 +16,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-gauge${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['likert: scale needs 5 point names, got 4', 'likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
+    expect(r.problems).toEqual(['sections/10-a/20-survey/scene.ts: likert: scale needs 5 point names, got 4', 'sections/10-a/20-survey/scene.ts: likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {

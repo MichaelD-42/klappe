@@ -12,7 +12,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-agenda`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['agenda: no row "Nope"', 'agenda: 24 rows do not fit 600px at 20px text'])
+    expect(r.problems).toEqual(['sections/10-a/40-unknown/scene.ts: agenda: no row "Nope"', 'sections/10-a/60-many/scene.ts step 1: agenda: 24 rows do not fit 600px at 20px text'])
   })
 
 // slide: false: show puts the marker on the current row with one set, no slide from the first row.

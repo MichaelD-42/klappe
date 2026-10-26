@@ -17,7 +17,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-roadmap${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['roadmap: today "2027-06-01" is outside the axis'])
+    expect(r.problems).toEqual(['sections/10-a/20-outside/scene.ts step 2: roadmap: today "2027-06-01" is outside the axis'])
   }, 120_000)
 
 async function open(hash: string): Promise<Page> {

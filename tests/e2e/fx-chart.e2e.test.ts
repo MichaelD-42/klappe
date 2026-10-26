@@ -26,9 +26,9 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
-      'chart: DATA MISSING: data/missing.csv',
-      'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
-      'chart: DATA ERROR: data/null.json (not an array of rows)',
+      'sections/10-a/60-missing/scene.ts: chart: DATA MISSING: data/missing.csv',
+      'sections/10-a/80-bad/scene.ts: chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
+      'sections/10-a/90-null/scene.ts: chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
     expect(r.steps).toBe(40)
   })

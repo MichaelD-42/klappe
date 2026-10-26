@@ -11,5 +11,5 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-tree`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['tree: too wide for 1600px at 20px text', 'tree: no edge "maybe" after "Can you repeat it?"'])
+    expect(r.problems).toEqual(['sections/10-a/40-oversize/scene.ts: tree: too wide for 1600px at 20px text', 'sections/10-a/30-missing/scene.ts step 2: tree: no edge "maybe" after "Can you repeat it?"'])
   })
