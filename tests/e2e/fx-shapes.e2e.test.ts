@@ -49,9 +49,9 @@ const state = (page: Page, i: number) =>
 test('shapes are hidden until their step, in --k-line or --k-accent at 4 px; tints land on their tokens, in order', async () => {
   const page = await open()
   let s = await state(page, 0)
-  // Order: rect, circle, line, arrow. Only the rect has drawn.
-  expect(s.groups.map((g) => g.visible)).toEqual([true, false, false, false])
-  expect(s.groups.map((g) => g.stroke)).toEqual([s.line, s.line, s.line, s.accent])
+  // Order: rect, circle, line, arrow, shown arrow. Only the rect has drawn.
+  expect(s.groups.map((g) => g.visible)).toEqual([true, false, false, false, false])
+  expect(s.groups.map((g) => g.stroke)).toEqual([s.line, s.line, s.line, s.accent, s.line])
   expect(s.groups.every((g) => g.width >= 2)).toBe(true)
   expect(s.word).toBe(s.fg)
   s = await state(page, 2)
@@ -64,6 +64,21 @@ test('shapes are hidden until their step, in --k-line or --k-accent at 4 px; tin
   expect(s.word).toBe(s.accent)
   await page.close()
 }, 60_000)
+
+// show() fades an arrow in whole: its head comes with the shaft, and a step back takes both away.
+test('an arrow that shows, not draws, shows its head too', async () => {
+  const page = await open()
+  const paths = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('g[data-k-shape]')[4].querySelectorAll('path')].map((p) => p.checkVisibility({ opacityProperty: true, visibilityProperty: true })),
+    )
+  await page.evaluate(() => window.klappe.stepper.goto(0, 'cut'))
+  await page.evaluate(() => window.klappe.stepper.next())
+  expect(await paths()).toEqual([true, true])
+  await page.evaluate(() => window.klappe.stepper.prev())
+  expect(await paths()).toEqual([false, false])
+  await page.close()
+})
 
 test('mid-draw the arrow shaft is part drawn and its head not yet shown', async () => {
   const page = await open()

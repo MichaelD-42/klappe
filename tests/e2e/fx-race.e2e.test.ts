@@ -1,12 +1,12 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const BAD = 'barRace: no period "2030"; the periods are 2021, 2022, 2023, 2024'
+const BAD = 'sections/10-a/20-bad/scene.ts step 2: barRace: no period "2030"; the periods are 2021, 2022, 2023, 2024'
 
 for (const vp of [
   { w: 1920, h: 1080 },
@@ -42,7 +42,7 @@ test('each year the top three stand in order, by play and by deep link', async (
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-race#/a/race/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1200)
+  await settle(page)
   expect(await board(page)).toEqual(want[0])
   for (let k = 1; k < 4; k++) {
     await page.evaluate(() => window.klappe.stepper.next())
@@ -52,7 +52,7 @@ test('each year the top three stand in order, by play and by deep link', async (
   const deep = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await deep.goto(`${inject('BASE_URL')}/?fixture=fx-race#/a/race/3`)
   await deep.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect(await board(deep)).toEqual(want[2])
   await deep.close()
 }, 60_000)

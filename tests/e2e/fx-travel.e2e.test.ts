@@ -15,7 +15,7 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-travel${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['travel: path has no length'])
+    expect(r.problems).toEqual(['sections/10-a/30-no-length/scene.ts: travel: path has no length'])
   }, 120_000)
 
 // With clock, the page runs on a fake clock that only moves with page.clock.runFor, as in fx-reveal.

@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -21,7 +21,7 @@ test('each stat ends on its number; the change is coloured by whether it is good
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-stats#/a/all/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const css = (v: string) => {
       const p = Object.assign(document.createElement('div'), { style: `color: var(${v})` })
@@ -52,7 +52,7 @@ test('a number and its unit stay on one line, and the waffle share too', async (
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-stats#/a/all/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(500)
+  await settle(page)
   // Each number is one line box, and a KPI's unit sits on the number's line. A label may wrap: how far
   // depends on the font (CI's is wider), so only the numbers are checked.
   // The number's own height in its own line heights (a flex item is one box however its text wraps).

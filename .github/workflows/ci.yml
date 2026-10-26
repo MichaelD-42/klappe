@@ -12,6 +12,11 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # The e2e files need more cores than one runner has: three runners split the files between them.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -29,16 +34,15 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
       - run: npx playwright install --with-deps chromium-headless-shell
         if: steps.pw-cache.outputs.cache-hit != 'true'
-      - run: npx playwright install-deps chromium-headless-shell
-        if: steps.pw-cache.outputs.cache-hit == 'true'
+      # No install-deps on a cache hit: the runner image ships Chrome and its libraries, and apt took up to 12 minutes.
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Lint and tests
-        run: npm test
+        run: npm test -- --shard=${{ matrix.shard }}/3
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.shard }}
           path: test-results/
           if-no-files-found: ignore
 

@@ -117,7 +117,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
 
   const notes = new Map(opts.notes.map((n, i) => {
     const el = ctx.html.appendChild(document.createElement("div"));
-    el.setAttribute("data-k-note", n.id);
+    el.setAttribute("data-k-sticky", n.id); // not data-k-note: that one is a note for the speaker view
     const text = el.appendChild(document.createElement("div"));
     text.textContent = n.text;
     Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%" });

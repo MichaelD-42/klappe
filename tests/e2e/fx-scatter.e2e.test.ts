@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -15,8 +15,8 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
-      'chart: period() is for a scatter or bubble chart with a period column: data/scatter.csv',
-      'chart: no period "2030"; the periods are 2023, 2024, 2025',
+      'sections/10-a/10-scatter/scene.ts step 2: chart: period() is for a scatter or bubble chart with a period column: data/scatter.csv',
+      'sections/10-a/20-bubble/scene.ts step 4: chart: no period "2030"; the periods are 2023, 2024, 2025',
     ])
   }, 120_000)
 
@@ -26,7 +26,7 @@ test('bubbles sit by their values and move to the period asked for', async () =>
   const at = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-scatter#/a/bubble/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(500)
+    await settle(page)
     return page.evaluate(() => {
       const g = document.querySelector('[data-scene="bubble"] [data-k-chart="bubble"]')!
       const dots = [...g.querySelectorAll('circle')].map((c) => c.getBoundingClientRect()).map((b) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2, d: b.width }))

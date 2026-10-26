@@ -1,12 +1,12 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const STRAY = 'focus: the item is not in the list'
+const STRAY = 'sections/10-a/30-stray/scene.ts step 2: focus: the item is not in the list'
 
 // Reduced motion too: the fade stays, so it must leave the same states.
 for (const [vp, q] of [
@@ -26,7 +26,7 @@ async function look(hash: string, query = '') {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-focus${query}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   const scene = hash.split('/')[2]
   const r = await page.evaluate((scene) => {
     const s = document.querySelector(`div[data-scene="${scene}"]`)!

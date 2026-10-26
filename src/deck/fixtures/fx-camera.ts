@@ -21,8 +21,11 @@ const ride: SceneModule = {
   ],
 };
 
-export default () =>
-  assembleDeck(
+// A parallax picture under the canvas, so a follow drifts it too.
+const GRID = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"><path d="M0 45H160M80 0V90" stroke="#888"/></svg>`;
+
+export default () => {
+  const r = assembleDeck(
     {
       "deck.md": "---\ntitle: Fixture\n---\n",
       "sections/10-a/section.md": "# Camera\n",
@@ -30,5 +33,11 @@ export default () =>
       "sections/10-a/20-ride/scene.md": "## Ride\n\n- It waits.\n- It travels, followed.\n- Back to the frame.\n",
       "sections/10-a/30-after/scene.md": "## After\n\n- The next scene.\n",
     },
-    { "sections/10-a/20-ride/scene.ts": ride },
+    {
+      "sections/10-a/section.ts": { background: { href: "media/grid.svg", parallax: true } },
+      "sections/10-a/20-ride/scene.ts": ride,
+    },
   );
+  r.deck.files = { data: {}, media: { "media/grid.svg": GRID } };
+  return r;
+};

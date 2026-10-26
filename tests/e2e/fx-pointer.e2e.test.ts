@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pointer`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['pointer: type field has no size to measure'])
+    expect(r.problems).toEqual(['sections/10-a/20-no-size/scene.ts step 1: pointer: type field has no size to measure'])
   }, 120_000)
 
 // The tip lands on the field's centre, the text is typed into it, then the tip moves on to the button point.
@@ -23,7 +23,7 @@ test('the pointer moves to its targets and types into the field', async () => {
   const at = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-pointer#/a/walk/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(500)
+    await settle(page)
     return page.evaluate(() => {
       const tip = document.querySelector('[data-k-pointer] path')!.getBoundingClientRect()
       const field = document.querySelector('[data-scene="walk"] > div')!.getBoundingClientRect()

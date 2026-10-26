@@ -1,12 +1,12 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const NO_SIZE = 'glow: target has no size to measure'
+const NO_SIZE = 'sections/10-a/20-no-size/scene.ts step 1: glow: target has no size to measure'
 
 // Reduced motion too: breathe then holds steady, and camera moves cut.
 for (const [vp, q] of [
@@ -25,7 +25,7 @@ async function open(hash: string, query = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-attention${query}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 

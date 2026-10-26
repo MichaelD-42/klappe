@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-gitgraph`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['gitGraph: next() after the last op'])
+    expect(r.problems).toEqual(['sections/10-a/20-all/scene.ts step 2: gitGraph: next() after the last op'])
   }, 120_000)
 
 // After the rebase the originals are gone and their copies sit on the feature lane past main's tip; the merge lands on main.
@@ -23,7 +23,7 @@ test('a rebase moves the branch past the target tip, and the merge joins it on m
   const at = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-gitgraph#/a/steps/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(500)
+    await settle(page)
     return page.evaluate(() =>
       Object.fromEntries(
         [...document.querySelectorAll<HTMLElement>('[data-scene="steps"] [data-k-git-commit]')].map((e) => {

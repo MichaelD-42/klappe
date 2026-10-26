@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 // The fixture causes exactly two problems: an unknown current row and too many rows.
 for (const vp of [
@@ -12,7 +12,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-agenda`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['agenda: no row "Nope"', 'agenda: 24 rows do not fit 600px at 20px text'])
+    expect(r.problems).toEqual(['sections/10-a/40-unknown/scene.ts: agenda: no row "Nope"', 'sections/10-a/60-many/scene.ts step 1: agenda: 24 rows do not fit 600px at 20px text'])
   })
 
 // slide: false: show puts the marker on the current row with one set, no slide from the first row.
@@ -21,7 +21,7 @@ test('slide: false shows the marker in place on the current row', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-agenda#/a/hop/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const root = document.querySelector<HTMLElement>('[data-scene="hop"] > div')!
     const bar = root.lastElementChild as HTMLElement

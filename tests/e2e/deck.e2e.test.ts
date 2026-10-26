@@ -1,5 +1,6 @@
 import { chromium } from '@playwright/test'
 import { expect, inject, test } from 'vitest'
+import { settle } from './driver'
 
 test('deck content loads without errors', async () => {
   const browser = await chromium.launch()
@@ -64,7 +65,7 @@ for (const vp of [
       }
       await covers()
       await page.keyboard.press('End') // the marker of the last scene sits at the bottom of the overview
-      await page.waitForTimeout(500)
+      await settle(page)
       await page.keyboard.press('o')
       await page.waitForTimeout(500)
       await page.keyboard.press('Escape')

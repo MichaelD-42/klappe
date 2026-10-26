@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -17,14 +17,14 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-roadmap${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['roadmap: today "2027-06-01" is outside the axis'])
+    expect(r.problems).toEqual(['sections/10-a/20-outside/scene.ts step 2: roadmap: today "2027-06-01" is outside the axis'])
   }, 120_000)
 
 async function open(hash: string): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-roadmap${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 

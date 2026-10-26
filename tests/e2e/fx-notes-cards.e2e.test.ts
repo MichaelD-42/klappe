@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -23,7 +23,7 @@ async function open(hash: string, query = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-notes-cards${query}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 
@@ -31,7 +31,7 @@ async function open(hash: string, query = ''): Promise<Page> {
 const note = (page: Page, scene: string, id: string) =>
   page.evaluate(
     ([scene, id]) => {
-      const el = document.querySelector<HTMLElement>(`[data-scene="${scene}"] [data-k-note="${id}"]`)!
+      const el = document.querySelector<HTMLElement>(`[data-scene="${scene}"] [data-k-sticky="${id}"]`)!
       if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return { col: 'hidden', tilt: 0 }
       const r = el.getBoundingClientRect()
       const cx = r.x + r.width / 2
@@ -93,6 +93,22 @@ const cards = (page: Page) =>
     })
   })
 
+// Once every group has formed there is no free area left to scatter in: the notes left over stay where they were.
+test('notes left over when the last group forms stay where they are', async () => {
+  const box = (page: Page, id: string) =>
+    page.evaluate((id) => {
+      const r = document.querySelector(`[data-scene="leftover"] [data-k-sticky="${id}"]`)!.getBoundingClientRect()
+      return [r.x, r.y].map(Math.round)
+    }, id)
+  const before = await open('#/a/leftover/3')
+  const was = [await box(before, 'b'), await box(before, 'd')]
+  await before.evaluate(() => window.klappe.stepper.next())
+  expect([await box(before, 'b'), await box(before, 'd')]).toEqual(was)
+  expect((await note(before, 'leftover', 'b')).col).toBe('scattered')
+  expect((await note(before, 'leftover', 'e')).col).toBe('docs')
+  await before.close()
+})
+
 test('a pulled card is larger and the rest dim; the next pull puts it back; back undims all', async () => {
   let page = await open('#/a/stack/2')
   let r = await cards(page)
@@ -116,7 +132,7 @@ test('a pulled card is larger and the rest dim; the next pull puts it back; back
 test('with reduced motion a note cuts to its group', async () => {
   const page = await open('#/a/notes/2', '&reducedmotion=1')
   await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(120)
+  await settle(page)
   expect(await note(page, 'notes', 'a')).toEqual({ col: 'pain', tilt: 0 })
   await page.close()
 }, 60_000)
@@ -128,9 +144,9 @@ const board = (page: Page, scene: string) =>
     const root = document.querySelector<HTMLElement>(`div[data-scene="${scene}"]`)!
     const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true })
     const cols = [...root.querySelectorAll<HTMLElement>('[data-k-note-group]')].filter(shows).map((l) => ({ x: l.offsetLeft, y: l.offsetTop, w: l.offsetWidth, h: 2000 }))
-    const notes = [...root.querySelectorAll<HTMLElement>('[data-k-note]')].filter(shows).map((el) => {
+    const notes = [...root.querySelectorAll<HTMLElement>('[data-k-sticky]')].filter(shows).map((el) => {
       const m = new DOMMatrix(getComputedStyle(el).transform)
-      return { id: el.dataset.kNote!, x: m.e, y: m.f, w: el.offsetWidth, h: el.offsetHeight, upright: Math.abs(m.b) < 1e-6 }
+      return { id: el.dataset.kSticky!, x: m.e, y: m.f, w: el.offsetWidth, h: el.offsetHeight, upright: Math.abs(m.b) < 1e-6 }
     })
     return { cols, notes }
   }, scene)
@@ -147,7 +163,7 @@ for (const [name, url, scene, steps] of [
     for (let step = 1; step <= steps; step++) {
       await page.goto(`${inject('BASE_URL')}${url}${step}`)
       await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-      await page.waitForTimeout(300)
+      await settle(page)
       const { cols, notes } = await board(page, scene)
       const scattered = notes.filter((n) => !n.upright)
       for (let i = 0; i < notes.length; i++)

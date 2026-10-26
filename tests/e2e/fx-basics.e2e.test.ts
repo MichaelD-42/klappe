@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-const BAD = 'text: color "red" is not a --k-* token name'
+const BAD = 'sections/10-a/20-bad/scene.ts: text: color "red" is not a --k-* token name'
 
 // Reduced motion too: show and hide are plain fades either way.
 for (const [vp, q] of [

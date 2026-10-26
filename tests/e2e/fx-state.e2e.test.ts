@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-state`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['flow: no edge from "done" to "idle"'])
+    expect(r.problems).toEqual(['sections/10-a/10-machine/scene.ts step 8: flow: no edge from "done" to "idle"'])
   }, 120_000)
 
 // After each fire exactly one state is ringed, the one fired into.
@@ -23,7 +23,7 @@ test('fire moves the ring to the state it fires into', async () => {
   const ringed = async (step: number) => {
     await page.goto(`${inject('BASE_URL')}/?fixture=fx-state#/a/machine/${step}`)
     await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-    await page.waitForTimeout(500)
+    await settle(page)
     return page.evaluate(() =>
       [...document.querySelectorAll<HTMLElement>('[data-k-flow-node]')]
         .filter((n) => +getComputedStyle(n.lastElementChild!).opacity > 0.9)

@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -16,14 +16,14 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-gauge${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['likert: scale needs 5 point names, got 4', 'likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
+    expect(r.problems).toEqual(['sections/10-a/20-survey/scene.ts: likert: scale needs 5 point names, got 4', 'sections/10-a/20-survey/scene.ts: likert: row 3 needs 5 counts of 0 or more, got [1, 2, 3]'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-gauge${q}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 
@@ -53,9 +53,9 @@ test('a step back over a swing to a whole number shows the decimals again', asyn
   const want = await dial(page, true) // the arc rewinds too: its offset is a fraction, not rounded to 0
   expect(want.arc).not.toBe('0px')
   await page.keyboard.press('ArrowRight')
-  await page.waitForTimeout(1500)
+  await settle(page)
   await page.keyboard.press('ArrowLeft')
-  await page.waitForTimeout(1500)
+  await settle(page)
   expect(await dial(page, true)).toEqual({ ...want, text: '95,5', angle: 81.9 })
   await page.close()
 }, 60_000)

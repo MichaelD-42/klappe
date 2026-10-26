@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -23,7 +23,7 @@ async function open(hash: string, q = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-venn${q}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 
@@ -39,10 +39,10 @@ test('each light settles the region before it; region labels stay once shown', a
   const page = await open('#/a/walk/2')
   expect(await state(page, 'walk')).toEqual({ lit: ['a'], labels: ['a'] })
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.waitForTimeout(1000)
+  await settle(page)
   expect(await state(page, 'walk')).toEqual({ lit: ['a+b'], labels: ['a', 'a+b'] })
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.waitForTimeout(1000)
+  await settle(page)
   expect(await state(page, 'walk')).toEqual({ lit: ['a+b+c'], labels: ['a', 'a+b', 'a+b+c'] })
   await page.close()
 }, 60_000)

@@ -11,7 +11,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-flow`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['flow: label of "x" too long'])
+    expect(r.problems).toEqual(['sections/10-a/40-long/scene.ts step 1: flow: label of "x" too long'])
   })
 
 test('a first highlight (nothing to turn off) logs no GSAP warning', async () => {

@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -14,7 +14,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-annotate`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['annotate: circle target has no size to measure'])
+    expect(r.problems).toEqual(['sections/10-a/20-no-size/scene.ts step 1: annotate: circle target has no size to measure'])
   }, 120_000)
 
 // Each mark is drawn on its word, measured through the stage scale, and sits above the text.
@@ -22,7 +22,7 @@ test('each mark lands on its word and paints above the text', async () => {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/7`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(500)
+  await settle(page)
   const r = await page.evaluate(() =>
     ['circle', 'underline', 'box', 'strike', 'arrow'].map((kind) => {
       const word = document.querySelector(`[data-word="${kind}"]`)!.getBoundingClientRect()
@@ -42,7 +42,7 @@ test('an underline on a wrapped phrase draws one stroke per line, each as wide a
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/9`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const range = document.createRange()
     range.selectNodeContents(document.querySelector('[data-word="wrapped"]')!)
@@ -74,7 +74,7 @@ test('a highlight on a wrapped phrase draws one band per line, behind the text',
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/marks/8`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(800)
+  await settle(page)
   const r = await page.evaluate(() => {
     const span = document.querySelector('[data-word="wrapped"]')!
     const range = document.createRange()
@@ -104,7 +104,7 @@ test('a ring on a code line stays clear of the lines above and below', async () 
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/code/2`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(1200)
+  await settle(page)
   const r = await page.evaluate(() => {
     const text = (n: number) => {
       const range = document.createRange()

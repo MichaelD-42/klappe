@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -53,9 +53,14 @@ test('the camera follows the parcel, holds it centred, and the scene jolts when 
   const mid = await state(page)
   expect(mid.cam[0]).toBeCloseTo(1.6)
   expect(mid.parcel.map((v, i) => Math.abs(v - [960, 540][i]) <= 2)).toEqual([true, true])
-  await page.clock.runFor(900) // the move has ended; the shake runs
-  const jolt = await state(page)
-  expect(Math.max(...jolt.shake.map(Math.abs))).toBeGreaterThan(1)
+  // The shake is a damped wave: one sample can land near a zero crossing if the play starts a frame late on a busy
+  // machine, so take its peak over the window the shake runs in.
+  let peak = 0
+  for (let t = 0; t < 1500; t += 50) {
+    await page.clock.runFor(50)
+    peak = Math.max(peak, ...(await state(page)).shake.map(Math.abs))
+  }
+  expect(peak).toBeGreaterThan(1)
   await page.clock.runFor(1000)
   const walked = await state(page)
   expect(walked.shake).toEqual([0, 0])
@@ -65,13 +70,13 @@ test('the camera follows the parcel, holds it centred, and the scene jolts when 
   const deep = await open('#/a/ride/2')
   expect(await state(deep)).toEqual(walked)
   await next(deep)
-  await deep.waitForTimeout(2200)
+  await settle(deep)
   expect((await state(deep)).cam).toEqual(rest.cam) // the next step flies back to the scene's frame
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect(await state(deep)).toEqual(walked)
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect((await state(deep)).cam).toEqual(rest.cam)
   await page.close()
   await deep.close()
@@ -87,3 +92,16 @@ test('with reduced motion, the camera cuts to the end frame and nothing shakes',
   expect(s.shake).toEqual([0, 0])
   await page.close()
 }, 60_000)
+
+// Reduced motion cuts the follow; the parallax picture under it still lands where the full follow takes it.
+test('after a follow, the parallax background sits where it does with full motion, also with reduced motion', async () => {
+  const drift = async (query: string) => {
+    const page = await open('#/a/ride/2', query, true)
+    const m = await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('[data-k-background="a"]')!).transform))
+    await page.close()
+    return [m.e, m.f].map((v) => Math.round(v))
+  }
+  const full = await drift('')
+  expect(full).not.toEqual([0, 0]) // the follow moved it
+  expect(await drift('&reducedmotion=1')).toEqual(full)
+})

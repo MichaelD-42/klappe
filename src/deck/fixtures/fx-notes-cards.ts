@@ -5,6 +5,7 @@ import type { SceneModule, StepAdder } from "../../types";
 // notes: show two, show the rest, group three, move one to another group, group one again where it is (no move).
 // early: the group adder for "a" is built before the show adder, and "c" is grouped without a show (it fades in at its slot).
 // stack: show, pull 1, pull 3 (1 goes back in the same step), back.
+// leftover: every group forms with one note each; the two notes left over stay where they are.
 const opts: StickyNotesOpts = {
   x: 160, y: 120, w: 1600, h: 780,
   notes: [
@@ -41,6 +42,16 @@ const early: SceneModule = {
   steps: [(tl, r: { shown: StepAdder }) => r.shown(tl), (tl, r: { grouped: StepAdder }) => r.grouped(tl)],
 };
 
+const leftover: SceneModule = {
+  build: (ctx) => ({ n: stickyNotes(ctx, opts) }),
+  steps: [
+    (tl, r: N) => r.n.show()(tl),
+    (tl, r: N) => r.n.group("pain", ["a"])(tl),
+    (tl, r: N) => r.n.group("gain", ["c"])(tl),
+    (tl, r: N) => r.n.group("docs", ["e"])(tl),
+  ],
+};
+
 const stack: SceneModule = {
   build: (ctx) => ({ c: cardStack(ctx, { x: 780, y: 300, cards: ["Speed", "Trust", "Cost", "Reach", "Joy"] }) }),
   steps: [
@@ -59,6 +70,7 @@ export default () =>
       "sections/10-a/10-notes/scene.md": md("Notes", 6),
       "sections/10-a/20-early/scene.md": md("Built early", 2),
       "sections/10-a/30-stack/scene.md": md("Stack", 4),
+      "sections/10-a/40-leftover/scene.md": md("Left over", 4),
     },
-    { "sections/10-a/10-notes/scene.ts": notes, "sections/10-a/20-early/scene.ts": early, "sections/10-a/30-stack/scene.ts": stack },
+    { "sections/10-a/10-notes/scene.ts": notes, "sections/10-a/20-early/scene.ts": early, "sections/10-a/30-stack/scene.ts": stack, "sections/10-a/40-leftover/scene.ts": leftover },
   );

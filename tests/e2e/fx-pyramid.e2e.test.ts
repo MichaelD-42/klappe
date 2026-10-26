@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -17,14 +17,14 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pyramid${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['pyramid: label of "long" too long', 'pyramid: next() past the top layer (2 layers)'])
+    expect(r.problems).toEqual(['sections/10-a/20-stack/scene.ts step 1: pyramid: label of "long" too long', 'sections/10-a/20-stack/scene.ts step 3: pyramid: next() past the top layer (2 layers)'])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   await page.goto(`${inject('BASE_URL')}/?fixture=fx-pyramid${q}${hash}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-  await page.waitForTimeout(300)
+  await settle(page)
   return page
 }
 
@@ -43,7 +43,7 @@ test('layers build bottom-up; the newest is in the accent and the one below sett
   const page = await open('#/a/walk/1')
   expect(await state(page, 'walk')).toEqual({ built: ['unit'], hot: ['unit'] })
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.waitForTimeout(1000)
+  await settle(page)
   expect(await state(page, 'walk')).toEqual({ built: ['unit', 'int'], hot: ['int'] })
   const ys = await page.evaluate(() => [...document.querySelectorAll('[data-scene="walk"] [data-k-pyramid-layer]')].slice(0, 2).map((g) => g.getBoundingClientRect().top))
   expect(ys[1]).toBeLessThan(ys[0])

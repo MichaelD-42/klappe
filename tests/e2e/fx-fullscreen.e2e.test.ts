@@ -8,7 +8,7 @@ beforeAll(async () => {
 })
 afterAll(() => browser?.close())
 
-const MISSING = 'IMAGE MISSING: media/sunrise.png — A sunrise over a mountain ridge'
+const MISSING = 'sections/10-a/40-missing/scene.ts: IMAGE MISSING: media/sunrise.png — A sunrise over a mountain ridge'
 const MISSING_BG = 'sections/20-b/30-no-sky/scene.md: background: IMAGE MISSING: media/harbour.png — A harbour at night'
 
 async function open(hash: string, vp = { width: 1366, height: 768 }, flags = ''): Promise<Page> {

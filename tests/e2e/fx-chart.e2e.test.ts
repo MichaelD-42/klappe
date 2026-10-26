@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => {
@@ -26,9 +26,9 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
-      'chart: DATA MISSING: data/missing.csv',
-      'chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
-      'chart: DATA ERROR: data/null.json (not an array of rows)',
+      'sections/10-a/60-missing/scene.ts: chart: DATA MISSING: data/missing.csv',
+      'sections/10-a/80-bad/scene.ts: chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
+      'sections/10-a/90-null/scene.ts: chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
     expect(r.steps).toBe(40)
   })
@@ -196,7 +196,7 @@ test('walk: charts pass under reduced motion too', async () => {
 test('a funnel sizes stages by value and gives the conversion between them', async () => {
   const page = await open('/a/funnel/3')
   await page.waitForFunction(() => window.klappe.stepper.index === 34)
-  await page.waitForTimeout(1500)
+  await settle(page)
   const r = await page.evaluate(() => {
     const g = document.querySelector('[data-k-chart="funnel"]')!
     return {
@@ -223,7 +223,7 @@ test('a sankey lays nodes in columns and lights one flow at a time, by step orde
   const lit = async (step: number, index: number) => {
     const page = await open(`/a/sankey/${step}`)
     await page.waitForFunction((i) => window.klappe.stepper.index === i, index)
-    await page.waitForTimeout(1500)
+    await settle(page)
     const r = await page.evaluate(() => {
       const g = document.querySelector('[data-k-chart="sankey"]')!
       const accents = [...g.querySelectorAll<SVGPathElement>('path')].filter((p) => p.style.fill === 'var(--k-accent)')
@@ -239,7 +239,7 @@ test('a sankey lays nodes in columns and lights one flow at a time, by step orde
   for (const [step, index, shown] of [[1, 35, false], [2, 36, true]] as const) {
     const page = await open('/a/sankey/' + step)
     await page.waitForFunction((i) => window.klappe.stepper.index === i, index)
-    await page.waitForTimeout(1500)
+    await settle(page)
     const names = await page.evaluate(() =>
       [...document.querySelectorAll<SVGTextElement>('[data-k-chart="sankey"] text[font-weight="700"]')].slice(1).map((e) => getComputedStyle(e).visibility === 'visible'),
     )

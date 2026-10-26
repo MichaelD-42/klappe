@@ -355,7 +355,8 @@ export function renderWorld(
   opts: { reducedMotion?: boolean; still?: boolean; svg?: Record<string, string>; onProblem?: (msg: string) => void } = {},
 ): CanvasRuntime[] {
   // Pass 1: all DOM and hidden initial state, before any timeline exists, so seek(0) = hidden.
-  const perScene = new Map<Scene, { ctx: Ctx; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
+  // ctx is what the scene's code gets; at(n) tells its problems which step is being added (0: none).
+  const perScene = new Map<Scene, { ctx: Ctx; at: (n: number) => void; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
   const onScreen = new Map<CanvasLayout, Pinned | undefined>(); // the background each canvas shows, while pass 2 builds
   const files = deck.files ?? { data: {}, media: {} };
   const runtimes = canvases.map((layout) => {
@@ -460,9 +461,14 @@ export function renderWorld(
           if (base) add(pin.el, sb, base);
           for (const l of pin.layers) add(l.el, parallaxScale(l.depth) / sb, (l.depth - base) / sb);
         }
+        // The scene's code gets problems that name its file, and the step while one is being added.
+        const file = sc.module ? sc.source.replace(/scene\.md$/, "scene.ts") : sc.source;
+        let step = 0;
+        const code: Ctx = { ...ctx, problem: (msg) => ctx.problem(`${file}${step ? ` step ${step}` : ""}: ${msg}`) };
         const build = sc.module?.build;
         perScene.set(sc, {
-          ...(build ? { ctx, refs: safe(sc.source, () => build(ctx)) } : { ctx, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
+          ...(build ? { ctx: code, refs: safe(file, () => build(code)) } : { ctx: code, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
+          at: (n) => (step = n),
           bg: pin,
         });
       }
@@ -508,8 +514,9 @@ export function renderWorld(
     const rt = runtimes.find((r) => r.layout.sectionIds.includes(s.id));
     if (!rt) continue;
     for (const sc of s.scenes) {
-      const { ctx, refs, title, fx, bg } = perScene.get(sc)!;
+      const { ctx, at, refs, title, fx, bg } = perScene.get(sc)!;
       sc.steps.forEach((_, i) => {
+        at(i + 1);
         const early = appendStep(rt.tl, `e:${index++}`, (tl) => {
           const start = tl.duration();
           if (i === 0) {
@@ -518,7 +525,7 @@ export function renderWorld(
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }
           const fn = sc.module?.steps?.[i];
-          if (fn) safe(`${sc.source} step ${i + 1}`, () => fn(tl, refs, ctx));
+          if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => fn(tl, refs, ctx));
           else defaultStep(tl, sc, i + 1, ctx.html, fx);
           // Last, so the step's content does not wait for them: they run alongside from the step's start.
           if (i === 0) {
@@ -534,7 +541,8 @@ export function renderWorld(
             if (bg) bg.push = undefined;
           }
         });
-        if (early) ctx.problem(`${sc.source} step ${i + 1}: ${early} tween(s) start before the step; do not begin a step with "<" or "-="`);
+        if (early) ctx.problem(`${early} tween(s) start before the step; do not begin a step with "<" or "-="`);
+        at(0);
       });
     }
   }

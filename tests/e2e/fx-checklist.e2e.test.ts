@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 // The fixture causes exactly two problems: a tick of a missing item and a list too tall for its rect.
 for (const vp of [
@@ -12,7 +12,7 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-checklist`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['checklist: no item 7', 'checklist: 30 items do not fit 600px at 20px text'])
+    expect(r.problems).toEqual(['sections/10-a/20-missing/scene.ts step 2: checklist: no item 7', 'sections/10-a/30-tall/scene.ts step 1: checklist: 30 items do not fit 600px at 20px text'])
   })
 
 // The order scene makes its tick adders out of step order: only the box of the latest tick is lit.
@@ -23,7 +23,7 @@ test('tick adders built out of step order light the box of the latest tick only'
     const boxes = async (step: number) => {
       await page.goto(`${inject('BASE_URL')}/?fixture=fx-checklist#/a/order/${step}`)
       await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
-      await page.waitForTimeout(300)
+      await settle(page)
       return page.evaluate(() => {
         const root = document.querySelector<HTMLElement>('div[data-scene="order"]')!
         const probe = root.appendChild(document.createElement('i'))

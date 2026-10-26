@@ -10,7 +10,8 @@ for (const vp of [
   { w: 1366, h: 768 },
   { w: 1024, h: 768 },
 ]) {
-  test(`walk passes at ${vp.w}x${vp.h}`, async () => {
+  // Concurrent: each walks the whole demo in its own browser, and one after another they are the slowest file.
+  test.concurrent(`walk passes at ${vp.w}x${vp.h}`, async ({ expect }) => {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk`, vp)
     expect(r.problems).toEqual([])
     expect(r.errors).toEqual([])
@@ -67,9 +68,9 @@ test('the problems panel lists problems raised after load and during a play', as
         summary: document.querySelector('.k-problems summary')?.textContent ?? '',
         items: [...document.querySelectorAll('.k-problems li')].map((li) => li.textContent),
       }))
-    await expect.poll(async () => (await panel()).items).toContain('late: after fonts.ready')
+    await expect.poll(async () => (await panel()).items).toContainEqual(expect.stringContaining('late: after fonts.ready'))
     await page.evaluate(() => window.klappe.stepper.next())
-    await expect.poll(async () => (await panel()).items).toContain('late: during the walk')
+    await expect.poll(async () => (await panel()).items).toContainEqual(expect.stringContaining('late: during the walk'))
     const r = await panel()
     expect(r.summary).toContain(`(${r.items.length})`)
   } finally {

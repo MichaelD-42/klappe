@@ -52,7 +52,7 @@ export default () => {
       "sections/40-d/30-bad-svg/scene.md": "## Bad SVG\n\n- An animated SVG file that does not parse.\n",
     },
     {
-      "sections/10-a/section.ts": { background: { href: "media/loop.mp4", scrim: 0.6 } },
+      "sections/10-a/section.ts": { background: { href: "media/loop.mp4", alt: "Light moving on water", scrim: 0.6 } },
       "sections/10-a/30-own-aurora/scene.ts": { background: { animate: "aurora" } },
       "sections/20-b/section.ts": { background: { animate: "aurora" } },
       "sections/30-c/20-no-loop/scene.ts": { background: { href: "media/harbour.mp4", alt: "Waves in a harbour at night" } },

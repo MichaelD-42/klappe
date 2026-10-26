@@ -3,8 +3,8 @@ import { code, type CodeHandle } from "klappe/fx";
 import type { SceneModule } from "../../types";
 
 // The code walkthrough: a Markdown fence with three highlight groups, a scene.ts diff with every handle
-// method, every bundled language, and two scenes that mean to cause problems: a 40-line block that does
-// not fit, and highlight groups out of range and reversed.
+// method, every bundled language, and scenes that mean to cause problems: a 40-line block that does
+// not fit, highlight groups out of range and reversed, and clipped code that a diff grows, then shrinks.
 const f = "```";
 const WALK = [
   "function total(items) {",
@@ -37,6 +37,16 @@ const diff: SceneModule = {
   ],
 };
 
+// Clipped code that a diff makes longer, then short enough to fit: the "+N more lines" row swaps, then goes.
+const grow: SceneModule = {
+  build: (ctx) => code(ctx, { src: LONG, lang: "ts", x: 160, y: 140, w: 1600, h: 800 }),
+  steps: [
+    (tl, h: CodeHandle) => h.show(tl),
+    (tl, h: CodeHandle) => h.diff(FIFTY)(tl),
+    (tl, h: CodeHandle) => h.diff(BEFORE)(tl),
+  ],
+};
+
 // Three lines in each bundled language, in a 3 x 3 grid.
 const SAMPLES: [string, string][] = [
   ["ts", "type Item = { price: number };\nconst sum = (xs: Item[]) =>\n  xs.reduce((s, x) => s + x.price, 0);"],
@@ -59,6 +69,7 @@ const langs: SceneModule = {
 };
 
 const LONG = Array.from({ length: 40 }, (_, i) => `const line${i + 1} = ${i + 1};`).join("\n");
+const FIFTY = Array.from({ length: 50 }, (_, i) => `const line${i + 1} = ${i + 1};`).join("\n");
 const TWENTY = Array.from({ length: 20 }, (_, i) => `x${i + 1} = ${i + 1}`).join("\n");
 
 export default () =>
@@ -70,10 +81,12 @@ export default () =>
       "sections/10-a/20-diff/scene.md": "## Diff\n\n- Show.\n- Focus line 2.\n- Diff.\n- Focus the new line.\n- Unfocus.\n",
       "sections/10-a/30-langs/scene.md": "## Languages\n\n- Every bundled language.\n",
       "sections/10-a/40-long/scene.md": `## Long\n\n${f}ts\n${LONG}\n${f}\n\n- Forty lines.\n`,
+      "sections/10-a/60-grow/scene.md": "## Grow\n\n- Show.\n- Grow.\n- Shrink.\n",
       "sections/10-a/50-bad/scene.md": `## Bad groups\n\n${f}python {0-2|4-2|1-99999999}\n${TWENTY}\n${f}\n\n- Line 0.\n- Reversed.\n- Huge.\n`,
     },
     {
       "sections/10-a/20-diff/scene.ts": diff,
       "sections/10-a/30-langs/scene.ts": langs,
+      "sections/10-a/60-grow/scene.ts": grow,
     },
   );

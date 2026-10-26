@@ -11,5 +11,5 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-swimlanes`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['swimlanes: label of "x" too long'])
+    expect(r.problems).toEqual(['sections/10-a/30-long/scene.ts step 1: swimlanes: label of "x" too long'])
   })

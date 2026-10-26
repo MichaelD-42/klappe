@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test'
+import { chromium, type Page } from '@playwright/test'
 import type { SelftestResult } from '../../src/types'
 export type { SelftestCheck, SelftestResult } from '../../src/types'
 
@@ -42,3 +42,11 @@ export async function runSelftest(
     await browser.close()
   }
 }
+
+// Waits until the page is still: web fonts in, every queued move played, and two frames drawn after it.
+export const settle = (page: Page) =>
+  page.evaluate(async () => {
+    await document.fonts.ready
+    await window.klappe.stepper.idle
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  })

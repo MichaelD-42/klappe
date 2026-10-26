@@ -1,6 +1,6 @@
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -56,14 +56,14 @@ test('rackFocus: a deep link, a walk and a step back show the same focus', async
   const page = await open('#/a/rack/1')
   expect((await state(page)).look).toEqual(Array(3).fill('1 blur(0px)'))
   await next(page)
-  await page.waitForTimeout(1200)
+  await settle(page)
   const walked = (await state(page)).look
   expect(walked).toEqual(['1 blur(0px)', '0.6 blur(6px)', '0.6 blur(6px)'])
   await next(page)
-  await page.waitForTimeout(1200)
+  await settle(page)
   expect((await state(page)).look).toEqual(['0.6 blur(6px)', '0.6 blur(6px)', '1 blur(0px)'])
   await prev(page)
-  await page.waitForTimeout(300)
+  await settle(page)
   expect((await state(page)).look).toEqual(walked)
   const deep = await open('#/a/rack/2')
   expect((await state(deep)).look).toEqual(walked)
@@ -94,10 +94,10 @@ test('dollyZoom: box 1 holds its size and place while the camera pulls back and 
   const back = await state(deep)
   expect([r2(back.cam[0]), r2(back.bg)]).toEqual([1, 1])
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect(await state(deep)).toEqual(walked)
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect([r2((await state(deep)).cam[0]), r2((await state(deep)).bg)]).toEqual([1, 1])
   await page.close()
   await deep.close()
@@ -115,9 +115,9 @@ test('tilt: the canvas leans mid-flight and lands flat; a deep link and a step b
   const deep = await open('#/a/lean/2')
   expect(await state(deep)).toEqual(walked)
   await next(deep)
-  await deep.waitForTimeout(2500)
+  await settle(deep)
   await prev(deep)
-  await deep.waitForTimeout(300)
+  await settle(deep)
   expect(await state(deep)).toEqual(walked)
   await page.close()
   await deep.close()
@@ -127,7 +127,7 @@ test('tilt: the canvas leans mid-flight and lands flat; a deep link and a step b
 test('a tilt paused mid-flight can be seeked with time() without hanging', async () => {
   const page = await open('#/a/lean/1')
   await next(page)
-  await page.waitForTimeout(50)
+  await settle(page)
   const seek = page.evaluate(() => {
     const tl = window.klappe.canvases.find((c: any) => c.el.hasAttribute('data-k-active')).tl
     const lean = tl.getChildren(true, true, false).find((t: any) => 'rotationX' in t.vars)
