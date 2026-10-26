@@ -12,6 +12,7 @@ export interface CalloutOpts {
 }
 export interface CalloutHandle {
   show: StepAdder;
+  hide: StepAdder; // the leader and the label fade out; add it after show
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -38,6 +39,7 @@ export function labelPos(to: { x: number; y: number }, side: CalloutOpts["side"]
 // A leader line from the target to a label box; the line draws on, then the box and its text fade in.
 // The target is measured when the step is added (see measure).
 export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
+  let drawn: Element[] | undefined; // the line and the label, once show has made them
   return {
     show(tl) {
       const { target, text, side } = opts;
@@ -69,10 +71,16 @@ export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
       for (const [k, v] of Object.entries({ x1: from.x, y1: from.y, x2: to.x, y2: to.y })) line.setAttribute(k, String(v));
       Object.assign(line.style, { stroke: "var(--k-accent)", strokeWidth: "3", strokeLinecap: "round" });
       ctx.svg.append(line);
+      gsap.set(line, { autoAlpha: 1 }); // the start hide() fades from, written at load so a seek back writes the same
 
+      drawn = [line, label];
       drawOn(line, { duration: 0.5 })(tl);
       tl.to(label, { autoAlpha: 1, duration: 0.2 }, ">-0.1");
       tl.to(span, { opacity: 1, duration: motion.step }, ">");
+    },
+    hide(tl) {
+      // A callout that did not draw (no size, out of the frame) has reported that already.
+      if (drawn) tl.to(drawn, { autoAlpha: 0, duration: motion.step });
     },
   };
 }

@@ -4,7 +4,7 @@ import { gsap } from "gsap";
 import type { SceneModule } from "../../types";
 
 // One scene per target kind: a code line, a plain box standing in for a flow node, and a point; plus one
-// callout whose label cannot fit the frame (the fixture's only problem).
+// callout whose label cannot fit the frame (the fixture's only problem); and a callout that shows, then hides.
 const md = (title: string) => `## ${title}\n\n- Show.\n- Callout.\n`;
 const SRC = "const data = load();\nconst bad = check(data);\nsave(bad);";
 
@@ -42,6 +42,11 @@ const tooFar: SceneModule = {
   steps: [(tl, r) => r.c.show(tl)],
 };
 
+const onOff: SceneModule = {
+  build: (ctx) => ({ c: callout(ctx, { target: { x: 960, y: 300 }, text: "Here, then gone", side: "bottom" }) }),
+  steps: [(tl, r) => r.c.show(tl), (tl, r) => r.c.hide(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -51,11 +56,13 @@ export default () =>
       "sections/10-a/20-node/scene.md": md("Node"),
       "sections/10-a/30-point/scene.md": "## Point\n\n- Callout.\n",
       "sections/10-a/40-far/scene.md": "## Out of frame\n\n- Callout.\n",
+      "sections/10-a/50-off/scene.md": "## On and off\n\n- Callout.\n- Gone.\n",
     },
     {
       "sections/10-a/10-code/scene.ts": onCode,
       "sections/10-a/20-node/scene.ts": onNode,
       "sections/10-a/30-point/scene.ts": onPoint,
       "sections/10-a/40-far/scene.ts": tooFar,
+      "sections/10-a/50-off/scene.ts": onOff,
     },
   );

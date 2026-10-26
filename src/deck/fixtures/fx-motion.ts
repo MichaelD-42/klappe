@@ -91,13 +91,13 @@ const talk: SceneModule = {
   ],
 };
 
-// The stack of open questions shrinks to zero; a second counter counts up.
+// The stack of open questions shrinks to zero; a second counter counts up, with a prefix and a unit.
 const counts: SceneModule = {
   build(ctx) {
     return {
       h: heading(ctx, "Counters"),
       down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions" }),
-      up: counter(ctx, { x: 1300, y: 600, from: 0, to: 2000, label: "Documents read" }),
+      up: counter(ctx, { x: 1300, y: 600, from: 0, to: 2000, label: "Documents read", prefix: "≈", unit: "docs" }),
     };
   },
   steps: [

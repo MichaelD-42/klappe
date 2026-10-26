@@ -6,6 +6,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.
+- `callout`: `hide` fades the leader and the label out again. Catalog: `#/callout/point/2`.
 - `kpi`, `waffle` and `progress` take `to(value)`: the number, the cells or the ring move on to a new value in a later step, as `gauge` already did. Catalog: `#/numbers/shares/2`.
 - `flipCard`, `cardStack`, `venn` (set names and region labels) and `matrix` (axis titles) shrink their text to fit, down to the 20 px floor, as the other elements do; text that still does not fit is a deck problem instead of spilling out of its box.
 - German words: a deck with `lang: de` (or `de-DE`) shows klappe's own words in German, in the speaker view, the review window and the effects (Beispieldaten, Zeit ist um, the likert scale).
