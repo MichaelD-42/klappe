@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- `chart`: no reference line. A `target` (or `lines: [{ value, label }]`) drawn dashed across the value axis, for "goal", "last year" or "SLA".
 - `chart` scatter and bubble: names overlap when dots sit close (the slope chart already moves its labels apart with `spread`), and every dot is `--k-series-1`. Spread the names, and take an optional category column as the dot colour, with a legend.
 - Strings: the strings table has English only, so likert's scale, the exercise card's "min", the timer's "Time's up" and "Press T to start" and the sample label read English in a German deck. Every caller already passes `ctx.deck.lang`, so adding `de` is the whole change; the timer's reference page still says the language is not on `ctx`, which is stale.
 - `splitFlap`: the drum has no Ä, Ö, Ü or lower case, so a German word changes those cells in one flip. Add Ä Ö Ü to the drum.

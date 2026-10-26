@@ -21,6 +21,9 @@ export interface ChartOpts {
   rect: Rect;
   title?: string;
   sample?: boolean;
+  // Bar, stacked, line, waterfall, slope and timeline: dashed lines across the plot at these values (a goal,
+  // last year), each with its label; they show with the axes, and the value axis reaches them.
+  lines?: { value: number; label: string }[];
 }
 export interface ChartHandle {
   axes: StepAdder;
@@ -480,7 +483,11 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     head.push(g);
   }
 
-  const v = d3.scaleLinear().domain(chartDomain(data, type)).nice();
+  const REF_TYPES: ChartType[] = ["bar", "stacked", "line", "waterfall", "slope", "timeline"];
+  const refs = REF_TYPES.includes(type) ? (opts.lines ?? []) : [];
+  if (opts.lines?.length && !refs.length) ctx.problem(`chart: lines are for ${REF_TYPES.join(", ")} charts, not ${type}: ${opts.src}`);
+  const v = d3.scaleLinear().domain(d3.extent([...chartDomain(data, type), ...refs.map((l) => l.value)]) as [number, number]).nice();
+  let refAt: ((n: number) => { x1: number; y1: number; x2: number; y2: number }) | undefined; // where a reference line runs
   const marks = svg(root, "g", {});
   // label: a name that fades in with its mark during grow (a sankey node's)
   // part: the row (a line chart: the series) a mark or value belongs to, for bar(), slice(), series() and
@@ -553,6 +560,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const [a, b] = keys;
     v.range([P.y + P.h, P.y]);
     const [xL, xR] = [P.x, P.x + P.w];
+    refAt = (n) => ({ x1: xL, y1: v(n), x2: xR, y2: v(n) });
     labels.push(text(root, a, { x: xL, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
     labels.push(text(root, b, { x: xR, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
     const id = `k-chart-clip-${++clips}`;
@@ -732,11 +740,13 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
       cur = -1;
     });
+    refAt = (n) => ({ x1: x(n), y1: P.y, x2: x(n), y2: P.y + P.h });
     xAxis = d3.axisBottom(x).ticks(6).tickFormat(d3.format("d"));
     yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
   } else {
     // Below zero, value labels sit under their bars: keep them clear of the category labels.
     v.range([P.y + P.h - (v.domain()[0] < 0 ? FONT + 16 : 0), P.y]);
+    refAt = (n) => ({ x1: P.x, y1: v(n), x2: P.x + P.w, y2: v(n) });
     if (type === "line") {
       const x = d3.scalePoint().domain(band).range([P.x, P.x + P.w]).padding(0.5);
       // One clip per series, all made first, so grow draws the lines together, then pops the markers.
@@ -835,6 +845,16 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     axesEls.push(z);
   }
 
+  // Reference lines over the marks; a label above the line at its right end, or right of a timeline's at its top.
+  for (const { value, label } of refs) {
+    const at = refAt!(value);
+    const ref = svg(root, "line", { ...at, "stroke-width": 2, "stroke-dasharray": "10 8", "data-k-ref": label });
+    ref.style.stroke = "var(--k-fg)";
+    const across = at.y1 === at.y2;
+    const tag = text(root, label, across ? { x: at.x2, y: at.y1 - 10, "text-anchor": "end", "font-weight": 700 } : { x: at.x1 + 10, y: at.y1 + FONT, "font-weight": 700 });
+    Object.assign(tag.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+    axesEls.push(ref, tag);
+  }
   for (const { el, from, show } of values) el.textContent = show(from);
   for (const e of values) e.el.setAttribute("data-k-text", "");
   gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents, ...grown.flatMap((g) => g.label ?? [])], { autoAlpha: 0 });

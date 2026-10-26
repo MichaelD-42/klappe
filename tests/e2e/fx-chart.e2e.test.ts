@@ -30,7 +30,7 @@ for (const vp of [
       'sections/10-a/80-bad/scene.ts: chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
       'sections/10-a/90-null/scene.ts: chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(60)
+    expect(r.steps).toBe(66)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -329,4 +329,35 @@ test('bar(i) on a funnel grows one stage with its value and its conversion', asy
   expect(r.bars).toEqual([true, true, false, false, false])
   expect(r.values).toEqual(['1,000', '400', '40 %'])
   await page.close()
+})
+
+test('a reference line spans the plot at its value, dashed, its label beside it, both with the axes', async () => {
+  const line = async (hash: string, index: number, scene: string) => {
+    const page = await at(hash, index)
+    const r = await page.evaluate((s) => {
+      const g = document.querySelector(`[data-scene="${s}"] [data-k-chart]`)!
+      const ref = g.querySelector<SVGLineElement>('[data-k-ref]')!
+      const tick = (v: string) => [...g.querySelectorAll('.tick')].find((t) => t.textContent === v)
+      const label = [...g.querySelectorAll('text')].find((t) => t.textContent === ref.dataset.kRef)!
+      return {
+        dashed: getComputedStyle(ref).strokeDasharray !== 'none',
+        shown: getComputedStyle(ref).visibility === 'visible' && getComputedStyle(label).visibility === 'visible',
+        at: ['x1', 'y1', 'x2', 'y2'].map((a) => +ref.getAttribute(a)!),
+        // The axis tick at the line's value, as [x, y] (d3 may shift a tick half a pixel).
+        tick: (tick('300') ?? tick('2024'))?.getAttribute('transform')?.match(/[-\d.]+/g)?.map(Number),
+      }
+    }, scene)
+    await page.close()
+    return r
+  }
+  const goal = await line('/a/target/1', 60, 'target')
+  expect(goal.dashed).toBe(true)
+  expect(goal.shown).toBe(true)
+  // Horizontal, at the y of the axis's 300 tick (the axis reaches it).
+  expect(goal.at[1]).toBe(goal.at[3])
+  expect(Math.abs(goal.tick![1] - goal.at[1])).toBeLessThanOrEqual(1)
+  const today = await line('/a/today/1', 63, 'today')
+  expect(today.at[0]).toBe(today.at[2])
+  expect(Math.abs(today.tick![0] - today.at[0])).toBeLessThanOrEqual(1)
+  expect(today.shown).toBe(true)
 })

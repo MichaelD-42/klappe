@@ -6,7 +6,7 @@ import type { SceneModule, StepAdder } from "../../types";
 // cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default
 // media slot; a donut, a slope, a funnel with a zero stage, and a sankey whose highlight adders are made out of
 // step order (row 2 made first, lit last); then one scene per step-by-step adder: highlight on a bar chart, series
-// on a line, slice on a donut, bar on a stacked chart and a funnel.
+// on a line, slice on a donut, bar on a stacked chart and a funnel; reference lines on a bar chart and a timeline.
 // All numbers are made-up sample data. Each bar from the handle's bars carries its index as data-bar.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -53,6 +53,8 @@ export default () => {
       "sections/10-a/103-slice/scene.md": steps("Slice", 5),
       "sections/10-a/104-stack-steps/scene.md": steps("Stack steps", 3),
       "sections/10-a/105-funnel-steps/scene.md": steps("Funnel steps", 3),
+      "sections/10-a/106-target/scene.md": md("Target"),
+      "sections/10-a/107-today/scene.md": md("Today"),
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -119,6 +121,18 @@ export default () => {
         (c) => c.bar(0),
         (c) => c.bar(1),
       ]),
+      // The goal is above every bar: the value axis must reach it.
+      "sections/10-a/106-target/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", lines: [{ value: 300, label: "Goal" }] }),
+      "sections/10-a/107-today/scene.ts": scene({
+        src: "data/plan.csv",
+        type: "timeline",
+        title: "Project phases",
+        data: [
+          { phase: "Concept", from: 2019, to: 2021 },
+          { phase: "Series", from: 2023, to: 2026 },
+        ],
+        lines: [{ value: 2024, label: "Today" }],
+      }),
     },
   );
   r.deck.files = {

@@ -27,6 +27,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
 | `sample` | boolean | false | show the "Sample data" label. It also shows when the file has the line `# source: klappe demo sample` |
+| `lines` | `{ value, label }[]` | none | `bar`, `stacked`, `line`, `waterfall`, `slope` and `timeline`: a dashed `--k-fg` line across the plot at each value (a goal, last year, a limit; on a timeline a "today" down the plot), its label in bold at the line's right end (a timeline's: at its top). They show with `axes`, and the value axis reaches them. Catalog: `#/chart/bars/1`. Another type reports `chart: lines are for bar, stacked, line, waterfall, slope, timeline charts, not <type>` |
 
 The first column labels the rows; every later column with a number in any row is a series and must be a number in every row.
 
