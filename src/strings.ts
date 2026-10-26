@@ -12,6 +12,17 @@ export const strings = {
     elapsed: "Elapsed",
     problems: "Deck problems",
     timer: "Timer",
+    // The review window (?review=1).
+    review: "Review",
+    content: "Content",
+    storytelling: "Storytelling",
+    visuals: "Visuals",
+    savedTo: "Saved to",
+    saveFailed: "Not saved: is npm run dev still running?",
+    stepsWithFindings: "Steps with findings",
+    notInDeck: "Entries for steps no longer in the deck",
+    writtenFor: "Written for",
+    reviewNeedsDev: "Review mode needs the dev server: npm run dev",
     // Effect UI words (src/fx and the default media slot).
     dataMissing: "DATA MISSING",
     dataError: "DATA ERROR",

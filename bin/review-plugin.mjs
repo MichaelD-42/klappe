@@ -31,6 +31,8 @@ export function klappeReview({ file }) {
   return {
     name: 'klappe-review',
     apply: 'serve',
+    // The page asks this, not import.meta.env.DEV: review mode exists exactly where its route does.
+    config: () => ({ define: { 'import.meta.env.KLAPPE_REVIEW': 'true' } }),
     configureServer(server) {
       server.middlewares.use(ROUTE, (req, res) => {
         // Any page the author visits can reach localhost: only the deck's own pages may use this.

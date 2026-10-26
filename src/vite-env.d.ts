@@ -17,3 +17,8 @@ declare module "virtual:klappe-langs" {
   const langs: string[];
   export default langs;
 }
+
+// Set by bin/review-plugin.mjs, which runs only in the dev server: true where the review route exists.
+interface ImportMetaEnv {
+  readonly KLAPPE_REVIEW?: boolean;
+}

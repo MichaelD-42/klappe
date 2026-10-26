@@ -1,6 +1,6 @@
 import type { Stepper } from "./stepper";
 
-export type Action = "next" | "prev" | "home" | "end" | "overview" | "selector" | "speaker" | "autoplay" | "timer" | "close";
+export type Action = "next" | "prev" | "home" | "end" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "close";
 
 const KEYS: Record<string, Action> = {
   ArrowRight: "next",
@@ -14,6 +14,7 @@ const KEYS: Record<string, Action> = {
   o: "overview",
   s: "selector",
   n: "speaker",
+  r: "review",
   a: "autoplay",
   t: "timer",
   Escape: "close",
@@ -36,7 +37,14 @@ export interface Panel {
 
 export function bindInput(
   stepper: Stepper,
-  ui: { overview: Panel; selector: Panel; speaker?: { open(): void }; autoplay?: { stop(): void; toggle(): void }; timer?: () => void },
+  ui: {
+    overview: Panel;
+    selector: Panel;
+    speaker?: { open(): void };
+    review?: { open(): void };
+    autoplay?: { stop(): void; toggle(): void };
+    timer?: () => void;
+  },
   stage: HTMLElement,
   lastIndex: number,
 ): void {
@@ -57,6 +65,7 @@ export function bindInput(
     else if (a === "overview") toggle(ui.overview, ui.selector);
     else if (a === "selector") toggle(ui.selector, ui.overview);
     else if (a === "speaker") ui.speaker?.open();
+    else if (a === "review") ui.review?.open();
     else if (a === "autoplay") ui.autoplay?.toggle();
     else if (a === "timer") ui.timer?.();
     else if (ui.overview.isOpen) ui.overview.close();
