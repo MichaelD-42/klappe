@@ -5,3 +5,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 ## Effects
 
 
+## Tooling
+
+- `klappe test` writes `data/TODO.md` and `media/TODO.md`, which the `@deck/**/*.md` glob in `src/deck/load.ts` takes in, so a `klappe test` run reloads an open deck. Leave them out of the glob, as `review.md` is.
