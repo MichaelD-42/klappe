@@ -117,7 +117,7 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language; klappe has English names only, so every deck shows them in English for now.
+A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
 
 ## `gaugeAngle`
 

@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- Strings: the strings table has English only, so likert's scale, the exercise card's "min", the timer's "Time's up" and "Press T to start" and the sample label read English in a German deck. Every caller already passes `ctx.deck.lang`, so adding `de` is the whole change; the timer's reference page still says the language is not on `ctx`, which is stale.
 - `splitFlap`: the drum has no Ä, Ö, Ü or lower case, so a German word changes those cells in one flip. Add Ä Ö Ü to the drum.
 - Text that is not fitted: `flipCard`, `cardStack`, `venn` names and region labels, `matrix` axis titles. Fit them like the other elements (shrink to the 20 px floor, then a deck problem) instead of a "keep it short" note.
 - `kpi`, `waffle`, `progress`: only `show`. A `to(value)` as `gauge` has, for "before and after" on one tile.

@@ -53,11 +53,64 @@ export const strings = {
     yes: "yes", // the spoken name of a tick in a comparison table
     no: "no",
   },
+  // Every key of en; the unit test checks it.
+  de: {
+    sections: "Abschnitte",
+    overview: "Übersicht",
+    next: "Weiter",
+    previous: "Zurück",
+    close: "Schließen",
+    upNext: "Als Nächstes",
+    endOfDeck: "Ende der Präsentation",
+    waiting: "Warte auf das Hauptfenster",
+    notes: "Notizen",
+    elapsed: "Vergangen",
+    problems: "Probleme im Deck",
+    timer: "Timer",
+    content: "Inhalt",
+    storytelling: "Storytelling",
+    visuals: "Gestaltung",
+    savedTo: "Gespeichert in",
+    saveFailed: "Nicht gespeichert: läuft npm run dev noch?",
+    saveRefused: "Vom Dev-Server abgelehnt, nicht gespeichert",
+    stepsWithFindings: "Schritte mit Befunden",
+    notInDeck: "Einträge für Schritte, die es nicht mehr gibt",
+    writtenFor: "Geschrieben für",
+    reviewNeedsDev: "Der Review-Modus braucht den Dev-Server: npm run dev",
+    dataMissing: "DATEN FEHLEN",
+    dataError: "DATENFEHLER",
+    imageMissing: "BILD FEHLT",
+    videoMissing: "VIDEO FEHLT",
+    effectMissing: "EFFEKT FEHLT",
+    video: "Video",
+    needsInternet: "braucht Internet",
+    videoOffline: "Das Video braucht eine Netzverbindung",
+    sampleData: "Beispieldaten",
+    source: "Quelle",
+    originNotStated: "Herkunft nicht angegeben",
+    net: "netto",
+    total: "Gesamt",
+    size: "Größe",
+    of: "von",
+    increase: "Zunahme",
+    decrease: "Abnahme",
+    timesUp: "Zeit ist um",
+    pressT: "T drücken zum Starten",
+    moreLines: "weitere Zeilen",
+    stronglyDisagree: "Stimme gar nicht zu",
+    disagree: "Stimme nicht zu",
+    neutral: "Neutral",
+    agree: "Stimme zu",
+    stronglyAgree: "Stimme voll zu",
+    min: "Min.",
+    yes: "ja",
+    no: "nein",
+  },
 };
 
 export type StringKey = keyof (typeof strings)["en"];
 
 export function t(key: StringKey, lang: string): string {
-  // An unknown language, or a key it lacks, falls back to en.
-  return (strings[lang as keyof typeof strings] as Partial<(typeof strings)["en"]> | undefined)?.[key] ?? strings.en[key];
+  // The language's primary subtag (de-DE reads de); an unknown language falls back to en.
+  return strings[lang.split("-")[0] as keyof typeof strings]?.[key] ?? strings.en[key];
 }

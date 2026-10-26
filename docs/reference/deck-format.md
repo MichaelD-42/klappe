@@ -25,7 +25,7 @@ decks/<id>/
 Frontmatter keys:
 
 - `title`: required. It is also the page title in the browser tab.
-- `lang`: default `en`.
+- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English. Numbers and dates follow `lang` in every language.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
