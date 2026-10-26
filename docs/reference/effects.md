@@ -27,6 +27,7 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
 | `sample` | boolean | false | show the "Sample data" label. It also shows when the file has the line `# source: klappe demo sample` |
+| `group` | string | none | `scatter` and `bubble`: a text column whose values colour the dots, one `--k-series-N` colour each (repeating past six), with a legend. A name with rows in several periods takes the group of its first row. Catalog: `#/chart/scatter/1`. A column that is not there reports `chart: no group column "<name>" in <src>`; another chart type `chart: group is for scatter and bubble charts` |
 | `lines` | `{ value, label }[]` | none | `bar`, `stacked`, `line`, `waterfall`, `slope` and `timeline`: a dashed `--k-fg` line across the plot at each value (a goal, last year, a limit; on a timeline a "today" down the plot), its label in bold at the line's right end (a timeline's: at its top). They show with `axes`, and the value axis reaches them. Catalog: `#/chart/bars/1`. Another type reports `chart: lines are for bar, stacked, line, waterfall, slope, timeline charts, not <type>` |
 
 The first column labels the rows; every later column with a number in any row is a series and must be a number in every row.
@@ -48,7 +49,7 @@ The first column labels the rows; every later column with a number in any row is
 
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
-- Scatter and bubble names are not moved apart: dots that sit close together overlap their names. Every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
+- Scatter and bubble names that would touch move apart up and down, in each period (`tagSpread`); a name can then sit a little off its dot's line. Without `group` every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
 - A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason). A funnel reveals all stages in one `grow` step, not one stage per step.
 
 ## `kpi`, `waffle`, `progress`
@@ -176,6 +177,10 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `scatterTracks`
 
 `scatterTracks(rows)` gives `{ period?, periods, names, at, keys }`: the time column's name (if any) and its periods in order, the point names, `at[p][i]` the number values of point `i` in period `p`, and `keys` the number columns other than the time, in order (x, y, size). Without a time column every row is a point and `at` has one period. What `scatter` and `bubble` draw; tests use it.
+## `tagSpread`
+
+`tagSpread(tags, gap)` takes scatter names as `{ x, y, w, left }` (`x` where a name starts, or ends for a `left` name; `w` its width) and gives each name's `y` so that no two names whose boxes overlap sideways sit closer than `gap`. Touching names move apart as `spread` moves labels, group by group, until none touch. The scatter and bubble charts use it in every period.
+
 ## `donutSlices`
 
 `donutSlices(values)` gives each value's slice as `{ start, end, share }`, fractions of a turn from 12 o'clock, clockwise, in row order.

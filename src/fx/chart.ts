@@ -24,6 +24,8 @@ export interface ChartOpts {
   // Bar, stacked, line, waterfall, slope and timeline: dashed lines across the plot at these values (a goal,
   // last year), each with its label; they show with the axes, and the value axis reaches them.
   lines?: { value: number; label: string }[];
+  // Scatter and bubble: the text column that colours each dot, one colour per value, with a legend.
+  group?: string;
 }
 export interface ChartHandle {
   axes: StepAdder;
@@ -290,6 +292,34 @@ export function spread(ys: number[], gap: number): number[] {
   return out;
 }
 
+// Scatter names apart: tags whose boxes overlap sideways and sit closer than gap in y move apart (spread), group
+// by group, until none touch. x is where a name starts (where it ends, for a left tag), w its width. Pure.
+export function tagSpread(tags: { x: number; y: number; w: number; left: boolean }[], gap: number): number[] {
+  const ys = tags.map((t) => t.y);
+  const span = tags.map((t) => (t.left ? [t.x - t.w, t.x] : [t.x, t.x + t.w]));
+  const side = (i: number, j: number) => span[i][0] < span[j][1] && span[j][0] < span[i][1];
+  // A group's spread can push a tag onto another group, so go again; a few rounds settle any slide's worth.
+  for (let round = 0; round < 10; round++) {
+    const root = tags.map((_, i) => i);
+    const find = (i: number): number => (root[i] === i ? i : (root[i] = find(root[i])));
+    let touching = false;
+    for (let i = 0; i < tags.length; i++)
+      for (let j = i + 1; j < tags.length; j++)
+        if (side(i, j) && Math.abs(ys[i] - ys[j]) < gap - 1e-9) {
+          touching = true;
+          root[find(i)] = find(j);
+        }
+    if (!touching) break;
+    const groups = d3.group(tags.map((_, i) => i), find);
+    for (const ids of groups.values()) {
+      if (ids.length < 2) continue;
+      const moved = spread(ids.map((i) => ys[i]), gap);
+      ids.forEach((i, k) => (ys[i] = moved[k]));
+    }
+  }
+  return ys;
+}
+
 // Each delta's bar runs from the running total before it to the one after it.
 export function waterfallSteps(deltas: number[]): [number, number][] {
   let sum = 0;
@@ -426,9 +456,16 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
   const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
+  const dotted = type === "scatter" || type === "bubble";
+  if (opts.group !== undefined && !(dotted && opts.group in data[0]))
+    ctx.problem(dotted ? `chart: no group column "${opts.group}" in ${opts.src}` : `chart: group is for scatter and bubble charts, not ${type}: ${opts.src}`);
+  const groupOf = dotted && opts.group !== undefined && opts.group in data[0] ? (name: string) => String(data.find((r) => String(r[label]) === name)![opts.group!]) : undefined;
+  const groups = groupOf ? [...new Set(data.map((r) => String(r[opts.group!])))] : [];
+  const groupFill = (name: string) => SLICES[groups.indexOf(groupOf!(name)) % SLICES.length];
   // Colour means direction in a waterfall and a slope; the legend says which is which.
-  const legend =
-    type === "waterfall" || type === "slope"
+  const legend = groups.length
+    ? groups.map((g, k) => ({ name: g, fill: SLICES[k % SLICES.length] }))
+    : type === "waterfall" || type === "slope"
       ? [
           { name: t("increase", ctx.deck.lang), fill: UP },
           { name: t("decrease", ctx.deck.lang), fill: DOWN },
@@ -682,19 +719,25 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     stamp.style.fill = "var(--k-muted)";
     stamp.setAttribute("data-k-text", "");
     if (tr.period) labels.push(stamp);
-    // A name sits right of its dot, or left of it where the dot comes near the right edge in any period.
+    // A name sits right of its dot, or left of it where the dot comes near the right edge in any period. Names
+    // that would touch move apart, in each period.
     const poses = tr.at.map((_, p) => pose(p));
     const tagAt = (q: { cx: number; cy: number; r: number }, left: boolean) => ({ x: left ? q.cx - q.r - 8 : q.cx + q.r + 8, y: q.cy + FONT * 0.35 });
+    const lefts = tr.names.map((name, i) => Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w);
+    const tagPoses = poses.map((ps) => {
+      const at = ps.map((q, i) => tagAt(q, lefts[i]));
+      const ys = tagSpread(at.map((a, i) => ({ ...a, w: tr.names[i].length * 12, left: lefts[i] })), FONT + 4); // about 12 px per character
+      return at.map((a, i) => ({ x: a.x, y: ys[i] }));
+    });
     const dots = tr.names.map((name, i) => {
       cur = i;
-      const left = Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w;
       const q = poses[0][i];
       const c = svg(marks, "circle", { cx: q.cx, cy: q.cy, r: q.r });
-      Object.assign(c.style, { fill: color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
+      Object.assign(c.style, { fill: groupOf ? groupFill(name) : color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
       grow({ el: c, origin: "50% 50%", scale: "scale" });
-      const tag = valueAt({ ...tagAt(q, left), "text-anchor": left ? "end" : "start" }, 0, 0, () => name);
+      const tag = valueAt({ ...tagPoses[0][i], "text-anchor": lefts[i] ? "end" : "start" }, 0, 0, () => name);
       cur = -1;
-      return { c, tag, left };
+      return { c, tag };
     });
     xAxis = d3.axisBottom(x).ticks(6).tickSizeOuter(0).tickFormat(d3.format(",~f"));
     yAxis = d3.axisLeft(y).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
@@ -707,9 +750,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         if (!(to >= 0 && to < tr.periods.length)) return ctx.problem(`chart: no period ${JSON.stringify(p)}; the periods are ${tr.periods.join(", ")}`);
         const [a, b, from] = [poses[at], poses[to], at];
         const d = { duration: motion.step * 2, ease: "power1.inOut", immediateRender: false };
-        dots.forEach(({ c, tag, left }, i) => {
+        dots.forEach(({ c, tag }, i) => {
           tl.fromTo(c, { attr: a[i] }, { attr: b[i], ...d }, i ? "<" : undefined);
-          tl.fromTo(tag, { attr: tagAt(a[i], left) }, { attr: tagAt(b[i], left), ...d }, "<");
+          tl.fromTo(tag, { attr: tagPoses[from][i] }, { attr: tagPoses[to][i], ...d }, "<");
         });
         // A numeric period counts as a pure function of progress; a named one switches halfway.
         tl.to({}, {

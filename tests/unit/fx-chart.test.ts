@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, scatterTracks, showsSample, spread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
+import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, scatterTracks, showsSample, spread, tagSpread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
 import { contrast, parseTokens } from "../../src/theme";
 
 describe("parseCsv", () => {
@@ -314,5 +314,28 @@ describe("scatter and bubble", () => {
   test("a name missing from a period, or twice in one, is an error", () => {
     expect(dataError(parseCsv("team,year,x,y\nWeb,2023,1,2\nMobile,2023,1,2\nWeb,2024,1,2\n"), "scatter")).toBe('"Mobile" has no row for year 2024');
     expect(dataError(parseCsv("team,year,x,y\nWeb,2023,1,2\nWeb,2023,3,4\n"), "scatter")).toBe('"Web" has two rows for year 2023');
+  });
+});
+
+describe("tagSpread", () => {
+  const tag = (x: number, y: number, w = 100, left = false) => ({ x, y, w, left });
+  test("leaves tags that do not touch where they are", () => {
+    expect(tagSpread([tag(0, 100), tag(0, 200), tag(300, 105)], 30)).toEqual([100, 200, 105]);
+  });
+  test("moves tags that share a row and touch sideways a gap apart, centred where they were", () => {
+    const ys = tagSpread([tag(0, 100), tag(50, 110)], 30);
+    expect(ys[1] - ys[0]).toBeCloseTo(30);
+    expect((ys[0] + ys[1]) / 2).toBeCloseTo(105);
+  });
+  test("a left tag reaches left of its x", () => {
+    // [-100, 0] and [-20, 80] overlap; [10, 110] would not overlap the first.
+    expect(tagSpread([tag(0, 100, 100, true), tag(-20, 100)], 30)).not.toEqual([100, 100]);
+    expect(tagSpread([tag(0, 100, 100, true), tag(10, 100)], 30)).toEqual([100, 100]);
+  });
+  test("settles a chain: no two touching tags end closer than the gap", () => {
+    const tags = [tag(0, 100), tag(40, 104), tag(80, 108), tag(120, 112)];
+    const ys = tagSpread(tags, 30);
+    for (let i = 0; i < tags.length; i++)
+      for (let j = i + 1; j < tags.length; j++) expect(Math.abs(ys[i] - ys[j])).toBeGreaterThanOrEqual(30 - 1e-9);
   });
 });

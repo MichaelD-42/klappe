@@ -30,7 +30,7 @@ for (const vp of [
       'sections/10-a/80-bad/scene.ts: chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
       'sections/10-a/90-null/scene.ts: chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(66)
+    expect(r.steps).toBe(69)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -360,4 +360,22 @@ test('a reference line spans the plot at its value, dashed, its label beside it,
   expect(today.at[0]).toBe(today.at[2])
   expect(Math.abs(today.tick![0] - today.at[0])).toBeLessThanOrEqual(1)
   expect(today.shown).toBe(true)
+})
+
+test('a scatter keeps close names apart and colours its dots by group, with a legend', async () => {
+  const page = await at('/a/groups/3', 68)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-scene="groups"] [data-k-chart="scatter"]')!
+    const tags = [...g.querySelectorAll<SVGTextElement>('[data-k-text]')].map((t) => t.getBBox())
+    const dots = [...g.querySelectorAll<SVGCircleElement>('circle')].map((c) => c.style.fill)
+    const texts = [...g.querySelectorAll('text')].map((t) => t.textContent)
+    const [a, b] = tags
+    return { overlap: a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height, dots, texts }
+  })
+  expect(r.overlap).toBe(false)
+  expect(r.dots[0]).toBe(r.dots[1])
+  expect(r.dots[2]).toBe(r.dots[3])
+  expect(r.dots[0]).not.toBe(r.dots[2])
+  expect(r.texts).toEqual(expect.arrayContaining(['North', 'South']))
+  await page.close()
 })

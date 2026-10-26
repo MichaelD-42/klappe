@@ -6,7 +6,7 @@ import type { SceneModule, StepAdder } from "../../types";
 // cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default
 // media slot; a donut, a slope, a funnel with a zero stage, and a sankey whose highlight adders are made out of
 // step order (row 2 made first, lit last); then one scene per step-by-step adder: highlight on a bar chart, series
-// on a line, slice on a donut, bar on a stacked chart and a funnel; reference lines on a bar chart and a timeline.
+// on a line, slice on a donut, bar on a stacked chart and a funnel; reference lines on a bar chart and a timeline; a scatter coloured by group with two names on one spot.
 // All numbers are made-up sample data. Each bar from the handle's bars carries its index as data-bar.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -55,6 +55,7 @@ export default () => {
       "sections/10-a/105-funnel-steps/scene.md": steps("Funnel steps", 3),
       "sections/10-a/106-target/scene.md": md("Target"),
       "sections/10-a/107-today/scene.md": md("Today"),
+      "sections/10-a/108-groups/scene.md": md("Groups"),
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -133,6 +134,7 @@ export default () => {
         ],
         lines: [{ value: 2024, label: "Today" }],
       }),
+      "sections/10-a/108-groups/scene.ts": scene({ src: "data/teams.csv", type: "scatter", title: "Speed and quality", group: "region" }),
     },
   );
   r.deck.files = {
@@ -156,6 +158,8 @@ export default () => {
       "data/change.csv": "# source: klappe demo sample\nteam,before,after\nNorth,30,12\nSouth,22,13\nEast,15,12.5\nWest,9,18\n",
       // Trial to Paid converts at 0 %; Paid to Renew has no conversion.
       "data/stages.csv": "# source: klappe demo sample\nstage,people\nVisit,1000\nSignup,400\nTrial,100\nPaid,0\nRenew,0\n",
+      // Alpha and Beta sit almost on one spot: their names must not overlap.
+      "data/teams.csv": "# source: klappe demo sample\nteam,region,speed,quality\nAlpha,North,10,10\nBeta,North,10.4,10.2\nGamma,South,30,20\nDelta,South,50,40\n",
       "data/flow.csv": "# source: klappe demo sample\nfrom,to,users\nAds,Signup,40\nSearch,Signup,30\nSearch,Bounce,20\nSignup,Paid,25\nSignup,Churn,45\n",
     },
     media: {},
