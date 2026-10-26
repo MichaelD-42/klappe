@@ -73,6 +73,7 @@ test('a malformed body is refused', async () => {
 test('a review.md in the deck folder does not reload the deck', async () => {
   if (!inject('IS_DEMO_DECK')) return
   const file = fileURLToPath(new URL('../../decks/demo/review.md', import.meta.url))
+  const kept = existsSync(file) ? readFileSync(file, 'utf8') : null // a review of the demo in progress survives the test
   const page = await browser.newPage()
   try {
     await page.goto(`${inject('BASE_URL')}/#/opening/old-way/1`)
@@ -84,7 +85,8 @@ test('a review.md in the deck folder does not reload the deck', async () => {
     await page.waitForTimeout(1500)
     expect(await page.evaluate(() => (window as any).marker)).toBe(1)
   } finally {
-    rmSync(file, { force: true })
+    if (kept === null) rmSync(file, { force: true })
+    else writeFileSync(file, kept)
     await page.close()
   }
 })
@@ -176,5 +178,50 @@ test('keys typed in a field do not step the deck', async () => {
   await review.keyboard.press('ArrowRight')
   await review.waitForTimeout(500)
   expect(await deckIndex(deck)).toBe(1)
+  await context.close()
+})
+
+// The author types in a field, clicks into the deck and steps on: the review window keeps that field focused,
+// and must still show the next step's finding in it, or typing would replace it.
+test('a field focused before a step from the deck window shows the new step\'s finding', async () => {
+  writeFileSync(inject('REVIEW_FILE'), '# Review\n\n## #/a/first/3\n\n> Step 3.\n\n### Content\n\nExisting finding on step 3.\n')
+  const { context, deck, review } = await pair()
+  await field(review, 'content').click()
+  await review.keyboard.type('On step 2.')
+  await deck.bringToFront()
+  await deck.keyboard.press('ArrowRight')
+  await expect.poll(() => field(review, 'content').inputValue(), { timeout: 10_000 }).toBe('Existing finding on step 3.')
+  expect(onDisk()).toContain('On step 2.')
+  await context.close()
+})
+
+// With the dev server gone a save fails; the text it holds must still show when the author comes back to the step.
+test('a finding whose save failed still shows on its step, and goes out with the next save that works', async () => {
+  const { context, review } = await pair()
+  await review.route('**/__klappe/review', (r) => (r.request().method() === 'POST' ? r.abort() : r.continue()))
+  await field(review, 'content').fill('Not saved yet.')
+  await expect.poll(() => review.locator('.k-rv-status').textContent(), { timeout: 10_000 }).toContain('Not saved')
+  await review.getByRole('button', { name: 'Next', exact: true }).click()
+  await review.getByRole('button', { name: 'Previous', exact: true }).click()
+  await expect.poll(() => field(review, 'content').inputValue(), { timeout: 10_000 }).toBe('Not saved yet.')
+  await review.unroute('**/__klappe/review')
+  await field(review, 'visuals').fill('Later.')
+  await expect.poll(onDisk, { timeout: 10_000 }).toContain('Later.')
+  expect(onDisk()).toContain('Not saved yet.')
+  await context.close()
+})
+
+// A save the server refuses (400) cannot succeed on a retry: it must not hold up every save after it.
+test('a save the server refuses does not block the saves after it', async () => {
+  const { context, review } = await pair()
+  // Every request carrying this edit is refused, as one with an id the route cannot take would be.
+  let refused = 0
+  await review.route('**/__klappe/review', (r) =>
+    r.request().postData()?.includes('Refused.') ? (refused++, r.fulfill({ status: 400, body: '{"error":"not a review edit"}' })) : r.continue(),
+  )
+  await field(review, 'content').fill('Refused.')
+  await expect.poll(() => refused, { timeout: 10_000 }).toBeGreaterThan(0)
+  await field(review, 'visuals').fill('Goes through.')
+  await expect.poll(onDisk, { timeout: 10_000 }).toContain('Goes through.')
   await context.close()
 })

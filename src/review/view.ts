@@ -74,6 +74,12 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
       while (queue.length) {
         try {
           const r = await post(queue[0]);
+          // Refused (4xx): a retry would be refused too, and would hold up every save after it.
+          if (r.status >= 400 && r.status < 500) {
+            queue.shift();
+            showStatus(true);
+            continue;
+          }
           if (!r.ok) throw new Error(String(r.status));
           ({ text, path } = await r.json());
           queue.shift();
@@ -110,7 +116,8 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     for (const e of queue) void post(e, true);
   });
 
-  // Showing: the step's findings from the file, except in a field the author is typing in or has unsaved text in.
+  // Showing: the step's findings from the file, or from a save still queued, except in a field with unsent text. Not "the focused field":
+  // a window that loses focus keeps its focused field, and typing there would replace the next step's finding.
   const show = () => {
     if (index < 0) return;
     const a = steps[index];
@@ -120,9 +127,9 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
       .join(" · ");
     said.textContent = stepText(a);
     const entry = parseReview(text).find((e) => e.hash === order[index]);
-    const pending = new Set(queue.filter((e) => e.hash === order[index]).flatMap((e) => Object.keys(e.set)));
-    for (const k of CATEGORIES)
-      if (document.activeElement !== fields[k] && !dirty.has(k) && !pending.has(k)) fields[k].value = entry?.findings[k] ?? "";
+    // A queued save is newer than the file: its latest value for the category shows.
+    const queued = (k: Category) => [...queue].reverse().find((e) => e.hash === order[index] && k in e.set)?.set[k];
+    for (const k of CATEGORIES) if (!dirty.has(k)) fields[k].value = queued(k) ?? entry?.findings[k] ?? "";
     const written = entry?.quote && entry.quote !== stepText(a) ? entry.quote : "";
     moved.textContent = written && `${t("writtenFor", lang)}: “${written}”`;
     moved.hidden = !written;

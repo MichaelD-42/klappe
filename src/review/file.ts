@@ -25,7 +25,9 @@ interface Doc {
   rest: string[][]; // ## sections that are not a step, line by line as written
 }
 
-const DEEP_LINK = /^## (#\/[\w-]+\/[\w-]+\/\d+)\s*$/;
+// A step's deep link: ids are free text after a folder's number ("einführung", "v1.2", "q&a"), never / or space.
+export const STEP_HASH = /^#\/[^/\s]+\/[^/\s]+\/\d+$/;
+const DEEP_LINK = new RegExp(`^## (${STEP_HASH.source.slice(1, -1)})\\s*$`);
 const trimLines = (lines: string[]) => lines.join("\n").replace(/^\s*\n|\s+$/g, "");
 // A finding line that could read as a heading (or as an escape) gets a backslash in front.
 const escape = (text: string) => text.replace(/^(?=[#\\])/gm, "\\");

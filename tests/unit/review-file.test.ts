@@ -94,3 +94,10 @@ test('text written by hand under a step heading, before its categories, survives
   expect(t).toContain('See also step 3.')
   expect(parseReview(t)[0]).toEqual({ hash: T(1), quote: 'One.', findings: { content: 'C', visuals: 'V' } })
 })
+
+// Folder ids are free text after the number prefix: "10-einführung", "20-v1.2", "30-q&a".
+test('a deep link with non-ASCII, dots or & in its ids is a step entry', () => {
+  const hash = '#/einführung/v1.2/3'
+  const t = applyEdit('', { hash, quote: 'Drei.', set: { content: 'C' } }, [hash, '#/q&a/x/1'])
+  expect(parseReview(t)).toEqual([{ hash, quote: 'Drei.', findings: { content: 'C' } }])
+})

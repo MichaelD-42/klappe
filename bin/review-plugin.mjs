@@ -1,10 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { applyEdit, CATEGORIES } from '../src/review/file.ts'
+import { applyEdit, CATEGORIES, STEP_HASH as HASH } from '../src/review/file.ts'
 
 // The review window's route, dev server only: GET returns review.md, POST applies one step's changed findings.
 const ROUTE = '/__klappe/review'
-const HASH = /^#\/[\w-]+\/[\w-]+\/\d+$/
 const MAX_TEXT = 20_000 // characters in one finding or quote
 const MAX_STEPS = 10_000
 const MAX_BODY = 2_000_000 // bytes
