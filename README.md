@@ -17,7 +17,7 @@ Write scenes in Markdown, add motion in TypeScript, and present on one infinite 
 
 ## Why klappe
 
-klappe is for talks where motion carries the message: trainings, engineering walkthroughs, board updates. A section is one large canvas, and each scene is a place on it, so the room sees how one idea connects to the next instead of a stack of separate slides.
+klappe is for conference talks and other presentations where motion carries the message, from a keynote to an engineering walkthrough. A section is one large canvas, and each scene is a place on it, so the room sees how one idea connects to the next instead of a stack of separate slides.
 
 Every step is a label on a GSAP timeline, and an effect only adds tweens to it. That one rule buys a lot: any step has a deep link (`#/section/scene/step`), jumping back and forth always lands on the same picture, the speaker view in a second window stays in sync, and a self-test walks every step to prove that playing a step and jumping to it look the same.
 
@@ -65,7 +65,7 @@ export default scene;
 ## What's in the box
 
 - **Markdown that animates:** bullets that step in, code walkthroughs, console sessions that type themselves, checklists, agendas, shout-outs (`### Question?`), pictures, video and charts from a CSV link.
-- **Charts and board numbers:** bar, stacked, line, waterfall, timeline, donut, slope and bar race; KPI tiles with a sparkline, waffle, progress ring. Each reads a `data/` file and puts its source in the speaker notes.
+- **Charts and numbers:** bar, stacked, line, waterfall, timeline, donut, slope and bar race; KPI tiles with a sparkline, waffle, progress ring. Each reads a `data/` file and puts its source in the speaker notes.
 - **Diagrams:** flow with travelling packets, sequence, swimlanes, decision tree, world map with arcs, line art that draws itself, Lucide icons.
 - **Pointing:** callout, spotlight, hand-drawn marks (ring, underline, frame, strike, arrow).
 - **Effects:** shatter, CRT, zoom and blackout transitions; shout-out, swarm, morph, counters, a decoding line, before/after wipe, people figures, a QR code.
