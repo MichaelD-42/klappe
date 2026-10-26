@@ -21,6 +21,8 @@ const ORIGIN = "50% 140%"; // the cards turn about a point below the stack, like
 const DIM = 0.45; // the scrim over a card left behind, --k-bg at this opacity
 const LIFT = 0.15; // the pulled card rises by this share of its height
 const GROW = 1.2;
+const FONT = 32;
+const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
 
 // Card i's lean in a fan of n, degrees: symmetric about the middle card.
 export const fanPose = (i: number, n: number) => (n > 1 ? (i - (n - 1) / 2) * Math.min(STEP, SPREAD / (n - 1)) : 0);
@@ -38,11 +40,11 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
   const cards = opts.cards.map((text, i) => {
     const el = root.appendChild(document.createElement("div"));
     el.setAttribute("data-k-card", String(i));
-    el.textContent = text;
+    el.appendChild(document.createElement("span")).textContent = text;
     Object.assign(el.style, {
       position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 28px", borderRadius: "16px", background: "var(--k-surface)",
       border: "2px solid var(--k-line)", outline: "2px solid transparent", // border and outline turn accent when pulled: 4 px of accent, no layout change
-      color: "var(--k-fg)", font: "600 32px/1.25 var(--k-font)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
+      color: "var(--k-fg)", font: `600 ${FONT}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       transformOrigin: ORIGIN, zIndex: String(i + 1),
     });
     const scrim = el.appendChild(document.createElement("div"));
@@ -57,6 +59,25 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
   const dim = (tl: gsap.core.Timeline, except: number | undefined, at: number) =>
     cards.forEach((c, k) => tl.to(c.scrim, { autoAlpha: except === undefined || k === except ? 0 : DIM, duration: motion.step }, at));
 
+  // Text is fitted on first use: the layout exists by then, not while building. The card's font size, so the
+  // whole card scales with it; the content box is the card less its padding.
+  let fitted = false;
+  const fit = () => {
+    if (fitted) return;
+    fitted = true;
+    cards.forEach(({ el }, i) => {
+      const text = el.firstElementChild as HTMLElement;
+      const over = () => text.offsetHeight > el.clientHeight - 64 || text.scrollWidth > el.clientWidth - 56;
+      let size = FONT;
+      for (; size > FLOOR; size -= 2) {
+        el.style.fontSize = `${size}px`;
+        if (!over()) break;
+      }
+      el.style.fontSize = `${size}px`;
+      if (over()) ctx.problem(`cardStack: text of card ${i} too long`);
+    });
+  };
+
   let pulled: number | undefined; // step-order state, written only inside the adders
   const settle = (tl: gsap.core.Timeline, i: number, at: number) => {
     tl.set(cards[i].el, { zIndex: i + 1, outlineColor: "transparent", borderColor: "var(--k-line)", immediateRender: false }, at);
@@ -65,6 +86,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
 
   return {
     show(tl) {
+      fit();
       const t = tl.duration();
       tl.to(root, { autoAlpha: 1, duration: 0.4 }, t);
       if (move) cards.forEach((c, i) => tl.fromTo(c.el, { rotation: 0 }, { rotation: fanPose(i, n), duration: motion.step, ease: "power2.out", immediateRender: false }, t + 0.2));
@@ -72,6 +94,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
     pull(i) {
       if (!Number.isInteger(i) || i < 0 || i >= n) throw new Error(`cardStack: no card ${i}`);
       return (tl) => {
+        fit();
         const t = tl.duration();
         const prev = pulled;
         pulled = i;
@@ -82,6 +105,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
       };
     },
     back(tl) {
+      fit();
       const t = tl.duration();
       const prev = pulled;
       pulled = undefined;

@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `flipCard`, `cardStack`, `venn` (set names and region labels) and `matrix` (axis titles) shrink their text to fit, down to the 20 px floor, as the other elements do; text that still does not fit is a deck problem instead of spilling out of its box.
 - German words: a deck with `lang: de` (or `de-DE`) shows klappe's own words in German, in the speaker view, the review window and the effects (Beispieldaten, Zeit ist um, the likert scale).
 - `chart` scatter and bubble: `group: "<column>"` colours the dots by a text column, with a legend. Catalog: `#/chart/scatter/1`.
 - `chart`: `lines: [{ value, label }]` draws dashed reference lines (a goal, last year, a limit) across bar, stacked, line, waterfall and slope charts, and down a timeline. The value axis reaches them. Catalog: `#/chart/bars/1`.

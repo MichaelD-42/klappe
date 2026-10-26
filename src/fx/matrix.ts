@@ -95,7 +95,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       left: `${opts.x}px`, top: `${plot.y}px`, width: `${GUTTER - 12}px`, height: `${plot.h}px`, display: "flex", alignItems: "center", justifyContent: "center",
       writingMode: "vertical-rl", transform: "rotate(180deg)", color: "var(--k-fg)", font: axisFont,
     }, opts.axes.y),
-  ].map((t) => t.el);
+  ];
   const names = QUADS.filter((q) => opts.quadrants?.[q]).map((q) => {
     const b = quads[q];
     return [q, div({
@@ -123,9 +123,13 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   const fit = () => {
     if (fitted) return;
     fitted = true;
-    const shrink = (el: HTMLElement, text: HTMLElement, max: number, n: number, msg: string) => {
+    // A vertical title's lines stack sideways: its width counts them.
+    const shrink = (el: HTMLElement, text: HTMLElement, max: number, n: number, msg: string, vertical = false) => {
       let size = max;
-      const over = () => text.offsetHeight > LINE_H * size * n + 1 || text.offsetHeight > el.clientHeight || text.scrollWidth > text.clientWidth;
+      const over = () =>
+        vertical
+          ? text.scrollWidth > LINE_H * size * n + 1
+          : text.offsetHeight > LINE_H * size * n + 1 || text.offsetHeight > el.clientHeight || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;
         if (!over()) break;
@@ -133,6 +137,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       el.style.fontSize = `${size}px`;
       if (over()) ctx.problem(msg);
     };
+    titles.forEach(({ el, text }, i) => shrink(el, text, AXIS_FONT, 1, `matrix: ${i ? "y" : "x"} axis title too long`, i === 1));
     for (const [q, { el, text }] of names) shrink(el, text, NAME_FONT, 1, `matrix: name of quadrant "${q}" too long`);
     for (const [id, { el, text }] of items) shrink(el, text, MAX_FONT, 2, `matrix: label of "${id}" too long`);
   };
@@ -147,7 +152,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       lines.forEach((l) => tl.set(l, { autoAlpha: 1 }, t));
       drawOn(lines, { duration: 0.6, each: 0.1, at: t })(tl);
       tl.to(heads, { autoAlpha: 1, duration: 0.2 }, t + 0.5);
-      tl.to([...titles, ...names.map(([, n]) => n.el)], { autoAlpha: 1, duration: 0.4 }, t + 0.4);
+      tl.to([...titles.map((t) => t.el), ...names.map(([, n]) => n.el)], { autoAlpha: 1, duration: 0.4 }, t + 0.4);
     },
     place(id, q) {
       const item = items.get(id);

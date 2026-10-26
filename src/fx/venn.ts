@@ -19,6 +19,7 @@ const SVG = "http://www.w3.org/2000/svg";
 const NAME_H = 48; // the band above (and below) the circles for the set names
 const NAME_FONT = 26;
 const REGION_FONT = 22;
+const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
 const FILL = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`;
 let clips = 0;
 
@@ -121,10 +122,31 @@ export function venn(ctx: Ctx, opts: VennOpts): VennHandle {
     regionEls.set(key, e);
   }
 
+  // Text is fitted on first use: the layout exists by then, not while building. A name keeps one line, a region
+  // label two.
+  let fitted = false;
+  const fit = () => {
+    if (fitted) return;
+    fitted = true;
+    const shrink = (el: HTMLElement, max: number, lines: number, msg: string) => {
+      const over = () => el.offsetHeight > 1.2 * parseFloat(el.style.fontSize) * lines + 1 || el.scrollWidth > el.clientWidth;
+      let size = max;
+      for (; size > FLOOR; size -= 2) {
+        el.style.fontSize = `${size}px`;
+        if (!over()) break;
+      }
+      el.style.fontSize = `${size}px`;
+      if (over()) ctx.problem(msg);
+    };
+    nameEls.forEach((el, i) => shrink(el, NAME_FONT, 1, `venn: name of set "${ids[i]}" too long`));
+    for (const [key, el] of regionEls) shrink(el, REGION_FONT, 2, `venn: label of region "${key}" too long`);
+  };
+
   let lit: string | undefined; // the region lit by the latest light(), until the next one
   const labelled = new Set<string>(); // regions whose label shows already: it stays once shown
   return {
     show(tl) {
+      fit();
       const t = tl.duration();
       if (ctx.reducedMotion) tl.to(outlines, { autoAlpha: 1, duration: motion.step }, t);
       else {
@@ -137,6 +159,7 @@ export function venn(ctx: Ctx, opts: VennOpts): VennHandle {
       const key = keyOf(list);
       // Which region settles is decided when the step is added, not here: adders built out of step order still settle in step order.
       return (tl) => {
+        fit();
         const prev = lit;
         lit = key;
         const seen = labelled.has(key);

@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- Text that is not fitted: `flipCard`, `cardStack`, `venn` names and region labels, `matrix` axis titles. Fit them like the other elements (shrink to the 20 px floor, then a deck problem) instead of a "keep it short" note.
 - `kpi`, `waffle`, `progress`: only `show`. A `to(value)` as `gauge` has, for "before and after" on one tile.
 - `flow`: one box shape. Node kinds for the common symbols (`decision` diamond, `store` cylinder, `actor`), and `dim(ids)` for "this part is out of scope", without a separate `focus`.
 - `roadmap`: milestones are points only. Phases as bars on the axis (`{ id, from, to, label }`), for "beta runs July to September".

@@ -9,6 +9,7 @@ const fake = (): Fake => {
   const e: Fake = { style: {}, kids: [], attrs: [], textContent: '' }
   e.appendChild = (c: Fake) => (e.kids.push(c), c)
   e.setAttribute = (a: string) => e.attrs.push(a)
+  Object.defineProperty(e, 'firstElementChild', { get: () => e.kids[0] }) // fitting reads the text span; it measures 0 here
   return e
 }
 afterEach(() => vi.unstubAllGlobals())
