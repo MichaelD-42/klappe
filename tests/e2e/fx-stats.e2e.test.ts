@@ -28,14 +28,14 @@ test('each stat ends on its number; the change is coloured by whether it is good
       document.body.append(p)
       return getComputedStyle(p).color
     }
-    const kpis = [...document.querySelectorAll<HTMLElement>('[data-k-kpi]')].map((k) => {
+    const kpis = [...document.querySelectorAll<HTMLElement>('[data-scene="all"] [data-k-kpi]')].map((k) => {
       const badge = k.querySelector<HTMLElement>('[data-good]')!
       const line = k.querySelector('path')!
       return { text: k.querySelector('[data-k-text]')!.textContent, badge: badge.textContent, badgeColor: getComputedStyle(badge).color, drawn: parseFloat(getComputedStyle(line).strokeDashoffset) === 0, note: k.dataset.kNote }
     })
-    const waffle = document.querySelector<HTMLElement>('[data-k-waffle]')!
+    const waffle = document.querySelector<HTMLElement>('[data-scene="all"] [data-k-waffle]')!
     const lit = [...waffle.querySelectorAll('rect')].filter((r) => getComputedStyle(r).fill === css('--k-accent') && getComputedStyle(r).visibility === 'visible').length
-    const rings = [...document.querySelectorAll<HTMLElement>('[data-k-progress]')].map((p) => ({
+    const rings = [...document.querySelectorAll<HTMLElement>('[data-scene="all"] [data-k-progress]')].map((p) => ({
       text: p.querySelector('[data-k-text]')!.textContent,
       color: getComputedStyle(p.querySelectorAll('circle')[1]).stroke,
     }))
@@ -58,7 +58,7 @@ test('a number and its unit stay on one line, and the waffle share too', async (
   // The number's own height in its own line heights (a flex item is one box however its text wraps).
   const lines = await page.evaluate(() => {
     const k = document.querySelector('.k-stage')!.getBoundingClientRect().width / 1920
-    return [...document.querySelectorAll<HTMLElement>('[data-k-kpi] [data-k-text], [data-k-waffle] [data-k-text]')].map((e) => {
+    return [...document.querySelectorAll<HTMLElement>('[data-scene="all"] [data-k-kpi] [data-k-text], [data-scene="all"] [data-k-waffle] [data-k-text]')].map((e) => {
       const n = e.getBoundingClientRect()
       const unit = e.closest('[data-k-kpi]') ? e.nextElementSibling?.getBoundingClientRect() : undefined
       const sameLine = !unit || (unit.top >= n.top - 1 && unit.bottom <= n.bottom + 1)
@@ -67,4 +67,37 @@ test('a number and its unit stay on one line, and the waffle share too', async (
   })
   expect(lines).toEqual([1, 1, 1])
   await page.close()
+})
+
+test('to(value) moves a tile, a waffle and a ring on from where the step before left them', async () => {
+  const at = async (step: number) => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-stats#/a/moves/${step}`)
+    await page.waitForFunction((i) => window.klappe?.stepper?.index === i, step, { timeout: 30_000 })
+    await settle(page)
+    const r = await page.evaluate(() => {
+      const css = (v: string) => {
+        const p = Object.assign(document.createElement('div'), { style: `color: var(${v})` })
+        document.body.append(p)
+        return getComputedStyle(p).color
+      }
+      const k = document.querySelector<HTMLElement>('[data-scene="moves"] [data-k-kpi]')!
+      const badge = k.querySelector<HTMLElement>('[data-good]')!
+      const w = document.querySelector<HTMLElement>('[data-scene="moves"] [data-k-waffle]')!
+      const p = document.querySelector<HTMLElement>('[data-scene="moves"] [data-k-progress]')!
+      return {
+        kpi: k.querySelector('[data-k-text]')!.textContent,
+        badge: badge.textContent,
+        bad: getComputedStyle(badge).color === css('--k-bad'),
+        lit: [...w.querySelectorAll('rect')].filter((r) => getComputedStyle(r).fill === css('--k-accent') && getComputedStyle(r).visibility === 'visible').length,
+        share: w.querySelector('[data-k-text]')!.textContent,
+        ring: p.querySelector('[data-k-text]')!.textContent,
+        ok: getComputedStyle(p.querySelectorAll('circle')[1]).stroke === css('--k-ok'),
+      }
+    })
+    await page.close()
+    return r
+  }
+  expect(await at(2)).toEqual({ kpi: '6', badge: '▼ 25 %', bad: true, lit: 52, share: '52 %', ring: '110 %', ok: true })
+  expect(await at(3)).toMatchObject({ lit: 20, share: '20 %' })
 })

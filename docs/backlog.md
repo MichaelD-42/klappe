@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- `kpi`, `waffle`, `progress`: only `show`. A `to(value)` as `gauge` has, for "before and after" on one tile.
 - `flow`: one box shape. Node kinds for the common symbols (`decision` diamond, `store` cylinder, `actor`), and `dim(ids)` for "this part is out of scope", without a separate `focus`.
 - `roadmap`: milestones are points only. Phases as bars on the axis (`{ id, from, to, label }`), for "beta runs July to September".
 - `compareTable`: no column highlight. `column(i)` lights "our plan" across all rows, the usual end of a pricing or option comparison.

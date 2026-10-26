@@ -54,7 +54,7 @@ The first column labels the rows; every later column with a number in any row is
 
 ## `kpi`, `waffle`, `progress`
 
-Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show }`: it fades in and its number counts up from 0, written from `onUpdate` as a pure function of progress.
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
 
 ```ts
 kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
