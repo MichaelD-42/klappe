@@ -34,7 +34,8 @@ export async function loadDeck() {
     s.dataset.kDeckCss = "";
     document.head.append(s);
   }
-  const files = import.meta.glob("@deck/**/*.md", { query: "?raw", import: "default", eager: true });
+  // Not review.md: the review window writes it while the deck is open, and it is no part of the deck.
+  const files = import.meta.glob(["@deck/**/*.md", "!@deck/review.md"], { query: "?raw", import: "default", eager: true });
   const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });
   const data = import.meta.glob<string>("@deck/data/*", { query: "?raw", import: "default", eager: true });
   const media = import.meta.glob<string>("@deck/media/*", { query: "?url", import: "default", eager: true });
