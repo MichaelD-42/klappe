@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- `chart`: `highlight(row)` is sankey only. A lit bar, line, slice or stage with the rest muted is the most common chart beat in a business deck; give every type `highlight`, and a per-step reveal beside `bar(i)`: `series(i)` for line and stacked, `slice(i)` for donut, `stage(i)` for funnel.
 - `chart`: no reference line. A `target` (or `lines: [{ value, label }]`) drawn dashed across the value axis, for "goal", "last year" or "SLA".
 - `chart` scatter and bubble: names overlap when dots sit close (the slope chart already moves its labels apart with `spread`), and every dot is `--k-series-1`. Spread the names, and take an optional category column as the dot colour, with a legend.
 - Strings: the strings table has English only, so likert's scale, the exercise card's "min", the timer's "Time's up" and "Press T to start" and the sample label read English in a German deck. Every caller already passes `ctx.deck.lang`, so adding `de` is the whole change; the timer's reference page still says the language is not on `ctx`, which is stale.

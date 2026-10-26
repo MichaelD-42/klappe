@@ -5,7 +5,8 @@ import type { SceneModule, StepAdder } from "../../types";
 // One scene per chart type, each step adder as its own step; one missing dataset (DATA MISSING), one bad
 // cell and one JSON null (DATA ERROR), the fixture's only problems; one plain-Markdown chart link in the default
 // media slot; a donut, a slope, a funnel with a zero stage, and a sankey whose highlight adders are made out of
-// step order (row 2 made first, lit last).
+// step order (row 2 made first, lit last); then one scene per step-by-step adder: highlight on a bar chart, series
+// on a line, slice on a donut, bar on a stacked chart and a funnel.
 // All numbers are made-up sample data. Each bar from the handle's bars carries its index as data-bar.
 const rect = { x: 160, y: 120, w: 1600, h: 840 };
 const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
@@ -17,6 +18,17 @@ const scene = (opts: Omit<ChartOpts, "rect">): SceneModule => ({
   steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 });
 const md = (title: string) => `## ${title}\n\n- Axes.\n- Grow.\n- Values.\n`;
+// A scene whose steps are the given adders, one each, with a scene.md of as many steps.
+const stepped = (opts: Omit<ChartOpts, "rect">, steps: ((c: ChartHandle) => StepAdder)[]): SceneModule => ({
+  build: (ctx) => {
+    const c = chart(ctx, { rect, ...opts });
+    c.bars.forEach((b, i) => b.setAttribute("data-bar", String(i)));
+    return c;
+  },
+  steps: steps.map((s) => (tl, c: ChartHandle) => s(c)(tl)),
+});
+const steps = (title: string, n: number) => `## ${title}\n\n${"- Step.\n".repeat(n)}`;
+const axes = (c: ChartHandle): StepAdder => (tl) => c.axes(tl);
 
 export default () => {
   const r = assembleDeck(
@@ -36,6 +48,11 @@ export default () => {
       "sections/10-a/94-slope/scene.md": md("Slope"),
       "sections/10-a/96-funnel/scene.md": md("Funnel"),
       "sections/10-a/98-sankey/scene.md": md("Sankey") + "- Light row 1.\n- Light row 3.\n",
+      "sections/10-a/101-lit-bar/scene.md": steps("Lit bar", 5),
+      "sections/10-a/102-series/scene.md": steps("Series", 4),
+      "sections/10-a/103-slice/scene.md": steps("Slice", 5),
+      "sections/10-a/104-stack-steps/scene.md": steps("Stack steps", 3),
+      "sections/10-a/105-funnel-steps/scene.md": steps("Funnel steps", 3),
     },
     {
       "sections/10-a/10-bar/scene.ts": scene({ src: "data/quarters.csv", title: "Units by quarter", sample: true }),
@@ -72,6 +89,36 @@ export default () => {
           (tl, x: { later: StepAdder }) => x.later(tl),
         ],
       } satisfies SceneModule,
+      "sections/10-a/101-lit-bar/scene.ts": stepped({ src: "data/quarters.csv", title: "Units by quarter" }, [
+        axes,
+        (c) => (tl) => c.grow(tl),
+        (c) => (tl) => c.values(tl),
+        (c) => c.highlight(2),
+        (c) => c.highlight(null),
+      ]),
+      "sections/10-a/102-series/scene.ts": stepped({ src: "data/trend.csv", type: "line", title: "Margin by month, %" }, [
+        axes,
+        (c) => c.series(0),
+        (c) => c.series(1),
+        (c) => c.highlight(1),
+      ]),
+      "sections/10-a/103-slice/scene.ts": stepped({ src: "data/share.csv", type: "donut", title: "Hours by activity" }, [
+        axes,
+        (c) => c.slice(0),
+        (c) => c.slice(1),
+        (c) => c.slice(2),
+        (c) => c.slice(3),
+      ]),
+      "sections/10-a/104-stack-steps/scene.ts": stepped({ src: "data/mix.json", type: "stacked", title: "Units by product" }, [
+        axes,
+        (c) => c.bar(1),
+        (c) => c.highlight(1),
+      ]),
+      "sections/10-a/105-funnel-steps/scene.ts": stepped({ src: "data/stages.csv", type: "funnel", title: "Sign-up funnel" }, [
+        axes,
+        (c) => c.bar(0),
+        (c) => c.bar(1),
+      ]),
     },
   );
   r.deck.files = {
