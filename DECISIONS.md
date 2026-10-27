@@ -254,3 +254,10 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: a build made in a test run reports `DEV` true; the real condition is whether a server can save the file.
 - **Findings are keyed by deep link, which is a position; a skill rule and the quote guard it.**
   - Why: a stable step id would need authors to name steps. Claude rewrites the links of open entries when it changes a scene's step count and works a scene from its last step; the review window shows "Written for" when an entry's quote no longer matches its step.
+
+## 2026-10-27 (roadmap rush)
+
+- **`roadmap` ticks every 2 or more months count from January, not from the axis start.**
+  - Why: an axis from March with a 6-month stride showed "Mar 2020, Sep, Mar, Sep, …": the year was on the first tick only. Counted from January, every January has a tick with its year. The cost: an axis whose first month is off the stride has no tick at its left end.
+- **`rush(from, to)` is a handle step on `roadmap`, not a new effect.**
+  - Why: it reuses the axis, the milestones, the accent and its settle; only the timing and the pop are new. With reduced motion it keeps the shrinking gaps, since they are the message, and drops the pops.

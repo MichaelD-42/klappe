@@ -44,3 +44,10 @@ test('two labels too close on one side are a problem; a bad date throws', () => 
   expect(roadmapLayout({ ...base, milestones: close }).problems).toContain('roadmap: milestones "kick" and "rc" are too close')
   expect(() => roadmapLayout({ ...base, today: '2026-02-30' })).toThrow('roadmap: date "2026-02-30" is not YYYY-MM-DD')
 })
+
+test('a span of years puts a tick on every January, with its year, and the year in each milestone date', () => {
+  const L = roadmapLayout({ x: 160, w: 1600, milestones: [{ id: 'a', date: '2020-03-10', label: 'A' }], today: '2026-10-27' })
+  expect(L.ticks.map((t) => t.label)).toEqual(['Jul 2020', 'Jan 2021', 'Jul', 'Jan 2022', 'Jul', 'Jan 2023', 'Jul', 'Jan 2024', 'Jul', 'Jan 2025', 'Jul', 'Jan 2026', 'Jul'])
+  expect(L.milestones[0].date).toBe('Mar 10, 2020')
+  expect(roadmapLayout(base).milestones[0].date).toBe('Jul 1')
+})
