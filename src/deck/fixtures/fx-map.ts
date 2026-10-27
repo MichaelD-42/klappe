@@ -39,6 +39,15 @@ const inset: SceneModule = {
   ],
 };
 
+// regions: two countries filled, one by name and one by ISO numeric code.
+const regions: SceneModule = {
+  build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 60, w: 1800, h: 960 }, sites: [] }),
+  steps: [
+    (tl, m: WorldMapHandle) => m.draw(tl),
+    (tl, m: WorldMapHandle) => (m.region(tl, "Germany"), m.region(tl, "840")),
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -46,6 +55,7 @@ export default () =>
       "sections/10-a/section.md": "# A\n",
       "sections/10-a/10-world/scene.md": "## World\n\n- Draw.\n- Sites.\n- Arcs to the host.\n- Zoom two.\n- World.\n- Zoom three.\n- Zoom four.\n",
       "sections/10-a/20-inset/scene.md": "## Inset\n\n- Draw.\n- Site.\n- Arc.\n- Zoom.\n",
+      "sections/10-a/30-regions/scene.md": "## Regions\n\n- Draw.\n- Two countries.\n",
     },
-    { "sections/10-a/10-world/scene.ts": world, "sections/10-a/20-inset/scene.ts": inset },
+    { "sections/10-a/10-world/scene.ts": world, "sections/10-a/20-inset/scene.ts": inset, "sections/10-a/30-regions/scene.ts": regions },
   );

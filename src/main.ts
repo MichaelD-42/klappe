@@ -17,6 +17,7 @@ import { applyTheme, loadFonts, motion } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
+import { t } from "./strings";
 import { Overview } from "./ui/overview";
 import { showProblems } from "./ui/problems";
 import { Selector } from "./ui/selector";
@@ -32,7 +33,15 @@ const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
 document.title = deck.meta.title;
 
-if (query.get("speaker") === "1") {
+if (query.get("review") === "1") {
+  applyTheme(deck, query.get("theme"));
+  // The review window saves through the dev server; a built deck has no such route.
+  if (import.meta.env.KLAPPE_REVIEW) {
+    const { mountReview } = await import("./review/view");
+    const reviewView = mountReview(document.body, deck, steps, channel);
+    window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, reviewView };
+  } else document.body.append(Object.assign(document.createElement("p"), { className: "k-review-off", textContent: t("reviewNeedsDev", deck.meta.lang) }));
+} else if (query.get("speaker") === "1") {
   applyTheme(deck, query.get("theme")); // tokens only; the speaker page shows no problems
   const speakerView = mountSpeaker(document.body, deck, steps, channel);
   window.klappe = { ...window.klappe, steps, deck, errors, problems, channel, speakerView };
@@ -83,9 +92,21 @@ async function startDeck(svg: Record<string, string>) {
       window.open(url, `klappe-speaker:${deck.meta.title}`, "popup,width=1280,height=800");
     },
   };
+  // R: the review window, beside the deck like the speaker view. Only on the dev server, which saves its findings.
+  const review = import.meta.env.KLAPPE_REVIEW
+    ? {
+        open() {
+          const url = new URL(location.href);
+          url.searchParams.set("review", "1");
+          url.searchParams.delete("autoplay");
+          url.searchParams.delete("selftest");
+          window.open(url, `klappe-review:${deck.meta.title}`, "popup,width=900,height=900");
+        },
+      }
+    : undefined;
   // Starts or pauses the current scene's timer; a scene without one ignores it.
   const timer = () => document.dispatchEvent(new CustomEvent("klappe:timer"));
-  bindInput(stepper, { overview, selector, speaker, autoplay, timer }, stage, steps.length - 1);
+  bindInput(stepper, { overview, selector, speaker, review, autoplay, timer }, stage, steps.length - 1);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   const state = (i: number) =>

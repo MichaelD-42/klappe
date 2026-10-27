@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import type { Ctx, Part, StepAdder } from "../types";
+import { iconGlyph } from "./icons";
 
 export type AgendaRow = Extract<Part, { kind: "agenda" }>["rows"][number];
 export interface AgendaOpts {
@@ -42,6 +43,11 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
     Object.assign(time.style, { flex: "none", width: "7em", textAlign: "right", fontVariantNumeric: "tabular-nums" });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = r.title;
+    // The glyph is em-sized, so it shrinks with the text, and strokes in currentColor, so it takes the row's colour.
+    if (r.icon) {
+      text.innerHTML = `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em;margin-right:0.35em">${iconGlyph(r.icon, ctx.problem)}</svg>`;
+      text.append(r.title);
+    }
     Object.assign(text.style, { minWidth: "0", overflowWrap: "anywhere" });
     return el;
   });

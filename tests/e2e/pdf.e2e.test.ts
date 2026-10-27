@@ -9,12 +9,12 @@ test('the PDF has one page per step of the deck', async () => {
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-pdf-')), 'deck.pdf')
   try {
     const r = await exportPdf(`${inject('BASE_URL')}/?fixture=fx-code`, out)
-    expect(r.pages).toBe(16)
+    expect(r.pages).toBe(18)
     expect(r.problems).toHaveLength(6)
     expect(r.errors).toEqual([])
     const pdf = fs.readFileSync(out, 'latin1')
     expect(pdf.startsWith('%PDF-')).toBe(true)
-    expect(pdf.match(/\/Type\s*\/Page\b/g)).toHaveLength(16)
+    expect(pdf.match(/\/Type\s*\/Page\b/g)).toHaveLength(18)
   } finally {
     fs.rmSync(path.dirname(out), { recursive: true })
   }

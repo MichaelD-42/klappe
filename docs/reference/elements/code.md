@@ -55,6 +55,7 @@ export default captioned("code() — show, focus(lines) and diff(newSrc) on one 
 | `lang` | string | required | a language in `LANGS`; any other shows plain, uncoloured text |
 | `x`, `y`, `w` | number | required | the panel's top-left corner and width, in scene units |
 | `h` | number | to the scene's bottom | the most height the panel may take; it is as tall as its lines, up to `h` |
+| `lineNumbers` | boolean | `false` | a `--k-muted` number before each line, counted by position, so after a `diff` they count the new lines. The gutter takes the room of at least two digits; the font fits the code and the gutter together. Catalog: `#/code/live/1` |
 
 ### Step adders
 
@@ -62,7 +63,7 @@ export default captioned("code() — show, focus(lines) and diff(newSrc) on one 
 | --- | --- |
 | `show` | the panel fades in, all lines unfocused |
 | `focus(lines)` | the 1-based `lines` go to full opacity with an accent bar on the left; the others dim: their colours blend to `--k-muted` at 0.7 opacity, which keeps them at least 3:1 on the panel. `focus([])` unfocuses everything |
-| `diff(newSrc)` | morphs to `newSrc` by a line diff: removed lines fade and collapse, added lines grow in, kept lines slide to their new place. The result shows unfocused; later `focus` calls number the new lines |
+| `diff(newSrc, { type? })` | morphs to `newSrc` by a line diff: removed lines fade and collapse, added lines grow in, kept lines slide to their new place. The result shows unfocused; later `focus` calls number the new lines. With `type: true` the added lines open empty and type in, one after another, at 34 characters a second, once the other lines have moved, for a live-coding beat (`#/code/live/2`) |
 | `line(n)` | not a step: the element of line `n` (1-based, current version), as a callout target |
 
 Colours come from the theme: the panel is `--k-surface`, text `--k-code-foreground`, syntax `--k-code-token-*`, the focus bar `--k-accent`. The font is `--k-font-code`.

@@ -50,7 +50,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual(PROBLEMS)
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(16)
+    expect(r.steps).toBe(18)
   })
 
 // Review focus 2: a deep link onto group 3 equals playing to it, line by line.
@@ -192,5 +192,41 @@ test('code shows plain when the highlighter fails to load', async () => {
   })
   expect(r).toEqual({ text: '  return sum;', coloured: 0 })
   expect(errors.filter((e) => e.includes('syntax highlighting failed'))).toHaveLength(1)
+  await page.close()
+})
+
+test('line numbers count the lines by position; a typed diff types its new lines in', async () => {
+  const gutter = (page: Page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('[data-scene="typed"] .k-code [data-k-code-number]')]
+        .filter((e) => e.checkVisibility({ visibilityProperty: true }))
+        .map((e) => e.textContent),
+    )
+  const first = await open('#/a/typed/1')
+  expect(await gutter(first)).toEqual(['1', '2', '3'])
+  // The numbers sit left of the code: every line's text starts right of the widest number.
+  const clear = await first.evaluate(() => {
+    const nums = [...document.querySelectorAll<HTMLElement>('[data-scene="typed"] [data-k-code-number]')].map((e) => e.getBoundingClientRect().right)
+    const text = [...document.querySelectorAll<HTMLElement>('[data-scene="typed"] [data-line] span')].map((e) => e.getBoundingClientRect().left)
+    return Math.min(...text) > Math.max(...nums)
+  })
+  expect(clear).toBe(true)
+  await first.close()
+  // Played on a held clock: mid-typing the new line holds part of its text; at the end, all of it.
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.clock.install()
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-code#/a/typed/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await page.clock.runFor(500)
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await page.clock.runFor(1000) // the lines have moved (0.6 s); typing is under way
+  // The added line 2, made after the line 2 the diff removes.
+  const mid = (await lines(page, 'typed')).filter((l) => l.n === '2').at(-1)!.text!
+  expect(mid.length).toBeGreaterThan(0)
+  expect('if (!a) throw new Error("empty");'.startsWith(mid) && mid.length < 33).toBe(true)
+  await page.clock.runFor(3000)
+  const after = (await lines(page, 'typed')).filter((l) => l.visible).sort((p, q) => p.y - q.y)
+  expect(after.map((l) => l.text)).toEqual(['const a = load();', 'if (!a) throw new Error("empty");', 'save(a);', 'log(a);'])
+  expect(await gutter(page)).toEqual(['1', '2', '3', '4'])
   await page.close()
 })

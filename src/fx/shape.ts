@@ -4,16 +4,17 @@ import type { Ctx, StepAdder } from "../types";
 import { drawOn, token } from "./draw";
 
 type P = { x: number; y: number };
-export type ShapeOpts = { accent?: boolean } & (
+// dash: a dashed stroke (it draws on solid, then shows its dashes); width: the stroke in scene px, at least 2.
+type Line = { accent?: boolean; dash?: boolean; width?: number };
+export type ShapeOpts = Line & (
   | { kind: "rect"; x: number; y: number; w: number; h: number } // top-left corner and size, scene-local
   | { kind: "circle"; x: number; y: number; r: number } // centre and radius
   | { kind: "line"; x: number; y: number; x2: number; y2: number }
 );
-export interface ArrowOpts {
+export interface ArrowOpts extends Line {
   from: P;
   to: P; // the tip
   curve?: number; // bow, as a share of the length: 0.2 bends to the left of the way it points, -0.2 to the right; default 0
-  accent?: boolean;
 }
 export interface ShapeHandle {
   el: SVGGElement;
@@ -42,10 +43,18 @@ export function arrowPath(from: P, to: P, curve = 0): { shaft: string; head: str
 }
 
 // A group of stroked SVG elements in --k-line (or --k-accent), hidden until its draw or show step.
-function group(ctx: Ctx, accent: boolean | undefined, parts: [string, Record<string, number | string>][]) {
+function group(ctx: Ctx, kind: string, o: Line, parts: [string, Record<string, number | string>][]) {
   const g = document.createElementNS(SVG, "g");
   g.setAttribute("data-k-shape", "");
-  Object.assign(g.style, { fill: "none", stroke: accent ? "var(--k-accent)" : "var(--k-line)", strokeWidth: "4", strokeLinecap: "round", strokeLinejoin: "round" });
+  let width = o.width ?? 4;
+  if (width < 2) {
+    ctx.problem(`${kind}: width ${width} is under the 2 px floor`);
+    width = 2;
+  }
+  Object.assign(g.style, {
+    fill: "none", stroke: o.accent ? "var(--k-accent)" : "var(--k-line)", strokeWidth: String(width), strokeLinecap: "round", strokeLinejoin: "round",
+    ...(o.dash ? { strokeDasharray: `${3 * width} ${3 * width}` } : {}),
+  });
   const els = parts.map(([tag, attrs]) => {
     const e = g.appendChild(document.createElementNS(SVG, tag));
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
@@ -66,7 +75,7 @@ export function shape(ctx: Ctx, opts: ShapeOpts): ShapeHandle {
       : opts.kind === "circle"
         ? ["circle", { cx: opts.x, cy: opts.y, r: opts.r }]
         : ["line", { x1: opts.x, y1: opts.y, x2: opts.x2, y2: opts.y2 }];
-  const { g } = group(ctx, opts.accent, [part]);
+  const { g } = group(ctx, "shape", opts, [part]);
   return {
     el: g,
     draw: (tl) => void tl.set(g, { autoAlpha: 1 }, drawOn(g)(tl)),
@@ -77,7 +86,8 @@ export function shape(ctx: Ctx, opts: ShapeOpts): ShapeHandle {
 // An arrow (connector) from one point to another, straight or bowed. The head draws on when the shaft arrives.
 export function arrow(ctx: Ctx, opts: ArrowOpts): ShapeHandle {
   const d = arrowPath(opts.from, opts.to, opts.curve);
-  const { g, els } = group(ctx, opts.accent, [["path", { d: d.shaft }], ["path", { d: d.head }]]);
+  const { g, els } = group(ctx, "arrow", opts, [["path", { d: d.shaft }], ["path", { d: d.head }]]);
+  (els[1] as SVGElement).style.strokeDasharray = "none"; // a dashed arrow keeps a solid head
   // The head has no hidden dash before its own draw starts: it stays hidden until then.
   gsap.set(els[1], { autoAlpha: 0 });
   return {

@@ -6,7 +6,7 @@ interface Refs {
   t: CompareTableHandle;
 }
 
-export default captioned("compareTable(ctx, { columns, rows }) — row(i) lands ticks and crosses cell by cell", {
+export default captioned("compareTable() — row(i) lands marks cell by cell; column(i) lights a plan", {
   build: (ctx): Refs => ({
     h: title(ctx),
     t: compareTable(ctx, {
@@ -26,5 +26,6 @@ export default captioned("compareTable(ctx, { columns, rows }) — row(i) lands 
     (tl, r) => r.t.row(1)(tl),
     (tl, r) => r.t.row(2)(tl),
     (tl, r) => r.t.row(3)(tl),
+    (tl, r) => r.t.column(1)(tl),
   ],
 });

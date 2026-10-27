@@ -5,6 +5,6 @@
 - The whole flow.
 - The API glows.
 - It breathes: live.
-- A pulse on the web app.
+- A pulse on the web app, in --k-warn.
 - The database shakes: it failed.
 - The glow goes off.

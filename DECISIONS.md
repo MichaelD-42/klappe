@@ -243,3 +243,21 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: they share loading, the data checks, the title, the sample label and the source note with the other types. A year column holds numbers, so it can only be told apart from a series by its name.
 - **The speaker profile is a demo factory to copy (`decks/demo/shared/speaker-profile.ts`), not a `klappe/fx` effect.**
   - Why: it only lays out `image`, `qr` and `text`, and every deck wants its own arrangement and house style. A fixed effect would grow an option per taste; a copied factory is edited in place.
+
+## 2026-10-26 (review mode)
+
+- **Review findings are saved through a dev-server route (`bin/review-plugin.mjs`), one step and only its changed categories per write.**
+  - Why: the browser cannot write the deck folder, and the author reviews on the dev server anyway. Writing one step's changed categories means a save never brings back a finding Claude removed meanwhile, nor overwrites another step.
+  - The route takes only the deck's own origin: any page the author visits can reach localhost.
+  - Each save carries its window's id and a growing number; the route skips a category that a newer save from that window already set on that step. Why: a closing window sends its last saves at once, beside one still in flight, and they land in any order. Per step and category, so a late save never drops another category's or step's text.
+- **Review mode exists where its route does: the plugin defines `import.meta.env.KLAPPE_REVIEW`, not `import.meta.env.DEV`.**
+  - Why: a build made in a test run reports `DEV` true; the real condition is whether a server can save the file.
+- **Findings are keyed by deep link, which is a position; a skill rule and the quote guard it.**
+  - Why: a stable step id would need authors to name steps. Claude rewrites the links of open entries when it changes a scene's step count and works a scene from its last step; the review window shows "Written for" when an entry's quote no longer matches its step.
+
+## 2026-10-27 (roadmap rush)
+
+- **`roadmap` ticks every 2 or more months count from January, not from the axis start.**
+  - Why: an axis from March with a 6-month stride showed "Mar 2020, Sep, Mar, Sep, …": the year was on the first tick only. Counted from January, every January has a tick with its year. The cost: an axis whose first month is off the stride has no tick at its left end.
+- **`rush(from, to)` is a handle step on `roadmap`, not a new effect.**
+  - Why: it reuses the axis, the milestones, the accent and its settle; only the timing and the pop are new. With reduced motion it keeps the shrinking gaps, since they are the message, and drops the pops.

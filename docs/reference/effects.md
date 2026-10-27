@@ -27,6 +27,8 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | `title` | string | none | shown above the plot |
 | `data` | `Row[]` or `null` | read `src` from `ctx.files.data` | rows you parsed yourself; `null` says the file is missing |
 | `sample` | boolean | false | show the "Sample data" label. It also shows when the file has the line `# source: klappe demo sample` |
+| `group` | string | none | `scatter` and `bubble`: a text column whose values colour the dots, one `--k-series-N` colour each (repeating past six), with a legend. A name with rows in several periods takes the group of its first row. Catalog: `#/chart/scatter/1`. A column that is not there reports `chart: no group column "<name>" in <src>`; another chart type `chart: group is for scatter and bubble charts` |
+| `lines` | `{ value, label }[]` | none | `bar`, `stacked`, `line`, `waterfall`, `slope` and `timeline`: a dashed `--k-fg` line across the plot at each value (a goal, last year, a limit; on a timeline a "today" down the plot), its label in bold at the line's right end (a timeline's: at its top). They show with `axes`, and the value axis reaches them. Catalog: `#/chart/bars/1`. Another type reports `chart: lines are for bar, stacked, line, waterfall, slope, timeline charts, not <type>` |
 
 The first column labels the rows; every later column with a number in any row is a series and must be a number in every row.
 
@@ -37,20 +39,22 @@ The first column labels the rows; every later column with a number in any row is
 | `axes` | title, legend and axes fade in |
 | `grow` | bars, segments, lines or waterfall steps grow in, staggered; donut slices draw round one after another; slope lines draw left to right; funnel stages grow from the centre, top to bottom; sankey nodes grow with their names, then the bands draw left to right |
 | `values` | the value labels fade in and count up |
-| `highlight(row)` | sankey only: the flow in that data row (0 is the first row after the header) turns `--k-accent`; the flow lit before goes back. Add it after `grow`: before it the bands are not drawn, so the lit flow does not show. Another chart type, or a row that does not exist, reports a deck problem |
+| `highlight(row)` | lights one row (0 is the first row after the header) and lets the one lit before go back; `highlight(null)` lights none. A sankey: the flow in that row turns `--k-accent`. Any other type: that row's marks and values (a bar, a stack, a slice, a stage, a phase, a slope line, a dot) stay at full strength and the rest dims to 0.35. In a `line` chart the argument is a series, 0 the first number column. Catalog: `#/chart/series/4`, `#/chart/slices/5`. Add it after the marks and values are shown: `values` after it brings the dimmed values back to full. A row that does not exist reports `chart: no row <i>; the rows are 0 to <last>` (`no series` for a line, `no flow in row <n>` for a sankey) |
 | `period(p)` | `scatter` and `bubble` with a time column: the dots and their names move to period `p`, by index (0 is the first) or by its name (`"2025"`); a numeric period counts on the way, a named one switches halfway. Catalog: `#/chart/bubble/2`. Without a time column it reports `chart: period() is for a scatter or bubble chart with a period column`; a period that is not there `chart: no period "<p>"; the periods are …` |
-| `bar(i)` | `bar` and `waterfall` only: bar `i` (0-based, data order; a waterfall's total is the last) grows and its value counts up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type reports `chart: bar(<i>) is for bar and waterfall charts`; a bar that does not exist reports `chart: no bar <i>` |
+| `bar(i)` | `bar`, `waterfall`, `stacked`, `timeline` and `funnel`: bar `i` (0-based, data order; a waterfall's total is the last; a stacked chart's whole stack; a funnel's stage with the conversion into it) grows and its values count up. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/bar-steps/1`. Another type reports `chart: bar(<i>) is for bar, waterfall, stacked, timeline and funnel charts`; a bar that does not exist reports `chart: no bar <i>` |
+| `slice(i)` | `donut` only: slice `i` draws round, its value and share in the legend count up, and the total in the centre counts on from the slices the steps before drew. Call it once per step instead of `grow` and `values`, after `axes`, which shows the legend names. Catalog: `#/chart/slices/2` |
+| `series(i)` | `line` only: series `i` (0 is the first number column) draws left to right with its markers and values. Call it once per step instead of `grow` and `values`. Catalog: `#/chart/series/2` |
 
 ### Limits
 
 - A missing file, an empty file or bad data shows a large box (DATA MISSING or DATA ERROR with the reason) and a deck problem, `chart: <label>: <src> (<why>)`. It never plots around a bad cell.
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
-- Scatter and bubble names are not moved apart: dots that sit close together overlap their names. Every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
+- Scatter and bubble names that would touch move apart up and down, in each period (`tagSpread`); a name can then sit a little off its dot's line. Without `group` every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
 - A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason). A funnel reveals all stages in one `grow` step, not one stage per step.
 
 ## `kpi`, `waffle`, `progress`
 
-Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show }`: it fades in and its number counts up from 0, written from `onUpdate` as a pure function of progress.
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
 
 ```ts
 kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
@@ -113,7 +117,7 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language; klappe has English names only, so every deck shows them in English for now.
+A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
 
 ## `gaugeAngle`
 
@@ -173,6 +177,10 @@ build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ## `scatterTracks`
 
 `scatterTracks(rows)` gives `{ period?, periods, names, at, keys }`: the time column's name (if any) and its periods in order, the point names, `at[p][i]` the number values of point `i` in period `p`, and `keys` the number columns other than the time, in order (x, y, size). Without a time column every row is a point and `at` has one period. What `scatter` and `bubble` draw; tests use it.
+## `tagSpread`
+
+`tagSpread(tags, gap)` takes scatter names as `{ x, y, w, left }` (`x` where a name starts, or ends for a `left` name; `w` its width) and gives each name's `y` so that no two names whose boxes overlap sideways sit closer than `gap`. Touching names move apart as `spread` moves labels, group by group, until none touch. The scatter and bubble charts use it in every period.
+
 ## `donutSlices`
 
 `donutSlices(values)` gives each value's slice as `{ start, end, share }`, fractions of a turn from 12 o'clock, clockwise, in row order.
@@ -248,6 +256,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | `point(id)` | the site's `[x, y]`, scene-local, where its dot sits: place your own figures, labels and routes with it. Unknown id: `undefined` and a deck problem |
 | `arcPath(from, to)` | the path data of the map's arc between two sites, for a figure's `walk` or your own drawing |
 | `zoomTo(tl, id)` | the camera flies to the site; only that site's label shows; strokes thin to keep their weight |
+| `region(tl, country)` | fills a country in `--k-accent` at `MARKER_MIX` (35 %), under the coastline, fading in over 0.6 s; "where we sell". `country` is the name as `world-atlas` spells it (`"Germany"`, `"United States of America"`, `"Dem. Rep. Congo"`) or the ISO 3166-1 numeric code (`"276"`); ISO letter codes are not known. A country the atlas lacks shows `worldMap: no country '<name>'; use the ISO 3166-1 numeric code or the name in world-atlas`. The 1:110m atlas leaves out the smallest states. Catalog: `#/map/world/6` |
 | `world` | labels fade out, the camera frames the whole scene again |
 
 ### Limits
@@ -284,6 +293,7 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `color` | string | required | stroke colour, a token such as `"var(--k-fg)"` |
 | `scale` | number | 1 | size; scaling is about the feet |
 | `strokeWidth` | number | 4 | line weight in figure units, before `scale`: raise it for a small figure |
+| `seated` | boolean | `false` | seated from load, on a chair (see `sit`): people at a meeting table |
 
 ### Step adders
 
@@ -292,6 +302,7 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
+| `sit(tl, at?)`, `stand(tl, at?)` | sits down where it stands, or stands up, over 0.6 s: the hips come down 45 units, the thighs (seen from the front) shorten, the knees part, and a chair shows under it; the feet stay put. `walk` and `gather` only from standing. Catalog: `#/figure/table/3` |
 
 The handle's `el` is the figure's root group, for a scene that dims or moves it (`tl.to(f.el, { opacity: 0.3 })`).
 
@@ -474,6 +485,7 @@ steps: [(tl, img) => img.show(tl)],
 | `kenBurns` | `true` or `{ from?, to? }` | none | a slow push on `show`; `true` is scale 1 to 1.08 with a small drift. Your own poses are `{ scale, x, y }`; a drift stays inside the push's overscan. Reduced motion leaves it out |
 | `scrim` | number 0 to 1 | none | a `--k-scrim` layer over the picture (black, white in a light theme); use 0.6 or more for text on top |
 | `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none (flat) | the scrim covers only that side: full over the 45% of the frame there, clear by 85%. Keep the text inside that 45%; the rest of the picture keeps its light |
+| `credit` | string | none | a credit line, `"Photo: …"`, 20 px in `--k-fg` on a 75 % `--k-bg` patch, 12 px in from the picture's bottom-right corner, so it reads on any photo. It stays put while Ken Burns pushes. It sits outside the safe area on a full frame on purpose (`data-k-bleed`); move a footer logo if they meet. Catalog: `#/fullscreen/cover/1` |
 
 ### Step adders
 
@@ -536,6 +548,7 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
 | `scrim` | number | none | 0 to 1, a `--k-scrim` layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
 | `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none | as for `image`: the scrim on that side only |
+| `direction` | `"horizontal"` or `"vertical"` | `"horizontal"` | `"vertical"`: the after picture comes in from the top under a divider across the picture. Catalog: `#/fullscreen/wipe-down/2` |
 
 | Handle | Step |
 | --- | --- |
@@ -570,7 +583,7 @@ steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.sketch(
 | Handle | Step |
 | --- | --- |
 | `show` | the picture fades in, then the lens |
-| `to(x, y)` | the lens slides so its centre is on the scene point `(x, y)`, with a soft start and stop over 1.2 s. With reduced motion it cuts there |
+| `to(x, y, { zoom? })` | `zoom`: this stop's own enlargement, the lens's `zoom` when left out. The lens slides so its centre is on the scene point `(x, y)`, with a soft start and stop over 1.2 s. With reduced motion it cuts there |
 
 Make each `to` in `build` and call it in a step, as above. Points are scene units on the picture as it shows in `rect`: with `fit: "cover"` the picture is cropped, so check the points in the deck, not on the file.
 
@@ -844,7 +857,7 @@ down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions (s
 steps: [(tl, { down }) => down.run(tl)],
 ```
 
-`counter(ctx, { x, y, from, to, label, decimals? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
+`counter(ctx, { x, y, from, to, label, decimals?, prefix?, unit? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `prefix` (`"€"`, `"≈"`) and `unit` (`"%"`, `"days"`) sit before and after the number on its line, at 52 px; they do not count. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
 
 ## `scramble`
 
@@ -862,11 +875,11 @@ steps: [(tl, s) => s.run(tl)],
 Catalog: section `238-handwriting` (`#/handwriting/note/1`). A short phrase that writes itself in a hand font, glyph by glyph, left to right.
 
 ```ts
-build: (ctx) => handwrite(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 400, size: 160 }),
+build: (ctx) => handwrite(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 300, size: 128 }),
 steps: [(tl, h) => h.write(tl)],
 ```
 
-`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average; default 1). The phrase stays on one line. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, 0.09 s a character, 0.6 s to 4 s in all; a space is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
+`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `text` is a string, whose lines are its line breaks (the source lines of a list item, as `reveal` reads them), or a list of strings, one line each; lines are trimmed and empty ones dropped. `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average; default 1). A line never wraps. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, line after line, 0.09 s a character, 0.6 s to 4 s a line; a space or a line break is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text, its lines joined by spaces. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
 
 ## `reveal`
 
@@ -934,7 +947,7 @@ build: (ctx) => splitFlap(ctx, { x: 287, y: 360, cells: 10, text: "On time", siz
 steps: [(tl, f) => f.show(tl), (tl, f) => f.to("Boarding")(tl), (tl, f) => f.to("98.6% up")(tl)],
 ```
 
-`splitFlap(ctx, { x, y, cells, text, size? })`: `x`, `y` the top-left corner; `cells` how many characters the board holds; `text` what it shows first; `size` the font size (default 96, weight 700; a cell is 1.05 by 1.3 times it, so the widest letters, W and M, fit in every theme font; anything wider is clipped at the cell's edge). Text is upper-cased and left-aligned; a text longer than `cells` reports the problem `splitFlap: '<text>' has <n> characters for <cells> cells; the rest is cut`. `show(tl)` fades the board in. `to(text)` gives a step that flips each cell forward through the drum (space, A to Z, 0 to 9, `.,:-+%/€$&?!`) to its new character over 1.8 s, each cell a little after the one to its left; a character not on the drum changes in one flip at its cell's end. Each cell's character is written from `onUpdate` as a pure function of progress (`flapGlyphs`), and the text a step flips from is read when the step is added, so `to` steps may be built in any order. A line across each cell's middle gives the split look. `el` is the row of cells. Reduced motion: the board cuts to the new text.
+`splitFlap(ctx, { x, y, cells, text, size? })`: `x`, `y` the top-left corner; `cells` how many characters the board holds; `text` what it shows first; `size` the font size (default 96, weight 700; a cell is 1.05 by 1.3 times it, so the widest letters, W and M, fit in every theme font; anything wider is clipped at the cell's edge). Text is upper-cased (ß to ẞ, so a word keeps its length) and left-aligned; a text longer than `cells` reports the problem `splitFlap: '<text>' has <n> characters for <cells> cells; the rest is cut`. `show(tl)` fades the board in. `to(text)` gives a step that flips each cell forward through the drum (space, A to Z, Ä Ö Ü, 0 to 9, `.,:-+%/€$&?!`) to its new character over 1.8 s, each cell a little after the one to its left; a character not on the drum changes in one flip at its cell's end. Each cell's character is written from `onUpdate` as a pure function of progress (`flapGlyphs`), and the text a step flips from is read when the step is added, so `to` steps may be built in any order. A line across each cell's middle gives the split look. `el` is the row of cells. Reduced motion: the board cuts to the new text.
 
 ## `scrambleGlyphs`
 

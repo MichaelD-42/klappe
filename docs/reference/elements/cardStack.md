@@ -41,7 +41,7 @@ Call `cardStack` in `build`; the steps only use what it returns.
 ### Limits
 
 - The fan spreads the cards up to 8° apart and 32° from the left card to the right card, about a point 40 % of a card's height below the stack. The fan reaches past `x` and `x + w` on both sides: at the defaults with five cards, about 175 px each side. The pulled card grows about the same point, so its top rises above `y`: about 210 px at the defaults. Keep that room free.
-- Only the top card and the pulled card show their text in full; the others are mostly behind it. The text is not fitted: keep each card to a word or two.
+- Only the top card and the pulled card show their text in full; the others are mostly behind it. Card text shrinks from 32 px to the 20 px floor to fit its card; text that still does not fit shows `cardStack: text of card <i> too long`. Fitting happens when the first step is added. Behind the top card a long text reads poorly anyway: keep each card to a word or two.
 
 ## `fanPose`
 

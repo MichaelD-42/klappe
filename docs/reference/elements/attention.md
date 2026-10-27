@@ -46,7 +46,7 @@ Call all three in `build`, so their parts exist at load; the steps only use what
 
 ## `pulse`
 
-`pulse(ctx, target)` returns a step adder: a ring in `--k-accent` around the target grows and fades out once.
+`pulse(ctx, target, { color? })` returns a step adder: a ring in `--k-accent` (or `color`, a `--k-*` token name such as `"--k-warn"`) around the target grows and fades out once.
 
 ## `shake`
 

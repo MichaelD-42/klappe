@@ -1,7 +1,7 @@
 // The klappe/fx exports a deck author does not call: pure helpers (layout, parsing, maths) and engine-only parts.
 // demo-coverage and skill-catalog skip them.
 export const ALLOW = [
-  'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'waffleCells', 'scribble', 'MARKER_MIX', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText', 'bubbleLayout', 'wrapBreaks', 'crtColor', 'cursorCentre',
+  'KEN_BURNS', 'LANGS', 'cleanSvg', 'donutSlices', 'kpiDelta', 'raceRanks', 'spread', 'shapeEdge', 'tagSpread', 'waffleCells', 'scribble', 'MARKER_MIX', 'scrambleGlyphs', 'MAX_LINES', 'MIN_FONT', 'anchor', 'arcPath', 'chartDomain', 'codeLines', 'counted', 'counterText', 'bubbleLayout', 'wrapBreaks', 'crtColor', 'cursorCentre',
   'dataError', 'edgePath', 'fitFont', 'fitProjection', 'flowRoutes', 'iconGlyph', 'labelPos', 'limbAngle', 'matrixLayout', 'lineDiff', 'loadHighlighter',
   'parseCsv', 'parseGroups', 'roadmapLayout', 'rowY', 'shatterGeometry', 'showsSample', 'splitConsole', 'swarmPoint', 'swimlaneRoutes',
   'gitLayout', 'scatterTracks', 'zoomLayout', 'zoomView', 'timerState', 'treeLayout', 'treeRoute', 'typed', 'untilMs', 'waterfallSteps',

@@ -72,4 +72,4 @@ past: timer(ctx, { until: "00:00", style: "ring", x: 1100, y: 260, size: 520, la
 
 - The timer sits under `data-k-ignore`: the self-test snapshot leaves its countdown out. Its fade-in is a normal tween.
 - Several timers in one scene start, pause and reset together.
-- The words come from `strings.ts` in English: the deck language is not on `ctx` yet.
+- The words come from `strings.ts` in the deck language: English, or German for `lang: de`; any other language shows English.

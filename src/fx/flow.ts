@@ -7,8 +7,10 @@ import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
 gsap.registerPlugin(MotionPathPlugin);
 
+// The flowchart symbols beside the plain box: a decision diamond, a data store cylinder, a start or end pill.
+export type FlowKind = "decision" | "store" | "terminal";
 export interface FlowOpts {
-  nodes: { id: string; label: string; col: number; row: number; icon?: IconName }[];
+  nodes: { id: string; label: string; col: number; row: number; icon?: IconName; kind?: FlowKind }[];
   edges: { from: string; to: string; label?: string }[];
   grid: Rect & { cols: number; rows: number };
 }
@@ -17,6 +19,7 @@ export interface FlowHandle {
   highlight(ids: string[]): StepAdder;
   send(o: { path: string[]; count?: number; label?: string }): StepAdder;
   fire(from: string, to: string): StepAdder;
+  dim(ids: string[]): StepAdder; // those nodes and the arrows touching them fade to DIM; the others come back
   node(id: string): Element;
 }
 
@@ -31,6 +34,40 @@ const DOT = 30;
 const INSET = 24; // a packet rests this far inside the box edge, clear of the label
 const ARROW = 20; // arrowhead length
 const WAIT = 0.3; // seconds a packet rests at a node
+const DIM = 0.35; // a dimmed node's opacity, as focus() dims
+const STROKE = 3; // a node's outline
+
+// How far inside its bounding face a node's outline lies, `off` from the face middle along it: where an arrow
+// that enters or leaves that face at that offset meets the shape. 0 for a plain box. Pure.
+export function shapeEdge(kind: FlowKind | undefined, w: number, h: number, face: "left" | "right" | "top" | "bottom", off: number): number {
+  const side = face === "left" || face === "right";
+  const a = Math.abs(off);
+  if (kind === "decision") return side ? (w / 2) * Math.min(1, a / (h / 2)) : (h / 2) * Math.min(1, a / (w / 2));
+  if (kind === "terminal") {
+    const r = h / 2;
+    const d = side ? a : a - (w / 2 - r); // across the round end
+    return d > 0 ? r - Math.sqrt(Math.max(0, r * r - Math.min(d, r) ** 2)) : 0;
+  }
+  if (kind === "store" && !side) {
+    const [rx, ry] = [w / 2, storeRy(h)];
+    return ry * (1 - Math.sqrt(Math.max(0, 1 - Math.min(1, a / rx) ** 2)));
+  }
+  return 0;
+}
+const storeRy = (h: number) => Math.min(h * 0.12, 24);
+// A node fills FILL of its cell; a terminal is at most half as high as it is wide, so it reads as a pill.
+const nodeSize = (kind: FlowKind | undefined, cw: number, ch: number): [number, number] =>
+  kind === "terminal" ? [cw * FILL, Math.min(ch * FILL, cw * FILL * 0.5)] : [cw * FILL, ch * FILL];
+
+// The outline of a node kind in a w x h box, as SVG markup: the shape, filled, inset by half the stroke.
+function shapeSvg(kind: FlowKind, w: number, h: number, paint: string): string {
+  const s = STROKE / 2;
+  if (kind === "decision") return `<path d="M ${w / 2} ${s} L ${w - s} ${h / 2} L ${w / 2} ${h - s} L ${s} ${h / 2} Z" style="${paint}"/>`;
+  if (kind === "terminal") return `<rect x="${s}" y="${s}" width="${w - 2 * s}" height="${h - 2 * s}" rx="${h / 2 - s}" style="${paint}"/>`;
+  const [rx, ry] = [w / 2 - s, storeRy(h)];
+  return `<path d="M ${s} ${ry} A ${rx} ${ry} 0 0 1 ${w - s} ${ry} V ${h - ry - s} A ${rx} ${ry} 0 0 1 ${s} ${h - ry - s} Z" style="${paint}"/>` +
+    `<path d="M ${s} ${ry} A ${rx} ${ry} 0 0 0 ${w - s} ${ry}" style="${paint}; fill: none"/>`;
+}
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -74,7 +111,7 @@ export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: 
   const [cw, ch] = [grid.w / grid.cols, grid.h / grid.rows];
   const boxes = new Map<string, Rect>();
   for (const n of opts.nodes) {
-    const [w, h] = [cw * FILL, ch * FILL];
+    const [w, h] = nodeSize(n.kind, cw, ch);
     boxes.set(n.id, { x: grid.x + (n.col + 0.5) * cw - w / 2, y: grid.y + (n.row + 0.5) * ch - h / 2, w, h });
   }
   const box = (id: string) => {
@@ -138,7 +175,8 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
   const [cw, ch] = [grid.w / grid.cols, grid.h / grid.rows];
   const boxes = new Map<string, Rect>();
   const els = new Map<string, HTMLElement>();
-  const rings = new Map<string, HTMLElement>();
+  const rings = new Map<string, Element>();
+  const kinds = new Map<string, FlowKind | undefined>();
   const labels = new Map<string, HTMLElement>();
   const need = (id: string) => {
     if (!boxes.has(id)) throw new Error(`flow: unknown node "${id}"`);
@@ -149,29 +187,50 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
   for (const e of opts.edges) for (const id of [e.from, e.to]) if (!known.has(id)) throw new Error(`flow: unknown node "${id}"`);
 
   for (const n of opts.nodes) {
-    const [w, h] = [cw * FILL, ch * FILL];
+    const [w, h] = nodeSize(n.kind, cw, ch);
     const box = { x: grid.x + (n.col + 0.5) * cw - w / 2, y: grid.y + (n.row + 0.5) * ch - h / 2, w, h };
     boxes.set(n.id, box);
+    kinds.set(n.id, n.kind);
     const el = document.createElement("div");
     el.setAttribute("data-k-flow-node", n.id);
+    // A kind draws its outline as SVG behind the text, and keeps the text inside the shape's middle.
+    const pad = n.kind === "decision" ? `${h * 0.18}px ${w * 0.22}px` : n.kind === "store" ? `${storeRy(h) * 2 + 4}px 12px 8px` : n.kind === "terminal" ? `8px ${h * 0.3}px` : "8px 12px";
     Object.assign(el.style, {
       position: "absolute", left: `${box.x}px`, top: `${box.y}px`, width: `${w}px`, height: `${h}px`, boxSizing: "border-box",
-      padding: "8px 12px", border: "3px solid var(--k-line)", borderRadius: "14px", background: "var(--k-surface)", color: "var(--k-fg)",
+      padding: pad, border: n.kind ? "none" : `${STROKE}px solid var(--k-line)`, borderRadius: "14px", background: n.kind ? "none" : "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px",
       textAlign: "center", font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, overflow: "visible", zIndex: "2",
     });
+    const outline = (inset: number, paint: string) => {
+      const [W, H] = [w + 2 * inset, h + 2 * inset];
+      const svg = document.createElementNS(SVG, "svg");
+      for (const [k, v] of Object.entries({ width: W, height: H, viewBox: `0 0 ${W} ${H}`, "data-k-flow-shape": "" })) svg.setAttribute(k, String(v));
+      Object.assign(svg.style, { position: "absolute", left: `${-inset}px`, top: `${-inset}px`, overflow: "visible", pointerEvents: "none" });
+      svg.innerHTML = shapeSvg(n.kind!, W, H, paint);
+      return el.appendChild(svg);
+    };
+    if (n.kind) {
+      el.dataset.kFlowKind = n.kind;
+      outline(0, `fill: var(--k-surface); stroke: var(--k-line); stroke-width: ${STROKE}`);
+    }
     if (n.icon) {
       const i = el.appendChild(document.createElement("div"));
       i.innerHTML = `<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconGlyph(n.icon, ctx.problem)}</svg>`;
-      i.style.flex = "none";
+      Object.assign(i.style, { flex: "none", position: "relative" });
     }
     const text = el.appendChild(document.createElement("div"));
     text.textContent = n.label;
-    Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%" });
-    const ring = el.appendChild(document.createElement("div"));
-    Object.assign(ring.style, {
-      position: "absolute", inset: "-6px", border: "5px solid var(--k-accent)", borderRadius: "18px", pointerEvents: "none",
-    });
+    Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%", position: "relative" });
+    let ring: Element;
+    if (n.kind) {
+      ring = outline(6, "fill: none; stroke: var(--k-accent); stroke-width: 5");
+      ring.removeAttribute("data-k-flow-shape");
+    } else {
+      ring = el.appendChild(document.createElement("div"));
+      Object.assign((ring as HTMLElement).style, {
+        position: "absolute", inset: "-6px", border: "5px solid var(--k-accent)", borderRadius: "18px", pointerEvents: "none",
+      });
+    }
     ctx.html.append(el);
     gsap.set(el, { autoAlpha: 0, x: 0, y: 0 }); // x, y: the pulse writes a transform; unset, play and seek would differ
     gsap.set(ring, { autoAlpha: 0 });
@@ -180,9 +239,21 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     labels.set(n.id, text);
   }
 
+  // An arrow meets a kind's outline, not its bounding box: its end on a face moves in along the face's normal.
+  const onShape = (id: string, end: Pt, next: Pt) => {
+    const [b, kind] = [boxes.get(id)!, kinds.get(id)];
+    if (!kind) return end;
+    const [cx, cy] = [b.x + b.w / 2, b.y + b.h / 2];
+    const vertical = end.x === next.x; // the segment leaves the face straight out: a top or bottom face
+    const face = vertical ? (end.y < cy ? "top" : "bottom") : end.x < cx ? "left" : "right";
+    const d = shapeEdge(kind, b.w, b.h, face, vertical ? end.x - cx : end.y - cy);
+    return vertical ? { x: end.x, y: end.y + (face === "top" ? d : -d) } : { x: end.x + (face === "left" ? d : -d), y: end.y };
+  };
   const routes = flowRoutes(opts);
   const edges = routes.map((r, k) => {
-    const pts = r.points;
+    const pts = [...r.points];
+    pts[0] = onShape(r.from, pts[0], pts[1]);
+    pts[pts.length - 1] = onShape(r.to, pts[pts.length - 1], pts[pts.length - 2]);
     const [p, q] = [pts[pts.length - 2], pts[pts.length - 1]];
     const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
     const d = { x: (q.x - p.x) / len, y: (q.y - p.y) / len };
@@ -191,6 +262,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     const path = document.createElementNS(SVG, "path");
     const line = fmt([...pts.slice(0, -1), base]);
     path.setAttribute("d", line);
+    path.setAttribute("data-k-flow-edge", "");
     Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
     const head = document.createElementNS(SVG, "path");
     const tip = fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z";
@@ -223,7 +295,9 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     for (const [id, text] of labels) {
       let size = MAX_FONT;
       const el = els.get(id)!;
-      const over = () => text.offsetHeight > LINE_H * size * MAX_LINES + 1 || text.offsetHeight + (el.querySelector("svg") ? 44 : 0) > el.clientHeight - 16 || text.scrollWidth > text.clientWidth;
+      const css = getComputedStyle(el);
+      const room = el.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom);
+      const over = () => text.offsetHeight > LINE_H * size * MAX_LINES + 1 || text.offsetHeight + (el.querySelector(":scope > div > svg") ? 44 : 0) > room || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;
         if (!over()) break;
@@ -235,6 +309,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
 
   const shown = new Set<string>();
   const lit = new Set<string>();
+  let dimmed = new Set<string>(); // the nodes the dim() steps added so far leave dimmed
   let fired: SVGElement[] = []; // the accent line and head the last fire() drew, as the steps are added
 
   return {
@@ -257,6 +332,25 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
           tl.to([e.head, ...(e.tag ? [e.tag] : [])], { autoAlpha: 1, duration: 0.15 }, t + draw - 0.1);
         });
         if (!want.length && !ready.length) tl.set({}, {}, at + 0.4);
+      };
+    },
+    // Each node and arrow goes from the level the steps before left it to the new one.
+    dim(ids) {
+      const was = dimmed;
+      const next = new Set(ids.map(need));
+      dimmed = next;
+      const level = (set: Set<string>, ...ids: string[]) => (ids.some((id) => set.has(id)) ? DIM : 1);
+      return (tl) => {
+        fit();
+        const at = tl.duration();
+        const d = { duration: motion.step, immediateRender: false };
+        for (const id of boxes.keys())
+          if (level(was, id) !== level(next, id)) tl.fromTo(els.get(id)!, { opacity: level(was, id) }, { opacity: level(next, id), ...d }, at);
+        for (const e of edges) {
+          const [a, b] = [level(was, e.from, e.to), level(next, e.from, e.to)];
+          if (a !== b) tl.fromTo([e.path, e.head, ...(e.tag ? [e.tag] : [])], { opacity: a }, { opacity: b, ...d }, at);
+        }
+        tl.set({}, {}, at + d.duration);
       };
     },
     highlight(ids) {

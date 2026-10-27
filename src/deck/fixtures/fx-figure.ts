@@ -69,6 +69,22 @@ const gather: SceneModule = {
   ],
 };
 
+// Seated: one figure seated from load, one that sits down and stands up again.
+const seat: SceneModule = {
+  build(ctx) {
+    title(ctx, "Sit");
+    return {
+      seated: figure(ctx, { x: 600, y: 900, color: "var(--k-fg)", seated: true }),
+      sitter: figure(ctx, { x: 1300, y: 900, color: "var(--k-fg)" }),
+    };
+  },
+  steps: [
+    (tl, r) => (r.seated.appear(tl), r.sitter.appear(tl, "<")),
+    (tl, r) => r.sitter.sit(tl),
+    (tl, r) => r.sitter.stand(tl),
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -77,10 +93,12 @@ export default () =>
       "sections/10-a/10-walk/scene.md": "## Walk\n\n- Appear.\n- Walk along a curve.\n",
       "sections/10-a/20-path/scene.md": "## Path\n\n- Appear.\n- Walk along a path.\n",
       "sections/10-a/30-table/scene.md": "## Table\n\n- Appear.\n- Gather at the table.\n",
+      "sections/10-a/40-seat/scene.md": "## Seat\n\n- Appear.\n- Sit.\n- Stand.\n",
     },
     {
       "sections/10-a/10-walk/scene.ts": walkString,
       "sections/10-a/20-path/scene.ts": walkElement,
       "sections/10-a/30-table/scene.ts": gather,
+      "sections/10-a/40-seat/scene.ts": seat,
     },
   );

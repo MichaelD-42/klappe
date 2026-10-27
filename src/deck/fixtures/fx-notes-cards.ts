@@ -52,6 +52,19 @@ const leftover: SceneModule = {
   ],
 };
 
+// vote: dots add up per note over two steps and stay on the note when it moves; a vote past the most dots, or on a
+// note not shown yet, is a problem.
+const vote: SceneModule = {
+  build: (ctx) => ({ n: stickyNotes(ctx, opts) }),
+  steps: [
+    (tl, r: N) => r.n.show(["a", "b", "c"])(tl),
+    (tl, r: N) => (r.n.vote("a", 3)(tl), r.n.vote("b", 1)(tl)),
+    (tl, r: N) => r.n.vote("a", 2)(tl),
+    (tl, r: N) => r.n.group("pain", ["a", "b"])(tl),
+    (tl, r: N) => (r.n.vote("c", 20)(tl), r.n.vote("d", 1)(tl)),
+  ],
+};
+
 const stack: SceneModule = {
   build: (ctx) => ({ c: cardStack(ctx, { x: 780, y: 300, cards: ["Speed", "Trust", "Cost", "Reach", "Joy"] }) }),
   steps: [
@@ -71,6 +84,7 @@ export default () =>
       "sections/10-a/20-early/scene.md": md("Built early", 2),
       "sections/10-a/30-stack/scene.md": md("Stack", 4),
       "sections/10-a/40-leftover/scene.md": md("Left over", 4),
+      "sections/10-a/50-vote/scene.md": md("Vote", 5),
     },
-    { "sections/10-a/10-notes/scene.ts": notes, "sections/10-a/20-early/scene.ts": early, "sections/10-a/30-stack/scene.ts": stack, "sections/10-a/40-leftover/scene.ts": leftover },
+    { "sections/10-a/10-notes/scene.ts": notes, "sections/10-a/20-early/scene.ts": early, "sections/10-a/30-stack/scene.ts": stack, "sections/10-a/40-leftover/scene.ts": leftover, "sections/10-a/50-vote/scene.ts": vote },
   );

@@ -6,6 +6,7 @@ import { captioned } from "../../../caption";
 export default captioned("shatter() — the card cracks, cracks to the edges, then falls apart: crack, crack2, fall", {
   build(ctx) {
     const el = document.createElement("div");
+    el.dataset.shatterCard = ""; // the acceptance check AC-9 finds the card by it
     Object.assign(el.style, {
       position: "absolute",
       inset: "64px 64px 160px", // the safe area's sides

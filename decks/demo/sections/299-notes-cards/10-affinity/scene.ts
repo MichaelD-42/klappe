@@ -1,7 +1,7 @@
 import { stickyNotes, title, type BasicHandle, type StickyNotesHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
-export default captioned("stickyNotes(ctx, { notes, groups, … }) — show(ids?), then group(groupId, ids)", {
+export default captioned("stickyNotes(ctx, { notes, groups, … }) — show(ids?), group(groupId, ids), then vote(id, n)", {
   build: (ctx) => ({
     h: title(ctx),
     n: stickyNotes(ctx, {
@@ -29,5 +29,7 @@ export default captioned("stickyNotes(ctx, { notes, groups, … }) — show(ids?
     (tl, r) => r.n.group("start", ["setup", "access", "onboard"])(tl),
     (tl, r) => r.n.group("docs", ["examples", "outdated", "find"])(tl),
     (tl, r) => r.n.group("like", ["search", "cli", "team"])(tl),
+    // Sample data: made-up votes, labelled in the speaker note.
+    (tl, r) => ([["onboard", 5], ["outdated", 4], ["access", 2], ["find", 1]] as const).forEach(([id, n]) => r.n.vote(id, n)(tl)),
   ],
 });

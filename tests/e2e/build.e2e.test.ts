@@ -44,3 +44,24 @@ test.skipIf(!inject('IS_DEMO_DECK'))('the built deck runs from a sub-path and th
     await browser.close()
   }
 })
+
+// Review mode needs the dev server's route: the built deck has none.
+test.skipIf(!inject('IS_DEMO_DECK'))('the built deck has no review mode', async () => {
+  const browser = await chromium.launch()
+  try {
+    const context = await browser.newContext({ viewport: { width: 1366, height: 768 } })
+    const page = await context.newPage()
+    const port = (server.address() as { port: number }).port
+    await page.goto(`http://127.0.0.1:${port}/sub/deck/index.html?review=1`)
+    await expect.poll(() => page.locator('body').textContent(), { timeout: 30_000 }).toContain('Review mode needs the dev server')
+    await page.goto(`http://127.0.0.1:${port}/sub/deck/index.html`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    let opened = false
+    context.on('page', () => (opened = true))
+    await page.keyboard.press('r')
+    await page.waitForTimeout(1000)
+    expect(opened).toBe(false)
+  } finally {
+    await browser.close()
+  }
+})

@@ -57,6 +57,23 @@ const onCode: SceneModule = {
   steps: [(tl, r: { c: ReturnType<typeof code> }) => r.c.show(tl), (tl, r: { a: AnnotateHandle }) => r.a.show(tl)],
 };
 
+// A cross takes --k-bad unless told otherwise; a bracket and a box take the colour token they are given; a colour
+// that is not a --k-* token is a problem and falls back to the kind's default.
+const colors: SceneModule = {
+  build(ctx) {
+    const box = (x: number) => ({ x, y: 400, w: 300, h: 200 });
+    return {
+      a: [
+        annotate(ctx, box(160), { kind: "cross" }),
+        annotate(ctx, box(560), { kind: "bracket", color: "--k-ok" }),
+        annotate(ctx, box(960), { kind: "box", color: "--k-warn" }),
+        annotate(ctx, box(1360), { kind: "underline", color: "red" }),
+      ],
+    };
+  },
+  steps: [(tl, r: { a: AnnotateHandle[] }) => r.a.forEach((h) => h.show(tl))],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -66,6 +83,12 @@ export default () =>
         "## Marks\n\n- The text.\n- Circle.\n- Underline.\n- Box.\n- Strike.\n- Arrow.\n- A rect.\n- A highlighted phrase.\n- A wrapped phrase.\n- All fade.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
       "sections/10-a/30-code/scene.md": "## Code\n\n- The code.\n- Ring a line.\n",
+      "sections/10-a/40-colors/scene.md": "## Colors\n\n- Four marks in their colours.\n",
     },
-    { "sections/10-a/10-marks/scene.ts": marks, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-code/scene.ts": onCode },
+    {
+      "sections/10-a/10-marks/scene.ts": marks,
+      "sections/10-a/20-no-size/scene.ts": noSize,
+      "sections/10-a/30-code/scene.ts": onCode,
+      "sections/10-a/40-colors/scene.ts": colors,
+    },
   );

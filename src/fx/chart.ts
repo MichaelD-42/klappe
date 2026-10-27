@@ -21,18 +21,29 @@ export interface ChartOpts {
   rect: Rect;
   title?: string;
   sample?: boolean;
+  // Bar, stacked, line, waterfall, slope and timeline: dashed lines across the plot at these values (a goal,
+  // last year), each with its label; they show with the axes, and the value axis reaches them.
+  lines?: { value: number; label: string }[];
+  // Scatter and bubble: the text column that colours each dot, one colour per value, with a legend.
+  group?: string;
 }
 export interface ChartHandle {
   axes: StepAdder;
   grow: StepAdder;
   values: StepAdder;
-  // Bar and waterfall only: bar i grows and its value counts up. One per step, instead of grow and values.
+  // Bar, waterfall, stacked, timeline and funnel: bar i (a stack, a phase, a stage) grows and its values count up.
+  // One per step, instead of grow and values.
   bar(i: number): StepAdder;
+  // Donut only: slice i draws round, its legend values count up and the total counts on to the slices so far.
+  slice(i: number): StepAdder;
+  // Line only: series i (0 is the first number column) draws left to right with its markers and values.
+  series(i: number): StepAdder;
   // The bar rects in data order: waterfall then its total, stacked series by series, funnel stages, sankey nodes
   // in sankeyLayout order; none for a line or a placeholder.
   bars: SVGElement[];
-  // A sankey only: the flow in that data row turns --k-accent; the one shown before goes back.
-  highlight(row: number): StepAdder;
+  // A sankey: the flow in that data row turns --k-accent. Any other type: row i (a line chart: series i) stays
+  // at full strength and the rest dims. The one lit before goes back; null lights none.
+  highlight(row: number | null): StepAdder;
   // A scatter or bubble with a period column only: the dots move to that period, by index or by its name.
   period(p: number | string): StepAdder;
 }
@@ -281,6 +292,34 @@ export function spread(ys: number[], gap: number): number[] {
   return out;
 }
 
+// Scatter names apart: tags whose boxes overlap sideways and sit closer than gap in y move apart (spread), group
+// by group, until none touch. x is where a name starts (where it ends, for a left tag), w its width. Pure.
+export function tagSpread(tags: { x: number; y: number; w: number; left: boolean }[], gap: number): number[] {
+  const ys = tags.map((t) => t.y);
+  const span = tags.map((t) => (t.left ? [t.x - t.w, t.x] : [t.x, t.x + t.w]));
+  const side = (i: number, j: number) => span[i][0] < span[j][1] && span[j][0] < span[i][1];
+  // A group's spread can push a tag onto another group, so go again; a few rounds settle any slide's worth.
+  for (let round = 0; round < 10; round++) {
+    const root = tags.map((_, i) => i);
+    const find = (i: number): number => (root[i] === i ? i : (root[i] = find(root[i])));
+    let touching = false;
+    for (let i = 0; i < tags.length; i++)
+      for (let j = i + 1; j < tags.length; j++)
+        if (side(i, j) && Math.abs(ys[i] - ys[j]) < gap - 1e-9) {
+          touching = true;
+          root[find(i)] = find(j);
+        }
+    if (!touching) break;
+    const groups = d3.group(tags.map((_, i) => i), find);
+    for (const ids of groups.values()) {
+      if (ids.length < 2) continue;
+      const moved = spread(ids.map((i) => ys[i]), gap);
+      ids.forEach((i, k) => (ys[i] = moved[k]));
+    }
+  }
+  return ys;
+}
+
 // Each delta's bar runs from the running total before it to the one after it.
 export function waterfallSteps(deltas: number[]): [number, number][] {
   let sum = 0;
@@ -319,6 +358,7 @@ const UP = "var(--k-ok)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
 // Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
 const FONT = 22;
+const DIM = 0.35; // the opacity of the parts highlight() does not light, as focus() dims
 const SVG = "http://www.w3.org/2000/svg";
 const ease = gsap.parseEase("power2.out");
 let clips = 0;
@@ -376,7 +416,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bar: () => show, bars: [], highlight: () => show, period: () => show };
+  return { axes: show, grow: show, values: show, bar: () => show, slice: () => show, series: () => show, bars: [], highlight: () => show, period: () => show };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -416,9 +456,16 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
   const band = names.map((_, i) => String(i));
   const color = (i: number) => PALETTE[i % PALETTE.length];
+  const dotted = type === "scatter" || type === "bubble";
+  if (opts.group !== undefined && !(dotted && opts.group in data[0]))
+    ctx.problem(dotted ? `chart: no group column "${opts.group}" in ${opts.src}` : `chart: group is for scatter and bubble charts, not ${type}: ${opts.src}`);
+  const groupOf = dotted && opts.group !== undefined && opts.group in data[0] ? (name: string) => String(data.find((r) => String(r[label]) === name)![opts.group!]) : undefined;
+  const groups = groupOf ? [...new Set(data.map((r) => String(r[opts.group!])))] : [];
+  const groupFill = (name: string) => SLICES[groups.indexOf(groupOf!(name)) % SLICES.length];
   // Colour means direction in a waterfall and a slope; the legend says which is which.
-  const legend =
-    type === "waterfall" || type === "slope"
+  const legend = groups.length
+    ? groups.map((g, k) => ({ name: g, fill: SLICES[k % SLICES.length] }))
+    : type === "waterfall" || type === "slope"
       ? [
           { name: t("increase", ctx.deck.lang), fill: UP },
           { name: t("decrease", ctx.deck.lang), fill: DOWN },
@@ -473,19 +520,28 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     head.push(g);
   }
 
-  const v = d3.scaleLinear().domain(chartDomain(data, type)).nice();
+  const REF_TYPES: ChartType[] = ["bar", "stacked", "line", "waterfall", "slope", "timeline"];
+  const refs = REF_TYPES.includes(type) ? (opts.lines ?? []) : [];
+  if (opts.lines?.length && !refs.length) ctx.problem(`chart: lines are for ${REF_TYPES.join(", ")} charts, not ${type}: ${opts.src}`);
+  const v = d3.scaleLinear().domain(d3.extent([...chartDomain(data, type), ...refs.map((l) => l.value)]) as [number, number]).nice();
+  let refAt: ((n: number) => { x1: number; y1: number; x2: number; y2: number }) | undefined; // where a reference line runs
   const marks = svg(root, "g", {});
   // label: a name that fades in with its mark during grow (a sankey node's)
-  const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number; label?: SVGElement }[] = [];
+  // part: the row (a line chart: the series) a mark or value belongs to, for bar(), slice(), series() and
+  // highlight(); -1 for what belongs to the whole chart. Marks take the part being built, cur.
+  let cur = -1;
+  const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number; label?: SVGElement; part: number }[] = [];
+  const grow = (g: Omit<(typeof grown)[number], "part">) => grown.push({ ...g, part: cur });
   const bars: SVGElement[] = [];
-  const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string }[] = [];
+  const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string; part: number }[] = [];
   const labels: SVGElement[] = []; // names and headers that show with the axes step
-  const sweeps: { el: SVGElement; len: number }[] = []; // donut arcs: drawn round, not scaled
+  const sweeps: { el: SVGElement; len: number; part: number }[] = []; // donut arcs: drawn round, not scaled
+  const strokes: { el: SVGElement; part: number }[] = []; // line and slope paths: they dim with their part
   const valueAt = (attrs: Record<string, string | number>, from: number, to: number, show: (n: number) => string) => {
     const el = text(root, "", attrs);
     // A dark halo keeps the number readable where it crosses a line or a bar.
     Object.assign(el.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
-    values.push({ el, from, to, show });
+    values.push({ el, from, to, show, part: cur });
     return el;
   };
   const bar = (x: number, w: number, lo: number, hi: number, fill: string, up: boolean) => {
@@ -493,9 +549,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const r = svg(marks, "rect", { x, width: w, y: Math.min(y0, y1), height: Math.abs(y0 - y1) });
     r.style.fill = fill;
     bars.push(r);
-    grown.push({ el: r, origin: up ? "50% 100%" : "50% 0%", scale: "scaleY" });
+    grow({ el: r, origin: up ? "50% 100%" : "50% 0%", scale: "scaleY" });
   };
 
+  let donutTotal = -1; // the index in values of a donut's total, which slice() counts on
   let accents: SVGElement[] = []; // a sankey's links again in --k-accent, hidden until highlight()
   let moveTo: ((p: number | string, tl: gsap.core.Timeline) => void) | undefined; // a scatter's period()
   let scatterAxes = false; // a scatter's axes keep their ticks; the frame draws their lines
@@ -508,15 +565,17 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const d = Math.min(P.h, P.w * 0.45);
     const [cx, cy, thick] = [P.x + d / 2, P.y + P.h / 2, d * 0.18];
     const GAP = data.length > 1 ? 0.004 : 0; // a hairline of background between slices, in turns
-    donutSlices(data.map((r) => num(r, k))).forEach((s, i) => {
+    const shares = donutSlices(data.map((r) => num(r, k)));
+    shares.forEach((s, i) => {
       const len = Math.max(0.001, s.share - GAP);
       const arc = svg(marks, "circle", {
         cx, cy, r: d / 2 - thick / 2, fill: "none", "stroke-width": thick, pathLength: 1,
         transform: `rotate(${-90 + (s.start + GAP / 2) * 360} ${cx} ${cy})`,
       });
       Object.assign(arc.style, { stroke: SLICES[i], strokeDasharray: `${len} 1` });
-      sweeps.push({ el: arc, len });
+      sweeps.push({ el: arc, len, part: i });
     });
+    donutTotal = values.length;
     valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 64, "font-weight": 700 }, 0, total, fmt);
     labels.push(text(root, t("total", ctx.deck.lang), { x: cx, y: cy + 60, "text-anchor": "middle" }));
     const x0 = P.x + d + 80;
@@ -528,19 +587,22 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       labels.push(sw, text(root, names[i], { x: x0 + 40, y: y + 4 }));
       // Two columns: the value, then its share of the total.
       const n = num(r, k);
+      cur = i;
       valueAt({ x: R.x + R.w - 120, y: y + 4, "text-anchor": "end" }, 0, n, fmt);
       valueAt({ x: R.x + R.w, y: y + 4, "text-anchor": "end" }, 0, n, (v) => `${Math.round((v / total) * 100)} %`);
+      cur = -1;
     });
   } else if (type === "slope") {
     // Before on the left, after on the right, one line per row: up in the accent of change, down muted.
     const [a, b] = keys;
     v.range([P.y + P.h, P.y]);
     const [xL, xR] = [P.x, P.x + P.w];
+    refAt = (n) => ({ x1: xL, y1: v(n), x2: xR, y2: v(n) });
     labels.push(text(root, a, { x: xL, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
     labels.push(text(root, b, { x: xR, y: P.y - 28, "text-anchor": "middle", "font-weight": 700 }));
     const id = `k-chart-clip-${++clips}`;
     const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
-    grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the lines draw left to right
+    grow({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the lines draw left to right
     marks.setAttribute("clip-path", `url(#${id})`);
     const gap = FONT + 8;
     const ys = (k: string) => spread(data.map((r) => v(num(r, k)) + FONT * 0.35), gap);
@@ -548,16 +610,19 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     data.forEach((r, i) => {
       const [va, vb] = [num(r, a), num(r, b)];
       const fill = vb > va ? UP : DOWN;
+      cur = i;
       const line = svg(marks, "path", { d: `M${xL} ${v(va)}L${xR} ${v(vb)}`, fill: "none", "stroke-width": 5, "stroke-linecap": "round" });
       line.style.stroke = fill;
+      strokes.push({ el: line, part: i });
       for (const [x, n] of [[xL, va], [xR, vb]]) {
         const c = svg(root, "circle", { cx: x, cy: v(n), r: 8 });
         c.style.fill = fill;
-        grown.push({ el: c, origin: "50% 50%", scale: "scale" });
+        grow({ el: c, origin: "50% 50%", scale: "scale" });
       }
       labels.push(text(root, names[i], { x: xL - 32 - valW, y: left[i], "text-anchor": "end" }));
       valueAt({ x: xL - 20, y: left[i], "text-anchor": "end" }, 0, va, fmt);
       valueAt({ x: xR + 20, y: right[i] }, 0, vb, fmt);
+      cur = -1;
     });
   } else if (type === "funnel") {
     // One centred bar per stage, width by value; the name left, the value inside the bar's right end when it fits
@@ -571,12 +636,13 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const bh = rowH * 0.62;
     const cx = P.x + P.w / 2;
     data.forEach((r, i) => {
+      cur = i;
       const top = P.y + i * rowH + (rowH - bh) / 2;
       const w = Math.max(2, stages[i].share * P.w);
       const rect = svg(marks, "rect", { x: cx - w / 2, y: top, width: w, height: bh, rx: 4 });
       rect.style.fill = color(0);
       bars.push(rect);
-      grown.push({ el: rect, origin: "50% 50%", scale: "scaleX" });
+      grow({ el: rect, origin: "50% 50%", scale: "scaleX" });
       const yc = top + bh / 2 + FONT * 0.35;
       labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
       const inside = w >= 13 * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
@@ -587,6 +653,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         valueAt({ x: cx, y: P.y + i * rowH + FONT * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
           c === null ? "–" : `${Math.round(n)} %`,
         ).style.fill = "var(--k-muted)";
+      cur = -1;
     });
   } else if (type === "sankey") {
     // Nodes in columns, bands between them; names and values beside each node, outside the last column inwards.
@@ -619,10 +686,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const yc = Y((n.y0 + n.y1) / 2);
       const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
       Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "3px", strokeLinejoin: "round", paintOrder: "stroke" });
-      grown.push({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
+      grow({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
       valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
     });
-    grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
+    grow({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
   } else if (type === "scatter" || type === "bubble") {
     // Two value axes and a dot per point, a bubble's area by its size. With a period column the dots start at the
     // first period and period() moves them; the axes span every period, so a place compares across time.
@@ -652,17 +719,25 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     stamp.style.fill = "var(--k-muted)";
     stamp.setAttribute("data-k-text", "");
     if (tr.period) labels.push(stamp);
-    // A name sits right of its dot, or left of it where the dot comes near the right edge in any period.
+    // A name sits right of its dot, or left of it where the dot comes near the right edge in any period. Names
+    // that would touch move apart, in each period.
     const poses = tr.at.map((_, p) => pose(p));
     const tagAt = (q: { cx: number; cy: number; r: number }, left: boolean) => ({ x: left ? q.cx - q.r - 8 : q.cx + q.r + 8, y: q.cy + FONT * 0.35 });
+    const lefts = tr.names.map((name, i) => Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w);
+    const tagPoses = poses.map((ps) => {
+      const at = ps.map((q, i) => tagAt(q, lefts[i]));
+      const ys = tagSpread(at.map((a, i) => ({ ...a, w: tr.names[i].length * 12, left: lefts[i] })), FONT + 4); // about 12 px per character
+      return at.map((a, i) => ({ x: a.x, y: ys[i] }));
+    });
     const dots = tr.names.map((name, i) => {
-      const left = Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w;
+      cur = i;
       const q = poses[0][i];
       const c = svg(marks, "circle", { cx: q.cx, cy: q.cy, r: q.r });
-      Object.assign(c.style, { fill: color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
-      grown.push({ el: c, origin: "50% 50%", scale: "scale" });
-      const tag = valueAt({ ...tagAt(q, left), "text-anchor": left ? "end" : "start" }, 0, 0, () => name);
-      return { c, tag, left };
+      Object.assign(c.style, { fill: groupOf ? groupFill(name) : color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
+      grow({ el: c, origin: "50% 50%", scale: "scale" });
+      const tag = valueAt({ ...tagPoses[0][i], "text-anchor": lefts[i] ? "end" : "start" }, 0, 0, () => name);
+      cur = -1;
+      return { c, tag };
     });
     xAxis = d3.axisBottom(x).ticks(6).tickSizeOuter(0).tickFormat(d3.format(",~f"));
     yAxis = d3.axisLeft(y).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
@@ -675,9 +750,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         if (!(to >= 0 && to < tr.periods.length)) return ctx.problem(`chart: no period ${JSON.stringify(p)}; the periods are ${tr.periods.join(", ")}`);
         const [a, b, from] = [poses[at], poses[to], at];
         const d = { duration: motion.step * 2, ease: "power1.inOut", immediateRender: false };
-        dots.forEach(({ c, tag, left }, i) => {
+        dots.forEach(({ c, tag }, i) => {
           tl.fromTo(c, { attr: a[i] }, { attr: b[i], ...d }, i ? "<" : undefined);
-          tl.fromTo(tag, { attr: tagAt(a[i], left) }, { attr: tagAt(b[i], left), ...d }, "<");
+          tl.fromTo(tag, { attr: tagPoses[from][i] }, { attr: tagPoses[to][i], ...d }, "<");
         });
         // A numeric period counts as a pure function of progress; a named one switches halfway.
         tl.to({}, {
@@ -697,44 +772,56 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const y = d3.scaleBand().domain(band).range([P.y, P.y + P.h]).padding(0.35);
     const tdec = decimals(data.flatMap((r) => [num(r, a), num(r, b)]));
     data.forEach((r, i) => {
+      cur = i;
       const [s, e] = [num(r, a), num(r, b)];
       const top = y(band[i])!;
       const rect = svg(marks, "rect", { x: x(s), y: top, width: x(e) - x(s), height: y.bandwidth() });
       rect.style.fill = color(i);
       bars.push(rect);
-      grown.push({ el: rect, origin: "0% 50%", scale: "scaleX" });
+      grow({ el: rect, origin: "0% 50%", scale: "scaleX" });
       const yc = top + y.bandwidth() / 2 + FONT * 0.35;
       valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
+      cur = -1;
     });
+    refAt = (n) => ({ x1: x(n), y1: P.y, x2: x(n), y2: P.y + P.h });
     xAxis = d3.axisBottom(x).ticks(6).tickFormat(d3.format("d"));
     yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
   } else {
     // Below zero, value labels sit under their bars: keep them clear of the category labels.
     v.range([P.y + P.h - (v.domain()[0] < 0 ? FONT + 16 : 0), P.y]);
+    refAt = (n) => ({ x1: P.x, y1: v(n), x2: P.x + P.w, y2: v(n) });
     if (type === "line") {
       const x = d3.scalePoint().domain(band).range([P.x, P.x + P.w]).padding(0.5);
-      const id = `k-chart-clip-${++clips}`;
-      const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
-      grown.push({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the line draws left to right
-      marks.setAttribute("clip-path", `url(#${id})`);
+      // One clip per series, all made first, so grow draws the lines together, then pops the markers.
+      const ids = keys.map((_, i) => {
+        cur = i;
+        const id = `k-chart-clip-${++clips}`;
+        const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
+        grow({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the line draws left to right
+        return id;
+      });
       keys.forEach((k, i) => {
+        cur = i;
         const path = svg(marks, "path", {
           d: d3.line<Row>((_, j) => x(band[j])!, (r) => v(num(r, k)))(data) ?? "",
           fill: "none",
           "stroke-width": 5,
           "stroke-linejoin": "round",
+          "clip-path": `url(#${ids[i]})`,
         });
         path.style.stroke = color(i);
+        strokes.push({ el: path, part: i });
         data.forEach((r, j) => {
           const [n, cx] = [num(r, k), x(band[j])!];
           const c = svg(root, "circle", { cx, cy: v(n), r: 8 });
           c.style.fill = color(i);
-          grown.push({ el: c, origin: "50% 50%", scale: "scale" });
+          grow({ el: c, origin: "50% 50%", scale: "scale" });
           // Below the marker for a negative value, above it otherwise.
           const y = n < 0 ? v(n) + FONT + 14 : v(n) - 16;
           valueAt({ x: cx, y, "text-anchor": "middle" }, 0, n, fmt);
         });
       });
+      cur = -1;
       xAxis = categories(x, names);
     } else {
       const x = d3.scaleBand().domain(band).range([P.x, P.x + P.w]).padding(0.3);
@@ -747,10 +834,14 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       if (type === "stacked") {
         const layers = d3.stack<Row>().keys(keys).value((r, k) => num(r, k)).offset(d3.stackOffsetDiverging)(data);
         layers.forEach((layer, li) =>
-          layer.forEach(([lo, hi], i) => bar(left(i), x.bandwidth(), lo, hi, color(li), hi >= lo && lo >= 0)),
+          layer.forEach(([lo, hi], i) => {
+            cur = i;
+            bar(left(i), x.bandwidth(), lo, hi, color(li), hi >= lo && lo >= 0);
+          }),
         );
         // With a part below zero the stack's height is not its sum: say "net".
         data.forEach((r, i) => {
+          cur = i;
           const net = keys.some((k) => num(r, k) < 0);
           const pos = d3.sum(keys, (k) => Math.max(0, num(r, k)));
           barValue(0, pos, i, d3.sum(keys, (k) => num(r, k)), net ? (n) => `${t("net", ctx.deck.lang)} ${fmt(n)}` : fmt);
@@ -759,19 +850,23 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         const signed = d3.format(`+,.${dec}f`);
         const steps = waterfallSteps(data.map((r) => num(r, keys[0])));
         steps.forEach(([lo, hi], i) => {
+          cur = i;
           // The first row is the starting value, not a change.
           bar(left(i), x.bandwidth(), lo, hi, i === 0 ? color(0) : hi >= lo ? UP : DOWN, hi >= lo);
           barValue(lo, hi, i, hi - lo, i === 0 ? fmt : signed);
         });
         const total = steps[steps.length - 1][1];
+        cur = names.length - 1;
         bar(left(names.length - 1), x.bandwidth(), 0, total, color(0), total >= 0);
         barValue(0, total, names.length - 1, total, fmt);
       } else
         data.forEach((r, i) => {
+          cur = i;
           const n = num(r, keys[0]);
           bar(left(i), x.bandwidth(), 0, n, color(0), n >= 0);
           barValue(0, n, i, n, fmt);
         });
+      cur = -1;
       xAxis = categories(x, names);
     }
     yAxis = d3.axisLeft(v).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"));
@@ -793,12 +888,53 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     axesEls.push(z);
   }
 
+  // Reference lines over the marks; a label above the line at its right end, or right of a timeline's at its top.
+  for (const { value, label } of refs) {
+    const at = refAt!(value);
+    const ref = svg(root, "line", { ...at, "stroke-width": 2, "stroke-dasharray": "10 8", "data-k-ref": label });
+    ref.style.stroke = "var(--k-fg)";
+    const across = at.y1 === at.y2;
+    const tag = text(root, label, across ? { x: at.x2, y: at.y1 - 10, "text-anchor": "end", "font-weight": 700 } : { x: at.x1 + 10, y: at.y1 + FONT, "font-weight": 700 });
+    Object.assign(tag.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+    axesEls.push(ref, tag);
+  }
   for (const { el, from, show } of values) el.textContent = show(from);
   for (const e of values) e.el.setAttribute("data-k-text", "");
   gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents, ...grown.flatMap((g) => g.label ?? [])], { autoAlpha: 0 });
   for (const { el, origin, scale } of grown) gsap.set(el, { [scale]: 0, transformOrigin: origin });
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
   let lit = -1; // the sankey flow the steps added so far end on
+  let litPart: number | null = null; // the part highlight() left lit, in step order
+  let sliced = 0; // the donut total the slice() steps added so far count to
+  const parts = 1 + Math.max(-1, ...[...grown, ...values, ...sweeps].map((e) => e.part));
+  // What dims with each part: its marks (not the clips that draw a line on), strokes and values.
+  const partEls = Array.from({ length: parts }, (_, p) => [
+    ...grown.filter((g) => g.part === p && !g.el.closest("clipPath")).map((g) => g.el),
+    ...[...sweeps, ...strokes, ...values].filter((e) => e.part === p).map((e) => e.el),
+  ]);
+  // Grows part i's marks, draws its arcs round and fades in and counts its values: one bar, slice or series.
+  const reveal = (i: number, tl: gsap.core.Timeline, extra: (typeof values)[number][] = []) => {
+    const t0 = tl.duration();
+    for (const { el, len } of sweeps.filter((e) => e.part === i))
+      tl.to(el, { strokeDashoffset: 0, duration: Math.max(motion.step, 1.2 * len), ease: "power2.out", autoRound: false }, t0);
+    const gs = grown.filter((g) => g.part === i);
+    const stagger = Math.min(0.12, 1 / gs.length);
+    gs.forEach(({ el, scale, dur }, k) => tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, t0 + k * stagger));
+    const vs = [...values.filter((e) => e.part === i), ...extra];
+    tl.to(vs.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 }, t0);
+    // Count up as a pure function of this tween's progress, so play equals seek.
+    tl.to({}, {
+      duration: motion.step * 2,
+      onUpdate(this: gsap.core.Tween) {
+        const p = ease(this.progress());
+        for (const { el, from, to, show } of vs) el.textContent = show(from + (to - from) * p);
+      },
+    }, t0);
+  };
+  // highlight() tweens opacity from 1: write that start at load, so a seek back over it leaves what play leaves.
+  gsap.set(partEls.flat().filter((el) => !values.some((e) => e.el === el)), { opacity: 1 });
+  const outOf = (what: string, i: number, n: number) =>
+    !(i >= 0 && i < n) && ctx.problem(`chart: no ${what} ${i}; the ${what === "series" ? what : `${what}s`} are 0 to ${n - 1}`);
 
   return {
     bars,
@@ -829,33 +965,49 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       };
       tl.to({}, count, "<");
     },
-    // The step order, not the call order, decides which flow was lit before: bookkeeping inside the adder.
+    // The step order, not the call order, decides what was lit before: bookkeeping inside the adder.
     highlight: (row) => (tl) => {
-      if (type !== "sankey") return ctx.problem(`chart: highlight() is for a sankey, not a ${type}: ${opts.src}`);
-      if (!(row >= 0 && row < accents.length)) return ctx.problem(`chart: no flow in row ${row + 1}: ${opts.src}`);
-      if (row === lit) return;
       const d = { duration: motion.step, immediateRender: false };
-      if (lit >= 0) tl.fromTo(accents[lit], { autoAlpha: 1 }, { autoAlpha: 0, ...d });
-      tl.fromTo(accents[row], { autoAlpha: 0 }, { autoAlpha: 1, ...d }, lit >= 0 ? "<" : undefined);
-      lit = row;
+      if (type === "sankey") {
+        if (row !== null && !(row >= 0 && row < accents.length)) return ctx.problem(`chart: no flow in row ${row + 1}: ${opts.src}`);
+        const to = row ?? -1;
+        if (to === lit) return;
+        if (lit >= 0) tl.fromTo(accents[lit], { autoAlpha: 1 }, { autoAlpha: 0, ...d });
+        if (to >= 0) tl.fromTo(accents[to], { autoAlpha: 0 }, { autoAlpha: 1, ...d }, lit >= 0 ? "<" : undefined);
+        lit = to;
+        return;
+      }
+      if (row !== null && outOf(type === "line" ? "series" : "row", row, parts)) return;
+      if (row === litPart) return;
+      const level = (p: number, on: number | null) => (on === null || p === on ? 1 : DIM);
+      const t0 = tl.duration();
+      partEls.forEach((els, p) => {
+        const [a, b] = [level(p, litPart), level(p, row)];
+        if (a !== b) tl.fromTo(els, { opacity: a }, { opacity: b, ...d }, t0);
+      });
+      litPart = row;
     },
     period: (p) => (tl) => {
       if (!moveTo) return ctx.problem(`chart: period() is for a scatter or bubble chart with a period column: ${opts.src}`);
       moveTo(p, tl);
     },
-    // In a bar or waterfall chart, bars[i], grown[i] and values[i] are the same category.
     bar: (i) => (tl) => {
-      if (type !== "bar" && type !== "waterfall") return ctx.problem(`chart: bar(${i}) is for bar and waterfall charts, not ${type}`);
-      if (!(i >= 0 && i < bars.length)) return ctx.problem(`chart: no bar ${i}; the bars are 0 to ${bars.length - 1}`);
-      const [g, val] = [grown[i], values[i]];
-      tl.to(g.el, { [g.scale]: 1, duration: motion.step, ease: "power2.out" });
-      tl.to(val.el, { autoAlpha: 1, duration: motion.step / 2 }, "<");
-      tl.to({}, {
-        duration: motion.step * 2,
-        onUpdate(this: gsap.core.Tween) {
-          val.el.textContent = val.show(val.from + (val.to - val.from) * ease(this.progress()));
-        },
-      }, "<");
+      if (!["bar", "waterfall", "stacked", "timeline", "funnel"].includes(type))
+        return ctx.problem(`chart: bar(${i}) is for bar, waterfall, stacked, timeline and funnel charts, not ${type}`);
+      if (!outOf("bar", i, parts)) reveal(i, tl);
+    },
+    slice: (i) => (tl) => {
+      if (type !== "donut") return ctx.problem(`chart: slice(${i}) is for a donut chart, not ${type}`);
+      if (outOf("slice", i, parts)) return;
+      // The total counts on from the slices the steps before drew, in step order.
+      const total = values[donutTotal];
+      const to = sliced + num(data[i], keys[0]);
+      reveal(i, tl, [{ ...total, from: sliced, to }]);
+      sliced = to;
+    },
+    series: (i) => (tl) => {
+      if (type !== "line") return ctx.problem(`chart: series(${i}) is for a line chart, not ${type}`);
+      if (!outOf("series", i, parts)) reveal(i, tl);
     },
   };
 }

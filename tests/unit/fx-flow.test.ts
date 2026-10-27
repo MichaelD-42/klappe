@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { edgePath, flow, flowRoutes } from '../../src/fx/flow'
+import { edgePath, flow, flowRoutes, shapeEdge } from '../../src/fx/flow'
 
 const box = (x: number, y: number) => ({ x, y, w: 100, h: 60 })
 
@@ -113,4 +113,24 @@ test('a self-loop takes a face no other edge uses', () => {
   const right = 200 + 400 * 0.7 / 2
   expect(r[1].points.map((p) => p.x)).toEqual([right, expect.any(Number), expect.any(Number), right])
   expect(r[1].points[1].x).toBeGreaterThan(right)
+})
+
+test('shapeEdge: a box meets its arrows on its bounding faces', () => {
+  for (const face of ['left', 'right', 'top', 'bottom'] as const) expect(shapeEdge(undefined, 200, 100, face, 30)).toBe(0)
+})
+
+test('shapeEdge: a diamond meets an arrow at the face middle on its corner, and off it further in', () => {
+  expect(shapeEdge('decision', 200, 100, 'left', 0)).toBe(0)
+  expect(shapeEdge('decision', 200, 100, 'left', 25)).toBeCloseTo(50) // a quarter of the height off: half of w/2 in
+  expect(shapeEdge('decision', 200, 100, 'top', 50)).toBeCloseTo(25)
+  expect(shapeEdge('decision', 200, 100, 'top', 500)).toBeCloseTo(50) // past the corner: clamped to the centre
+})
+
+test('shapeEdge: a pill rounds in at its ends; a store at its top and bottom', () => {
+  expect(shapeEdge('terminal', 200, 100, 'left', 0)).toBe(0)
+  expect(shapeEdge('terminal', 200, 100, 'left', 30)).toBeCloseTo(50 - 40) // r 50: sqrt(50² - 30²) = 40
+  expect(shapeEdge('terminal', 200, 100, 'top', 20)).toBe(0) // on the straight part
+  expect(shapeEdge('store', 200, 100, 'left', 30)).toBe(0)
+  expect(shapeEdge('store', 200, 100, 'top', 0)).toBe(0)
+  expect(shapeEdge('store', 200, 100, 'top', 60)).toBeGreaterThan(0)
 })

@@ -4,6 +4,8 @@ import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import type { MultiPolygon } from "geojson";
 import topo from "world-atlas/land-110m.json";
+import countryTopo from "world-atlas/countries-110m.json";
+import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -29,6 +31,8 @@ export interface WorldMapHandle {
   // The path of the map's arc from one site to another, for your own drawing or a figure's walk.
   arcPath(fromId: string, toId: string): string | undefined;
   zoomTo(tl: gsap.core.Timeline, id: string): void;
+  // Fills a country, named as in world-atlas ("Germany") or by its ISO 3166-1 numeric code ("276").
+  region(tl: gsap.core.Timeline, country: string): void;
   // Back to the whole map: labels fade out, the camera frames the scene again.
   world: StepAdder;
 }
@@ -36,6 +40,7 @@ export interface WorldMapHandle {
 const SVG = "http://www.w3.org/2000/svg";
 const LAND = feature(topo as unknown as Topology, (topo as unknown as Topology).objects.land as GeometryCollection)
   .features[0].geometry as MultiPolygon;
+const COUNTRIES = feature(countryTopo as unknown as Topology, (countryTopo as unknown as Topology).objects.countries as GeometryCollection).features;
 // A fixed zoom box (canvas units) gives camera scale 4, so an 8-unit label renders at 8 * 4 * 1366/1920 = 22.8 px.
 const ZOOM = { w: 480, h: 270 };
 const LABEL_SIZE = 8;
@@ -118,7 +123,24 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
     if (arcs.size) tl.to([...arcs.values()], { strokeWidth: w.arc, duration: motion.camera }, "<");
   };
 
+  const regions = new Map<string, SVGPathElement>();
   return {
+    region(tl, country) {
+      const f = COUNTRIES.find((c) => c.id === country || (c.properties as { name?: string } | null)?.name === country);
+      if (!f) return ctx.problem(`worldMap: no country '${country}'; use the ISO 3166-1 numeric code or the name in world-atlas`);
+      // Made while the timeline is built at load, hidden, under the coastline (the group's first child).
+      let p = regions.get(country);
+      if (!p) {
+        p = document.createElementNS(SVG, "path");
+        p.setAttribute("d", path(f) ?? "");
+        p.dataset.kRegion = country;
+        p.style.fill = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`;
+        g.prepend(p);
+        gsap.set(p, { autoAlpha: 0 });
+        regions.set(country, p);
+      }
+      tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false });
+    },
     draw: (tl) => tl.fromTo(land, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 2.4, ease: "power1.inOut" }),
     site(tl, id) {
       const s = get(id);

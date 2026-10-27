@@ -34,10 +34,12 @@ export async function loadDeck() {
     s.dataset.kDeckCss = "";
     document.head.append(s);
   }
-  const files = import.meta.glob("@deck/**/*.md", { query: "?raw", import: "default", eager: true });
+  // Not review.md (the review window writes it while the deck is open) nor the TODO.md lists klappe test
+  // writes: none is part of the deck, and a change to one must not reload it.
+  const files = import.meta.glob(["@deck/**/*.md", "!@deck/review.md", "!@deck/data/TODO.md", "!@deck/media/TODO.md"], { query: "?raw", import: "default", eager: true });
   const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });
-  const data = import.meta.glob<string>("@deck/data/*", { query: "?raw", import: "default", eager: true });
-  const media = import.meta.glob<string>("@deck/media/*", { query: "?url", import: "default", eager: true });
+  const data = import.meta.glob<string>(["@deck/data/*", "!@deck/data/TODO.md"], { query: "?raw", import: "default", eager: true });
+  const media = import.meta.glob<string>(["@deck/media/*", "!@deck/media/TODO.md"], { query: "?url", import: "default", eager: true });
   // The shortest key that ends in deck.md is the deck's own; everything before that name is the root.
   const deckMd = Object.keys(files)
     .filter((k) => /(?:^|\/)deck\.md$/.test(k))

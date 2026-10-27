@@ -9,7 +9,7 @@ interface Refs {
   s: StepAdder;
 }
 
-export default captioned("glow(ctx, el) — on, breathe, off; pulse(ctx, el) and shake(el) — one-step nudges", {
+export default captioned("glow(ctx, el) — on, breathe, off; pulse(ctx, el, { color? }) and shake(el) — one-step nudges", {
   build: (ctx): Refs => {
     const f = flow(ctx, {
       grid: { x: 160, y: 140, w: 1600, h: 700, cols: 3, rows: 1 },
@@ -20,7 +20,7 @@ export default captioned("glow(ctx, el) — on, breathe, off; pulse(ctx, el) and
       ],
       edges: [{ from: "web", to: "api" }, { from: "api", to: "db" }],
     });
-    return { f, g: glow(ctx, f.node("api")), p: pulse(ctx, f.node("web")), s: shake(f.node("db")) };
+    return { f, g: glow(ctx, f.node("api")), p: pulse(ctx, f.node("web"), { color: "--k-warn" }), s: shake(f.node("db")) };
   },
   steps: [
     (tl, r: Refs) => r.f.show()(tl),

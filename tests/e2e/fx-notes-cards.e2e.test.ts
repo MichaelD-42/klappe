@@ -16,7 +16,10 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-notes-cards${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual([])
+    expect(r.problems).toEqual([
+      'sections/10-a/50-vote/scene.ts step 5: stickyNotes: vote on "c" past 12 dots',
+      'sections/10-a/50-vote/scene.ts step 5: stickyNotes: vote on "d" before it shows',
+    ])
   }, 120_000)
 
 async function open(hash: string, query = ''): Promise<Page> {
@@ -172,3 +175,28 @@ for (const [name, url, scene, steps] of [
     }
     await page.close()
   }, 90_000)
+
+// Dots add up per note, sit on the note's top edge inside its width, and ride along when the note moves.
+test('vote(id, n) drops n dots on a note; they add up and move with it', async () => {
+  const dots = (page: Page) =>
+    page.evaluate(() =>
+      Object.fromEntries(
+        ['a', 'b', 'c'].map((id) => {
+          const el = document.querySelector<HTMLElement>(`[data-scene="vote"] [data-k-sticky="${id}"]`)!
+          const r = el.getBoundingClientRect()
+          const shown = [...el.querySelectorAll<HTMLElement>('[data-k-vote]')].filter((d) => d.checkVisibility({ opacityProperty: true, visibilityProperty: true }))
+          const inside = shown.every((d) => {
+            const b = d.getBoundingClientRect()
+            return b.left >= r.left - 1 && b.right <= r.right + 1 && b.top < r.top + 4
+          })
+          return [id, { n: shown.length, inside }]
+        }),
+      ),
+    )
+  let page = await open('#/a/vote/2')
+  expect(await dots(page)).toEqual({ a: { n: 3, inside: true }, b: { n: 1, inside: true }, c: { n: 0, inside: true } })
+  await page.close()
+  page = await open('#/a/vote/4')
+  expect(await dots(page)).toEqual({ a: { n: 5, inside: true }, b: { n: 1, inside: true }, c: { n: 0, inside: true } })
+  await page.close()
+}, 60_000)

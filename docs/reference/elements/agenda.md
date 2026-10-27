@@ -22,7 +22,7 @@ In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current, slide })` returns `{ sh
 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `rows` | `{ from, to, title, current }[]` | required | the rows, in order |
+| `rows` | `{ from, to, title, current, icon }[]` | required | the rows, in order. `icon` (optional) is a Lucide name, as for [`icon`](../effects.md#icon): it shows before the title, as tall as the text and in the row's colour. For a training day: `"utensils"` for lunch, `"coffee"` for a break, `"pencil"` for an exercise. The Markdown form has no icon; set it in `scene.ts` |
 | `x`, `y`, `w` | number | required | the agenda's top-left corner and width, scene units |
 | `h` | number | none | the height the rows must fit |
 | `current` | string | the row marked `current` | the title of the current row |
@@ -41,4 +41,5 @@ In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current, slide })` returns `{ sh
 - Text is 40 px and shrinks to 20 px (14 px at 1366) to fit `h`. If it still does not fit, the deck shows `agenda: N rows do not fit Hpx at 20px text` and nothing draws.
 - A `toRow` that is not a row shows `agenda: no row N`; nothing moves.
 - With no current row, `move` shows the marker on `toRow` without a slide.
+- An unknown `icon` shows `icon: unknown Lucide name '<name>'` and a crossed box. A name must stand in the deck's code as a string literal to be bundled ([icon](../effects.md#icon)).
 - Long titles wrap; times sit in a right-aligned column.

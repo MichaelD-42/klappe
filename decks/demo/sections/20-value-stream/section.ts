@@ -4,8 +4,7 @@ import type { Ctx, Rect, SectionModule, StepFn } from "klappe/types";
 const SVG = "http://www.w3.org/2000/svg";
 const NAMES = ["Requirements", "Analysis", "Clarification", "Design", "Verification"];
 const ICONS = ["clipboard-list", "scan-search", "messages-square", "pencil-ruler", "shield-check"];
-// Stage centres keep Requirements in the overview scene (0..1920) and Verification left of
-// the global-team scene (from 5760). The band sits low, under the default scene text, with
+// Stage centres keep Requirements in the overview scene (0..1920). The band sits low, under the default scene text, with
 // room for the clarification answer line above it.
 const X0 = 1000;
 const GAP = 1100;
@@ -16,7 +15,8 @@ const TILE = 140; // the stage's icon tile, just above its box
 
 // Where the stage sits inside its scene frame (x, stage px); default the centre. Clarification
 // sits left, so its frame starts right of the Analysis cards (Analysis x < 1640, scene-local).
-const FRAME_AT: Record<string, number> = { clarification: 420 };
+// Design sits left too, so Verification fits whole inside the frame's right edge (1856, the safe area).
+const FRAME_AT: Record<string, number> = { clarification: 420, design: 526 };
 
 const centre = (name: string) => {
   const i = NAMES.findIndex((n) => n.toLowerCase() === name);

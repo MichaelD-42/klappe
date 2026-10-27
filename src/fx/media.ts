@@ -18,6 +18,7 @@ export interface ImageOpts {
   kenBurns?: true | { from?: Partial<KenBurnsPose>; to?: Partial<KenBurnsPose> };
   scrim?: number; // 0..1: a --k-scrim layer over the picture, for text on top
   scrimSide?: ScrimSide; // the scrim is full on this side only and clears past the middle; default: flat
+  credit?: string; // "Photo: …": small, in the bottom-right corner, on its own --k-bg patch
 }
 export type ScrimSide = "left" | "right" | "top" | "bottom";
 // The scrim layer's background: flat, or full over the 45% of the frame on `side` and clear by 85%.
@@ -173,6 +174,18 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     const s = document.createElement("div");
     Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(scrimSide), opacity: String(scrim) });
     b.append(s);
+  }
+  if (opts.credit) {
+    // On its own half-clear --k-bg patch, so it reads on any photo with or without a scrim; it does not push with Ken Burns.
+    const c = b.appendChild(document.createElement("div"));
+    c.dataset.kCredit = "";
+    c.setAttribute("data-k-bleed", ""); // in the picture's corner on purpose, past the safe area on a full frame
+    c.textContent = opts.credit;
+    Object.assign(c.style, {
+      position: "absolute", right: "12px", bottom: "12px", maxWidth: "calc(100% - 24px)", padding: "2px 10px", borderRadius: "4px",
+      background: "color-mix(in srgb, var(--k-bg) 75%, transparent)", color: "var(--k-fg)", font: "500 20px/1.3 var(--k-font)",
+      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+    });
   }
   const kb = kenBurns === true ? {} : kenBurns;
   const from = clampPose({ ...STILL, ...kb?.from }, rect);

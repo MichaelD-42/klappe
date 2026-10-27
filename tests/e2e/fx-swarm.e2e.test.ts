@@ -66,6 +66,22 @@ test('each counter shows from before its step and to after it', async () => {
   await page.close()
 })
 
+test('a counter shows its prefix and unit on the number\'s line, smaller, outside the counted text', async () => {
+  const page = await open('?fixture=fx-motion#/a/counts/2')
+  const r = await page.evaluate(() => {
+    const num = [...document.querySelectorAll<HTMLElement>('[data-k-text]')].find((e) => e.textContent === '2,000')!
+    const [pre, unit] = [num.previousElementSibling as HTMLElement, num.nextElementSibling as HTMLElement]
+    const [n, p, u] = [num, pre, unit].map((e) => e.getBoundingClientRect())
+    return {
+      texts: [pre.textContent, unit.textContent],
+      oneLine: p.bottom > n.top && p.top < n.bottom && u.bottom > n.top && u.top < n.bottom && p.right <= n.left + 1 && u.left >= n.right - 1,
+      smaller: parseFloat(getComputedStyle(unit).fontSize) < parseFloat(getComputedStyle(num).fontSize),
+    }
+  })
+  expect(r).toEqual({ texts: ['≈', 'docs'], oneLine: true, smaller: true })
+  await page.close()
+})
+
 test('bubble maxWidth wraps the text; side top puts the tail on the top edge', async () => {
   const page = await open('?fixture=fx-motion#/a/wrap/3')
   const r = await page.evaluate(() => {

@@ -10,15 +10,16 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 | shout-out | `### Who owns the release?` and a paragraph `The team that ships it.` | three steps: enter, fade, answer; a `> note` goes on the answer | [shout](effects.md#shout) |
 | code fence with groups | ```` ```ts {1-2\|4} ```` | one step per group, its lines lit; list items after the block are the steps' text | [code](elements/code.md) |
 | console fence | ```` ```console ```` with `$ npm test` and output lines | each `$ ` line types and its output appears; one step per command | [terminal](elements/terminal.md) |
+| chat fence | ```` ```chat ```` with `user: Where do I start?` and `Start with the tests.` | a messenger thread in the right-hand slot; one step per message line; list items after the block are the steps' text | [chat](elements/chat.md) |
 | task list | `- [ ] Restore tested` and `- [x] Backup verified` | a checklist; each item is a step that ticks its box; `[x]` starts ticked | [checklist](elements/checklist.md) |
 | agenda rows | `- 09:45–10:30 Practice ←` | all list items start with a time range: one step shows an agenda; `←` marks the current row | [agenda](elements/agenda.md) |
 
 Notes:
 
-- A scene has one code or console block.
+- A scene has one code, console or chat block.
 - `**bold**` in a list item marks key words for `reveal` (scene.ts); a plain scene shows the asterisks.
 - A mix of time ranges and plain items stays plain steps.
 - A missing image, video or data file shows a placeholder and a deck problem; `klappe test` and `klappe build` list it in `media/TODO.md` or `data/TODO.md`.
 - A full-frame picture, a background, a flow, a sequence, swimlanes, a decision tree, a callout and a timer have no Markdown form: use `scene.ts`.
 
-Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `310-checklist-agenda`.
+Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `217-chat/30-chat-md`, `310-checklist-agenda`.

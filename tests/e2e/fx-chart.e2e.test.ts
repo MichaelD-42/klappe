@@ -30,7 +30,7 @@ for (const vp of [
       'sections/10-a/80-bad/scene.ts: chart: DATA ERROR: data/bad.csv (row 2, column units not a number)',
       'sections/10-a/90-null/scene.ts: chart: DATA ERROR: data/null.json (not an array of rows)',
     ])
-    expect(r.steps).toBe(40)
+    expect(r.steps).toBe(69)
   })
 
 test('the source reaches the notes: origin from the CSV, the JSON, or not stated', async () => {
@@ -63,7 +63,7 @@ test('the handle returns the bars in data order', async () => {
   const r = await page.evaluate(() =>
     Object.fromEntries(
       ['bar', 'stacked', 'line', 'waterfall', 'timeline'].map((t) => {
-        const bars = [...document.querySelectorAll<SVGRectElement>(`[data-k-chart="${t}"] [data-bar]`)]
+        const bars = [...document.querySelectorAll<SVGRectElement>(`[data-scene="${t}"] [data-k-chart="${t}"] [data-bar]`)]
         return [t, { n: bars.length, ordered: bars.every((b, i) => b.dataset.bar === String(i)), x: bars.map((b) => +b.getAttribute('x')!), y: bars.map((b) => +b.getAttribute('y')!) }]
       }),
     ),
@@ -253,4 +253,129 @@ test('a sankey lays nodes in columns and lights one flow at a time, by step orde
   expect([ads === search, signup === bounce, paid === churn, ads < signup && signup < paid]).toEqual([true, true, true, true])
   expect(four.shown).toEqual([1, 0, 0, 0, 0])
   expect((await lit(5, 39)).shown).toEqual([0, 0, 1, 0, 0])
+})
+
+// Opens a deep link, waits for its step index and for the step to finish playing.
+async function at(hash: string, index: number): Promise<Page> {
+  const page = await open(hash)
+  await page.waitForFunction((i) => window.klappe.stepper.index === i, index)
+  await settle(page)
+  return page
+}
+const opacities = (page: Page, sel: string) =>
+  page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => +(+getComputedStyle(e).opacity).toFixed(2)), sel)
+const shown = (page: Page, sel: string) =>
+  page.evaluate((s) => [...document.querySelectorAll(s)].map((e) => getComputedStyle(e).visibility === 'visible'), sel)
+
+test('highlight lights one bar and its value, dims the rest, and highlight(null) clears it', async () => {
+  const lit = await at('/a/lit-bar/4', 43)
+  expect(await opacities(lit, '[data-scene="lit-bar"] [data-k-chart="bar"] [data-bar]')).toEqual([0.35, 0.35, 1, 0.35])
+  expect(await opacities(lit, '[data-scene="lit-bar"] [data-k-chart="bar"] [data-k-text]')).toEqual([0.35, 0.35, 1, 0.35])
+  await lit.close()
+  const clear = await at('/a/lit-bar/5', 44)
+  expect(await opacities(clear, '[data-scene="lit-bar"] [data-k-chart="bar"] [data-bar]')).toEqual([1, 1, 1, 1])
+  expect(await opacities(clear, '[data-scene="lit-bar"] [data-k-chart="bar"] [data-k-text]')).toEqual([1, 1, 1, 1])
+  await clear.close()
+})
+
+test('series(i) draws one line with its values; highlight(i) on a line chart lights a series', async () => {
+  const one = await at('/a/series/2', 46)
+  // Values in series order: north's five, then south's.
+  expect(await shown(one, '[data-scene="series"] [data-k-chart="line"] [data-k-text]')).toEqual([true, true, true, true, true, false, false, false, false, false])
+  await one.close()
+  const lit = await at('/a/series/4', 48)
+  expect(await opacities(lit, '[data-scene="series"] [data-k-chart="line"] path[stroke-width="5"]')).toEqual([0.35, 1])
+  await lit.close()
+})
+
+test('slice(i) draws one slice, shows its legend values and counts the total so far', async () => {
+  const page = await at('/a/slice/3', 51)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-scene="slice"] [data-k-chart="donut"]')!
+    const texts = [...g.querySelectorAll('[data-k-text]')]
+    return {
+      drawn: [...g.querySelectorAll<SVGCircleElement>('circle')].map((a) => Math.abs(parseFloat(getComputedStyle(a).strokeDashoffset)) < 1e-3),
+      total: texts[0].textContent,
+      legend: texts.slice(1).map((e) => getComputedStyle(e).visibility === 'visible'),
+    }
+  })
+  expect(r.drawn).toEqual([true, true, false, false])
+  expect(r.total).toBe('70')
+  expect(r.legend).toEqual([true, true, true, true, false, false, false, false])
+  await page.close()
+})
+
+test('bar(i) grows one stack of a stacked chart; highlight(i) lights that stack', async () => {
+  const heights = (page: Page) =>
+    page.evaluate(() => [...document.querySelectorAll('[data-scene="stack-steps"] [data-k-chart="stacked"] [data-bar]')].map((b) => b.getBoundingClientRect().height > 1))
+  const grown = await at('/a/stack-steps/2', 55)
+  // Bars are series by series: category 1 is bars 1, 5 and 9.
+  expect(await heights(grown)).toEqual([false, true, false, false, false, true, false, false, false, true, false, false])
+  await grown.close()
+  const lit = await at('/a/stack-steps/3', 56)
+  expect(await opacities(lit, '[data-scene="stack-steps"] [data-k-chart="stacked"] [data-bar]')).toEqual([0.35, 1, 0.35, 0.35, 0.35, 1, 0.35, 0.35, 0.35, 1, 0.35, 0.35])
+  await lit.close()
+})
+
+test('bar(i) on a funnel grows one stage with its value and its conversion', async () => {
+  const page = await at('/a/funnel-steps/3', 59)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-scene="funnel-steps"] [data-k-chart="funnel"]')!
+    return {
+      bars: [...g.querySelectorAll('[data-bar]')].map((b) => b.getBoundingClientRect().width > 1),
+      values: [...g.querySelectorAll('[data-k-text]')].filter((e) => getComputedStyle(e).visibility === 'visible').map((e) => e.textContent),
+    }
+  })
+  expect(r.bars).toEqual([true, true, false, false, false])
+  expect(r.values).toEqual(['1,000', '400', '40 %'])
+  await page.close()
+})
+
+test('a reference line spans the plot at its value, dashed, its label beside it, both with the axes', async () => {
+  const line = async (hash: string, index: number, scene: string) => {
+    const page = await at(hash, index)
+    const r = await page.evaluate((s) => {
+      const g = document.querySelector(`[data-scene="${s}"] [data-k-chart]`)!
+      const ref = g.querySelector<SVGLineElement>('[data-k-ref]')!
+      const tick = (v: string) => [...g.querySelectorAll('.tick')].find((t) => t.textContent === v)
+      const label = [...g.querySelectorAll('text')].find((t) => t.textContent === ref.dataset.kRef)!
+      return {
+        dashed: getComputedStyle(ref).strokeDasharray !== 'none',
+        shown: getComputedStyle(ref).visibility === 'visible' && getComputedStyle(label).visibility === 'visible',
+        at: ['x1', 'y1', 'x2', 'y2'].map((a) => +ref.getAttribute(a)!),
+        // The axis tick at the line's value, as [x, y] (d3 may shift a tick half a pixel).
+        tick: (tick('300') ?? tick('2024'))?.getAttribute('transform')?.match(/[-\d.]+/g)?.map(Number),
+      }
+    }, scene)
+    await page.close()
+    return r
+  }
+  const goal = await line('/a/target/1', 60, 'target')
+  expect(goal.dashed).toBe(true)
+  expect(goal.shown).toBe(true)
+  // Horizontal, at the y of the axis's 300 tick (the axis reaches it).
+  expect(goal.at[1]).toBe(goal.at[3])
+  expect(Math.abs(goal.tick![1] - goal.at[1])).toBeLessThanOrEqual(1)
+  const today = await line('/a/today/1', 63, 'today')
+  expect(today.at[0]).toBe(today.at[2])
+  expect(Math.abs(today.tick![0] - today.at[0])).toBeLessThanOrEqual(1)
+  expect(today.shown).toBe(true)
+})
+
+test('a scatter keeps close names apart and colours its dots by group, with a legend', async () => {
+  const page = await at('/a/groups/3', 68)
+  const r = await page.evaluate(() => {
+    const g = document.querySelector('[data-scene="groups"] [data-k-chart="scatter"]')!
+    const tags = [...g.querySelectorAll<SVGTextElement>('[data-k-text]')].map((t) => t.getBBox())
+    const dots = [...g.querySelectorAll<SVGCircleElement>('circle')].map((c) => c.style.fill)
+    const texts = [...g.querySelectorAll('text')].map((t) => t.textContent)
+    const [a, b] = tags
+    return { overlap: a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height, dots, texts }
+  })
+  expect(r.overlap).toBe(false)
+  expect(r.dots[0]).toBe(r.dots[1])
+  expect(r.dots[2]).toBe(r.dots[3])
+  expect(r.dots[0]).not.toBe(r.dots[2])
+  expect(r.texts).toEqual(expect.arrayContaining(['North', 'South']))
+  await page.close()
 })

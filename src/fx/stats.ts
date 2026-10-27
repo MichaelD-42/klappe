@@ -40,6 +40,7 @@ export interface ProgressOpts {
 }
 export interface StatHandle {
   show: StepAdder;
+  to(value: number): StepAdder; // the number (and the cells, the ring, the change) move on to a new value
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -79,17 +80,24 @@ function block(ctx: Ctx, kind: string, x: number, y: number, w: number, source?:
   return root;
 }
 
-// A number that counts up from 0 as a pure function of the tween's progress.
-function counting(tl: gsap.core.Timeline, node: HTMLElement, to: number, show: (n: number) => string) {
+// A number that counts from one value to another as a pure function of the tween's progress; show gets the
+// value and the progress, so the end can take its own format.
+function counting(tl: gsap.core.Timeline, node: HTMLElement, from: number, to: number, show: (n: number, p: number) => string, at: gsap.Position = "<") {
   node.setAttribute("data-k-text", "");
-  node.textContent = show(0);
+  if (!from) node.textContent = show(0, 0);
   tl.to({}, {
     duration: motion.step * 2,
     onUpdate(this: gsap.core.Tween) {
-      node.textContent = show(to * ease(this.progress()));
+      const p = this.progress();
+      node.textContent = show(from + (to - from) * ease(p), p);
     },
-  }, "<");
+  }, at);
 }
+// Each end in its own decimals (a step back shows 9.5 again, not 9.50); in between the finer of the two.
+const formatBetween = (from: number, to: number) => {
+  const [a, b, mid] = [decimals(from), decimals(to), Math.max(decimals(from), decimals(to))].map((d) => d3.format(`,.${d}f`));
+  return (n: number, p: number) => (p >= 1 ? b(n) : p <= 0 ? a(n) : mid(n));
+};
 
 // A KPI tile: the label, the number (counting up), the change against last period in --k-ok or --k-bad, and a
 // sparkline of the recent values that draws on, its last point in --k-accent.
@@ -104,10 +112,15 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
   const num = el(line0, "span", { font: "700 112px/1.1 var(--k-font)", fontVariantNumeric: "tabular-nums" });
   if (opts.unit) el(line0, "span", { font: "600 40px/1 var(--k-font)", marginLeft: "8px" }, opts.unit.trim());
   let badge: HTMLElement | undefined;
+  const mark = (value: number) => {
+    const d = kpiDelta(value, opts.previous!, opts.better);
+    Object.assign(badge!, { textContent: d.text });
+    badge!.style.color = d.good ? "var(--k-ok)" : "var(--k-bad)";
+    badge!.dataset.good = String(d.good);
+  };
   if (opts.previous !== undefined) {
-    const d = kpiDelta(opts.value, opts.previous, opts.better);
-    badge = el(root, "div", { color: d.good ? "var(--k-ok)" : "var(--k-bad)" }, d.text);
-    badge.dataset.good = String(d.good);
+    badge = el(root, "div", {});
+    mark(opts.value);
   }
   let line: SVGElement | undefined;
   let dot: SVGElement | undefined;
@@ -127,13 +140,21 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
   }
   if (badge) gsap.set(badge, { autoAlpha: 0 });
   num.textContent = fmt(0);
+  let at = opts.value; // the value the steps added so far leave on the tile
   return {
     show(tl) {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
-      counting(tl, num, opts.value, fmt);
+      counting(tl, num, 0, opts.value, (n) => fmt(n));
       if (line) tl.to(line, { strokeDashoffset: 0, duration: motion.step * 2, ease: "power1.inOut", autoRound: false }, "<");
       if (dot) tl.to(dot, { scale: 1, duration: motion.step / 2 }, ">");
       if (badge) tl.to(badge, { autoAlpha: 1, duration: motion.step }, "<");
+    },
+    // The number counts on; the change against previous switches halfway.
+    to: (value) => (tl) => {
+      const from = at;
+      at = value;
+      counting(tl, num, from, value, formatBetween(from, value), tl.duration());
+      if (badge) tl.to({}, { duration: motion.step * 2, onUpdate(this: gsap.core.Tween) { mark(this.progress() < 0.5 ? from : value); } }, "<");
     },
   };
 }
@@ -147,15 +168,14 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
   const cell = (opts.size - 9 * gap) / 10;
   const svg = svgEl(root, "svg", { width: opts.size, height: opts.size, viewBox: `0 0 ${opts.size} ${opts.size}` });
   const n = waffleCells(opts.value, of);
+  // A lit cell over every track cell, all hidden: to() may light any of them.
   const on: SVGElement[] = [];
   for (let i = 0; i < 100; i++) {
-    const r = svgEl(svg, "rect", { x: (i % 10) * (cell + gap), y: Math.floor(i / 10) * (cell + gap), width: cell, height: cell, rx: cell / 6 });
-    r.style.fill = "var(--k-line)";
-    if (i < n) {
-      const lit = svgEl(svg, "rect", { x: (i % 10) * (cell + gap), y: Math.floor(i / 10) * (cell + gap), width: cell, height: cell, rx: cell / 6 });
-      lit.style.fill = "var(--k-accent)";
-      on.push(lit);
-    }
+    const box = { x: (i % 10) * (cell + gap), y: Math.floor(i / 10) * (cell + gap), width: cell, height: cell, rx: cell / 6 };
+    svgEl(svg, "rect", box).style.fill = "var(--k-line)";
+    const lit = svgEl(svg, "rect", box);
+    lit.style.fill = "var(--k-accent)";
+    on.push(lit);
   }
   gsap.set(on, { autoAlpha: 0 });
   const text = el(root, "div", { marginTop: "20px", display: "flex", gap: "16px", alignItems: "baseline" });
@@ -163,12 +183,23 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
   if (opts.label) el(text, "span", {}, opts.label);
   const show = (v: number) => `${Math.round(v)} %`;
   num.textContent = show(0);
+  let [at, lit] = [opts.value, n]; // the value and the lit cells the steps added so far leave
   return {
     show(tl) {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
       // The cells fill over the same 1.2 s whatever their number.
-      if (on.length) tl.to(on, { autoAlpha: 1, duration: 0.15, stagger: 1.05 / on.length }, ">");
-      counting(tl, num, (opts.value / of) * 100, show);
+      if (n) tl.to(on.slice(0, n), { autoAlpha: 1, duration: 0.15, stagger: 1.05 / n }, ">");
+      counting(tl, num, 0, (opts.value / of) * 100, show);
+    },
+    // Cells fill on in reading order, or empty from the last lit one back, over the same 1.2 s.
+    to: (value) => (tl) => {
+      const m = waffleCells(value, of);
+      const t0 = tl.duration();
+      const d = { duration: 0.15, stagger: 1.05 / Math.max(1, Math.abs(m - lit)), immediateRender: false };
+      if (m > lit) tl.fromTo(on.slice(lit, m), { autoAlpha: 0 }, { autoAlpha: 1, ...d }, t0);
+      if (m < lit) tl.fromTo(on.slice(m, lit).reverse(), { autoAlpha: 1 }, { autoAlpha: 0, ...d }, t0);
+      counting(tl, num, (at / of) * 100, (value / of) * 100, show, t0);
+      [at, lit] = [value, m];
     },
   };
 }
@@ -183,10 +214,12 @@ export function progress(ctx: Ctx, opts: ProgressOpts): StatHandle {
   const svg = svgEl(box, "svg", { width: s, height: s, viewBox: `0 0 ${s} ${s}` });
   const ring = { cx: s / 2, cy: s / 2, r: s / 2 - thick / 2, fill: "none", "stroke-width": thick };
   svgEl(svg, "circle", ring).style.stroke = "var(--k-line)";
-  const frac = Math.max(0, Math.min(1, opts.value / opts.target));
+  const frac = (v: number) => Math.max(0, Math.min(1, v / opts.target));
+  const tone = (v: number) => (frac(v) >= 1 ? "var(--k-ok)" : "var(--k-accent)");
   const arc = svgEl(svg, "circle", { ...ring, pathLength: 1, "stroke-linecap": "round", transform: `rotate(-90 ${s / 2} ${s / 2})` });
-  Object.assign(arc.style, { stroke: frac >= 1 ? "var(--k-ok)" : "var(--k-accent)", strokeDasharray: `${frac} 1` });
-  gsap.set(arc, { strokeDashoffset: frac, autoRound: false });
+  // Dash 1, gap 1: an offset of 1 - f shows the first f of the ring, so any change is one offset tween.
+  Object.assign(arc.style, { stroke: tone(opts.value), strokeDasharray: "1 1" });
+  gsap.set(arc, { strokeDashoffset: 1, autoRound: false });
   const mid = el(box, "div", { position: "absolute", inset: "0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" });
   const num = el(mid, "div", { font: `700 ${Math.round(s * 0.2)}px/1 var(--k-font)`, fontVariantNumeric: "tabular-nums" });
   const fmt = d3.format(`,.${decimals(opts.target)}f`);
@@ -194,11 +227,23 @@ export function progress(ctx: Ctx, opts: ProgressOpts): StatHandle {
   if (opts.label) el(root, "div", { marginTop: "20px", textAlign: "center" }, opts.label);
   const show = (v: number) => `${Math.round(v)} %`;
   num.textContent = show(0);
+  let at = opts.value; // the value the steps added so far leave on the ring
   return {
     show(tl) {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
-      tl.to(arc, { strokeDashoffset: 0, duration: motion.step * 2, ease: "power2.out", autoRound: false }, ">");
-      counting(tl, num, (opts.value / opts.target) * 100, show);
+      tl.to(arc, { strokeDashoffset: 1 - frac(opts.value), duration: motion.step * 2, ease: "power2.out", autoRound: false }, ">");
+      counting(tl, num, 0, (opts.value / opts.target) * 100, show);
+    },
+    // The ring closes or opens on; it turns --k-ok as it reaches the target, back to the accent as it leaves it.
+    to: (value) => (tl) => {
+      const from = at;
+      at = value;
+      const t0 = tl.duration();
+      const d = { duration: motion.step * 2, ease: "power2.out", autoRound: false, immediateRender: false };
+      tl.fromTo(arc, { strokeDashoffset: 1 - frac(from), autoRound: false }, { strokeDashoffset: 1 - frac(value), ...d }, t0);
+      // Reaching the target: green as the ring closes, near the end; leaving it: the accent at once.
+      if (tone(from) !== tone(value)) tl.fromTo(arc, { stroke: tone(from) }, { stroke: tone(value), duration: 0, immediateRender: false }, frac(value) >= 1 ? t0 + d.duration * 0.75 : t0);
+      counting(tl, num, (from / opts.target) * 100, (value / opts.target) * 100, show, t0);
     },
   };
 }
@@ -354,7 +399,7 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
       if (!r) return ctx.problem(`likert: no row ${i + 1} (row(${i})); there are ${rows.length} rows`);
       tl.to(r.bar, ctx.reducedMotion ? { autoAlpha: 1, duration: motion.step } : { scaleX: 1, duration: motion.step * 2, ease: "power2.out" });
       tl.to(r.num, { autoAlpha: 1, duration: motion.step / 2 }, "<");
-      counting(tl, r.num, r.agree, r.show);
+      counting(tl, r.num, 0, r.agree, r.show);
     },
   };
 }

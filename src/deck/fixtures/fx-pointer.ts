@@ -33,6 +33,21 @@ const noSize: SceneModule = {
   steps: [(tl, r: { p: PointerHandle; hidden: HTMLElement }) => r.p.type(r.hidden, "x")(tl)],
 };
 
+// drag: a card dragged onto a zone, then on to a point; the pointer ends on the card's centre each time.
+type D = { p: PointerHandle; card: HTMLElement; zone: HTMLElement };
+const drag: SceneModule = {
+  build(ctx): D {
+    const [card, zone] = [box(ctx, 300, 300, 240, 140), box(ctx, 1200, 500, 400, 300)];
+    gsap.set([card, zone], { autoAlpha: 1 });
+    return { p: pointer(ctx, { at: { x: 900, y: 900 } }), card, zone };
+  },
+  steps: [
+    (tl, r: D) => r.p.show(tl),
+    (tl, r: D) => r.p.drag(r.card, r.zone)(tl),
+    (tl, r: D) => r.p.drag(r.card, { x: 700, y: 300 })(tl),
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -40,6 +55,7 @@ export default () =>
       "sections/10-a/section.md": "# Pointer\n",
       "sections/10-a/10-walk/scene.md": "## Walk\n\n- Show.\n- Click and type.\n- Click the button.\n- Hide.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- Type into nothing.\n",
+      "sections/10-a/30-drag/scene.md": "## Drag\n\n- Show.\n- Drag the card onto the zone.\n- Drag it on.\n",
     },
-    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-no-size/scene.ts": noSize },
+    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-drag/scene.ts": drag },
   );

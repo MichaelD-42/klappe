@@ -33,6 +33,22 @@ const early: SceneModule = {
   steps: [(tl, r: { first: StepAdder }) => r.first(tl), (tl, r: { second: StepAdder }) => r.second(tl)],
 };
 
+// Built whole, then lit again: the middle, the base, then nothing; a light on a layer not built yet, or no such id, is a problem.
+const light: SceneModule = {
+  build: (ctx) => ({ p: pyramid(ctx, { ...tests, shape: "inverted" }) }),
+  steps: [
+    (tl, r: R) => [0, 1, 2].forEach(() => r.p.next()(tl)),
+    (tl, r: R) => r.p.light("int")(tl),
+    (tl, r: R) => r.p.light("unit")(tl),
+    (tl, r: R) => r.p.light(null)(tl),
+    (tl, r: R) => r.p.light("nope")(tl),
+  ],
+};
+const lightEarly: SceneModule = {
+  build: (ctx) => ({ p: pyramid(ctx, tests) }),
+  steps: [(tl, r: R) => r.p.next()(tl), (tl, r: R) => r.p.light("e2e")(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -41,6 +57,14 @@ export default () =>
       "sections/10-a/10-walk/scene.md": md("Bottom-up", 3),
       "sections/10-a/20-stack/scene.md": md("Stack", 3),
       "sections/10-a/30-early/scene.md": md("Built early", 2),
+      "sections/10-a/40-light/scene.md": md("Light", 5),
+      "sections/10-a/50-light-early/scene.md": md("Light early", 2),
     },
-    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-stack/scene.ts": stack, "sections/10-a/30-early/scene.ts": early },
+    {
+      "sections/10-a/10-walk/scene.ts": walk,
+      "sections/10-a/20-stack/scene.ts": stack,
+      "sections/10-a/30-early/scene.ts": early,
+      "sections/10-a/40-light/scene.ts": light,
+      "sections/10-a/50-light-early/scene.ts": lightEarly,
+    },
   );

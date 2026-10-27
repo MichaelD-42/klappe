@@ -25,11 +25,11 @@ decks/<id>/
 Frontmatter keys:
 
 - `title`: required. It is also the page title in the browser tab.
-- `lang`: default `en`.
+- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English. Numbers and dates follow `lang` in every language.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
-- `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
+- `shared-canvas`: section ids that share one canvas, for example `[value-stream, results]`. Use a list of lists for several groups.
 - `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
 - `duration`: the talk's planned length in minutes, for example `45`. Only `klappe outline` reads it, to compare its timing estimate.
 
@@ -50,8 +50,9 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
 - An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `  ![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
-- A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code or console block per scene.
+- A fenced code block with a language shows code in the right-hand slot, highlighted for ts, js, python, bash, json, yaml, sql, html and css. Another language shows plain, with the problem `language "<lang>" not bundled; shown plain`. Highlight groups after the language, ```` ```ts {1-2|4} ````, make one step per group: its lines light up and the others dim. The list items after the block are those steps' text, in order. More groups than items gives steps without text; more items than groups gives plain steps. Without groups, the block is one step. One code, console or chat block per scene.
 - A ```` ```console ```` block replays a terminal session. Each `$ ` line is a command: it types itself, then its output lines appear. Each command is one step, and the list items after the block are their text, as for code. A console block with no `$ ` line is a problem.
+- A ```` ```chat ```` block replays a messenger thread in the right-hand slot. Each non-empty line is one message and one step: `user: …` sits on the right, `Name: …` on the left under the name, and a line with no prefix is the assistant's. The list items after the block are the steps' text, as for code. A chat block with no message is a problem.
 - Task-list items, `- [ ] Backup verified`, build one checklist: each item is a step that ticks its box. `- [x]` starts ticked.
 - A scene whose list items all start with a time range, `- 09:00–09:45 Basics`, shows an agenda in one step. A trailing `←` marks the current row. A mix of time ranges and plain items stays plain steps.
 - A missing file shows a placeholder box (IMAGE MISSING, VIDEO MISSING or DATA MISSING) and a deck problem, not a blank slide. `klappe test` and `klappe build` write `media/TODO.md` and `data/TODO.md` with one line per missing file. They read the links in `scene.md` and the `href: "media/..."` values in `scene.ts` and `section.ts`. For an image, the line holds a prompt made from the scene heading and the link's title (the `"prompt"` part, else the alt text), or the `alt` next to the `href` in a `.ts` file. A title stays as written. A prompt from alt text gets a shape: ", square, 1024x1024, no text, no logos" for a `scene.md` image, which shows in a near-square column, and ", 16:9, 1920x1080, no text, no logos" for an image in a `.ts` file, the shape of a full-frame picture or background; edit the line for an image with a smaller `rect`. A `.ts` file only counts an `href` written as a plain string in the call's `{ ... }`; a path built at run time is not listed. Full-frame pictures and backgrounds need `scene.ts` or `section.ts` (see Effects); there is no Markdown syntax for them.
@@ -77,8 +78,8 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 When several scenes share one shape and differ only in their words or numbers, write the shape once as a function that takes options and returns a `SceneModule`. Put it in `decks/<id>/shared/`. klappe loads every `.ts` under `sections/` as a scene or section module, so a helper there would be taken for one. Each scene then needs two lines:
 
 ```ts
-import { checkpoint } from "../../../shared/checkpoint";
-export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: "It is round." });
+import { transitionCard } from "../../../shared/transition-card";
+export default transitionCard("layers", "right");
 ```
 
 - Return a new object from each call. Keep no DOM or state at module level: two scenes that use the factory can be built at once.
@@ -87,7 +88,7 @@ export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: 
 - A factory result is a plain `SceneModule`, so another wrapper can take it, as the demo's `captioned(text, scene)` does.
 - The path counts folders: from `sections/<section>/<scene>/scene.ts` it is `../../../shared/`.
 
-Catalog: `#/reuse/check-data/1` and `#/reuse/check-motion/1` both call `checkpoint()` from `decks/demo/shared/checkpoint.ts`.
+Catalog: every card of the transition gallery (`#/tr-cut/cut-card/1` to `#/tr-magicmove/magicmove-card/1`) calls `transitionCard()` from `decks/demo/shared/transition-card.ts`.
 
 ### A speaker profile
 
@@ -131,7 +132,7 @@ Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } f
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `mesh3d`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`, among them [crt](elements/crt.md) (colour, `settle`, prompts, `cursorAt`), [bubble](elements/bubble.md) (`side`, `maxWidth`), [mesh3d](elements/mesh3d.md) and [timer](elements/timer.md). Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
 - Transitions for `section.ts`: `cut`, `fade`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`, `magicMove`. `push` takes `transitionOptions: { direction }` (`left`, the default, `right`, `up` or `down`); `iris` takes `transitionOptions: { origin: [x, y] }` in frame pixels (default the centre). A transition that fails plays `fade` and logs the error. `fade` takes 0.4 s: the old canvas fades out in the first half, then the new one fades in, so two titles at the same spot do not overlap. With `cut` and `fade`, the first step of the new section plays at once. With the others, it waits for the transition to end, unless the transition's timeline has a label `reveal`: then the step starts at that label. `zoom`, `cube` and `pageTurn` set `reveal`, so the new content shows while the canvas grows or turns in. `push` and `iris` set it at their start, so the new content shows while it moves or opens in. `magicMove` flies each element that both sections show with the same `data-k-match` key from its old place to its new one, while the rest fades; a `scene.ts` sets the key in `build`, as in `el.dataset.kMatch = "logo"` (for an icon, `tile.el.dataset.kMatch`). It sets `reveal` when the flight lands. With no shared key it plays a fade. A new transition in `src/fx` can set `reveal` the same way.
 - Shout-out intensity: `intensity` in `deck.md` sets every shout-out, including one a `scene.ts` builds with `shout(ctx, { question, answer })`. Pass `intensity` to set it for one shout-out (see the example below).
-- `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `h: title(ctx)` in `build` builds the `scene.md` title as a hidden `h2`, then `r.h.show(tl)` in step 1 (see [basics](elements/basics.md)). With `build()`, klappe draws nothing for the scene, not even its title, so a scene that wants one calls `title`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
+- `ctx.doc` is the scene's parsed `scene.md`: `title`, `notes`, and `steps`, each with its `text`, `notes` and Markdown `part` (code group, console command, chat message, checklist item, agenda rows). Read text from here instead of copying it into `scene.ts`, so `scene.md` stays the one source: `h: title(ctx)` in `build` builds the `scene.md` title as a hidden `h2`, then `r.h.show(tl)` in step 1 (see [basics](elements/basics.md)). With `build()`, klappe draws nothing for the scene, not even its title, so a scene that wants one calls `title`. Step functions must still exist before `build` runs, so a step count cannot come from `ctx.doc`.
 - `ctx.deck` holds `lang` and `intensity` from `deck.md`. Effects use `lang` for their words and number formats (a `de` deck counts to `2.000`).
 - `ctx.files.data` and `ctx.files.media` hold the deck's `data/` files (text) and `media/` files (URL), keyed like the link: `"data/x.csv"`.
 - `ctx.problem(msg)` reports a deck problem, named after its file and, while a step is being added, the step: `sections/10-intro/20-why/scene.ts step 2: msg`. One reported after load (once a web font is in, or while a step plays) joins the on-screen list too. `ctx.onStep(fn)` hears every move, as `{ play, span, scene, next }`: `next` is the scene of the step after it, for a helper that gets ready one step early. Video uses it to play, pause and load.
@@ -230,7 +231,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, s) => s.enter(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
 
 // A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
-{ transition: "zoom", zoomTarget: "hostSite" }
+{ transition: "zoom", zoomTarget: "countsAim" }
 { transition: "shatter", transitionOptions: { shards: 20 } }
 ```
 
@@ -249,7 +250,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Next: Right arrow, Space, Page Down, Enter, click.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 
 ## URL flags
 
@@ -258,9 +259,30 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - `?reducedmotion=0`: full motion even when the system asks for reduced motion, for a presenter laptop with animations off.
 - `?autoplay=1`: start autoplay.
 - `?speaker=1`: open the speaker view.
+- `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
+
+## Review mode
+
+To review your own deck, run it with `npm run dev` and press `R`. A review window opens beside the deck, like the speaker view, and follows it: stepping in either window moves both. For the step shown it gives its place and text and a field each for **Content** (text to correct), **Storytelling** (another effect, another storyline) and **Visuals**. Whatever you type is saved as you type, with no Save button, to `decks/<id>/review.md`; coming back to a step shows what you wrote there. Review one section by going to it and stepping through.
+
+```markdown
+# Review
+
+## #/value-stream/analysis/2
+
+> Thousands of documents stream in.
+
+### Content
+
+"stream" should be "value stream" in the caption.
+```
+
+One entry per step with findings, in deck order, each with the step's text as a quote. Then ask Claude Code to work through the review: it fixes each finding, deletes it from the file, and asks in the chat when one is unclear (the klappe skill says how). When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
+
+Review mode exists only on the dev server, which saves the file: a built deck has no `R`, and `?review=1` says so. The deck does not load `review.md`, so a save never reloads it.
 
 ## Look checks
 

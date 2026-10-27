@@ -20,6 +20,8 @@ export interface CounterOpts {
   to: number;
   label: string;
   decimals?: number; // places shown, default 0
+  prefix?: string; // before the number, smaller: "€", "≈"
+  unit?: string; // after it, smaller: "%", "days"
 }
 
 const TAIL = 24; // bubble tail size in scene units
@@ -147,14 +149,24 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTML
   const { x, y, from, to, label, decimals = 0 } = opts;
   const box = document.createElement("div");
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
-  const num = document.createElement("div");
+  // The number with its prefix and unit on one line, those at about a third of its size, as kpi sets its unit.
+  const line = document.createElement("div");
+  Object.assign(line.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", whiteSpace: "nowrap" });
+  const side = (text: string, margin: "marginLeft" | "marginRight") => {
+    const e = line.appendChild(document.createElement("span"));
+    e.textContent = text.trim();
+    Object.assign(e.style, { fontSize: "52px", [margin]: "12px" });
+  };
+  if (opts.prefix) side(opts.prefix, "marginRight");
+  const num = line.appendChild(document.createElement("span"));
   num.dataset.kText = "";
   num.textContent = counterText(from, to, 0, ctx.deck.lang, decimals);
-  Object.assign(num.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", fontVariantNumeric: "tabular-nums" });
+  num.style.fontVariantNumeric = "tabular-nums";
+  if (opts.unit) side(opts.unit, "marginLeft");
   const cap = document.createElement("div");
   cap.textContent = label;
   Object.assign(cap.style, { fontSize: "36px", marginTop: "12px" });
-  box.append(num, cap);
+  box.append(line, cap);
   ctx.html.append(box);
   gsap.set(box, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
   return {

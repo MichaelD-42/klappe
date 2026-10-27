@@ -24,6 +24,11 @@ const order: SceneModule = {
   },
   steps: [(tl, r: { c: ChecklistHandle; t: StepAdder[] }) => r.c.show(tl), (tl, r) => r.t[0](tl), (tl, r) => r.t[1](tl), (tl, r) => r.t[2](tl)],
 };
+// fail: a cross in --k-bad instead of a check, also on a done item, whose check goes.
+const fail: SceneModule = {
+  build: (ctx) => ({ c: checklist(ctx, { items, ...rect }) }),
+  steps: [(tl, r: { c: ChecklistHandle }) => r.c.show(tl), (tl, r) => r.c.tick(1)(tl), (tl, r) => r.c.fail(2)(tl), (tl, r) => r.c.fail(0)(tl)],
+};
 const tall: SceneModule = {
   build: (ctx) => ({ c: checklist(ctx, { items: Array.from({ length: 30 }, (_, i) => ({ text: `Item ${i + 1}` })), ...rect }) }),
   steps: [(tl, r: { c: ChecklistHandle }) => r.c.show(tl)],
@@ -38,7 +43,8 @@ export default () =>
       "sections/10-a/20-missing/scene.md": md("Missing item", 2),
       "sections/10-a/30-tall/scene.md": md("Too tall", 1),
       "sections/10-a/35-order/scene.md": md("Out of order", 4),
+      "sections/10-a/37-fail/scene.md": md("Fail", 4),
       "sections/10-a/40-markdown/scene.md": "## From Markdown\n\n- [x] Backup verified\n- [ ] Restore tested\n- [ ] Owners told\n",
     },
-    { "sections/10-a/10-ticks/scene.ts": ticks, "sections/10-a/20-missing/scene.ts": missing, "sections/10-a/30-tall/scene.ts": tall, "sections/10-a/35-order/scene.ts": order },
+    { "sections/10-a/10-ticks/scene.ts": ticks, "sections/10-a/20-missing/scene.ts": missing, "sections/10-a/30-tall/scene.ts": tall, "sections/10-a/35-order/scene.ts": order, "sections/10-a/37-fail/scene.ts": fail },
   );

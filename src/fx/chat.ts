@@ -13,6 +13,9 @@ export interface ChatOpts {
   w: number;
   h: number;
   messages: ChatMessage[];
+  // A picture per sender, from media/: { Ana: "media/ana.jpeg" }. With it, every sender gets a round avatar
+  // beside the bubble; a sender with no picture shows their initials.
+  avatars?: Record<string, string>;
 }
 export interface ChatHandle {
   el: HTMLElement;
@@ -32,6 +35,10 @@ const CPS = 50; // streaming speed, characters per second: an answer streams fas
 const GAP = 24; // between messages
 const BOUNCE = 0.2; // one dot rise or fall
 const BOUNCES = 4; // rises and falls per dot: two hops
+const FACE = 64; // an avatar's diameter
+
+// "Ana Lopez" gives "AL", "user" gives "U": up to two first letters.
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
 
 // The bubble keeps its full text as a hidden ghost, so it has its final size from build: the streamed text
 // wraps at the same places and the thread never reflows while it streams.
@@ -40,6 +47,13 @@ const CSS = `
 .k-chat-track { position: absolute; left: 0; right: 0; top: 0; display: flex; flex-direction: column; gap: ${GAP}px; }
 .k-chat-row { display: flex; flex-direction: column; align-items: flex-start; }
 .k-chat-row.k-chat-user { align-items: flex-end; }
+.k-chat-faces .k-chat-row { flex-direction: row; align-items: flex-end; gap: 16px; }
+.k-chat-faces .k-chat-row.k-chat-user { flex-direction: row-reverse; }
+.k-chat-body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.k-chat-user .k-chat-body { align-items: flex-end; }
+.k-chat-face { flex: none; width: ${FACE}px; height: ${FACE}px; border-radius: 50%; overflow: hidden; display: flex; align-items: center;
+  justify-content: center; background: var(--k-surface); color: var(--k-fg); font: 600 26px/1 var(--k-font); }
+.k-chat-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
 .k-chat-name { margin: 0 0 6px 4px; color: var(--k-muted); font: 600 24px/1.2 var(--k-font); }
 .k-chat-hold { position: relative; max-width: 72%; }
 .k-chat-bubble { position: relative; box-sizing: border-box; padding: 18px 28px; border: 3px solid var(--k-surface); border-radius: 6px;
@@ -67,11 +81,28 @@ export function chat(ctx: Ctx, opts: ChatOpts): ChatHandle {
   const panel = div(ctx.html, "k-chat");
   Object.assign(panel.style, { left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, height: `${opts.h}px` });
   const track = div(panel, "k-chat-track");
+  const faces = opts.avatars;
+  if (faces) panel.classList.add("k-chat-faces");
+  const told = new Set<string>(); // senders whose missing picture is reported already
+  const face = (row: Element, from: string) => {
+    const f = div(row, "k-chat-face");
+    f.setAttribute("data-k-chat-avatar", from);
+    const href = faces![from];
+    const url = href === undefined ? undefined : ctx.files.media[href.replace(/^\.\//, "")];
+    if (href !== undefined && url === undefined && !told.has(from)) {
+      told.add(from);
+      ctx.problem(`chat: avatar of "${from}": ${href} is missing; initials show`);
+    }
+    if (url) f.appendChild(Object.assign(document.createElement("img"), { src: url, alt: "" }));
+    else f.textContent = initials(from);
+  };
   const rows = opts.messages.map((m) => {
     const user = m.from === "user";
     const row = div(track, `k-chat-row${user ? " k-chat-user" : ""}`);
-    if (!user && m.from !== "assistant") div(row, "k-chat-name", m.from);
-    const hold = div(row, "k-chat-hold");
+    if (faces) face(row, m.from);
+    const body = faces ? div(row, "k-chat-body") : row;
+    if (!user && m.from !== "assistant") div(body, "k-chat-name", m.from);
+    const hold = div(body, "k-chat-hold");
     const bubble = div(hold, "k-chat-bubble");
     div(bubble, "k-chat-ghost", m.text);
     const live = div(bubble, "k-chat-live", user || ctx.reducedMotion ? m.text : "");

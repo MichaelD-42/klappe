@@ -6,7 +6,7 @@ let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-// The stack's over-long label and its next() past the top are the fixture's problems.
+// The stack's over-long label, its next() past the top, and two bad light() calls are the fixture's problems.
 for (const [vp, q] of [
   [{ w: 1920, h: 1080 }, ''],
   [{ w: 1366, h: 768 }, ''],
@@ -17,7 +17,12 @@ for (const [vp, q] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-pyramid${q}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['sections/10-a/20-stack/scene.ts step 1: pyramid: label of "long" too long', 'sections/10-a/20-stack/scene.ts step 3: pyramid: next() past the top layer (2 layers)'])
+    expect(r.problems).toEqual([
+      'sections/10-a/20-stack/scene.ts step 1: pyramid: label of "long" too long',
+      'sections/10-a/20-stack/scene.ts step 3: pyramid: next() past the top layer (2 layers)',
+      'sections/10-a/40-light/scene.ts step 5: pyramid: light("nope"): no such layer',
+      'sections/10-a/50-light-early/scene.ts step 2: pyramid: light("e2e"): the layer is not built yet',
+    ])
   }, 120_000)
 
 async function open(hash: string, q = ''): Promise<Page> {
@@ -88,5 +93,17 @@ test('a next() past the top layer still takes a beat', async () => {
     return tl.labels[`e:${i}`] - tl.labels[`e:${i - 1}`]
   })
   expect(span).toBeGreaterThanOrEqual(0.4)
+  await page.close()
+}, 60_000)
+
+// Once built, light(id) puts one layer back in the accent and settles the one lit before; light(null) clears it.
+test('light(id) lights a built layer again; light(null) clears it', async () => {
+  const page = await open('#/a/light/1')
+  expect(await state(page, 'light')).toEqual({ built: ['unit', 'int', 'e2e'], hot: ['e2e'] })
+  for (const [step, hot] of [[2, ['int']], [3, ['unit']], [4, []]] as const) {
+    await page.evaluate(() => void window.klappe.stepper.next())
+    await settle(page)
+    expect(await state(page, 'light'), `step ${step}`).toEqual({ built: ['unit', 'int', 'e2e'], hot })
+  }
   await page.close()
 }, 60_000)

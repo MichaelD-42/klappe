@@ -36,3 +36,14 @@ test("the camera's view on a box holds it with a margin, at the frame's aspect",
   expect(inside({ x: 100, y: 100, w: 320, h: 180 }, v)).toBe(true)
   expect(v.w).toBeCloseTo(400)
 })
+
+test('a level with links spaces its boxes wider, so the arrows have room; the other levels keep their gap', () => {
+  const gap = (cells: ReturnType<typeof zoomLayout>, a: string, b: string) => {
+    const [p, q] = [cells.find((c) => c.id === a)!, cells.find((c) => c.id === b)!]
+    return Math.max(q.x - (p.x + p.w), q.y - (p.y + p.h), p.x - (q.x + q.w), p.y - (q.y + q.h))
+  }
+  const plain = zoomLayout(boxes, rect)
+  const linked = zoomLayout(boxes, rect, 1920, [''])
+  const firstTwo = (cells: typeof plain) => cells.filter((c) => c.depth === 0).slice(0, 2).map((c) => c.id) as [string, string]
+  expect(gap(linked, ...firstTwo(linked))).toBeGreaterThan(3 * gap(plain, ...firstTwo(plain)))
+})

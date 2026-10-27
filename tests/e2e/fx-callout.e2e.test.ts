@@ -53,3 +53,19 @@ test('a deck loaded in a window with no size measures its callout targets', asyn
   expect(await page.evaluate(() => [...window.klappe.problems].filter((p: string) => p.includes('no size')))).toEqual([])
   await page.close()
 })
+
+test('hide fades the leader and the label out', async () => {
+  const shown = async (step: number) => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-callout#/a/off/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    const r = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-scene="off"] [data-k-callout]')].map((e) => getComputedStyle(e).visibility === 'visible' && getComputedStyle(e).opacity === '1'),
+    )
+    await page.close()
+    return r
+  }
+  expect(await shown(1)).toEqual([true, true])
+  expect(await shown(2)).toEqual([false, false])
+})

@@ -11,7 +11,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(6)
+    expect(r.steps).toBe(9)
     expect(r.ok).toBe(true)
   })
 
@@ -28,8 +28,10 @@ test('a walking figure lifts one leg at a time and swings the opposite arm', asy
     const tl = canvases[steps[i].canvas].tl
     const [a, b] = [tl.labels[`e:${i - 1}`], tl.labels[`e:${i}`]]
     const root = document.querySelector('[data-scene="walk"] [data-k-figure]')!
-    // Joints in build order: right thigh, left thigh, right arm, left arm (screen left first).
-    const joints = [...root.children].filter((e) => e.localName === 'g').slice(0, 4)
+    // Joints in build order: right thigh, left thigh, then in the upper-body group right arm, left arm (screen left first).
+    const groups = (e: Element) => [...e.children].filter((c) => c.localName === 'g')
+    const [t0, t1, upper] = groups(root)
+    const joints = [t0, t1, ...groups(upper).slice(0, 2)]
     const turned = (g: Element) => Math.abs(Number(/rotate\(([-\d.e]+)/.exec(g.getAttribute('transform') ?? '')?.[1] ?? 0)) > 0.01
     const out: boolean[][] = []
     for (let k = 1; k < 40; k++) {
@@ -98,3 +100,33 @@ test('figure, timer and checklist handles expose their root as el', async () => 
   expect(r).toEqual({ figure: true, timer: true, checklist: true })
   await browser.close()
 })
+
+// Seated, the head sits lower and the feet stay on the floor; sit() gets there and stand() back.
+test('a seated figure is shorter with its feet on the floor; sit and stand move between the poses', async () => {
+  const { chromium } = await import('@playwright/test')
+  const { settle } = await import('./driver')
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    const at = async (step: number) => {
+      await page.goto(`${inject('BASE_URL')}/?fixture=fx-figure#/a/seat/${step}`)
+      await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+      await settle(page)
+      return page.evaluate(() =>
+        [...document.querySelectorAll<SVGGElement>('[data-scene="seat"] [data-k-figure]')].map((g) => {
+          const b = g.getBoundingClientRect()
+          return { top: Math.round(b.top), bottom: Math.round(b.bottom) }
+        }),
+      )
+    }
+    const [seated, standing] = await at(1)
+    expect(Math.abs(seated.bottom - standing.bottom)).toBeLessThan(3)
+    expect(seated.top - standing.top).toBeGreaterThan(30)
+    const [, sat] = await at(2)
+    expect(sat).toEqual(seated)
+    const [, stood] = await at(3)
+    expect(stood).toEqual(standing)
+  } finally {
+    await browser.close()
+  }
+}, 90_000)

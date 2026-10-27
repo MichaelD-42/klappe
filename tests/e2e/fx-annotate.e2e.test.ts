@@ -14,7 +14,10 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-annotate`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['sections/10-a/20-no-size/scene.ts step 1: annotate: circle target has no size to measure'])
+    expect(r.problems).toEqual([
+      'sections/10-a/40-colors/scene.ts: annotate: color "red" is not a --k-* token name',
+      'sections/10-a/20-no-size/scene.ts step 1: annotate: circle target has no size to measure',
+    ])
   }, 120_000)
 
 // Each mark is drawn on its word, measured through the stage scale, and sits above the text.
@@ -119,5 +122,23 @@ test('a ring on a code line stays clear of the lines above and below', async () 
   expect(r.ring.bottom).toBeLessThanOrEqual(r.below + 1)
   expect(r.ring.left).toBeLessThan(r.line.left)
   expect(r.ring.right).toBeGreaterThan(r.line.right)
+  await page.close()
+}, 60_000)
+
+// A cross is --k-bad by default, any mark takes a --k-* token, and a colour that is no token falls back to --k-accent.
+test('each mark strokes in its colour token', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/colors/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await settle(page)
+  const r = await page.evaluate(() =>
+    Object.fromEntries(
+      [...document.querySelectorAll<SVGElement>('[data-scene="colors"] svg[data-k-annotation]')].map((svg) => [
+        svg.dataset.kAnnotation,
+        [...new Set([...svg.querySelectorAll<SVGPathElement>('path')].map((p) => p.style.stroke))],
+      ]),
+    ),
+  )
+  expect(r).toEqual({ cross: ['var(--k-bad)'], bracket: ['var(--k-ok)'], box: ['var(--k-warn)'], underline: ['var(--k-accent)'] })
   await page.close()
 }, 60_000)

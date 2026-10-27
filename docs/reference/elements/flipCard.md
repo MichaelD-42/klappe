@@ -44,4 +44,4 @@ Call `flipCard` in `build`, so the card exists at load; the steps only use what 
 ### Limits
 
 - With reduced motion the two sides crossfade in place; the card does not turn. The PDF export uses reduced motion, so each page shows the side its step leaves.
-- The text is not shrunk to fit. Keep each side to a few words; at 40 px a default card holds about six short lines.
+- Each side's text shrinks from 40 px to the 20 px floor to fit the face; text that still does not fit shows `flipCard: text of the front too long` (or `back`). Fitting happens when the first step is added. At 40 px a default card holds about six short lines.

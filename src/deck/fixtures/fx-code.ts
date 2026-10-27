@@ -37,6 +37,12 @@ const diff: SceneModule = {
   ],
 };
 
+// Line numbers, and a diff that types its added lines in: two lines come in typed, one goes.
+const TYPED = ["const a = load();", "if (!a) throw new Error(\"empty\");", "save(a);", "log(a);"].join("\n");
+const typed: SceneModule = {
+  build: (ctx) => code(ctx, { src: BEFORE, lang: "js", x: 160, y: 200, w: 1200, h: 500, lineNumbers: true }),
+  steps: [(tl, h: CodeHandle) => h.show(tl), (tl, h: CodeHandle) => h.diff(TYPED, { type: true })(tl)],
+};
 // Clipped code that a diff makes longer, then short enough to fit: the "+N more lines" row swaps, then goes.
 const grow: SceneModule = {
   build: (ctx) => code(ctx, { src: LONG, lang: "ts", x: 160, y: 140, w: 1600, h: 800 }),
@@ -82,11 +88,13 @@ export default () =>
       "sections/10-a/30-langs/scene.md": "## Languages\n\n- Every bundled language.\n",
       "sections/10-a/40-long/scene.md": `## Long\n\n${f}ts\n${LONG}\n${f}\n\n- Forty lines.\n`,
       "sections/10-a/60-grow/scene.md": "## Grow\n\n- Show.\n- Grow.\n- Shrink.\n",
+      "sections/10-a/70-typed/scene.md": "## Typed\n\n- Show.\n- Type.\n",
       "sections/10-a/50-bad/scene.md": `## Bad groups\n\n${f}python {0-2|4-2|1-99999999}\n${TWENTY}\n${f}\n\n- Line 0.\n- Reversed.\n- Huge.\n`,
     },
     {
       "sections/10-a/20-diff/scene.ts": diff,
       "sections/10-a/30-langs/scene.ts": langs,
       "sections/10-a/60-grow/scene.ts": grow,
+      "sections/10-a/70-typed/scene.ts": typed,
     },
   );

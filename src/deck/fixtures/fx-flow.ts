@@ -36,6 +36,23 @@ const long: SceneModule = {
   steps: [(tl, r) => r.f.show()(tl)],
 };
 
+// A decision, a store and a start node, then everything but the decision dimmed and back.
+const kinds: SceneModule = {
+  build: (ctx) => ({
+    f: flow(ctx, {
+      grid,
+      nodes: [
+        { id: "start", label: "Order in", col: 0, row: 0, kind: "terminal" },
+        { id: "ok", label: "In stock?", col: 1, row: 0, kind: "decision" },
+        { id: "db", label: "Stock", col: 1, row: 1, kind: "store" },
+        { id: "ship", label: "Ship", col: 2, row: 0 },
+      ],
+      edges: [{ from: "start", to: "ok" }, { from: "ok", to: "db", label: "check" }, { from: "ok", to: "ship", label: "yes" }],
+    }),
+  }),
+  steps: [(tl, r: { f: FlowHandle }) => r.f.show()(tl), (tl, r) => r.f.dim(["start", "db", "ship"])(tl), (tl, r) => r.f.dim([])(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -45,11 +62,13 @@ export default () =>
       "sections/10-a/20-send/scene.md": md("Send"),
       "sections/10-a/30-call/scene.md": md("Callout"),
       "sections/10-a/40-long/scene.md": md("Too long", 1),
+      "sections/10-a/50-kinds/scene.md": md("Kinds", 3),
     },
     {
       "sections/10-a/10-parts/scene.ts": parts,
       "sections/10-a/20-send/scene.ts": send,
       "sections/10-a/30-call/scene.ts": call,
       "sections/10-a/40-long/scene.ts": long,
+      "sections/10-a/50-kinds/scene.ts": kinds,
     },
   );

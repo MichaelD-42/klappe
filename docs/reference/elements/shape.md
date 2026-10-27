@@ -37,6 +37,8 @@ Call `shape` and `arrow` in `build`, so the shapes exist at load; the steps only
 | `r`        | number                             | (required for circle) | the radius                                                                  |
 | `x2`, `y2` | number                             | (required for line)   | the line's end                                                              |
 | `accent`   | boolean                            | `false`               | stroke in `--k-accent` instead of `--k-line`                                |
+| `dash` | boolean | `false` | a dashed stroke, dashes three widths long; it draws on solid, then shows its dashes. An arrow's head stays solid. Catalog: `#/shapes/diagram/2` |
+| `width` | number | 4 | the stroke in scene px; under 2 shows `<shape \| arrow>: width <n> is under the 2 px floor` and draws 2 |
 
 ### Step adders
 
@@ -56,6 +58,8 @@ The handle's `el` is the shape's `<g>`, for a tween of your own (move it, or twe
 | `from`, `to` | `{ x, y }` | (required) | the tail and the tip, scene-local                                                                       |
 | `curve`      | number     | `0`        | how far the curve bends, as a share of the length (the bend's widest point is half this): `0.2` bends to the left of the way the arrow points, `-0.2` to the right |
 | `accent`     | boolean    | `false`    | stroke in `--k-accent` instead of `--k-line`                                                            |
+| `dash` | boolean | `false` | a dashed stroke, dashes three widths long; it draws on solid, then shows its dashes. An arrow's head stays solid. Catalog: `#/shapes/diagram/2` |
+| `width` | number | 4 | the stroke in scene px; under 2 shows `<shape \| arrow>: width <n> is under the 2 px floor` and draws 2 |
 
 ## `tint`
 

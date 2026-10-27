@@ -47,3 +47,37 @@ test('into a box: its insides show at the top level size, the rest of its level 
   expect([back.Shop.on, back.Billing.on, back['Shop/API/Orders'].on, back['Shop/Web'].on]).toEqual([true, true, false, false])
   await page.close()
 }, 60_000)
+
+// A level's links show with it and leave with it; each runs from the edge of one box to the edge of the other.
+test('links show with their level, edge to edge, and go when the camera leaves it', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  const at = async (step: number) => {
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-semanticzoom#/a/links/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    return page.evaluate(() => {
+      const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+      const box = (id: string) => document.querySelector(`[data-scene="links"] [data-k-zoom-box="${id}"]`)!.getBoundingClientRect()
+      // Distance from a point to a box's outline, 0 on it.
+      const off = (x: number, y: number, r: DOMRect) => Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom))
+      const links = [...document.querySelectorAll<SVGElement>('[data-scene="links"] [data-k-zoom-link]')].filter(shows)
+      return links.map((l) => {
+        const [from, to] = l.dataset.kZoomLink!.split(' > ')
+        const p = l.querySelector('path')!
+        const len = p.getTotalLength()
+        const m = p.getScreenCTM()!
+        const pt = (d: number) => new DOMPoint(p.getPointAtLength(d).x, p.getPointAtLength(d).y).matrixTransform(m)
+        const [a, b] = [pt(0), pt(len)]
+        const [fa, tb] = [box(from), box(to)]
+        return { link: l.dataset.kZoomLink, touches: off(a.x, a.y, fa) < 12 && off(b.x, b.y, tb) < 30 }
+      })
+    })
+  }
+  const names = async (step: number) => (await at(step)).map((l) => l.link)
+  expect(await names(1)).toEqual(['Shop > Billing', 'Billing > Support'])
+  expect(await names(2)).toEqual(['Shop/Web > Shop/API', 'Shop/API > Shop/DB'])
+  expect(await names(3)).toEqual(['Shop/API/Orders > Shop/API/Payments'])
+  expect(await names(4)).toEqual(['Shop/Web > Shop/API', 'Shop/API > Shop/DB'])
+  for (const step of [1, 2, 3]) for (const l of await at(step)) expect(l.touches, `${l.link} at step ${step}`).toBe(true)
+  await page.close()
+}, 60_000)

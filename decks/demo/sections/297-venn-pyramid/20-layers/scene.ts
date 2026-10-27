@@ -1,7 +1,7 @@
 import { pyramid, title, type BasicHandle, type PyramidHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
-export default captioned("pyramid(ctx, { layers, shape, … }) — next() builds the next layer up", {
+export default captioned("pyramid(ctx, { layers, shape, … }) — next() builds the next layer up, light(id) lights one again", {
   build: (ctx) => ({
     h: title(ctx),
     p: pyramid(ctx, {
@@ -19,5 +19,6 @@ export default captioned("pyramid(ctx, { layers, shape, … }) — next() builds
     (tl, r) => r.p.next()(tl),
     (tl, r) => r.p.next()(tl),
     (tl, r) => r.p.next()(tl),
+    (tl, r) => r.p.light("contract")(tl),
   ],
 });

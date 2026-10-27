@@ -4,7 +4,8 @@ import type { SceneModule, StepAdder } from "../../types";
 
 // A table whose row adders are made in build out of step order, a short row, a row of text only (no marks), a missing
 // row and a table too tall;
-// a card with extras revealed per step, a missing extra and a card too tall (with no extras).
+// a card with extras revealed per step, a missing extra and a card too tall (with no extras); a table whose columns
+// light one after another, then none.
 const columns = ["Basic", "Team", "Enterprise"];
 const rows = [
   { label: "Single sign-on", cells: [false, true, true] },
@@ -48,6 +49,16 @@ const cardTall: SceneModule = {
   steps: [(tl, x: { c: ExerciseCardHandle }) => x.c.show(tl)],
 };
 
+const lit: SceneModule = {
+  build: (ctx) => ({ t: compareTable(ctx, { columns, rows, ...rect }) }),
+  steps: [
+    (tl, x: { t: CompareTableHandle }) => (x.t.show(tl), x.t.row(0)(tl), x.t.row(1)(tl)),
+    (tl, x) => x.t.column(1)(tl),
+    (tl, x) => x.t.column(2)(tl),
+    (tl, x) => x.t.column(null)(tl),
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -58,6 +69,7 @@ export default () =>
       "sections/10-a/30-tall/scene.md": md("Too tall", 1),
       "sections/10-a/40-card/scene.md": md("Card", 4),
       "sections/10-a/50-card-tall/scene.md": md("Card too tall", 1),
+      "sections/10-a/60-lit/scene.md": md("Columns", 4),
     },
     {
       "sections/10-a/10-order/scene.ts": order,
@@ -65,5 +77,6 @@ export default () =>
       "sections/10-a/30-tall/scene.ts": tall,
       "sections/10-a/40-card/scene.ts": card,
       "sections/10-a/50-card-tall/scene.ts": cardTall,
+      "sections/10-a/60-lit/scene.ts": lit,
     },
   );

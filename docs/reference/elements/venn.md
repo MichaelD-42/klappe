@@ -49,7 +49,7 @@ With `?reducedmotion=1` (or the viewer's setting) the outlines fade in instead o
 
 - `sets` must have 2 or 3 entries with distinct ids; otherwise `venn` throws.
 - An id that is not a set throws `venn: unknown set "<id>"`: in a `regions` key when the venn is built, in `light()` when the step is made. `light()` with no ids throws `venn: a region needs a set`.
-- Names and region labels are not fitted. Keep them to a word or two: a pair region in a three-set venn is about 0.6 × the radius wide (155 px in the catalog).
+- A name keeps one line, as wide as its circle; a region label wraps to two lines, 0.6 × the radius wide (155 px for a pair region in the catalog). Both shrink to the 20 px floor (names from 26 px, labels from 22 px); one that still does not fit shows `venn: name of set "<id>" too long` or `venn: label of region "<key>" too long`. Fitting happens when the first step is added. Keep them to a word or two.
 
 ## `vennLayout`
 

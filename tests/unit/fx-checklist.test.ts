@@ -48,8 +48,8 @@ function build(extra: { items?: typeof items } = {}) {
   ;(globalThis as any).document = { createElement: () => (made.push(el()), made[made.length - 1]), createElementNS: () => (svgs.push(el()), svgs[svgs.length - 1]) }
   const ctx: any = { svg: el(), html: el(), problem: () => {} }
   const h = checklist(ctx, { items: extra.items ?? [{ text: 'A', done: true }, { text: 'B' }, { text: 'C' }], x: 0, y: 0, w: 1000 })
-  // svg elements per item are created in order: svg, rect, path
-  const item = (i: number) => ({ box: svgs[i * 3 + 1], mark: svgs[i * 3 + 2], text: made[2 + i * 2] })
+  // svg elements per item are created in order: svg, rect, check, cross
+  const item = (i: number) => ({ box: svgs[i * 4 + 1], mark: svgs[i * 4 + 2], cross: svgs[i * 4 + 3], text: made[2 + i * 2] })
   return { h, item }
 }
 

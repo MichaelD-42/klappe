@@ -1,0 +1,91 @@
+/* Review window (?review=1): a normal page, like the speaker view. Three fields for the step shown, each tall
+   enough for four lines, and a status line that says where the findings are saved. */
+.k-review {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(20px, 2.5vw, 40px) clamp(24px, 3vw, 56px);
+  overflow: auto;
+  background: var(--k-bg);
+  color: var(--k-fg);
+  font-family: var(--k-font);
+}
+
+.k-rv-place {
+  margin: 0;
+  font-size: clamp(16px, 1.4vw, 24px);
+  font-weight: 600;
+  color: var(--k-muted);
+}
+
+.k-rv-text {
+  margin: 0;
+  font-size: clamp(20px, 1.9vw, 32px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.k-rv-moved {
+  margin: 0;
+  color: var(--k-warn);
+}
+
+.k-rv-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.k-rv-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: clamp(14px, 1.1vw, 18px);
+  font-weight: 600;
+  color: var(--k-accent);
+}
+
+.k-rv-label textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  resize: vertical;
+  font: inherit;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--k-fg);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: 6px;
+}
+
+.k-rv-label textarea:focus {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+
+.k-rv-buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.k-rv-buttons .k-btn {
+  flex: 1;
+  text-align: center;
+  font-size: clamp(15px, 1.1vw, 18px);
+  padding: 8px 12px;
+}
+
+.k-rv-status {
+  margin: 0;
+  font-size: clamp(13px, 1vw, 16px);
+  color: var(--k-muted);
+}
+
+.k-rv-status.k-rv-failed {
+  color: var(--k-warn);
+}

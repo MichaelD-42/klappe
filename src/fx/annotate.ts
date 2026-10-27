@@ -5,10 +5,11 @@ import { anchor } from "./callout";
 import { drawOn } from "./draw";
 import { lines, measure } from "./measure";
 
-export type AnnotationKind = "circle" | "underline" | "box" | "strike" | "arrow" | "highlight";
+export type AnnotationKind = "circle" | "underline" | "box" | "strike" | "arrow" | "highlight" | "bracket" | "cross";
 export interface AnnotateOpts {
   kind: AnnotationKind;
-  side?: "left" | "right" | "top" | "bottom"; // arrow: the side it comes from; default "left"
+  side?: "left" | "right" | "top" | "bottom"; // arrow: the side it comes from; bracket: the side it stands on; default "left"
+  color?: string; // a --k-* token name; default "--k-bad" for a cross, else "--k-accent"
   pad?: number; // scene units between the target and the stroke; default 12
   seed?: number; // picks the wobble; default 1
 }
@@ -22,9 +23,9 @@ const SVG = "http://www.w3.org/2000/svg";
 const ARROW = 160; // the arrow's length from its tail to the target edge
 const HEAD = 22; // each head stroke's length
 export const MARKER_MIX = 0.35; // the share of --k-accent in a highlight band; --k-fg on it holds 6.3:1 or more in every built-in theme
-const MARKER = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`;
 const BAND = 0.8; // a highlight band's height, as a share of its line's
-const SLANT = 0.3; // the most a highlight band's ends lean (tan of the angle), as a chisel marker's do
+const SLANT = 0.3;
+const BRACE = 26; // how far a bracket's tip stands out from its ends // the most a highlight band's ends lean (tan of the angle), as a chisel marker's do
 
 // mulberry32: a small seeded generator, so a stroke is the same on every load and in every test.
 function random(seed: number) {
@@ -110,6 +111,33 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
     const o = (box.h * BAND * lean(opts.seed)) / 2;
     return [line({ x: x0 + o, y: cy + (rnd() - 0.5) * 8 }, { x: x1 - o, y: cy + (rnd() - 0.5) * 8 }, 16, 3, rnd)];
   }
+  if (kind === "cross") {
+    // Two strokes, upper left to lower right, then upper right to lower left.
+    return [line({ x: x0, y: y0 }, { x: x1, y: y1 }, 12, 4, rnd), line({ x: x1, y: y0 + rnd() * 6 }, { x: x0, y: y1 - rnd() * 6 }, 12, 4, rnd)];
+  }
+  if (kind === "bracket") {
+    // A curly brace along the padded edge on `side`: its ends curl in to the edge, its spine stands half out,
+    // and its tip at the middle stands BRACE out, pointing away from the box.
+    const side = opts.side ?? "left";
+    const across = side === "left" || side === "right";
+    const [a, b] = across ? [y0, y1] : [x0, x1];
+    const sign = side === "left" || side === "top" ? -1 : 1;
+    const edge = { left: x0, right: x1, top: y0, bottom: y1 }[side] + sign * pad;
+    const len = b - a;
+    const curl = Math.min(0.25, BRACE / len); // the share of the run each end and the tip take to turn
+    const n = 48;
+    const k = 1 + (rnd() - 0.5) * 0.15;
+    return [
+      Array.from({ length: n + 1 }, (_, i) => {
+        const t = i / n;
+        const end = Math.min(1, Math.min(t, 1 - t) / curl);
+        const tip = Math.max(0, 1 - Math.abs(t - 0.5) / curl);
+        const off = edge + sign * k * BRACE * ((1 - (1 - end) ** 2) / 2 + tip ** 2 / 2);
+        const along = a + len * t;
+        return across ? { x: off, y: along } : { x: along, y: off };
+      }),
+    ];
+  }
   if (kind === "strike") return [line({ x: x0, y: cy + 4 - rnd() * 4 }, { x: x1, y: cy - 4 + rnd() * 4 }, 16, 3, rnd)];
   if (kind === "box") {
     // Four sides in one stroke; each corner overshoots a little, as a quick frame does.
@@ -131,11 +159,16 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
   return [shaft, ...head];
 }
 
-// A hand-drawn mark on a target, in --k-accent: it draws on, then hide fades it out. It sits in its own SVG
+// A hand-drawn mark on a target, in --k-accent (a cross in --k-bad) or opts.color: it draws on, then hide fades it out. It sits in its own SVG
 // above the scene's HTML, so it can mark text; a highlight's SVG goes just before the target's top-level element
 // instead, so it paints behind the text. An element target is measured by its content (its text, not
 // the row it fills) when show is added (see measure).
 export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): AnnotateHandle {
+  let color = opts.color ?? (opts.kind === "cross" ? "--k-bad" : "--k-accent");
+  if (!/^--k-[\w-]+$/.test(color)) {
+    ctx.problem(`annotate: color "${color}" is not a --k-* token name`);
+    color = opts.kind === "cross" ? "--k-bad" : "--k-accent";
+  }
   const svg = document.createElementNS(SVG, "svg");
   svg.setAttribute("data-k-annotation", opts.kind);
   svg.setAttribute("width", String(ctx.rect.w));
@@ -169,7 +202,7 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
         p.setAttribute("d", pts.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "));
         // A highlight band is most of its line's height, with butt ends (a round cap would reach into the next
         // word) that a skew about its middle leans like a chisel marker's, a little more or less on each line.
-        const stroke = hl ? { stroke: MARKER, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: "var(--k-accent)", strokeWidth: "4", strokeLinecap: "round" };
+        const stroke = hl ? { stroke: `color-mix(in srgb, var(${color}) ${MARKER_MIX * 100}%, transparent)`, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: `var(${color})`, strokeWidth: "4", strokeLinecap: "round" };
         Object.assign(p.style, { fill: "none", strokeLinejoin: "round", ...stroke });
         if (hl) {
           const t = lean(seed + i);

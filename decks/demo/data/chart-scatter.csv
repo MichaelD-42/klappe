@@ -1,8 +1,9 @@
 # source: klappe demo sample
-team,lead time in days,deploys a week
-Web,3,12
-Mobile,5,6
-Data,2,9
-Platform,8,3
-Payments,6,4
-Search,4,10
+team,area,lead time in days,deploys a week
+Web,Product,3,12
+Mobile,Product,5,6
+Data,Core,2,9
+Platform,Core,8,3
+Payments,Product,6,4
+Search,Core,4,10
+Billing,Product,6.2,4.3

@@ -26,6 +26,7 @@ steps: [
 | --- | --- | --- | --- |
 | `dim` | number | 0.7 | 0 to 1: how dark the scene goes around the hole |
 | `pad` | number | 24 | scene units between the target and the hole's edge |
+| `shape` | `"rect"` or `"circle"` | `"rect"` | `"circle"`: a round hole through the target's corners plus `pad`, for an icon or a dot. Catalog: `#/spotlight/round/2` |
 
 ### Step adders
 

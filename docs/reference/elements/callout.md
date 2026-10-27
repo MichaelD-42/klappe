@@ -37,6 +37,7 @@ export default captioned("callout() — a leader line draws on, then the label a
 | Handle | Step |
 | --- | --- |
 | `show` | the leader draws on from the target edge (`--k-accent`), the label box (`--k-surface`, 2px `--k-accent` border) fades in, then its text |
+| `hide` | the leader and the label fade out. Add it in a step after `show`; on a callout that did not draw (see Limits) it does nothing. Catalog: `#/callout/point/2` |
 
 ### Limits
 

@@ -60,3 +60,28 @@ test('place adders built out of step order still place, then move', async () => 
   expect(await at(2)).toEqual({ shows: true, right: true })
   expect(await at(3)).toEqual({ shows: true, right: false })
 }, 60_000)
+
+// place(id, { x, y }) centres the item at that share of the plot, y counted up from the x axis; a later place
+// moves it, and quadrant slots still work beside it.
+test('place(id, { x, y }) puts the item at its score in the plot', async () => {
+  const at = async (step: number) => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-matrix#/a/scores/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    const r = await page.evaluate(() => {
+      // The plot is where the axis lines run: the x title spans its width, the y title its height.
+      const titles = [...document.querySelectorAll<HTMLElement>('[data-scene="scores"] div')].filter((e) => e.textContent === 'Effort' || e.textContent === 'Impact')
+      const [x, y] = [titles.find((e) => e.textContent === 'Effort')!.getBoundingClientRect(), titles.find((e) => e.textContent === 'Impact')!.getBoundingClientRect()]
+      const share = (id: string) => {
+        const b = document.querySelector(`[data-scene="scores"] [data-k-matrix-item="${id}"]`)!.getBoundingClientRect()
+        return { x: Math.round(((b.x + b.width / 2 - x.left) / x.width) * 100) / 100, y: Math.round(((y.bottom - (b.y + b.height / 2)) / y.height) * 100) / 100 }
+      }
+      return { sso: share('sso'), dark: share('dark') }
+    })
+    await page.close()
+    return r
+  }
+  expect((await at(3))).toEqual({ sso: { x: 0.2, y: 0.9 }, dark: { x: 0.8, y: 0.1 } })
+  expect((await at(4)).sso).toEqual({ x: 0.6, y: 0.5 })
+}, 60_000)

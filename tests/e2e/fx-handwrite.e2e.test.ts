@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { runSelftest } from './driver'
+import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
 beforeAll(async () => void (browser = await chromium.launch()))
@@ -58,3 +58,23 @@ test('with reduced motion the phrase fades in whole', async () => {
   expect(r.whole).toBe(17)
   await page.close()
 })
+
+// Several lines: a list item's source lines (trimmed) or a list, each on its own line, all written by the end.
+test('a text of several lines writes each on its own line', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-handwrite#/a/lines/2`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await settle(page)
+  const r = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-scene="lines"] [data-k-handwrite]')].map((e) => ({
+      lines: e.innerText.split('\n'),
+      whole: [...e.children].every((s) => (s as HTMLElement).style.clipPath === 'none'),
+      label: e.getAttribute('aria-label'),
+    })),
+  )
+  expect(r).toEqual([
+    { lines: ['Ship it', 'on Friday'], whole: true, label: 'Ship it on Friday' },
+    { lines: ['Then tell', 'the team'], whole: true, label: 'Then tell the team' },
+  ])
+  await page.close()
+}, 60_000)

@@ -11,7 +11,7 @@ export type MatrixOpts = {
 } & Rect;
 export interface MatrixHandle {
   show: StepAdder;
-  place(id: string, quadrant: Quadrant): StepAdder;
+  place(id: string, at: Quadrant | { x: number; y: number }): StepAdder; // a quadrant's next slot, or a 0-to-1 score (y up)
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -95,7 +95,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       left: `${opts.x}px`, top: `${plot.y}px`, width: `${GUTTER - 12}px`, height: `${plot.h}px`, display: "flex", alignItems: "center", justifyContent: "center",
       writingMode: "vertical-rl", transform: "rotate(180deg)", color: "var(--k-fg)", font: axisFont,
     }, opts.axes.y),
-  ].map((t) => t.el);
+  ];
   const names = QUADS.filter((q) => opts.quadrants?.[q]).map((q) => {
     const b = quads[q];
     return [q, div({
@@ -123,9 +123,13 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   const fit = () => {
     if (fitted) return;
     fitted = true;
-    const shrink = (el: HTMLElement, text: HTMLElement, max: number, n: number, msg: string) => {
+    // A vertical title's lines stack sideways: its width counts them.
+    const shrink = (el: HTMLElement, text: HTMLElement, max: number, n: number, msg: string, vertical = false) => {
       let size = max;
-      const over = () => text.offsetHeight > LINE_H * size * n + 1 || text.offsetHeight > el.clientHeight || text.scrollWidth > text.clientWidth;
+      const over = () =>
+        vertical
+          ? text.scrollWidth > LINE_H * size * n + 1
+          : text.offsetHeight > LINE_H * size * n + 1 || text.offsetHeight > el.clientHeight || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;
         if (!over()) break;
@@ -133,11 +137,13 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       el.style.fontSize = `${size}px`;
       if (over()) ctx.problem(msg);
     };
+    titles.forEach(({ el, text }, i) => shrink(el, text, AXIS_FONT, 1, `matrix: ${i ? "y" : "x"} axis title too long`, i === 1));
     for (const [q, { el, text }] of names) shrink(el, text, NAME_FONT, 1, `matrix: name of quadrant "${q}" too long`);
     for (const [id, { el, text }] of items) shrink(el, text, MAX_FONT, 2, `matrix: label of "${id}" too long`);
   };
 
-  const where = new Map<string, { q: Quadrant; k: number }>();
+  // A slot in a quadrant, or a point (p) that takes no slot.
+  const where = new Map<string, { q?: Quadrant; k: number; p?: { x: number; y: number } }>();
   let last: string | undefined; // the item placed by the latest place(), in the accent until the next one
 
   return {
@@ -147,11 +153,33 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       lines.forEach((l) => tl.set(l, { autoAlpha: 1 }, t));
       drawOn(lines, { duration: 0.6, each: 0.1, at: t })(tl);
       tl.to(heads, { autoAlpha: 1, duration: 0.2 }, t + 0.5);
-      tl.to([...titles, ...names.map(([, n]) => n.el)], { autoAlpha: 1, duration: 0.4 }, t + 0.4);
+      tl.to([...titles.map((t) => t.el), ...names.map(([, n]) => n.el)], { autoAlpha: 1, duration: 0.4 }, t + 0.4);
     },
-    place(id, q) {
+    place(id, at) {
       const item = items.get(id);
       if (!item) throw new Error(`matrix: unknown item "${id}"`);
+      if (typeof at === "object") {
+        if (![at.x, at.y].every((v) => v >= 0 && v <= 1)) throw new Error(`matrix: place "${id}" at x ${at.x}, y ${at.y}; both run from 0 to 1`);
+        // Centred on the score, kept inside the plot.
+        const s = {
+          x: Math.min(Math.max(plot.x + at.x * plot.w - chip.w / 2, plot.x), plot.x + plot.w - chip.w),
+          y: Math.min(Math.max(plot.y + (1 - at.y) * plot.h - chip.h / 2, plot.y), plot.y + plot.h - chip.h),
+        };
+        return (tl) => {
+          const from = where.get(id);
+          const prev = last;
+          where.set(id, { k: -1, p: at });
+          last = id;
+          fit();
+          const t = tl.duration();
+          if (prev && prev !== id) tl.set(items.get(prev)!.el, { borderColor: "var(--k-line)", outlineColor: "transparent", zIndex: 2, immediateRender: false }, t);
+          tl.set(item.el, { borderColor: "var(--k-accent)", outlineColor: "var(--k-accent)", zIndex: 3, immediateRender: false }, t);
+          if (!from) tl.fromTo(item.el, { ...s, autoAlpha: 0 }, { ...s, autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
+          else if (from.p?.x !== at.x || from.p?.y !== at.y) tl.to(item.el, { ...s, duration: motion.step, ease: "power2.inOut" }, t);
+          else tl.set({}, {}, t + 0.4);
+        };
+      }
+      const q = at;
       if (!QUADS.includes(q)) throw new Error(`matrix: unknown quadrant "${q}"`);
       // The slot is picked when the step is added, not here: adders built out of step order still place in step order.
       return (tl) => {

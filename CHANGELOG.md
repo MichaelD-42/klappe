@@ -2,6 +2,55 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.6.0 (unreleased)
+
+### Added
+
+- Small options: `spotlight` `shape: "circle"`; `wipe` `direction: "vertical"`; `loupe` `to(x, y, { zoom })` per stop; `shape` and `arrow` `dash` and `width` (at least 2); `pulse` `{ color }` token. Catalog: `#/spotlight/round/2`, `#/fullscreen/wipe-down/2`, `#/loupe/detail/3`, `#/shapes/diagram/2`, `#/attention/nudges/4`.
+- `figure`: a seated pose on a chair, `seated: true` from load or `sit(tl)` and `stand(tl)` in a step. Catalog: `#/figure/table/3`.
+- `worldMap`: `region(tl, country)` fills a country in the accent, by its world-atlas name or ISO 3166-1 numeric code, for "where we sell". Catalog: `#/map/world/6`.
+- `handwrite`: several lines, from a list item's source lines or a list of strings, written one after the other, each up to 4 s. Catalog: `#/handwriting/note/1`.
+- `image`: `credit: "Photo: …"` puts a small credit line in the picture's bottom-right corner, readable on any photo. Catalog: `#/fullscreen/cover/1`.
+- `pointer`: `drag(item, to)` grabs an element at its centre, carries it with the pointer onto a target or a point and lets go. Catalog: `#/pointer/drag/2`.
+- `matrix`: `place(id, { x, y })` puts an item at its scores, 0 to 1 on each axis, for a scored effort and impact map; a later place moves it. Catalog: `#/matrix/scored/1`.
+- `gitGraph`: `{ tag, on }` puts a tag over a branch tip, and `{ cherryPick, onto }` copies a commit (by its label) onto another branch, keeping the original. Catalog: `#/git/backport/7`.
+- `semanticZoom`: `links: [{ from, to }]` draws arrows between boxes of one level, shown and hidden with that level; a level with links spaces its boxes wider. Catalog: `#/semantic-zoom/system/1`.
+- `sequence`: `activations` draw bars on lifelines while an actor is busy, a `{ note, over }` row puts a note over one or two actors, and `frames` group rows in `alt`, `loop`, `opt` or `par` frames with an optional `else` line; each shows with its first row. Catalog: `#/sequence/frames/1`.
+- `stickyNotes`: `vote(id, n)` drops `n` dots on a note, for the dot vote after an affinity map. Dots add up over steps and move with the note. Catalog: `#/notes-cards/affinity/5`.
+- `pyramid`: `light(id)` puts a built layer back in the accent (`light(null)`: none), and `shape: "inverted"` narrows downwards, for a funnel-shaped stack. Catalog: `#/venn-pyramid/layers/5`, `#/venn-pyramid/hiring/1`.
+- `checklist`: `fail(i)` crosses a box in `--k-bad` instead of ticking it, for an audit or a pre-mortem. Catalog: `#/checklist-agenda/pre-mortem/3`.
+- `annotate`: `kind: "bracket"` stands a curly brace beside a run of lines on `side`, and `kind: "cross"` draws an X over the target, in `--k-bad`. `color` takes a `--k-*` token name for any mark. Catalog: `#/draw/annotate/8`.
+- `roadmap`: a milestone with an empty `label` is a dot: no stem, label or date, and it does not count in the spacing check or the label width, so many dots show how dense releases get while a few labels carry the story. Labelled milestones keep alternating among themselves. Catalog: `#/roadmap/rush/3`.
+- `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
+- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text.
+- `chat`: a ```` ```chat ```` fence in `scene.md` replays a thread with no `scene.ts`, one message per line and step. `avatars: { Ana: "media/ana.jpeg" }` puts a round picture beside each sender's bubble, initials where there is none. Catalog: `#/chat/chat-md/1`, `#/chat/thread/1`.
+- `code`: `lineNumbers: true` shows a muted number before each line; `diff(src, { type: true })` types the added lines in, for live coding. Catalog: `#/code/live/1`.
+- `compareTable`: `column(i)` lights one column from its header through the last row, for the plan you recommend; `column(null)` clears it. Catalog: `#/table-card/compare/6`.
+- `roadmap`: `phases: [{ id, from, to, label }]` draws spans as bars in lanes under the axis; `reveal(id)` grows one. With phases, every milestone sits above the axis. Catalog: `#/roadmap/spans/1`.
+- `flow`: node kinds for flowcharts, `kind: "decision"` (a diamond), `"store"` (a cylinder) and `"terminal"` (a pill); arrows meet the shape's outline. `dim(ids)` fades nodes and their arrows while you talk about the rest; `dim([])` brings them back. Catalog: `#/flow/flowchart/1`.
+- `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.
+- `callout`: `hide` fades the leader and the label out again. Catalog: `#/callout/point/2`.
+- `kpi`, `waffle` and `progress` take `to(value)`: the number, the cells or the ring move on to a new value in a later step, as `gauge` already did. Catalog: `#/numbers/shares/2`.
+- `flipCard`, `cardStack`, `venn` (set names and region labels) and `matrix` (axis titles) shrink their text to fit, down to the 20 px floor, as the other elements do; text that still does not fit is a deck problem instead of spilling out of its box.
+- German words: a deck with `lang: de` (or `de-DE`) shows klappe's own words in German, in the speaker view, the review window and the effects (Beispieldaten, Zeit ist um, the likert scale).
+- `chart` scatter and bubble: `group: "<column>"` colours the dots by a text column, with a legend. Catalog: `#/chart/scatter/1`.
+- `chart`: `lines: [{ value, label }]` draws dashed reference lines (a goal, last year, a limit) across bar, stacked, line, waterfall and slope charts, and down a timeline. The value axis reaches them. Catalog: `#/chart/bars/1`.
+- `chart`: `highlight(i)` works on every chart type, not only sankey. The row's marks and values stay at full strength while the rest dims, and `highlight(null)` clears it. In a line chart, `i` is a series. `bar(i)` now also grows one stack, phase or funnel stage per step; the new `slice(i)` draws one donut slice and counts the total on; the new `series(i)` draws one line. Catalog: `#/chart/series/1`, `#/chart/slices/1`.
+- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
+
+### Changed
+
+- Demo deck: the story before the gallery is two sections, 5 scenes: the title slide gives way to a booting CRT, then the value stream, with the retry bug fixed in code at its Design stage. The global team, meeting room and training sections and the gallery's scene-reuse section are gone, and with them their deep links (`global-team`, `meeting`, `technical-training`, `process-training`, `opening/boot`, `reuse`).
+
+### Fixed
+
+- Review window: a read of review.md that lands late (a slow dev server) no longer replaces a newer one, which could blank a finding on screen after stepping back.
+- `klappe test`'s `data/TODO.md` and `media/TODO.md` are no longer loaded as part of the deck, so writing them does not reload an open one.
+- `swimlanes`: `walk` to a task with no link from the current one reports `swimlanes: no link from "<a>" to "<b>"` instead of moving straight in silence, as `flow`'s `send` does. The catalog scene that showed the silent hop is gone.
+- `roadmap` on an axis of several years: ticks every 2, 3, 6 or 12 months now count from January, so each January has a tick with its year (before, an axis from March showed "Mar, Sep, Mar, …" with only the first year). An axis that starts off that grid has no tick at its left end. Milestone dates show the year.
+- `splitFlap`: Ä, Ö and Ü are on the drum, so a German word flips through them instead of changing in one cut; ß shows as ẞ instead of SS, which pushed the rest of the word one cell on.
+- `chart` scatter and bubble: names of dots that sit close together no longer overlap; they move apart, in each period.
+
 ## 0.5.1 (unreleased)
 
 ### Fixed
