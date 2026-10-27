@@ -134,3 +134,33 @@ test('a circle with room stays inside it and still rings the box', () => {
   // Wider, not taller: the ends stay within a third of the half-width past the line.
   expect(Math.max(...ring.map((p) => p.x))).toBeLessThan(line.x + line.w + PAD + line.w / 6)
 })
+
+test('a bracket runs beside the box, end to end, with its tip at the middle pointing away', () => {
+  for (const side of ['left', 'right', 'top', 'bottom'] as const) {
+    const [brace] = scribble('bracket', box, { pad: PAD, seed: 1, side })
+    const across = side === 'left' || side === 'right'
+    // Along the box: from one end to the other. Off the box: always on its side, never over it.
+    const along = across ? ys(brace) : xs(brace)
+    const [lo, hi] = across ? [box.y, box.y + box.h] : [box.x, box.x + box.w]
+    expect(Math.min(...along)).toBeLessThanOrEqual(lo + 1)
+    expect(Math.max(...along)).toBeGreaterThanOrEqual(hi - 1)
+    const out = (p: P) => ({ left: box.x - p.x, right: p.x - box.x - box.w, top: box.y - p.y, bottom: p.y - box.y - box.h })[side]
+    for (const p of brace) expect(out(p)).toBeGreaterThan(PAD / 2)
+    // The tip is the farthest point, near the middle of the run.
+    const tip = brace.reduce((a, b) => (out(b) > out(a) ? b : a))
+    expect(Math.abs((across ? tip.y : tip.x) - (lo + hi) / 2)).toBeLessThan((hi - lo) / 10)
+  }
+})
+
+test('a cross is two strokes, corner to corner over the box', () => {
+  const strokes = scribble('cross', box, { pad: PAD, seed: 1 })
+  expect(strokes).toHaveLength(2)
+  for (const s of strokes) {
+    const [a, b] = [s[0], s[s.length - 1]]
+    // Each stroke spans the whole box both ways, so the two cross over its middle.
+    expect(Math.abs(b.x - a.x)).toBeGreaterThanOrEqual(box.w)
+    expect(Math.abs(b.y - a.y)).toBeGreaterThanOrEqual(box.h)
+  }
+  const slope = (s: P[]) => Math.sign((s[s.length - 1].y - s[0].y) * (s[s.length - 1].x - s[0].x))
+  expect(slope(strokes[0])).toBe(-slope(strokes[1]))
+})

@@ -22,7 +22,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Walk through a screen: move, click, type (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in` |
 | Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
 | Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
-| Mark words as a pen would (ring, underline, frame, strike, arrow) | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
+| Mark words as a pen would (ring, underline, frame, strike, arrow, highlight); group lines with a bracket; cross out what is wrong | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
 | Nudge one element | `glow`, `pulse`, `shake` | [attention](klappe/docs/reference/elements/attention.md) | `268-attention/10-nudges` |
 | Hold back an answer, then reveal it (question and answer, myth and fact) | `flipCard` | [flipCard](klappe/docs/reference/elements/flipCard.md) | `275-flipcard/10-cards` |
 | Show a system and what flows through it; a flowchart with decisions and data stores, `kind`; set a part aside, `dim` | `flow` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/10-pipeline`, `270-flow/20-send`, `270-flow/60-flowchart` |
