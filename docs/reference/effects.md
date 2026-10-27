@@ -256,6 +256,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | `point(id)` | the site's `[x, y]`, scene-local, where its dot sits: place your own figures, labels and routes with it. Unknown id: `undefined` and a deck problem |
 | `arcPath(from, to)` | the path data of the map's arc between two sites, for a figure's `walk` or your own drawing |
 | `zoomTo(tl, id)` | the camera flies to the site; only that site's label shows; strokes thin to keep their weight |
+| `region(tl, country)` | fills a country in `--k-accent` at `MARKER_MIX` (35 %), under the coastline, fading in over 0.6 s; "where we sell". `country` is the name as `world-atlas` spells it (`"Germany"`, `"United States of America"`, `"Dem. Rep. Congo"`) or the ISO 3166-1 numeric code (`"276"`); ISO letter codes are not known. A country the atlas lacks shows `worldMap: no country '<name>'; use the ISO 3166-1 numeric code or the name in world-atlas`. The 1:110m atlas leaves out the smallest states. Catalog: `#/map/world/6` |
 | `world` | labels fade out, the camera frames the whole scene again |
 
 ### Limits

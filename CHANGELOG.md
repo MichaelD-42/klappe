@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `worldMap`: `region(tl, country)` fills a country in the accent, by its world-atlas name or ISO 3166-1 numeric code, for "where we sell". Catalog: `#/map/world/6`.
 - `handwrite`: several lines, from a list item's source lines or a list of strings, written one after the other, each up to 4 s. Catalog: `#/handwriting/note/1`.
 - `image`: `credit: "Photo: …"` puts a small credit line in the picture's bottom-right corner, readable on any photo. Catalog: `#/fullscreen/cover/1`.
 - `pointer`: `drag(item, to)` grabs an element at its centre, carries it with the pointer onto a target or a point and lets go. Catalog: `#/pointer/drag/2`.

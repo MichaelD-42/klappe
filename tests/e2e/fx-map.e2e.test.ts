@@ -11,7 +11,7 @@ for (const vp of [
     expect(r.errors).toEqual([])
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.steps).toBe(11)
+    expect(r.steps).toBe(13)
     expect(r.ok).toBe(true)
   })
 
@@ -57,8 +57,9 @@ test('the worldMap handle exposes site points and arc paths, and arc() takes a p
   await browser.close()
 }, 30_000)
 
-// A site without a label draws no text: a deck that sets its own labels needs no empty strings.
-test('a site without a label draws no text, and zoomTo and world still work', async () => {
+// A site without a label draws no text: a deck that sets its own labels needs no empty strings. A region the
+// atlas lacks is a problem.
+test('a site without a label draws no text, zoomTo and world still work, an unknown region is a problem', async () => {
   const { chromium } = await import('@playwright/test')
   const browser = await chromium.launch()
   const page = await browser.newPage()
@@ -77,9 +78,37 @@ test('a site without a label draws no text, and zoomTo and world still work', as
     map.world(tl)
     tl.seek(tl.duration())
     const texts = [...svg.querySelectorAll('text')].map((t) => t.textContent)
+    const before = problems.length
+    map.region(tl, 'Atlantis') // not a country the atlas has
     svg.remove()
-    return { problems, texts }
+    return { problems, texts, before }
   })
-  expect(r).toEqual({ problems: [], texts: ['B'] })
+  expect(r).toEqual({ problems: ["worldMap: no country 'Atlantis'; use the ISO 3166-1 numeric code or the name in world-atlas"], texts: ['B'], before: 0 })
   await browser.close()
 })
+
+// region() fills a country in --k-accent at MARKER_MIX, under the coastline, by name or ISO numeric code.
+test('region fills a country by name or by ISO numeric code', async () => {
+  const { chromium } = await import('@playwright/test')
+  const { settle } = await import('./driver')
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-map#/a/regions/2`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    const r = await page.evaluate(() =>
+      [...document.querySelectorAll<SVGPathElement>('[data-scene="regions"] [data-k-region]')].map((p) => {
+        const b = p.getBoundingClientRect()
+        return { id: p.dataset.kRegion, shows: p.checkVisibility({ opacityProperty: true, visibilityProperty: true }), fill: p.style.fill, big: b.width > 20 && b.height > 20, x: b.x }
+      }),
+    )
+    const [de, us] = ['Germany', '840'].map((id) => r.find((p) => p.id === id)!)
+    for (const p of [de, us]) expect(p).toMatchObject({ shows: true, fill: 'color-mix(in srgb, var(--k-accent) 35%, transparent)', big: true })
+    expect(r).toHaveLength(2)
+    // The USA lies west of Germany.
+    expect(us.x).toBeLessThan(de.x)
+  } finally {
+    await browser.close()
+  }
+}, 60_000)
