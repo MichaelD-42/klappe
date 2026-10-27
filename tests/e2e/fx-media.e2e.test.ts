@@ -269,3 +269,22 @@ test('an autoplay embed starts on its step, muted by default, and stops on leave
   expect((await frame('autoplay-sound'))!.src).toBe(vm)
   await page.close()
 })
+
+// A credit line sits small in the picture's bottom-right corner, on its own patch, so it reads on any photo.
+test('an image credit sits in the bottom-right corner of the picture, at least at the floor size', async () => {
+  const page = await open('?fixture=fx-media#/a/image/1')
+  await page.evaluate("import('/src/fx/media.ts').then((m) => { window.__image = m.image })")
+  const r = await page.evaluate(() => {
+    const html = document.body.appendChild(document.createElement('div'))
+    Object.assign(html.style, { position: 'absolute', left: '0', top: '0', width: '1920px', height: '1080px' })
+    const ctx = { html, rect: { x: 0, y: 0, w: 1920, h: 1080 }, files: { data: {}, media: { 'media/a.png': 'data:image/png;base64,' } }, deck: { lang: 'en', intensity: 'calm' }, problem: () => {} }
+    const h = (window as any).__image(ctx, { href: 'media/a.png', alt: 'A', rect: { x: 100, y: 100, w: 800, h: 450 }, credit: 'Photo: Ada Lovelace' })
+    const c = h.el.querySelector('[data-k-credit]') as HTMLElement
+    const [b, p] = [h.el.getBoundingClientRect(), c.getBoundingClientRect()]
+    const out = { text: c.textContent, corner: b.right - p.right < 24 && b.bottom - p.bottom < 24 && p.left > b.left + b.width / 2, px: parseFloat(getComputedStyle(c).fontSize) }
+    html.remove()
+    return out
+  })
+  expect(r).toEqual({ text: 'Photo: Ada Lovelace', corner: true, px: 20 })
+  await page.close()
+})
