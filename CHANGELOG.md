@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
 - `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/technical-training/agenda/1`.
 - `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.
 - `callout`: `hide` fades the leader and the label out again. Catalog: `#/callout/point/2`.
@@ -19,6 +20,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `roadmap` on an axis of several years: ticks every 2, 3, 6 or 12 months now count from January, so each January has a tick with its year (before, an axis from March showed "Mar, Sep, Mar, …" with only the first year). An axis that starts off that grid has no tick at its left end. Milestone dates show the year.
 - `splitFlap`: Ä, Ö and Ü are on the drum, so a German word flips through them instead of changing in one cut; ß shows as ẞ instead of SS, which pushed the rest of the word one cell on.
 - `chart` scatter and bubble: names of dots that sit close together no longer overlap; they move apart, in each period.
 

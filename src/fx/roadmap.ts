@@ -9,6 +9,7 @@ export type RoadmapOpts = {
 export interface RoadmapHandle {
   show: StepAdder; // the axis, its month ticks and the today marker
   reveal(id: string): StepAdder; // one milestone appears in --k-accent; it settles on the next roadmap step
+  rush(from: string, to: string): StepAdder; // the milestones from one id to the other, in one step, each sooner and harder
   move(date: string): StepAdder; // the today marker moves to date
   el: HTMLElement; // the today marker
 }
@@ -25,6 +26,7 @@ const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
 const MAX_FONT = 28;
 const MAX_LINES = 3;
 const LINE_H = 1.2;
+const RUSH = 0.7; // in a rush, each gap between two landings is this much of the one before
 
 // ms since the epoch, UTC midnight; throws on anything but a real "YYYY-MM-DD".
 function day(s: string): number {
@@ -38,7 +40,8 @@ const dateFmt = (lang: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTi
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // The axis spans whole months around the milestones and today. Ticks fall on month starts, every 1, 2, 3, 6 or
-// 12 months so they are at least TICK_GAP apart; January and the first tick carry the year. Milestones alternate
+// 12 months so they are at least TICK_GAP apart, counted from January so every January gets one; January and the
+// first tick carry the year, as does a milestone date on an axis longer than a year. Milestones alternate
 // above and below the axis in date order; a label is as wide as its same-side neighbours leave room for.
 export function roadmapLayout(opts: Omit<RoadmapOpts, "y" | "h">, lang = "en") {
   const ms = new Map(opts.milestones.map((m) => [m.id, day(m.date)]));
@@ -53,14 +56,14 @@ export function roadmapLayout(opts: Omit<RoadmapOpts, "y" | "h">, lang = "en") {
   const stride = [1, 2, 3, 6, 12].find((s) => (opts.w / months) * s >= TICK_GAP) ?? 12;
   const [month, monthYear] = [dateFmt(lang, { month: "short" }), dateFmt(lang, { month: "short", year: "numeric" })];
   const ticks = [];
-  for (let i = 0; i <= months; i += stride) {
+  for (let i = (stride - (lo.getUTCMonth() % stride)) % stride; i <= months; i += stride) {
     const t = Date.UTC(lo.getUTCFullYear(), lo.getUTCMonth() + i, 1);
-    ticks.push({ x: px(t), label: i === 0 || new Date(t).getUTCMonth() === 0 ? monthYear(t) : month(t) });
+    ticks.push({ x: px(t), label: !ticks.length || new Date(t).getUTCMonth() === 0 ? monthYear(t) : month(t) });
   }
   const problems: string[] = [];
   const sorted = [...opts.milestones].sort((a, b) => ms.get(a.id)! - ms.get(b.id)!);
   const xs = sorted.map((m) => px(ms.get(m.id)!));
-  const short = dateFmt(lang, { day: "numeric", month: "short" });
+  const short = dateFmt(lang, { day: "numeric", month: "short", ...(months > 12 && { year: "numeric" }) });
   const milestones = sorted.map((m, i) => {
     const gap = (j: number) => (j >= 0 && j < xs.length ? Math.abs(xs[j] - xs[i]) - 16 : Infinity);
     if (gap(i + 2) < MIN_W) problems.push(`roadmap: milestones "${m.id}" and "${sorted[i + 2].id}" are too close`);
@@ -119,7 +122,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     div({ color: "var(--k-muted)", font: `500 ${FLOOR + 2}px/1.2 var(--k-font)` }, inner).textContent = m.date;
     const text = div({ font: `700 ${MAX_FONT}px/${LINE_H} var(--k-font)`, overflowWrap: "anywhere" }, inner);
     text.textContent = m.label;
-    gsap.set(box, { autoAlpha: 0 });
+    gsap.set(box, { autoAlpha: 0, scale: 1, transformOrigin: m.above ? "50% 100%" : "50% 0%" }); // the transform from load, as a rush's pop leaves it
     return [m.id, { stem, dot, box, inner, text }];
   }));
 
@@ -164,6 +167,34 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   const set = (tl: gsap.core.Timeline, el: Element, vars: gsap.TweenVars, t: number) => tl.set(el, { ...vars, immediateRender: false }, t);
   let todayMs = day(opts.today);
 
+  // Milestones land in one step, in --k-accent until the next roadmap step. In a rush the first gap is one step, each next
+  // gap RUSH times the one before, and each landing pops harder (punch 0 to 1). With reduced motion the cadence stays: dots show at once, labels never pop.
+  const land = (ids: string[]) => (tl: gsap.core.Timeline) => {
+    const its = ids.map((id) => items.get(id)!);
+    const paint = (tl: gsap.core.Timeline, dot: string, fg: string, t: number) =>
+      its.forEach((it) => {
+        set(tl, it.dot, { fill: dot }, t);
+        set(tl, it.stem, { stroke: dot }, t);
+        set(tl, it.inner, { color: fg }, t);
+      });
+    const t = begin(tl, (tl, t) => paint(tl, "var(--k-line)", "var(--k-fg)", t));
+    paint(tl, "var(--k-accent)", "var(--k-accent)", t);
+    its.forEach((it, k) => {
+      const at = t + (motion.step * (1 - RUSH ** k)) / (1 - RUSH);
+      const punch = k / Math.max(1, its.length - 1);
+      if (ctx.reducedMotion) set(tl, it.dot, { autoAlpha: 1, scale: 1 }, at);
+      else tl.fromTo(it.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: `back.out(${2 + 2 * punch})`, immediateRender: false }, at);
+      tl.to([it.stem, it.box], { autoAlpha: 1, duration: 0.4 }, at + 0.2);
+      // Out and back to the load scale, so a seek back over it leaves the label as it was.
+      if (punch && !ctx.reducedMotion) tl.to(it.box, { scale: 1 + 0.15 * punch, duration: 0.15, ease: "power2.out", yoyo: true, repeat: 1 }, at + 0.2);
+    });
+  };
+  const find = (id: string) => {
+    const i = L.milestones.findIndex((m) => m.id === id);
+    if (i < 0) throw new Error(`roadmap: unknown milestone "${id}"`);
+    return i;
+  };
+
   return {
     el: marker,
     show(tl) {
@@ -172,21 +203,13 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       tl.to(marker, { autoAlpha: 1, duration: 0.4 }, t + 0.3);
     },
     reveal(id) {
-      const it = items.get(id);
-      if (!it) throw new Error(`roadmap: unknown milestone "${id}"`);
-      return (tl) => {
-        const t = begin(tl, (tl, t) => {
-          set(tl, it.dot, { fill: "var(--k-line)" }, t);
-          set(tl, it.stem, { stroke: "var(--k-line)" }, t);
-          set(tl, it.inner, { color: "var(--k-fg)" }, t);
-        });
-        set(tl, it.dot, { fill: "var(--k-accent)" }, t);
-        set(tl, it.stem, { stroke: "var(--k-accent)" }, t);
-        set(tl, it.inner, { color: "var(--k-accent)" }, t);
-        if (ctx.reducedMotion) set(tl, it.dot, { autoAlpha: 1, scale: 1 }, t);
-        else tl.fromTo(it.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2)", immediateRender: false }, t);
-        tl.to([it.stem, it.box], { autoAlpha: 1, duration: 0.4 }, t + 0.2);
-      };
+      find(id);
+      return land([id]);
+    },
+    rush(from, to) {
+      const [i, j] = [find(from), find(to)];
+      if (i > j) throw new Error(`roadmap: rush "${from}" comes after "${to}"`);
+      return land(L.milestones.slice(i, j + 1).map((m) => m.id));
     },
     move(date) {
       let to = day(date);
