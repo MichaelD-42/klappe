@@ -37,7 +37,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Sort things on two axes (effort against impact) and move one when the view changes | `matrix` | [matrix](klappe/docs/reference/elements/matrix.md) | `295-matrix/10-priorities` |
 | A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
 | What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
-| A layered model from the base up (a test pyramid, a capability stack) | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers` |
+| A layered model from the base up (a test pyramid, a capability stack, a funnel-shaped stack with `shape: "inverted"`); light one layer again, `light(id)` | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers`, `297-venn-pyramid/30-hiring` |
 | Compare options feature by feature, one row at a time | `compareTable` | [compareTable](klappe/docs/reference/elements/compareTable.md) | `298-table-card/10-compare` |
 | A hands-on task for the room with a time box and group | `exerciseCard` | [exerciseCard](klappe/docs/reference/elements/exerciseCard.md) | `298-table-card/20-exercise-card` |
 | Replay a conversation (typing dots, then the answer streams in) | a ```` ```chat ```` fence in `scene.md`; `chat` in `scene.ts` for avatars, its messages through `chatMessage` | [chat](klappe/docs/reference/elements/chat.md) | `217-chat/30-chat-md`, `217-chat/10-thread` |
