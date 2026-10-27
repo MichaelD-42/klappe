@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `roadmap`: a milestone with an empty `label` is a dot: no stem, label or date, and it does not count in the spacing check or the label width, so many dots show how dense releases get while a few labels carry the story. Labelled milestones keep alternating among themselves. Catalog: `#/roadmap/rush/3`.
 - `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
 - `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/technical-training/agenda/1`.
 - `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.

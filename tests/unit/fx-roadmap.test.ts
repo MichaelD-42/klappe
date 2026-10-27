@@ -45,6 +45,16 @@ test('two labels too close on one side are a problem; a bad date throws', () => 
   expect(() => roadmapLayout({ ...base, today: '2026-02-30' })).toThrow('roadmap: date "2026-02-30" is not YYYY-MM-DD')
 })
 
+test('a milestone with an empty label is a dot: out of the spacing, and the labelled ones alternate among themselves', () => {
+  const dots = ['2026-07-02', '2026-07-02', '2026-07-03', '2026-09-14'].map((date, i) => ({ id: `d${i}`, date, label: '' }))
+  const L = roadmapLayout({ ...base, milestones: [...milestones, ...dots] })
+  expect(L.problems).toEqual([])
+  expect(L.milestones.map((m) => [m.id, m.dot])).toEqual([['kick', false], ['d0', true], ['d1', true], ['d2', true], ['d3', true], ['beta', false], ['ga', false]])
+  expect(L.milestones.filter((m) => !m.dot).map((m) => [m.id, m.above])).toEqual([['kick', true], ['beta', false], ['ga', true]])
+  expect(L.milestones[0]).toMatchObject({ x: 160, width: 300 }) // a dot beside it does not narrow its label
+  expect(L.milestones[1]).toMatchObject({ x: L.milestones[2].x, label: '', date: '' })
+})
+
 test('a span of years puts a tick on every January, with its year, and the year in each milestone date', () => {
   const L = roadmapLayout({ x: 160, w: 1600, milestones: [{ id: 'a', date: '2020-03-10', label: 'A' }], today: '2026-10-27' })
   expect(L.ticks.map((t) => t.label)).toEqual(['Jul 2020', 'Jan 2021', 'Jul', 'Jan 2022', 'Jul', 'Jan 2023', 'Jul', 'Jan 2024', 'Jul', 'Jan 2025', 'Jul', 'Jan 2026', 'Jul'])
