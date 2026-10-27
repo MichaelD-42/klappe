@@ -25,11 +25,12 @@ export interface CodeOpts {
   y: number;
   w: number;
   h?: number;
+  lineNumbers?: boolean; // a muted number before each line, counted by position
 }
 export interface CodeHandle {
   show: StepAdder;
   focus(lines: number[]): StepAdder; // 1-based; [] unfocuses everything
-  diff(src: string): StepAdder;
+  diff(src: string, o?: { type?: boolean }): StepAdder; // type: the added lines type in instead of growing in
   line(n: number): Element; // a callout target
 }
 
@@ -106,16 +107,18 @@ const BAR = 8; // the focus bar's width
 // A dimmed line: its tokens blend fully to --k-muted (at least 4.5:1 on --k-surface by the theme rules)
 // at 0.7 opacity, which keeps it above 3:1 on a projector.
 const DIM = 0.7;
+const CPS = 34; // typing speed, characters a second, as terminal types
 
 // Monospace is allowed under .k-code: code is not a label.
 const CSS = `
 .k-code { position: absolute; margin: 0; box-sizing: border-box; overflow: hidden; border-radius: 12px;
   background: var(--k-surface); color: var(--k-code-foreground); font-family: var(--k-font-code); font-variant-ligatures: none; }
 .k-code > div { position: absolute; left: 0; right: 0; top: ${PAD_Y}px; }
-.k-code [data-line] { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; white-space: pre; padding-left: ${PAD_X}px; }
+.k-code [data-line] { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; white-space: pre; padding-left: calc(${PAD_X}px + var(--gutter, 0px)); }
+.k-code [data-k-code-number] { position: absolute; left: ${PAD_X}px; top: 0; text-align: right; color: var(--k-muted); font-variant-numeric: tabular-nums; }
 .k-code .k-code-bar { position: absolute; left: 0; top: 0; bottom: 0; width: ${BAR}px; background: var(--k-accent); }
 .k-code [data-line] span { color: color-mix(in srgb, var(--tok, var(--k-code-foreground)) calc(100% - var(--dim) * 100%), var(--k-muted)); }
-.k-code .k-code-more { position: absolute; left: 0; right: 0; top: 0; padding-left: ${PAD_X}px; color: var(--k-muted); font-family: var(--k-font); }
+.k-code .k-code-more { position: absolute; left: 0; right: 0; top: 0; padding-left: calc(${PAD_X}px + var(--gutter, 0px)); color: var(--k-muted); font-family: var(--k-font); }
 `;
 
 function addStyle() {
@@ -156,22 +159,37 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
     );
   const h = opts.h ?? ctx.rect.h - opts.y;
   let texts = splitLines(opts.src);
-  const cols = Math.max(1, ...texts.map((t) => t.length));
+  // The gutter takes the widest number (at least two digits, so a diff past 9 lines keeps it) and a gap.
+  const digits = Math.max(2, String(texts.length).length);
+  const gutter = opts.lineNumbers ? digits + 1.5 : 0; // in characters
+  const cols = Math.max(1, ...texts.map((t) => t.length)) + gutter;
   const size = Math.max(
     MIN_FONT,
     Math.floor(Math.min(MAX_FONT, (h - 2 * PAD_Y) / (texts.length * LINE_H), (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
   );
   const lh = size * LINE_H;
   const rows = Math.floor((h - 2 * PAD_Y) / lh); // the most lines that show; the rest clip
-  const width = Math.floor((opts.w - PAD_X - PAD_Y) / (size * CHAR_W));
+  const width = Math.floor((opts.w - PAD_X - PAD_Y) / (size * CHAR_W)) - gutter;
   const fits = (n: number) => n <= rows || (ctx.problem(`code: ${n} lines do not fit; max ${rows}`), false);
   fits(texts.length);
-  if (cols > width) ctx.problem(`code: lines longer than ${width} characters are clipped`);
+  if (cols - gutter > width) ctx.problem(`code: lines longer than ${width} characters are clipped`);
   const panelH = (n: number) => Math.min(h, Math.min(n, rows) * lh + 2 * PAD_Y);
 
   const pre = ctx.html.appendChild(Object.assign(document.createElement("pre"), { className: "k-code" }));
   Object.assign(pre.style, { left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, fontSize: `${size}px`, lineHeight: `${lh}px` });
   const body = pre.appendChild(document.createElement("div"));
+  if (gutter) pre.style.setProperty("--gutter", `${gutter * CHAR_W}em`);
+  // Line numbers by position, one per row that can show; a diff shows as many as it has lines.
+  const numbers = gutter
+    ? Array.from({ length: rows }, (_, i) => {
+        const e = body.appendChild(document.createElement("div"));
+        e.setAttribute("data-k-code-number", "");
+        e.textContent = String(i + 1);
+        e.style.width = `${digits * CHAR_W}em`;
+        gsap.set(e, { y: i * lh, visibility: i < (texts.length > rows ? rows - 1 : texts.length) ? "inherit" : "hidden" });
+        return e;
+      })
+    : [];
   const highlight = (src: string) => codeLines(src, opts.lang);
   // Clipped code gives its last row to a muted "+N more lines" marker; vis is how many lines show.
   const vis = (n: number) => (n > rows ? rows - 1 : n);
@@ -226,7 +244,7 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
       const on = lines.filter((_, i) => want.includes(i + 1));
       return (tl) => focusAll(tl, on, tl.duration());
     },
-    diff(src) {
+    diff(src, o = {}) {
       const next = splitLines(src);
       fits(next.length);
       const tokens = highlight(src);
@@ -235,6 +253,10 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
       texts = next;
       const added = new Map(ops.flatMap((o) => (o.op === "add" ? [[o.to, makeLine(tokens[o.to], o.to, o.to + 1)] as const] : [])));
       for (const e of added.values()) gsap.set(e, { height: 0, opacity: 0 });
+      // Typed lines start empty, as a seek back over the typing leaves them, and type in line by line.
+      const typing = o.type ? [...added.values()].flatMap((e) => [...e.querySelectorAll("span")].map((s) => ({ s, full: s.textContent ?? "" }))) : [];
+      for (const t of typing) t.s.textContent = "";
+      if (o.type) for (const e of added.values()) e.setAttribute("data-k-text", "");
       marker = more(next.length);
       const newMarker = marker;
       if (newMarker) gsap.set(newMarker, { autoAlpha: 0 });
@@ -259,6 +281,22 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
           }
         }
         fade(tl, at, [pre], { height: panelH(next.length) });
+        numbers.forEach((e, i) => tl.set(e, { visibility: i < vis(next.length) ? "inherit" : "hidden" }, at));
+        if (typing.length) {
+          const total = typing.reduce((n, t) => n + t.full.length, 0);
+          // The text so far as a pure function of progress: the first k characters, span by span.
+          tl.to({}, {
+            duration: total / CPS,
+            ease: "none",
+            onUpdate(this: gsap.core.Tween) {
+              let k = Math.round(this.progress() * total);
+              for (const t of typing) {
+                t.s.textContent = t.full.slice(0, Math.max(0, k));
+                k -= t.full.length;
+              }
+            },
+          }, at + motion.step);
+        }
         if (oldMarker) fade(tl, at, [oldMarker], { autoAlpha: 0 });
         if (newMarker) fade(tl, at, [newMarker], { autoAlpha: 1 });
         // The new code shows unfocused: no bars.
