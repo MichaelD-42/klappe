@@ -2,6 +2,10 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
+## Demo deck
+
+- Rework the story before the gallery (`10-opening` to `70-process-training`: 6 sections, 20 scenes). It is too long and shows one effect per scene. Make it shorter, with fewer sections that each combine several effects in one scene, so it reads as a talk, not a list. Leave charts out of it: the gallery shows them from `110-chart` on. Keep every rule the catalog teaches, and check the acceptance tests and deep links that name story scenes before you move them.
+
 ## Effects
 
 - `annotate`: no `bracket` (a curly brace beside a run of lines) and no `cross` (an X over a box), and the colour is fixed to `--k-accent`; a `color` token (`--k-bad` for a cross) would cover "wrong".
