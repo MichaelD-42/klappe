@@ -31,7 +31,9 @@ steps: [(tl, r: { s: SequenceHandle }) => r.s.actors(tl), (tl, r) => r.s.message
 | --- | --- | --- | --- |
 | `x`, `y`, `w`, `h` | numbers | required | the area; heads sit at the top, lifelines run to the bottom |
 | `actors` | `{ id, label }[]` | required | left to right in even columns; head border in `--k-series-1` to `--k-series-6` in turn, label in `--k-fg` on `--k-surface` |
-| `messages` | `{ from, to, text, reply? }[]` | required | top to bottom, rows evenly spaced; `reply` draws the arrow dashed; `from` equal to `to` draws a loop on that lifeline; an unknown id throws `sequence: unknown actor "<id>"` |
+| `messages` | `({ from, to, text, reply? } \| { note, over })[]` | required | the rows, top to bottom, evenly spaced; `reply` draws the arrow dashed; `from` equal to `to` draws a loop on that lifeline. A `{ note, over }` row is a note box over actor `over` (220 px wide), or across two, `over: ["a", "b"]`, from 110 px left of the first lifeline to 110 px right of the second. An unknown id throws `sequence: unknown actor "<id>"` |
+| `activations` | `{ actor, from, to }[]` | none | a 16 px bar on the actor's lifeline from row `from` to row `to`, in `--k-surface` with a `--k-line` edge, under the arrows: the actor is busy. It shows with row `from`. Catalog: `#/sequence/frames/2` |
+| `frames` | `{ kind, label, from, to, else? }[]` | none | a frame across the diagram round rows `from` to `to`, `kind` (`"alt"`, `"loop"`, `"opt"` or `"par"`) and `[label]` in its corner; `else: { at, label }` draws a dashed line across it above row `at` with `[label]`. A frame inside another sits 12 px further in. Each shows with its first row; the else line with its row. Catalog: `#/sequence/frames/4` |
 
 ### Step adders
 
@@ -40,13 +42,16 @@ Each method returns a step adder (`actors` is one itself): call it with the time
 | Handle | Step |
 | --- | --- |
 | `actors` | the heads fade in, then the lifelines |
-| `message(i)` | the arrow draws from the sender's lifeline to the receiver's, its head appears as the line arrives, then the label fades in above it. Several calls in one step play one after another. An index with no message throws `sequence: no message <i>` |
+| `message(i)` | shows row `i` and the bars and frames that start there. A note row fades in. A message: the arrow draws from the sender's lifeline to the receiver's, its head appears as the line arrives, then the label fades in above it. Several calls in one step play one after another. An index with no message throws `sequence: no message <i>` |
 
 ### Limits
 
 - Labels are one line, 24 px shrinking to the 20 px floor. A label wider than the gap between its two lifelines (or, for a self-message, the room to the right of the loop) at the floor is reported as `sequence: label of message <i> too long`; an actor label too wide for its head as `sequence: label of actor "<id>" too long`.
 - Rows need at least 36 px each; fewer room reports `sequence: <n> messages do not fit the height`. 12 messages fit in 780 px.
 - Labels are fitted when the first step is added, so a sequence needs a step for the too-long checks to run.
+- A row index in `activations` or `frames` that is not a row throws `sequence: <an activation | a frame | an else> names row <i>, which is not there`.
+- A note is one line and shrinks like a label; too long for its box reports `sequence: label of message <i> too long`.
+- Frames and else lines are 20 px text. A frame's corner tag can sit under a message label that starts at the frame's left edge; leave the first lifeline's column free there.
 - Labels sit on a `--k-bg` patch, so on a message that spans a lifeline between its ends the label covers that lifeline.
 
 ## `rowY`

@@ -50,6 +50,38 @@ const long: SceneModule = {
   steps: [(tl, r: R) => r.s.actors(tl), (tl, r: R) => r.s.message(0)(tl)],
 };
 
+// uml: a note row, two activation bars, a loop frame inside an alt frame with an else line; each part shows with
+// the first row it covers.
+const uml: SceneModule = {
+  build: (ctx) => ({
+    s: sequence(ctx, {
+      ...rect,
+      actors: [{ id: "c", label: "Client" }, { id: "a", label: "API" }, { id: "w", label: "Worker" }],
+      messages: [
+        { from: "c", to: "a", text: "POST /jobs" },
+        { note: "Checks the body", over: "a" },
+        { from: "a", to: "w", text: "run job" },
+        { from: "w", to: "w", text: "attempt" },
+        { from: "w", to: "a", text: "done", reply: true },
+        { from: "a", to: "c", text: "400 Bad Request", reply: true },
+      ],
+      activations: [{ actor: "a", from: 0, to: 5 }, { actor: "w", from: 2, to: 4 }],
+      frames: [
+        { kind: "alt", label: "valid", from: 2, to: 5, else: { at: 5, label: "invalid" } },
+        { kind: "loop", label: "until it succeeds", from: 3, to: 3 },
+      ],
+    }),
+  }),
+  steps: [
+    (tl, r: R) => r.s.actors(tl),
+    (tl, r: R) => r.s.message(0)(tl),
+    (tl, r: R) => r.s.message(1)(tl),
+    (tl, r: R) => r.s.message(2)(tl),
+    (tl, r: R) => r.s.message(3)(tl),
+    (tl, r: R) => { r.s.message(4)(tl); r.s.message(5)(tl); },
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -58,6 +90,7 @@ export default () =>
       "sections/10-a/10-basic/scene.md": md("Basic", 4),
       "sections/10-a/20-twelve/scene.md": md("Twelve", 3),
       "sections/10-a/30-long/scene.md": md("Too long"),
+      "sections/10-a/40-uml/scene.md": md("Notes, bars and frames", 6),
     },
-    { "sections/10-a/10-basic/scene.ts": basic, "sections/10-a/20-twelve/scene.ts": twelve, "sections/10-a/30-long/scene.ts": long },
+    { "sections/10-a/10-basic/scene.ts": basic, "sections/10-a/20-twelve/scene.ts": twelve, "sections/10-a/30-long/scene.ts": long, "sections/10-a/40-uml/scene.ts": uml },
   );

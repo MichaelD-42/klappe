@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `sequence`: `activations` draw bars on lifelines while an actor is busy, a `{ note, over }` row puts a note over one or two actors, and `frames` group rows in `alt`, `loop`, `opt` or `par` frames with an optional `else` line; each shows with its first row. Catalog: `#/sequence/frames/1`.
 - `stickyNotes`: `vote(id, n)` drops `n` dots on a note, for the dot vote after an affinity map. Dots add up over steps and move with the note. Catalog: `#/notes-cards/affinity/5`.
 - `pyramid`: `light(id)` puts a built layer back in the accent (`light(null)`: none), and `shape: "inverted"` narrows downwards, for a funnel-shaped stack. Catalog: `#/venn-pyramid/layers/5`, `#/venn-pyramid/hiring/1`.
 - `checklist`: `fail(i)` crosses a box in `--k-bad` instead of ticking it, for an audit or a pre-mortem. Catalog: `#/checklist-agenda/pre-mortem/3`.
