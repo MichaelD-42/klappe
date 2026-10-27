@@ -63,3 +63,32 @@ test('a row without marks and a card without extras build without a GSAP warning
   expect(warned).toEqual([])
   await page.close()
 }, 60_000)
+
+test('column(i) lights one column from the header through the last row; the next moves it; column(null) clears it', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  const state = async (step: number) => {
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-table-card#/a/lit/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    return page.evaluate(() => {
+      const root = document.querySelector<HTMLElement>('div[data-scene="lit"]')!
+      const table = root.querySelector<HTMLElement>('[data-k-compare]')!
+      const bands = [...table.querySelectorAll<HTMLElement>('[data-k-compare-column]')]
+      const shown = bands.filter((b) => getComputedStyle(b).visibility === 'visible' && getComputedStyle(b).opacity === '1')
+      const head = [...table.firstElementChild!.children].slice(1) as HTMLElement[]
+      const t = table.getBoundingClientRect()
+      return {
+        lit: shown.map((b) => b.dataset.kCompareColumn),
+        // The band covers its header cell and reaches the table's bottom.
+        covers: shown.every((b) => {
+          const [r, h] = [b.getBoundingClientRect(), head[+b.dataset.kCompareColumn!].getBoundingClientRect()]
+          return r.left <= h.left && r.right >= h.right && r.top <= h.top && Math.abs(r.bottom - t.bottom) < 2
+        }),
+      }
+    })
+  }
+  expect(await state(2)).toEqual({ lit: ['1'], covers: true })
+  expect(await state(3)).toEqual({ lit: ['2'], covers: true })
+  expect(await state(4)).toEqual({ lit: [], covers: true })
+  await page.close()
+}, 90_000)

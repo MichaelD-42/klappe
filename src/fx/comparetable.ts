@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import type { IconNode } from "lucide";
 import { t } from "../strings";
 import type { Ctx, StepAdder } from "../types";
+import { MARKER_MIX } from "./annotate";
 import { iconGlyph } from "./icons";
 
 export interface CompareTableOpts {
@@ -16,6 +17,7 @@ export interface CompareTableHandle {
   el: HTMLElement; // the table's block, for a scene that places or moves it
   show: StepAdder; // the header and the grid lines; the rows stay hidden
   row(i: number): StepAdder;
+  column(i: number | null): StepAdder; // lights column i from its header through the last row; null lights none
 }
 
 // Lucide "check" and "x" (ISC), inline: src/fx is not scanned for icon names, and importing "lucide" would pull every icon in dev.
@@ -38,6 +40,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
   const cols = opts.columns.length;
   const grid = { display: "grid", gridTemplateColumns: `minmax(0, 2fr) repeat(${cols}, minmax(0, 1fr))`, columnGap: "24px", alignItems: "center" };
   const root = document.createElement("div");
+  root.setAttribute("data-k-compare", "");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, display: "flex", flexDirection: "column",
     font: `600 ${MAX_FONT}px/1.25 var(--k-font)`, color: "var(--k-fg)", zIndex: "2",
@@ -82,6 +85,25 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
     return fits;
   };
 
+  // A column's band: behind the column, from above its header through the last row, made when its step is added
+  // (the font is fitted by then). Its header turns --k-accent with it.
+  const bands = new Map<number, HTMLElement>();
+  const band = (i: number) => {
+    if (!bands.has(i)) {
+      const cell = head.children[i + 1] as HTMLElement;
+      const b = div(root, {
+        position: "absolute", left: `${cell.offsetLeft - 12}px`, top: "-12px", width: `${cell.offsetWidth + 24}px`, height: `${root.offsetHeight + 12}px`,
+        boxSizing: "border-box", border: "3px solid var(--k-accent)", borderRadius: "12px", zIndex: "-1",
+        background: `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`,
+      });
+      b.setAttribute("data-k-compare-column", String(i));
+      gsap.set(b, { autoAlpha: 0 });
+      bands.set(i, b);
+    }
+    return bands.get(i)!;
+  };
+  let litCol: number | null = null; // the column the column steps added so far leave lit
+
   let last = -1; // the row the previous row step lit; set while the timeline is built, so adders may be made in any order
   return {
     el: root,
@@ -89,6 +111,24 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
       const at = tl.duration();
       if (!fit()) return void tl.set({}, {}, at + 0.4);
       tl.to(root, { autoAlpha: 1, duration: 0.4 }, at);
+    },
+    column: (i) => (tl) => {
+      const at = tl.duration();
+      if (i !== null && !(i >= 0 && i < cols)) ctx.problem(`compareTable: no column ${i}`);
+      if ((i !== null && !(i >= 0 && i < cols)) || !fit() || i === litCol) return void tl.set({}, {}, at + 0.4);
+      const d = { duration: 0.4, immediateRender: false };
+      // The row lit by the step before settles, as the next row step would settle it.
+      if (rows[last]) tl.set(rows[last].label, { color: "var(--k-fg)", immediateRender: false }, at);
+      last = -1;
+      if (litCol !== null) {
+        tl.fromTo(band(litCol), { autoAlpha: 1 }, { autoAlpha: 0, ...d }, at);
+        tl.set(head.children[litCol + 1], { color: "var(--k-muted)", immediateRender: false }, at);
+      }
+      if (i !== null) {
+        tl.fromTo(band(i), { autoAlpha: 0 }, { autoAlpha: 1, ...d }, at);
+        tl.set(head.children[i + 1], { color: "var(--k-accent)", immediateRender: false }, at);
+      }
+      litCol = i;
     },
     row: (i) => (tl) => {
       const at = tl.duration();

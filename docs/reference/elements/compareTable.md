@@ -28,7 +28,7 @@ steps: [
 ],
 ```
 
-`compareTable(ctx, { columns, rows, x, y, w, h })` returns `{ el, show, row(i) }`; `el` is the table's block, for a scene that places or moves it.
+`compareTable(ctx, { columns, rows, x, y, w, h })` returns `{ el, show, row(i), column(i) }`; `el` is the table's block, for a scene that places or moves it.
 
 ### Options
 
@@ -45,6 +45,7 @@ steps: [
 | --- | --- |
 | `show` | fades in the header (in `--k-muted`) and the line under it; the rows stay hidden |
 | `row(i)` | fades row `i` in and lands its marks one cell after the other: ticks in `--k-ok`, crosses in `--k-bad`. The row's label is lit in `--k-accent` until the next `row` step settles it to `--k-fg` |
+| `column(i)` | lights column `i` (from 0): a band in `--k-accent` at `MARKER_MIX` with a 3 px `--k-accent` edge behind the column, from above its header through the last row, and the header in `--k-accent`; the column lit before goes back, and the row lit by the step before settles to `--k-fg`. `column(null)` lights none. For the plan you recommend, at the end. A column that is not there shows `compareTable: no column i`. Catalog: `#/table-card/compare/6` |
 
 The cue follows the order of the steps, not the order the adders were made in. With reduced motion the marks fade in without the pop. A tick and a cross have the spoken names "yes" and "no" from the strings table.
 
