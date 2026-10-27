@@ -40,3 +40,31 @@ test('the pointer moves to its targets and types into the field', async () => {
   expect(before.shown).toBe('hidden')
   await page.close()
 }, 60_000)
+
+// drag(card, to): the card's centre lands on the target, with the pointer tip on it; a second drag starts from there.
+test('drag moves the element with the pointer to the target', async () => {
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    const at = async (step: number) => {
+      await page.goto(`${inject('BASE_URL')}/?fixture=fx-pointer#/a/drag/${step}`)
+      await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+      await settle(page)
+      return page.evaluate(() => {
+        const [card, zone, tip] = [...document.querySelectorAll<HTMLElement>('[data-scene="drag"] > div')].filter((e) => !e.matches('[data-k-pointer]')).slice(0, 2)
+          .concat(document.querySelector<HTMLElement>('[data-scene="drag"] [data-k-pointer]')!)
+          .map((e) => e.getBoundingClientRect())
+        const mid = (b: DOMRect) => ({ x: Math.round(b.x + b.width / 2), y: Math.round(b.y + b.height / 2) })
+        return { card: mid(card), zone: mid(zone), tip: { x: Math.round(tip.x), y: Math.round(tip.y) } }
+      })
+    }
+    const one = await at(2)
+    expect(one.card).toEqual(one.zone)
+    expect(one.tip).toEqual(one.card)
+    const two = await at(3)
+    expect(two.card).toEqual({ x: 700, y: 300 })
+    expect(two.tip).toEqual(two.card)
+  } finally {
+    await browser.close()
+  }
+}, 90_000)

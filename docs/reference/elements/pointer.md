@@ -2,7 +2,7 @@
 
 A mouse pointer that walks through a screen: it moves to a target on a slight curve, clicks with a ripple and types into a field. For tool trainings over a screenshot or a screen drawn in the scene. `loupe` and `spotlight` point at a place; `pointer` shows the action.
 
-Catalog: section `239-pointer` (`#/pointer/sign-in/2`).
+Catalog: section `239-pointer` (`#/pointer/sign-in/2`; a drag at `#/pointer/drag/2`).
 
 ## `pointer`
 
@@ -39,6 +39,7 @@ The pointer is the classic arrow in `--k-fg` with a `--k-bg` outline, above the 
 | `move(target, { duration? })` | the tip moves to `target`, an element (its centre, measured when the step is added) or a point, in 0.8 s by default; x and y ease differently, so the path bows |
 | `click` | the pointer presses in and back, and a ring in `--k-accent` grows out of the tip and fades |
 | `type(field, text)` | the field, an element or a rect, gets a `--k-surface` patch with a `--k-accent` border (focused), and `text` types into it at 14 characters a second with a caret; the field typed into before loses its accent border. Text is half the field's height, at least 20 px |
+| `drag(item, to, { duration? })` | the pointer moves to the item's centre (if it is not there), presses, carries the item so its centre lands on `to` (an element's centre or a point), 1 s by default, and lets go. The item moves by its transform, so a later `drag` of it starts where this one left it. An item or target with no size shows `pointer: drag item or target has no size to measure` |
 | `el` | the pointer's element. Not a step |
 
 Each step starts where the steps before left the pointer, so add them in order.

@@ -13,6 +13,7 @@ export interface PointerHandle {
   move(to: Element | Point, opts?: { duration?: number }): StepAdder;
   click: StepAdder;
   type(field: Element | Rect, text: string): StepAdder;
+  drag(item: Element, to: Element | Point, opts?: { duration?: number }): StepAdder; // grab the item, carry it, let go
   hide: StepAdder;
 }
 
@@ -39,6 +40,12 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
   gsap.set(el, { x: opts.at.x, y: opts.at.y, scale: 1, transformOrigin: "0 0", autoAlpha: 0 });
   let pos = opts.at; // where the pointer is at the end of the steps added so far
   let focused: HTMLElement | undefined; // the field typed into last: it loses its accent border when the next one gets it
+  const moved = new Map<Element, Point>(); // how far drag has carried each item, after the steps added so far
+  const glide = (tl: gsap.core.Timeline, targets: Element[], to: (e: Element) => Point, duration: number) => {
+    // x and y on different eases: the path bows, as a hand's does.
+    tl.to(targets, { x: (_, e) => to(e).x, duration, ease: "power2.inOut" });
+    tl.to(targets, { y: (_, e) => to(e).y, duration, ease: "power1.inOut" }, "<");
+  };
 
   return {
     el,
@@ -47,11 +54,26 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
     move: (to, o = {}) => (tl) => {
       const p = spot(ctx, to);
       if (!p) return ctx.problem("pointer: move target has no size to measure");
-      const duration = o.duration ?? 0.8;
-      // x and y on different eases: the path bows, as a hand's does.
-      tl.to(el, { x: p.x, duration, ease: "power2.inOut" });
-      tl.to(el, { y: p.y, duration, ease: "power1.inOut" }, "<");
+      glide(tl, [el], () => p, o.duration ?? 0.8);
       pos = p;
+    },
+    drag: (item, to, o = {}) => {
+      if (!moved.has(item)) gsap.set(item, { x: 0, y: 0 }); // where a seek back before the first drag leaves it
+      return (tl) => {
+        const [from, p] = [spot(ctx, item), spot(ctx, to)];
+        if (!from || !p) return ctx.problem("pointer: drag item or target has no size to measure");
+        // measure() sees the item where the steps before left it: add what earlier drags carried it.
+        const was = moved.get(item) ?? { x: 0, y: 0 };
+        const grab = { x: from.x + was.x, y: from.y + was.y };
+        if (grab.x !== pos.x || grab.y !== pos.y) glide(tl, [el], () => grab, 0.8);
+        const by = { x: was.x + p.x - grab.x, y: was.y + p.y - grab.y };
+        moved.set(item, by);
+        // Press, carry the item with the tip on its centre, let go.
+        tl.to(el, { scale: 0.85, duration: 0.1 });
+        glide(tl, [el, item], (e) => (e === el ? p : by), o.duration ?? 1);
+        tl.to(el, { scale: 1, duration: 0.1 });
+        pos = p;
+      };
     },
     click(tl) {
       // A ring that grows out of the tip and fades, while the pointer presses in and back.
