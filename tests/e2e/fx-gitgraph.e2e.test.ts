@@ -44,3 +44,35 @@ test('a rebase moves the branch past the target tip, and the merge joins it on m
   expect(merged['merge feature'].x).toBeGreaterThan(merged['tests′'].x)
   await page.close()
 }, 60_000)
+
+// A tag sits over the commit it marks; a cherry-pick's copy lands on the target lane past its tip, the original stays.
+test('tags sit over their commits; a cherry-pick copies the commit onto main and keeps the original', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  const at = async (step: number) => {
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-gitgraph#/a/pick/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    return page.evaluate(() => {
+      const shows = (e: Element) => getComputedStyle(e).visibility === 'visible' && +getComputedStyle(e).opacity > 0.9
+      const mid = (e: Element) => {
+        const b = e.getBoundingClientRect()
+        return { x: b.x + b.width / 2, y: b.y + b.height / 2 }
+      }
+      const commits = Object.fromEntries(
+        [...document.querySelectorAll<HTMLElement>('[data-scene="pick"] [data-k-git-commit]')].map((e) => [e.textContent, { ...mid(e.firstElementChild!), on: shows(e) }]),
+      )
+      const tags = Object.fromEntries([...document.querySelectorAll<HTMLElement>('[data-scene="pick"] [data-k-git-tag]')].filter(shows).map((e) => [e.textContent, mid(e)]))
+      return { commits, tags }
+    })
+  }
+  let s = await at(2)
+  expect(Object.keys(s.tags)).toEqual(['v1.0'])
+  expect(s.tags['v1.0'].x).toBeCloseTo(s.commits.init.x, 0)
+  expect(s.tags['v1.0'].y).toBeLessThan(s.commits.init.y)
+  s = await at(7)
+  expect(Object.keys(s.tags).sort()).toEqual(['v1.0', 'v1.0.1'])
+  expect(s.commits.hotfix.on).toBe(true)
+  expect(s.commits['hotfix′']).toMatchObject({ on: true, y: s.commits.feature.y })
+  expect(s.commits['hotfix′'].x).toBeGreaterThan(s.commits.hotfix.x)
+  await page.close()
+}, 60_000)

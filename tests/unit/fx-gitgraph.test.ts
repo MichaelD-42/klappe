@@ -55,3 +55,24 @@ test('unknown branches, a repeat branch, an empty rebase and too much history ar
   const wide: GitOp[] = [{ commit: 'main', label: 'a' }, ...Array.from({ length: 6 }, (_, i) => ({ branch: `b${i}`, from: 'main' }))]
   expect(gitLayout(wide, rect).problems).toEqual(['gitGraph: 7 branches; at most 6', 'gitGraph: 7 branches do not fit in 600px'])
 })
+
+test('a tag marks a branch tip and takes no column; it rings the commit it marks', () => {
+  const l = gitLayout([...base, { tag: 'v1.0', on: 'main' }], rect)
+  expect(l.problems).toEqual([])
+  expect(l.commits).toHaveLength(3)
+  expect(l.tags).toEqual([{ name: 'v1.0', commit: 'c2', op: 4 }])
+  expect(l.lit.at(-1)).toEqual(['c2'])
+})
+
+test('a cherry-pick copies one commit onto a branch tip and leaves the original in place', () => {
+  const l = gitLayout([...base, { cherryPick: 'form', onto: 'main' }], rect)
+  expect(l.problems).toEqual([])
+  expect(l.commits[1].gone).toBeUndefined()
+  expect(l.commits.at(-1)).toMatchObject({ label: 'form′', lane: 0, parents: ['c2'], copyOf: 'c1', op: 4 })
+  expect(l.lit.at(-1)).toEqual(['c3'])
+})
+
+test('a tag on a branch with no commit and a cherry-pick of no such commit are problems', () => {
+  const l = gitLayout([{ commit: 'main', label: 'init' }, { tag: 'v0', on: 'nope' }, { cherryPick: 'ghost', onto: 'main' }], rect)
+  expect(l.problems).toEqual(['gitGraph: no branch "nope"', 'gitGraph: no commit "ghost" to cherry-pick'])
+})

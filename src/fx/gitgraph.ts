@@ -3,12 +3,15 @@ import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { drawOn } from "./draw";
 
-// One change to the history: a commit on a branch, a new branch from another's tip, a merge, a rebase.
+// One change to the history: a commit on a branch, a new branch from another's tip, a merge, a rebase, a tag on
+// a branch's tip, a cherry-pick of one commit (by its label) onto a branch.
 export type GitOp =
   | { commit: string; label: string }
   | { branch: string; from: string }
   | { merge: string; into: string; label?: string }
-  | { rebase: string; onto: string };
+  | { rebase: string; onto: string }
+  | { tag: string; on: string }
+  | { cherryPick: string; onto: string };
 export type GitGraphOpts = { ops: GitOp[] } & Rect;
 export interface GitGraphHandle {
   next: StepAdder;
@@ -17,7 +20,8 @@ export interface GitGraphHandle {
 
 export interface GitCommit { id: string; label: string; lane: number; parents: string[]; op: number; gone?: number; copyOf?: string; x: number; y: number }
 export interface GitLane { name: string; op: number; y: number }
-export interface GitLayout { commits: GitCommit[]; lanes: GitLane[]; lit: string[][]; colW: number; problems: string[] }
+export interface GitTag { name: string; commit: string; op: number }
+export interface GitLayout { commits: GitCommit[]; lanes: GitLane[]; tags: GitTag[]; lit: string[][]; colW: number; problems: string[] }
 
 const SVG = "http://www.w3.org/2000/svg";
 const NAME_W = 220; // the branch names' column at the left
@@ -36,6 +40,7 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
   const branches = new Map<string, Branch>();
   const commits: Omit<GitCommit, "x" | "y">[] = [];
   const lit: string[][] = [];
+  const tags: GitTag[] = [];
   const problems: string[] = [];
   const lane = (name: string, op: number) => {
     branches.set(name, { lane: branches.size, own: [] });
@@ -62,6 +67,17 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
       else if (from && !from.tip) problems.push(`gitGraph: "${o.from}" has no commit to branch from`);
       else if (from) lane(o.branch, k).tip = from.tip;
       lit.push(from?.tip ? [from.tip] : []);
+    } else if ("tag" in o) {
+      const b = known(o.on);
+      if (b && !b.tip) problems.push(`gitGraph: "${o.on}" has no commit to tag`);
+      if (b?.tip) tags.push({ name: o.tag, commit: b.tip, op: k });
+      lit.push(b?.tip ? [b.tip] : []);
+    } else if ("cherryPick" in o) {
+      const onto = known(o.onto);
+      const src = [...commits].reverse().find((c) => c.label === o.cherryPick && c.gone === undefined); // the latest of that name
+      if (!src) problems.push(`gitGraph: no commit "${o.cherryPick}" to cherry-pick`);
+      if (!src || !onto?.tip) return void lit.push([]);
+      lit.push([add(onto, `${src.label}′`, [onto.tip], k, src.id)]);
     } else if ("merge" in o) {
       const [src, dst] = [known(o.merge), known(o.into)];
       if (!src?.tip || !dst?.tip) return void lit.push([]);
@@ -92,6 +108,7 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
   return {
     commits: commits.map((c, i) => ({ ...c, x: rect.x + NAME_W + (i + 0.5) * colW, y: y(c.lane) })),
     lanes: lanes.map((l, i) => ({ ...l, y: y(i) })),
+    tags,
     lit,
     colW,
     problems,
@@ -101,7 +118,7 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
 // A git history drawn one op per step: commits as dots on one lane per branch in its series colour, lines to
 // their parents, the branch names at the left. The newest commits (or a new branch's base) are ringed in
 // --k-accent until the next op. A rebase fades the old commits out while their copies (label′) fly to the
-// target's tip.
+// target's tip; a cherry-pick's copy flies the same way and leaves its original. A tag is a pill over its commit.
 export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
   const lay = gitLayout(opts.ops, opts);
   lay.problems.forEach((p) => ctx.problem(p));
@@ -159,6 +176,21 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     return [c.id, { el, ring, label }] as const;
   }));
 
+  // A tag: a pill over the commit it marks, shown with its op.
+  const tagEls = lay.tags.map((g) => {
+    const c = byId.get(g.commit)!;
+    const el = ctx.html.appendChild(document.createElement("div"));
+    el.textContent = g.name;
+    el.dataset.kGitTag = g.name;
+    Object.assign(el.style, {
+      position: "absolute", left: `${c.x}px`, top: `${c.y - DOT / 2 - 14}px`, translate: "-50% -100%", padding: "2px 10px", zIndex: "2",
+      border: "2px solid var(--k-line)", borderRadius: "6px", background: "var(--k-surface)", color: "var(--k-fg)",
+      font: `600 ${FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
+    });
+    gsap.set(el, { autoAlpha: 0 });
+    return { el, op: g.op };
+  });
+
   let k = 0;
   let checked = false;
   let ringed: string[] = [];
@@ -180,11 +212,14 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     const settle = ringed.filter((id) => !lit.includes(id));
     if (settle.length) tl.to(rings(settle), { autoAlpha: 0, duration: motion.step }, at);
     lay.lanes.forEach((l, i) => l.op === k && tl.to(names[i], { autoAlpha: 1, duration: motion.step }, at));
+    tagEls.forEach((g) => g.op === k && tl.to(g.el, { autoAlpha: 1, duration: motion.step }, at));
     let t = at;
-    if (gone.length) {
-      // The copies show where the originals are, the originals and their lines fade, then the copies fly.
+    // Copies (a rebase's, a cherry-pick's) show where their originals are, then fly; a rebase's originals and
+    // their lines fade first.
+    const flying = added.some((c) => c.copyOf);
+    if (flying) {
       const dead = new Set(gone.map((c) => c.id));
-      tl.to([...gone.map((c) => dots.get(c.id)!.el), ...edges.filter((e) => dead.has(e.to) || dead.has(e.from)).map((e) => e.el)], { autoAlpha: 0, duration: motion.step }, at);
+      if (gone.length) tl.to([...gone.map((c) => dots.get(c.id)!.el), ...edges.filter((e) => dead.has(e.to) || dead.has(e.from)).map((e) => e.el)], { autoAlpha: 0, duration: motion.step }, at);
       tl.to(added.map((c) => dots.get(c.id)!.el), { autoAlpha: 1, duration: 0.01 }, at);
       tl.to(added.map((c) => dots.get(c.id)!.el), { x: 0, y: 0, duration: 0.9, ease: "power2.inOut", stagger: 0.1 }, at + 0.2);
       t = at + 0.9 + 0.1 * added.length;
@@ -195,8 +230,8 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
         tl.set(ins, { autoAlpha: 1 }, t);
         drawOn(ins, { duration: 0.4, each: 0, at: t })(tl);
       }
-      if (!gone.length) tl.to(dots.get(c.id)!.el, { autoAlpha: 1, duration: 0.3 }, t + (ins.length ? 0.25 : 0));
-      if (gone.length) t += 0.15;
+      if (!flying) tl.to(dots.get(c.id)!.el, { autoAlpha: 1, duration: 0.3 }, t + (ins.length ? 0.25 : 0));
+      else t += 0.15;
     }
     const fresh = lit.filter((id) => !ringed.includes(id));
     if (fresh.length) tl.to(rings(fresh), { autoAlpha: 1, duration: motion.step }, at + ("branch" in o ? 0 : 0.3));

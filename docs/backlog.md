@@ -2,11 +2,10 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `gitGraph` tags and cherry-pick (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `matrix` `place(id, { x, y })` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## Effects
 
-- `gitGraph`: no tags, cherry-pick or squash. Tags and cherry-pick are the two that come up in a git training.
 - `matrix`: quadrants only. `place(id, { x, y })` with 0 to 1 positions, for a scored effort and impact map rather than a sorted one.
 - `pointer`: no drag. `drag(from, to)` for moving a card, a slider or a file, the most common UI action after click and type.
 - `image`: no credit line. `credit: "Photo: …"`, small in a corner over the scrim, since stock and press photos need it.

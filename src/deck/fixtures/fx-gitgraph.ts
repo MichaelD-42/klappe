@@ -26,6 +26,21 @@ const all: SceneModule = {
   steps: [(tl, r: R) => r.g.show(tl), (tl, r: R) => r.g.next(tl)],
 };
 
+// release: a tag on main, a hotfix on a release branch cherry-picked back to main, and a tag on the release branch.
+const release: GitOp[] = [
+  { commit: "main", label: "init" },
+  { tag: "v1.0", on: "main" },
+  { branch: "release", from: "main" },
+  { commit: "main", label: "feature" },
+  { commit: "release", label: "hotfix" },
+  { tag: "v1.0.1", on: "release" },
+  { cherryPick: "hotfix", onto: "main" },
+];
+const pick: SceneModule = {
+  build: (ctx) => ({ g: gitGraph(ctx, { ops: release, ...rect }) }),
+  steps: release.map(() => (tl: gsap.core.Timeline, r: R) => r.g.next(tl)),
+};
+
 export default () =>
   assembleDeck(
     {
@@ -33,6 +48,7 @@ export default () =>
       "sections/10-a/section.md": "# Git\n",
       "sections/10-a/10-steps/scene.md": `## Steps\n\n${ops.map((_, i) => `- Op ${i + 1}.\n`).join("")}`,
       "sections/10-a/20-all/scene.md": "## All\n\n- All at once.\n- One too many.\n",
+      "sections/10-a/30-pick/scene.md": `## Pick\n\n${release.map((_, i) => `- Op ${i + 1}.\n`).join("")}`,
     },
-    { "sections/10-a/10-steps/scene.ts": steps, "sections/10-a/20-all/scene.ts": all },
+    { "sections/10-a/10-steps/scene.ts": steps, "sections/10-a/20-all/scene.ts": all, "sections/10-a/30-pick/scene.ts": pick },
   );
