@@ -548,6 +548,7 @@ steps: [(tl, w) => w.show(tl), (tl, w) => w.to(0.5)(tl), (tl, w) => w.to(1)(tl)]
 | `rect` | `{ x, y, w, h }` | the full scene frame | the spot both pictures cover |
 | `scrim` | number | none | 0 to 1, a `--k-scrim` layer on both pictures for text on top; 0.6 keeps theme text at 4.5:1 |
 | `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none | as for `image`: the scrim on that side only |
+| `direction` | `"horizontal"` or `"vertical"` | `"horizontal"` | `"vertical"`: the after picture comes in from the top under a divider across the picture. Catalog: `#/fullscreen/wipe-down/2` |
 
 | Handle | Step |
 | --- | --- |
@@ -582,7 +583,7 @@ steps: [(tl, r) => r.lens.show(tl), (tl, r) => r.chart(tl), (tl, r) => r.sketch(
 | Handle | Step |
 | --- | --- |
 | `show` | the picture fades in, then the lens |
-| `to(x, y)` | the lens slides so its centre is on the scene point `(x, y)`, with a soft start and stop over 1.2 s. With reduced motion it cuts there |
+| `to(x, y, { zoom? })` | `zoom`: this stop's own enlargement, the lens's `zoom` when left out. The lens slides so its centre is on the scene point `(x, y)`, with a soft start and stop over 1.2 s. With reduced motion it cuts there |
 
 Make each `to` in `build` and call it in a step, as above. Points are scene units on the picture as it shows in `rect`: with `fit: "cover"` the picture is cropped, so check the points in the deck, not on the file.
 

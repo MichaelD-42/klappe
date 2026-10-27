@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Small options: `spotlight` `shape: "circle"`; `wipe` `direction: "vertical"`; `loupe` `to(x, y, { zoom })` per stop; `shape` and `arrow` `dash` and `width` (at least 2); `pulse` `{ color }` token. Catalog: `#/spotlight/round/2`, `#/fullscreen/wipe-down/2`, `#/loupe/detail/3`, `#/shapes/diagram/2`, `#/attention/nudges/4`.
 - `figure`: a seated pose on a chair, `seated: true` from load or `sit(tl)` and `stand(tl)` in a step. The demo's meeting room seats its figures. Catalog: `#/figure/table/3`.
 - `worldMap`: `region(tl, country)` fills a country in the accent, by its world-atlas name or ISO 3166-1 numeric code, for "where we sell". Catalog: `#/map/world/6`.
 - `handwrite`: several lines, from a list item's source lines or a list of strings, written one after the other, each up to 4 s. Catalog: `#/handwriting/note/1`.

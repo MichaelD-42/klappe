@@ -117,12 +117,12 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
   return { on: go(1, 0), breathe: (tl) => (breathes(), breathe(tl)), off: go(0, 0) };
 }
 
-// A ring in --k-accent around the target that grows and fades out once.
-export function pulse(ctx: Ctx, target: Element): StepAdder {
+// A ring in --k-accent (or opts.color, a token name) around the target that grows and fades out once.
+export function pulse(ctx: Ctx, target: Element, opts: { color?: string } = {}): StepAdder {
   const ring = ctx.html.appendChild(document.createElement("div"));
   ring.setAttribute("data-k-pulse", "");
   Object.assign(ring.style, {
-    position: "absolute", boxSizing: "border-box", border: "4px solid var(--k-accent)", borderRadius: `${PAD}px`, pointerEvents: "none", zIndex: "3",
+    position: "absolute", boxSizing: "border-box", border: "4px solid", borderColor: `var(${opts.color ?? "--k-accent"})`, borderRadius: `${PAD}px`, pointerEvents: "none", zIndex: "3",
   });
   gsap.set(ring, { autoAlpha: 0, scale: 1 });
   return (tl) => {

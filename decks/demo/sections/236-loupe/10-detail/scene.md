@@ -4,4 +4,4 @@
 
 - The desk, and a lens on the part on it.
 - The lens slides to the chart on the screen.
-- Then to the drawing on the desk.
+- Then to the drawing on the desk, closer: to(x, y, { zoom }) sets this stop's zoom.
