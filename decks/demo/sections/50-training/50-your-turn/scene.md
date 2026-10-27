@@ -1,4 +1,9 @@
-## Exercise: review a change
+## Your turn
+
+- Ten minutes, in pairs.
+- Bring a change from your own team.
+
+> Enough watching. The next ten minutes are yours, with a change from your own team.
 
 - The task list and a ten-minute timer; the timer starts.
 - [ ] Pick a change your team made recently

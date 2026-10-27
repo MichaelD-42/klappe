@@ -522,12 +522,12 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
   });
 
   await check("AC-13", async ({ stepper, reach }) => {
-    const ready = stepOf("opening", "boot", 4);
-    if (ready < 0) return ["the demo deck has no #/opening/boot/4"];
+    const ready = stepOf("opening", "old-way", 7);
+    if (ready < 0) return ["the demo deck has no #/opening/old-way/7"];
     await stepper.goto(0, "cut");
     location.hash = formatHash(steps[ready]);
     const bad: (string | false)[] = [await reach(ready, "deep link")];
-    const root = canvases[steps[ready].canvas].el.querySelector(`div[data-scene="boot"]`);
+    const root = canvases[steps[ready].canvas].el.querySelector(`div[data-scene="old-way"]`);
     const lines = [...(root?.querySelectorAll(".k-crt-term > [data-k-text]") ?? [])].map((e) => e.textContent ?? "");
     const row = [...(root?.querySelectorAll(".k-crt-term > div") ?? [])].find((e) => e.textContent?.startsWith("READY."));
     for (const want of ["MEMORY TEST: 640K OK", "Loading: new ways of working .. OK"])

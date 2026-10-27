@@ -8,7 +8,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 - `roadmap`: a milestone with an empty `label` is a dot: no stem, label or date, and it does not count in the spacing check or the label width, so many dots show how dense releases get while a few labels carry the story. Labelled milestones keep alternating among themselves. Catalog: `#/roadmap/rush/3`.
 - `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
-- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/technical-training/agenda/1`.
+- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/training/agenda/1`.
 - `chat`: a ```` ```chat ```` fence in `scene.md` replays a thread with no `scene.ts`, one message per line and step. `avatars: { Ana: "media/ana.jpeg" }` puts a round picture beside each sender's bubble, initials where there is none. Catalog: `#/chat/chat-md/1`, `#/chat/thread/1`.
 - `code`: `lineNumbers: true` shows a muted number before each line; `diff(src, { type: true })` types the added lines in, for live coding. Catalog: `#/code/live/1`.
 - `compareTable`: `column(i)` lights one column from its header through the last row, for the plan you recommend; `column(null)` clears it. Catalog: `#/table-card/compare/6`.
@@ -23,6 +23,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart`: `lines: [{ value, label }]` draws dashed reference lines (a goal, last year, a limit) across bar, stacked, line, waterfall and slope charts, and down a timeline. The value axis reaches them. Catalog: `#/chart/bars/1`.
 - `chart`: `highlight(i)` works on every chart type, not only sankey. The row's marks and values stay at full strength while the rest dims, and `highlight(null)` clears it. In a line chart, `i` is a series. `bar(i)` now also grows one stack, phase or funnel stage per step; the new `slice(i)` draws one donut slice and counts the total on; the new `series(i)` draws one line. Catalog: `#/chart/series/1`, `#/chart/slices/1`.
 - Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
+
+### Changed
+
+- Demo deck: the story before the gallery is 12 scenes in 5 sections instead of 20 in 6, and most scenes combine several effects. The title slide shatters and the CRT boots in one scene (`#/opening/old-way/1`); the two trainings are one section, `training`, where the retry bug runs from walkthrough to fix to green tests in one scene, the system turns into a sequence diagram, the swimlanes lead into the ship decision, and the call to work leads into the exercise. Deep links into `technical-training`, `process-training` and `opening/boot` are gone.
 
 ### Fixed
 

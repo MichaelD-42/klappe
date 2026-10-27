@@ -2,7 +2,7 @@
 
 A mesh of dots that turns in 3D by itself: a quiet character for a scene. Its colour and speed show a mood.
 
-Catalog: section `340-mesh3d` (`#/mesh3d/avatar/1`). Story: `#/process-training/your-turn/1`.
+Catalog: section `340-mesh3d` (`#/mesh3d/avatar/1`). Story: `#/training/your-turn/1`.
 
 ## `mesh3d`
 

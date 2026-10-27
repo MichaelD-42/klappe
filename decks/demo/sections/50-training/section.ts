@@ -1,14 +1,6 @@
 import { gsap } from "gsap";
 import { agenda, type AgendaHandle } from "klappe/fx";
 import type { Ctx, SceneModule, SectionModule } from "klappe/types";
-import retryMd from "./20-retry/scene.md?raw";
-
-// The retry function as the walkthrough shows it: the bug and fix scenes take it from there, so it is written once.
-export const RETRY = /```js[^\n]*\n([\s\S]*?)\n```/.exec(retryMd)![1];
-export const BUG_LINE = RETRY.split("\n").findIndex((l) => l.includes("i <= attempts")) + 1;
-export const FIXED = RETRY.replace("i <= attempts", "i < attempts");
-// Where the Markdown walkthrough puts its code (src/render/world.ts), so the code stays put from scene to scene.
-export const SLOT = { x: 960, y: 140, w: 806, h: 799 };
 
 // A scene with build() gets no default title: this one shows in step 1.
 export function title(ctx: Ctx, text: string): HTMLElement {
@@ -16,6 +8,15 @@ export function title(ctx: Ctx, text: string): HTMLElement {
   h.textContent = text;
   gsap.set(h, { autoAlpha: 0 });
   return h;
+}
+
+// A layer for one effect inside a scene that shows several in turn: `ctx` draws into it, and fading `els`
+// clears that effect before the next one takes the frame.
+export function layer(ctx: Ctx): { ctx: Ctx; els: Element[] } {
+  const svg = ctx.svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "g"));
+  const html = ctx.html.appendChild(document.createElement("div"));
+  Object.assign(html.style, { position: "absolute", inset: "0" });
+  return { ctx: { ...ctx, svg, html }, els: [svg, html] };
 }
 
 // The vertical centre of the area under a scene title: the agendas and the exercise centre their blocks on it.
