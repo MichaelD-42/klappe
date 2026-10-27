@@ -15,7 +15,7 @@ for (const [vp, flags] of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-chat${flags}`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual([])
+    expect(r.problems).toEqual(['sections/10-a/40-faces/scene.ts: chat: avatar of "Cy": media/cy.png is missing; initials show'])
   }, 120_000)
 
 const ANSWER = "Yes. Run npm ci once, then npm test. The first run downloads the browsers, so it takes a few minutes."
@@ -106,5 +106,30 @@ test('reduced motion: no dots, the message lands whole', async () => {
   const r = (await read(page, 'thread'))[1]
   expect(r.text).toBe(ANSWER)
   expect(r.dots).toBe(false)
+  await page.close()
+})
+
+test('a chat fence in scene.md plays one message per step, beside the step text', async () => {
+  const page = await open('markdown/2')
+  const r = await page.evaluate(() => ({
+    messages: [...document.querySelectorAll<HTMLElement>('[data-scene="markdown"] .k-chat-live')].map((e) => [e.textContent, getComputedStyle(e.closest('.k-chat-row')!).visibility]),
+    text: [...document.querySelectorAll<HTMLElement>('[data-scene="markdown"] p')].map((p) => p.textContent),
+  }))
+  expect(r.messages).toEqual([['Where do I start?', 'visible'], ['With the three checks that block a release.', 'visible']])
+  expect(r.text).toEqual(['Ask.', 'The answer streams in.'])
+  await page.close()
+})
+
+test('avatars: a picture where the deck has one, initials otherwise; the user\'s on the right of the bubble', async () => {
+  const page = await open('faces/4')
+  const r = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-scene="faces"] .k-chat-row')].map((row) => {
+      const face = row.querySelector<HTMLElement>('[data-k-chat-avatar]')!
+      const [f, b] = [face.getBoundingClientRect(), row.querySelector('.k-chat-bubble')!.getBoundingClientRect()]
+      return { pic: !!face.querySelector('img'), text: face.textContent, side: f.left > b.left ? 'right' : 'left', round: getComputedStyle(face).borderRadius }
+    }),
+  )
+  expect(r.map(({ pic, text, side }) => [pic, text, side])).toEqual([[true, '', 'right'], [true, '', 'left'], [false, 'B', 'left'], [false, 'C', 'left']])
+  expect(r.every((x) => x.round === '50%')).toBe(true)
   await page.close()
 })

@@ -19,10 +19,11 @@ export interface DeckMeta {
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-fade" | "shout-answer";
-// A step built from Markdown by an element: a code group, a console command, a task-list item, an agenda.
+// A step built from Markdown by an element: a code group, a console command, a chat message, a task-list item, an agenda.
 export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups
   | { kind: "console"; command: number } // index of the "$ " line among the commands
+  | { kind: "chat"; message: number } // index of the message among the chat fence's non-empty lines
   | { kind: "check"; done: boolean }
   | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean; icon?: string }[] };
 export interface StepDoc {

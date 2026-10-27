@@ -21,8 +21,9 @@ describe("partsOf", () => {
       "30-d": "## D\n\n- 09:00–10:00 Start\n",
       "40-e": "## E\n\n- Sales [Sales](data/sales.csv)\n",
       "50-f": "## F\n\n```console\n$ ls\n```\n\n- List.\n",
+      "60-g": "## G\n\n```chat\nuser: Hi\nHello.\n```\n",
     });
-    expect(partsOf(all, [], []).names.sort()).toEqual(["agenda", "chart", "checklist", "shout", "terminal"]);
+    expect(partsOf(all, [], []).names.sort()).toEqual(["agenda", "chart", "chat", "checklist", "shout", "terminal"]);
     expect(partsOf(all, [], []).langs).toEqual([]);
   });
   it("loads the grammars of the code fences, and of code() when the deck's code imports it", () => {

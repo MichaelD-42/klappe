@@ -2,12 +2,14 @@ import usedFx from "virtual:klappe-fx";
 import usedLangs from "virtual:klappe-langs";
 import { LANGS, loadHighlighter } from "../fx/code";
 import { lazyTable } from "../lazy";
-import type { Deck } from "../types";
+import type { Ctx, Deck } from "../types";
 
 // The effects the default renderer plays for scene.md parts. Each one loads only when a scene.md uses it:
 // main.ts awaits loadParts before the world renders, so a deck without charts never fetches d3.
 type Parts = {
   agenda: typeof import("../fx/agenda").agenda;
+  // A chat fence's lines, each one message (chatMessage reads its sender), in the slot.
+  chat: (ctx: Ctx, o: Omit<import("../fx/chat").ChatOpts, "messages"> & { lines: string[] }) => import("../fx/chat").ChatHandle;
   chart: typeof import("../fx/chart").chart;
   checklist: typeof import("../fx/checklist").checklist;
   shout: typeof import("../fx/shout").shout;
@@ -15,6 +17,7 @@ type Parts = {
 };
 const table = lazyTable<Parts>({
   agenda: () => import("../fx/agenda").then((m) => m.agenda),
+  chat: () => import("../fx/chat").then((m) => (ctx: Ctx, { lines, ...o }: Omit<import("../fx/chat").ChatOpts, "messages"> & { lines: string[] }) => m.chat(ctx, { ...o, messages: lines.map(m.chatMessage) })),
   chart: () => import("../fx/chart").then((m) => m.chart),
   checklist: () => import("../fx/checklist").then((m) => m.checklist),
   shout: () => import("../fx/shout").then((m) => m.shout),
@@ -33,6 +36,7 @@ export function partsOf(deck: Deck, fx: string[], langs: string[]): { names: (ke
     for (const sc of sec.scenes) {
       if (sc.module?.build) continue;
       if (sc.fence?.lang === "console") names.add("terminal");
+      else if (sc.fence?.lang === "chat") names.add("chat");
       else if (sc.fence) want.add(sc.fence.lang);
       for (const s of sc.steps) {
         if (s.kind === "shout-enter") names.add("shout");

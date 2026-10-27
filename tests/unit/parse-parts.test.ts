@@ -64,7 +64,22 @@ describe("parseScene parts", () => {
   });
 
   it("reports a second fence", () => {
-    expect(parse(fence("ts", "a") + fence("js", "b")).problems).toEqual([`${F}/scene.md: one code or console block per scene`]);
+    expect(parse(fence("ts", "a") + fence("js", "b")).problems).toEqual([`${F}/scene.md: one code, console or chat block per scene`]);
+  });
+
+  it("makes one chat step per message line, blank lines skipped; the items after are their text", () => {
+    const { scene, problems } = parse(fence("chat", "user: Where do I start?\n\nWith the tests.\nAna: I take the changelog.") + "- Ask.\n- Answer.\n");
+    expect(problems).toEqual([]);
+    expect(scene.steps.map((s) => [s.text, s.part])).toEqual([
+      ["Ask.", { kind: "chat", message: 0 }],
+      ["Answer.", { kind: "chat", message: 1 }],
+      ["", { kind: "chat", message: 2 }],
+    ]);
+    expect(fenceProblem("chat")).toBeNull();
+  });
+
+  it("reports a chat block with no message", () => {
+    expect(parse(fence("chat", "\n")).problems).toEqual([`${F}/scene.md: chat block has no message`]);
   });
 
   it("reads task-list items as check parts", () => {

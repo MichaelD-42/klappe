@@ -4,6 +4,22 @@ Replays a messenger thread, one message per step. The user's messages land whole
 
 Catalog: section `217-chat` (`#/chat/thread/1`).
 
+## Markdown
+
+A ```` ```chat ```` fence in `scene.md`, one message per line, in the form `chatMessage` reads; blank lines are skipped. Each message is one step, and the list items after the fence are the steps' text, in the left column; the thread sits in the right-hand slot. From `decks/demo/sections/217-chat/30-chat-md/scene.md`:
+
+````md
+```chat
+user: Can the build run on my laptop?
+Yes. Run npm ci once, then npm test.
+Ana: I can pair with you on it after lunch.
+```
+
+- The question.
+- The assistant answers.
+- A colleague offers help.
+````
+
 ## scene.ts
 
 From `decks/demo/sections/217-chat/10-thread/scene.ts`, with one message per list item in `scene.md`:
@@ -37,6 +53,7 @@ export default captioned("chat(ctx, { messages }) — next() shows typing dots, 
 | --- | --- | --- | --- |
 | `x`, `y`, `w`, `h` | number | required | the thread's corner and size, in scene units. Messages fill it from the top |
 | `messages` | `{ from, text }[]` | required | `from: "user"` sits right; any other sender sits left. A sender other than `"user"` and `"assistant"` shows its name above the bubble in `--k-muted` |
+| `avatars` | `Record<string, string>` | none | a picture per sender from `media/`, keyed by `from`: `{ user: "media/me.jpeg", Ana: "media/ana.jpeg" }`. With it, every sender gets a 64-unit circle beside the bubble (the user's on the right), cropped from the middle, a little above centre where a portrait's face is; a sender without a picture shows up to two initials on `--k-surface`. Use a square or portrait picture of at least 256 px. A file that is not in `media/` shows the initials and the problem `chat: avatar of "<from>": <href> is missing; initials show`; `media/TODO.md` does not list it. Catalog: `#/chat/thread/1` |
 
 ### Step adders
 
@@ -55,7 +72,7 @@ Reduced motion: no typing dots, and every message fades in whole.
 ### Limits
 
 - A bubble is at most 72 % of `w` wide. A message taller than `h` shows the problem `chat: message N is taller than the panel (H px)`.
-- No Markdown form: the scene needs a `scene.ts`.
+- The Markdown form (below) has no avatars: they need `scene.ts`.
 
 ## `chatMessage`
 

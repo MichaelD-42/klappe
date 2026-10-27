@@ -44,7 +44,7 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
     if (b.type === "h2" && !title) title = b.text;
     else if (b.type === "fence") {
       if (fence) {
-        problems.push(`${folder}/scene.md: one code or console block per scene`);
+        problems.push(`${folder}/scene.md: one code, console or chat block per scene`);
         continue;
       }
       const [lang = "", ...rest] = (b.info ?? "").trim().split(/\s+/);
@@ -55,6 +55,10 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
         const n = src.split("\n").filter((l) => l.startsWith("$ ")).length;
         if (!n) problems.push(`${folder}/scene.md: console block has no "$ " command`);
         parts = Array.from({ length: n }, (_, command) => ({ kind: "console", command }));
+      } else if (lang === "chat") {
+        const n = src.split("\n").filter((l) => l.trim()).length;
+        if (!n) problems.push(`${folder}/scene.md: chat block has no message`);
+        parts = Array.from({ length: n }, (_, message) => ({ kind: "chat", message }));
       } else parts = fence.groups.map((_, group) => ({ kind: "code", group }));
       fenceAt = steps.length;
     } else if (b.type === "item" && agenda) {

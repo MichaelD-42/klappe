@@ -52,7 +52,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 // A code fence in a language Shiki does not bundle still shows, as plain text.
 export const fenceProblem = (lang: string) =>
-  lang && lang !== "console" && !LANGS.includes(lang) ? `language "${lang}" not bundled; shown plain` : null;
+  lang && lang !== "console" && lang !== "chat" && !LANGS.includes(lang) ? `language "${lang}" not bundled; shown plain` : null;
 
 // The media effect for a step: image, video, or chart from data/. The chart reads and checks the file
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
@@ -122,10 +122,14 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     const lang = fenceProblem(fence.lang);
     if (lang) ctx.problem(`${scene.source}: ${lang}`);
   }
-  // The code or terminal in the slot, built once at the scene's first code or console step.
+  // The code, terminal or chat in the slot, built once at the scene's first code, console or chat step.
   const term = fence?.lang === "console";
-  const fenceN = firstOf(term ? "console" : "code");
-  const codeFx = fence && fenceN && !term ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
+  const talk = fence?.lang === "chat";
+  const fenceN = firstOf(term ? "console" : talk ? "chat" : "code");
+  const chatFx = fence && fenceN && talk
+    ? part(fenceN, "chat", slot, (c) => fxPart("chat")(c, { lines: fence.src.split("\n").filter((l) => l.trim()), ...slot }))
+    : undefined;
+  const codeFx = fence && fenceN && !term && !talk ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
   const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => fxPart("terminal")(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
   // One checklist from all check items; one agenda per agenda step.
   const checks = scene.steps.filter((s) => s.part?.kind === "check");
@@ -166,13 +170,14 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
     p.dataset.step = String(n);
-    const fenced = codeFx ?? termFx;
-    if ((pt?.kind === "code" || pt?.kind === "console") && fenced) {
+    const fenced = codeFx ?? termFx ?? chatFx;
+    if ((pt?.kind === "code" || pt?.kind === "console" || pt?.kind === "chat") && fenced) {
       return fx.set(n, (tl) => {
         tl.to(p, { autoAlpha: 1, duration: motion.step });
         if (n === fenceN) (fenced.h?.show ?? fenced.miss!)(tl);
         if (pt.kind === "code") codeFx?.h?.focus(fence!.groups[pt.group])(tl);
-        else termFx?.h?.run(pt.command)(tl);
+        else if (pt.kind === "console") termFx?.h?.run(pt.command)(tl);
+        else chatFx?.h?.next()(tl);
       });
     }
     if (!s.media) return;
