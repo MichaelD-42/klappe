@@ -161,3 +161,31 @@ test('dots land in one rush without a label, take --k-accent, and settle', async
   expect(await dots()).toEqual({ circles: 13, boxes: 3, shown: 13, accent: 1 })
   await page.close()
 }, 60_000)
+
+test('a phase grows in its lane in the accent and settles on the next step; overlapping phases take two lanes', async () => {
+  const phases = async (step: number) => {
+    const page = await open(`#/a/phased/${step}`)
+    const r = await page.evaluate(() => {
+      const scene = document.querySelector('div[data-scene="phased"]')!
+      const probe = scene.appendChild(document.createElement('div'))
+      probe.style.color = 'var(--k-accent)'
+      const accent = getComputedStyle(probe).color
+      probe.remove()
+      const bars = [...scene.querySelectorAll<HTMLElement>('[data-k-roadmap-phase]')]
+      const axis = Math.max(...[...scene.querySelectorAll<HTMLElement>('[data-k-roadmap-milestone]')].map((m) => m.getBoundingClientRect().bottom))
+      return {
+        state: bars.map((b) => (getComputedStyle(b).visibility === 'hidden' ? 'hidden' : getComputedStyle(b).borderColor === accent ? 'accent' : 'settled')),
+        tops: bars.map((b) => Math.round(b.getBoundingClientRect().top)),
+        // Every milestone label ends above every bar: with phases, milestones sit above the axis.
+        above: bars.every((b) => b.getBoundingClientRect().top > axis),
+      }
+    })
+    await page.close()
+    return r
+  }
+  expect((await phases(2)).state).toEqual(['accent', 'hidden'])
+  const last = await phases(4)
+  expect(last.state).toEqual(['settled', 'accent'])
+  expect(last.tops[1]).toBeGreaterThan(last.tops[0])
+  expect(last.above).toBe(true)
+})

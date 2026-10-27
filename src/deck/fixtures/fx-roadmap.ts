@@ -59,6 +59,20 @@ const dots: SceneModule = {
   steps: [(tl, r: R) => r.r.show(tl), (tl, r: R) => r.r.reveal("p")(tl), (tl, r: R) => r.r.reveal("q")(tl), (tl, r: R) => r.r.rush("d0", "d9")(tl), (tl, r: R) => r.r.reveal("r")(tl)],
 };
 
+// Phases in two lanes (the pilot overlaps the build), revealed between milestones that all sit above the axis.
+const phased: SceneModule = {
+  build: (ctx) => ({
+    r: roadmap(ctx, {
+      ...rect, milestones, today: "2026-07-20",
+      phases: [
+        { id: "build", from: "2026-07-01", to: "2026-09-15", label: "Bau" },
+        { id: "pilot", from: "2026-09-01", to: "2026-11-30", label: "Pilot" },
+      ],
+    }),
+  }),
+  steps: [(tl, r: R) => r.r.show(tl), (tl, r: R) => r.r.reveal("build")(tl), (tl, r: R) => r.r.reveal("beta")(tl), (tl, r: R) => r.r.reveal("pilot")(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -69,6 +83,7 @@ export default () =>
       "sections/10-a/30-early/scene.md": md("Früh gebaut", 3),
       "sections/10-a/40-rush/scene.md": md("Immer schneller", 4),
       "sections/10-a/50-dots/scene.md": md("Punkte", 5),
+      "sections/10-a/60-phased/scene.md": md("Phasen", 4),
     },
-    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-outside/scene.ts": outside, "sections/10-a/30-early/scene.ts": early, "sections/10-a/40-rush/scene.ts": rush, "sections/10-a/50-dots/scene.ts": dots },
+    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-outside/scene.ts": outside, "sections/10-a/30-early/scene.ts": early, "sections/10-a/40-rush/scene.ts": rush, "sections/10-a/50-dots/scene.ts": dots, "sections/10-a/60-phased/scene.ts": phased },
   );

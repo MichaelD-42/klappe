@@ -1,14 +1,17 @@
 import { gsap } from "gsap";
+import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 export type RoadmapOpts = {
   milestones: { id: string; date: string; label: string }[]; // dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing
+  // Spans as bars in lanes under the axis; with phases, every labelled milestone sits above it.
+  phases?: { id: string; from: string; to: string; label: string }[];
   today: string; // "YYYY-MM-DD", given by the deck: never the wall clock, so seek equals play and CI sees the same picture
 } & Rect;
 export interface RoadmapHandle {
   show: StepAdder; // the axis, its month ticks and the today marker
-  reveal(id: string): StepAdder; // one milestone appears in --k-accent; it settles on the next roadmap step
+  reveal(id: string): StepAdder; // one milestone or phase appears in --k-accent; it settles on the next roadmap step
   rush(from: string, to: string): StepAdder; // the milestones from one id to the other, in one step, each sooner and harder
   move(date: string): StepAdder; // the today marker moves to date
   el: HTMLElement; // the today marker
@@ -27,6 +30,11 @@ const MAX_FONT = 28;
 const MAX_LINES = 3;
 const LINE_H = 1.2;
 const RUSH = 0.7; // in a rush, each gap between two landings is this much of the one before
+const BAR = 40; // a phase bar's height
+const LANE = 48; // one phase lane: the bar and the gap under it
+const BAR_TOP = 52; // from the axis to the first lane, clear of the month labels under it
+const BAR_FONT = 24;
+const PHASE_LIT = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, var(--k-surface))`; // the bar of the phase just revealed
 
 // ms since the epoch, UTC midnight; throws on anything but a real "YYYY-MM-DD".
 function day(s: string): number {
@@ -46,7 +54,13 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 export function roadmapLayout(opts: Omit<RoadmapOpts, "y" | "h">, lang = "en") {
   const ms = new Map(opts.milestones.map((m) => [m.id, day(m.date)]));
   const today = day(opts.today);
-  const all = [...ms.values(), today];
+  const spans = (opts.phases ?? []).map((p) => {
+    const [a, b] = [day(p.from), day(p.to)];
+    if (b < a) throw new Error(`roadmap: phase "${p.id}" ends before it starts`);
+    return { ...p, a, b };
+  });
+  // A phase's bar runs to the end of its last day.
+  const all = [...ms.values(), today, ...spans.flatMap((p) => [p.a, p.b])];
   const lo = new Date(Math.min(...all));
   const hi = new Date(Math.max(...all));
   const start = Date.UTC(lo.getUTCFullYear(), lo.getUTCMonth(), 1);
@@ -65,17 +79,27 @@ export function roadmapLayout(opts: Omit<RoadmapOpts, "y" | "h">, lang = "en") {
   const lab = sorted.filter((m) => m.label); // a dot (empty label) takes no side and no room
   const xs = lab.map((m) => px(ms.get(m.id)!));
   const short = dateFmt(lang, { day: "numeric", month: "short", ...(months > 12 && { year: "numeric" }) });
+  // With phases under the axis every labelled milestone is above it, so its same-side neighbour is the next one.
+  const k = spans.length ? 1 : 2;
   const milestones = sorted.map((m) => {
     const x = px(ms.get(m.id)!);
     if (!m.label) return { id: m.id, label: "", x, above: false, left: x, width: 0, date: "", dot: true };
     const i = lab.indexOf(m);
     const gap = (j: number) => (j >= 0 && j < xs.length ? Math.abs(xs[j] - xs[i]) - 16 : Infinity);
-    if (gap(i + 2) < MIN_W) problems.push(`roadmap: milestones "${m.id}" and "${lab[i + 2].id}" are too close`);
-    const width = Math.max(MIN_W, Math.min(LABEL_W, gap(i - 2), gap(i + 2)));
+    if (gap(i + k) < MIN_W) problems.push(`roadmap: milestones "${m.id}" and "${lab[i + k].id}" are too close`);
+    const width = Math.max(MIN_W, Math.min(LABEL_W, gap(i - k), gap(i + k)));
     // Centred on its dot, even at the axis ends, where it reaches past the area by up to half its width.
-    return { id: m.id, label: m.label, x, above: i % 2 === 0, left: r2(x - width / 2), width: r2(width), date: short(ms.get(m.id)!), dot: false };
+    return { id: m.id, label: m.label, x, above: k === 1 || i % 2 === 0, left: r2(x - width / 2), width: r2(width), date: short(ms.get(m.id)!), dot: false };
   });
-  return { start, end, px, ticks, milestones, today: px(today), problems };
+  // Lanes in start order: each phase takes the first lane whose last bar has ended before it starts.
+  const ends: number[] = [];
+  const phases = [...spans].sort((p, q) => p.a - q.a).map((p) => {
+    let lane = ends.findIndex((e) => e < p.a);
+    if (lane < 0) lane = ends.push(0) - 1;
+    ends[lane] = p.b;
+    return { id: p.id, label: p.label, lane, left: px(p.a), width: r2(px(p.b + DAY) - px(p.a)) };
+  });
+  return { start, end, px, ticks, milestones, phases, today: px(today), problems };
 }
 
 // A time axis with milestones that appear one per step and a "today" marker that moves step by step.
@@ -131,6 +155,24 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     return [m.id, { stem, dot, box, inner, text }];
   }));
 
+  // A phase: a bar in its lane under the axis, its label inside; it grows from its start.
+  const room = opts.y + opts.h - (ay + BAR_TOP);
+  const lanes = Math.max(0, ...L.phases.map((p) => p.lane + 1));
+  if (lanes * LANE > room) ctx.problem(`roadmap: ${lanes} phase lanes do not fit under the axis`);
+  const bars = new Map(L.phases.map((p) => {
+    const bar = div({
+      position: "absolute", left: `${p.left}px`, top: `${ay + BAR_TOP + p.lane * LANE}px`, width: `${p.width}px`, height: `${BAR}px`,
+      boxSizing: "border-box", borderRadius: "8px", border: "2px solid var(--k-line)", background: "var(--k-surface)", color: "var(--k-fg)",
+      display: "flex", alignItems: "center", padding: "0 12px", overflow: "hidden", zIndex: "1",
+    });
+    bar.setAttribute("data-k-roadmap-phase", p.id);
+    const text = div({ font: `700 ${BAR_FONT}px/1 var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, bar);
+    text.textContent = p.label;
+    gsap.set(bar, { autoAlpha: 0, scaleX: ctx.reducedMotion ? 1 : 0, transformOrigin: "0% 50%" }); // as a seek back over reveal leaves it
+    return [p.id, { bar, text }];
+  }));
+  for (const id of bars.keys()) if (items.has(id)) throw new Error(`roadmap: "${id}" is both a milestone and a phase`);
+
   // The today marker: a line through the area and its label on top; moves by x, so a step never edits layout.
   const marker = div({ position: "absolute", left: "0", top: `${opts.y}px`, width: "0", height: `${opts.h}px`, zIndex: "2", pointerEvents: "none" });
   marker.setAttribute("data-k-roadmap-today", "");
@@ -158,6 +200,16 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       }
       text.style.fontSize = `${size}px`;
       if (over()) ctx.problem(`roadmap: label of "${id}" too long`);
+    }
+    for (const [id, { text }] of bars) {
+      let size = BAR_FONT;
+      const over = () => text.scrollWidth > text.clientWidth;
+      for (; size > FLOOR; size -= 2) {
+        text.style.fontSize = `${size}px`;
+        if (!over()) break;
+      }
+      text.style.fontSize = `${size}px`;
+      if (over()) ctx.problem(`roadmap: label of phase "${id}" too long for its bar`);
     }
   };
 
@@ -210,6 +262,18 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       tl.to(marker, { autoAlpha: 1, duration: 0.4 }, t + 0.3);
     },
     reveal(id) {
+      const ph = bars.get(id);
+      if (ph)
+        return (tl) => {
+          const t = begin(tl, (tl, t) => set(tl, ph.bar, { borderColor: "var(--k-line)", backgroundColor: "var(--k-surface)" }, t));
+          set(tl, ph.bar, { borderColor: "var(--k-accent)", backgroundColor: PHASE_LIT }, t);
+          // Reduced motion fades the bar in at full length.
+          if (ctx.reducedMotion) tl.fromTo(ph.bar, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
+          else {
+            set(tl, ph.bar, { autoAlpha: 1 }, t);
+            tl.fromTo(ph.bar, { scaleX: 0 }, { scaleX: 1, duration: motion.step * 1.5, ease: "power2.out", immediateRender: false }, t);
+          }
+        };
       find(id);
       return land([id]);
     },

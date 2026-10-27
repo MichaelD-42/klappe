@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- `roadmap`: milestones are points only. Phases as bars on the axis (`{ id, from, to, label }`), for "beta runs July to September".
 - `compareTable`: no column highlight. `column(i)` lights "our plan" across all rows, the usual end of a pricing or option comparison.
 - `code`: no line numbers (`lineNumbers: true`, so a speaker can say "line 12"), and no typing: `type(lines)` that types new lines in, for live-coding beats.
 - `chat`: no Markdown form, though the scene already takes its messages from list items. A fence or a `chat:` marker in `scene.md` would cover the common case without `scene.ts`.

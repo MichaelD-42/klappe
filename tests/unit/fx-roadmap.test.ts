@@ -61,3 +61,27 @@ test('a span of years puts a tick on every January, with its year, and the year 
   expect(L.milestones[0].date).toBe('Mar 10, 2020')
   expect(roadmapLayout(base).milestones[0].date).toBe('Jul 1')
 })
+
+const phases = [
+  { id: 'build', from: '2026-07-01', to: '2026-09-15', label: 'Build' },
+  { id: 'pilot', from: '2026-09-01', to: '2026-11-30', label: 'Pilot' }, // overlaps build: a second lane
+  { id: 'roll', from: '2026-10-01', to: '2027-02-28', label: 'Roll-out' }, // after build: back in the first lane
+]
+
+test('phases sit in lanes under the axis, a phase that overlaps another in the next lane; the axis reaches them', () => {
+  const L = roadmapLayout({ ...base, phases })
+  expect(L.phases.map((p) => [p.id, p.lane])).toEqual([['build', 0], ['pilot', 1], ['roll', 0]])
+  expect(L.phases[0].left).toBe(L.px(Date.UTC(2026, 6, 1)))
+  // Through the end of its last day, 15 September.
+  expect(L.phases[0].width).toBeCloseTo(L.px(Date.UTC(2026, 8, 16)) - L.px(Date.UTC(2026, 6, 1)))
+  expect(new Date(L.end).toISOString().slice(0, 10)).toBe('2027-03-01')
+})
+
+test('with phases every milestone sits above the axis, and only same-side neighbours count as close', () => {
+  const L = roadmapLayout({ ...base, phases })
+  expect(L.milestones.every((m) => m.above)).toBe(true)
+})
+
+test('a phase that ends before it starts throws', () => {
+  expect(() => roadmapLayout({ ...base, phases: [{ id: 'x', from: '2026-09-01', to: '2026-08-01', label: 'X' }] })).toThrow('roadmap: phase "x" ends before it starts')
+})
