@@ -11,6 +11,7 @@ export type StickyNotesOpts = {
 export interface StickyNotesHandle {
   show(ids?: string[]): StepAdder;
   group(groupId: string, ids: string[]): StepAdder;
+  vote(id: string, n: number): StepAdder; // drops n more dots on the note
 }
 export type NotePose = { x: number; y: number; rotation: number };
 
@@ -25,6 +26,8 @@ const TILT = 4; // the most a scattered note leans, degrees
 const FONT = 22;
 const FLOOR = 20; // legibility floor, scene px
 const LINE_H = 1.2;
+const DOT = 22; // a vote dot's diameter
+const DOTS = 12; // the most dots a note holds: rows of dots along its top edge, the later rows above it
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -128,7 +131,19 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
       textAlign: "center", zIndex: "2",
     });
     gsap.set(el, { ...scatter[i], scale: 1, autoAlpha: 0 });
-    return [n.id, { el, text, i }] as const;
+    // Vote dots, hidden until vote() drops them: astride the top edge, left to right, a full row then the next above.
+    const per = Math.max(1, Math.floor((note.w - 8) / (DOT + 4)));
+    const dots = Array.from({ length: DOTS }, (_, k) => {
+      const d = el.appendChild(document.createElement("div"));
+      d.setAttribute("data-k-vote", "");
+      Object.assign(d.style, {
+        position: "absolute", left: `${8 + (k % per) * (DOT + 4)}px`, top: `${-DOT / 2 - Math.floor(k / per) * (DOT + 2)}px`,
+        width: `${DOT}px`, height: `${DOT}px`, borderRadius: "50%", background: "var(--k-accent)", boxShadow: "0 0 0 2px var(--k-bg)",
+      });
+      gsap.set(d, { autoAlpha: 0, scale: 1 });
+      return d;
+    });
+    return [n.id, { el, text, i, dots }] as const;
   }));
   const need = (id: string) => {
     if (!notes.has(id)) throw new Error(`stickyNotes: unknown note "${id}"`);
@@ -156,6 +171,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
   const pose = new Map<string, NotePose>(); // where each shown note stands after the steps added so far
   const labelled = new Set<number>();
   let last: number | undefined; // the group of the latest group(), its label in the accent until the next one
+  const votes = new Map<string, number>(); // dots dropped per note
 
   // The columns of groups not formed yet, side by side ones as one area.
   const free = () => {
@@ -245,6 +261,22 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
           where.set(id, { g, k });
         }
         settle(tl, t, ids);
+      };
+    },
+    vote(id, n) {
+      need(id);
+      return (tl) => {
+        const t = tl.duration();
+        tl.set({}, {}, t + 0.4); // the step still takes a beat
+        if (!where.has(id)) return ctx.problem(`stickyNotes: vote on "${id}" before it shows`);
+        const had = votes.get(id) ?? 0;
+        if (had + n > DOTS) ctx.problem(`stickyNotes: vote on "${id}" past ${DOTS} dots`);
+        const to = Math.min(DOTS, had + n);
+        votes.set(id, to);
+        const dropped = notes.get(id)!.dots.slice(had, to);
+        if (!dropped.length) return;
+        if (fly) tl.fromTo(dropped, { autoAlpha: 0, scale: 2 }, { autoAlpha: 1, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: 0.1, immediateRender: false }, t);
+        else tl.fromTo(dropped, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2, immediateRender: false }, t);
       };
     },
   };

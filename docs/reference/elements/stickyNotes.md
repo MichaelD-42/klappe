@@ -2,7 +2,7 @@
 
 Notes for a workshop deck: they appear scattered and slightly tilted, as the room stuck them up, then fly into labelled group columns one group per step (an affinity map). Each note is a paper colour: a `--k-series-N` token mixed toward `--k-bg`, with `--k-fg` text.
 
-Catalog: section `299-notes-cards` (`#/notes-cards/affinity/1`).
+Catalog: section `299-notes-cards` (`#/notes-cards/affinity/1`; the dot vote at `#/notes-cards/affinity/5`).
 
 ## `stickyNotes`
 
@@ -42,6 +42,7 @@ Call `stickyNotes` in `build`; the steps only use what it returns.
 | --- | --- |
 | `show(ids?)` | returns a step adder (`r.n.show()(tl)`). The notes in `ids` (all when left out) pop in at their scattered place, tilted up to 4°, 0.08 s apart. Notes already out are skipped. With reduced motion they fade in, without the pop |
 | `group(groupId, ids)` | returns a step adder. The group's label fades in the first time; its underline is `--k-accent` during the step and settles to `--k-line` when the next `group` starts. Each note in `ids` flies to the first free slot of the column, filled row by row from the top, and stands upright, 0.6 s, 0.08 s apart, over the notes still scattered. A column's notes sit centred in the height under its label. The notes still scattered move out of the column, spread evenly over the columns of groups not formed yet. A note never shown fades in at its slot. A note already in this group stays put; one in another group moves. With reduced motion a shown note cuts to its slot. An unknown note throws `stickyNotes: unknown note "<id>"`, an unknown group `stickyNotes: unknown group "<id>"` |
+| `vote(id, n)` | returns a step adder. Drops `n` more dots in `--k-accent` on note `id`, 0.1 s apart: astride its top edge, left to right, a full row then the next above it. Dots add up over steps and move with the note. Several calls in one step land together. With reduced motion they fade in. A vote on a note not shown yet shows `stickyNotes: vote on "<id>" before it shows`; past 12 dots on a note, `stickyNotes: vote on "<id>" past 12 dots` and the note keeps 12 |
 
 ### Limits
 
@@ -49,6 +50,7 @@ Call `stickyNotes` in `build`; the steps only use what it returns.
 - Scattered notes sit below the label band, spread evenly: as few rows as hold them, each row's notes across the width, each with a seeded nudge and lean, one note per cell, so they do not overlap. Once a group forms they keep out of its column. More notes than cells overlap; give them a bigger area. Notes left scattered after every group formed stay where they are and may overlap a column.
 - Each column has a fixed number of slots, filled row by row: 6 per group at the catalog's 1600 × 670 with three groups. One more shows `stickyNotes: group "<id>" is full` and puts the note on the last slot.
 - Notes that leave a group leave a gap; the next note grouped there fills it.
+- A note holds 12 vote dots, in rows of as many as fit its width (6 on a 180 px note). A second row stands above the note and can cover the bottom of the note above it in a column.
 - Note text wraps and shrinks from 22 px to the 20 px floor. Text that still does not fit shows `stickyNotes: text of "<id>" too long`. Fitting happens when the first step is added. Group labels are not fitted: they cut with an ellipsis.
 
 ## `stickyLayout`

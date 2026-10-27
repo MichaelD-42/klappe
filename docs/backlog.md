@@ -2,11 +2,10 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `stickyNotes` `vote(id, n)` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `sequence` activation bars, notes and frames (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## Effects
 
-- `stickyNotes`: dot voting. `vote(id, n)` drops `n` dots on a note, so a workshop deck can show the result of a vote after the affinity map.
 - `sequence`: no activation bars, notes or `alt`/`loop` frames, the three things readers expect after arrows.
 - `semanticZoom`: no lines between boxes; the reference says to draw them with `arrow`. `links: [{ from, to }]` per level, shown with the level.
 - `gitGraph`: no tags, cherry-pick or squash. Tags and cherry-pick are the two that come up in a git training.

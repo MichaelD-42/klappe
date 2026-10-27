@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `stickyNotes`: `vote(id, n)` drops `n` dots on a note, for the dot vote after an affinity map. Dots add up over steps and move with the note. Catalog: `#/notes-cards/affinity/5`.
 - `pyramid`: `light(id)` puts a built layer back in the accent (`light(null)`: none), and `shape: "inverted"` narrows downwards, for a funnel-shaped stack. Catalog: `#/venn-pyramid/layers/5`, `#/venn-pyramid/hiring/1`.
 - `checklist`: `fail(i)` crosses a box in `--k-bad` instead of ticking it, for an audit or a pre-mortem. Catalog: `#/checklist-agenda/pre-mortem/3`.
 - `annotate`: `kind: "bracket"` stands a curly brace beside a run of lines on `side`, and `kind: "cross"` draws an X over the target, in `--k-bad`. `color` takes a `--k-*` token name for any mark. Catalog: `#/draw/annotate/8`.
