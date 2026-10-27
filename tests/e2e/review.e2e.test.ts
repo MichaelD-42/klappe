@@ -143,7 +143,7 @@ test('stepping in either window moves both, and each step shows its own findings
   await review.getByRole('button', { name: 'Next', exact: true }).click()
   await expect.poll(() => deckIndex(deck), { timeout: 10_000 }).toBe(2)
   await expect.poll(() => values(review), { timeout: 10_000 }).toEqual(['', '', ''])
-  expect(onDisk()).toContain('Say it shorter.') // a step change saves at once
+  await expect.poll(onDisk, { timeout: 10_000 }).toContain('Say it shorter.') // a step change saves at once
   await deck.bringToFront()
   await deck.keyboard.press('ArrowLeft')
   await expect.poll(() => values(review), { timeout: 10_000 }).toEqual(['Say it shorter.', '', ''])
@@ -201,7 +201,7 @@ test('a field focused before a step from the deck window shows the new step\'s f
   await deck.bringToFront()
   await deck.keyboard.press('ArrowRight')
   await expect.poll(() => field(review, 'content').inputValue(), { timeout: 10_000 }).toBe('Existing finding on step 3.')
-  expect(onDisk()).toContain('On step 2.')
+  await expect.poll(onDisk, { timeout: 10_000 }).toContain('On step 2.')
   await context.close()
 })
 
@@ -218,6 +218,28 @@ test('a finding whose save failed still shows on its step, and goes out with the
   await field(review, 'visuals').fill('Later.')
   await expect.poll(onDisk, { timeout: 10_000 }).toContain('Later.')
   expect(onDisk()).toContain('Not saved yet.')
+  await context.close()
+})
+
+// Reads of the file can land out of order (a slow server under load): an old read must not replace a newer one.
+test('a read of the file that lands late does not overwrite a newer one', async () => {
+  const { context, review } = await pair()
+  // The next read is taken from the server now, while the file is still empty, and handed over 2 s later.
+  let slow = true
+  await review.route('**/__klappe/review', async (r) => {
+    if (r.request().method() !== 'GET' || !slow) return r.continue()
+    slow = false
+    const res = await r.fetch()
+    await new Promise((ok) => setTimeout(ok, 2000))
+    await r.fulfill({ response: res })
+  })
+  await review.evaluate(() => dispatchEvent(new Event('focus'))) // the slow, stale read
+  await field(review, 'content').fill('Say it shorter.')
+  await review.getByRole('button', { name: 'Next', exact: true }).click()
+  await review.getByRole('button', { name: 'Previous', exact: true }).click()
+  await expect.poll(() => values(review), { timeout: 10_000 }).toEqual(['Say it shorter.', '', ''])
+  await review.waitForTimeout(2500) // past the stale read's arrival
+  expect(await values(review)).toEqual(['Say it shorter.', '', ''])
   await context.close()
 })
 

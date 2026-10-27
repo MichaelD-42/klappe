@@ -2,7 +2,7 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish list is done. Next: New effects, top down. New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), pushed. `npm test` is green. The demo story rework is done (12 scenes in 5 sections). The Effects polish list is done. Next: New effects, top down. New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## New effects
 
@@ -17,7 +17,3 @@ State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0`
 - Org chart: people boxes with a portrait and a role, top-down. Check first whether `decisionTree` with an image per node does it.
 - Formula: a typeset equation that builds term by term, for technical trainings. Needs KaTeX or MathJax, a new dependency: a user decision.
 
-## Tooling
-
-- `tests/e2e/review.e2e.test.ts` fails under a full `npm test` run (seen 2026-10-26 and 2026-10-27: "stepping in either window moves both…" expected 'Say it shorter.', and "a field focused before a step…") and passes alone every time. A wait on a save or a window sync is timed, not awaited; find it and wait on the condition.
-- `klappe test` writes `data/TODO.md` and `media/TODO.md`, which the `@deck/**/*.md` glob in `src/deck/load.ts` takes in, so a `klappe test` run reloads an open deck. Leave them out of the glob, as `review.md` is.

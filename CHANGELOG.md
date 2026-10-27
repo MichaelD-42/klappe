@@ -44,6 +44,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- Review window: a read of review.md that lands late (a slow dev server) no longer replaces a newer one, which could blank a finding on screen after stepping back.
+- `klappe test`'s `data/TODO.md` and `media/TODO.md` are no longer loaded as part of the deck, so writing them does not reload an open one.
 - `swimlanes`: `walk` to a task with no link from the current one reports `swimlanes: no link from "<a>" to "<b>"` instead of moving straight in silence, as `flow`'s `send` does. The catalog scene that showed the silent hop is gone.
 - `roadmap` on an axis of several years: ticks every 2, 3, 6 or 12 months now count from January, so each January has a tick with its year (before, an axis from March showed "Mar, Sep, Mar, …" with only the first year). An axis that starts off that grid has no tick at its left end. Milestone dates show the year.
 - `splitFlap`: Ä, Ö and Ü are on the drum, so a German word flips through them instead of changing in one cut; ß shows as ẞ instead of SS, which pushed the rest of the word one cell on.

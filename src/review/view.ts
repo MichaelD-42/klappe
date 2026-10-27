@@ -144,14 +144,20 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     moved.textContent = written && `${t("writtenFor", lang)}: “${written}”`;
     moved.hidden = !written;
   };
+  // Reads can land out of order: only the latest one asked for is shown, or an old file would replace a newer one.
+  let reads = 0;
   const load = async () => {
+    const n = ++reads;
     await flushing;
     try {
       const r = await fetch(ROUTE);
       if (!r.ok) throw new Error(String(r.status));
-      ({ text, path } = await r.json());
+      const got = await r.json();
+      if (n !== reads) return;
+      ({ text, path } = got);
       showStatus();
     } catch {
+      if (n !== reads) return;
       showStatus(true);
     }
     show();
