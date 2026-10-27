@@ -15,7 +15,8 @@ const TILE = 140; // the stage's icon tile, just above its box
 
 // Where the stage sits inside its scene frame (x, stage px); default the centre. Clarification
 // sits left, so its frame starts right of the Analysis cards (Analysis x < 1640, scene-local).
-const FRAME_AT: Record<string, number> = { clarification: 420 };
+// Design sits left too, so Verification fits whole inside the frame's right edge (1856, the safe area).
+const FRAME_AT: Record<string, number> = { clarification: 420, design: 526 };
 
 const centre = (name: string) => {
   const i = NAMES.findIndex((n) => n.toLowerCase() === name);
