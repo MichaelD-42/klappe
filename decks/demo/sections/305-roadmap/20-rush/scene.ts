@@ -16,6 +16,10 @@ export default captioned("rush(from, to) lands a range of milestones in one step
         { id: "g", date: "2025-06-15", label: "Release G" },
         { id: "h", date: "2025-10-15", label: "Release H" },
         { id: "i", date: "2026-05-15", label: "Release I" },
+        // No label, so a dot: a crowd of small releases shows the pace without more labels.
+        { id: "x1", date: "2024-08-01", label: "" }, { id: "x2", date: "2024-12-05", label: "" }, { id: "x3", date: "2025-02-10", label: "" },
+        { id: "x4", date: "2025-03-20", label: "" }, { id: "x5", date: "2025-08-20", label: "" }, { id: "x6", date: "2025-12-05", label: "" },
+        { id: "x7", date: "2026-02-01", label: "" }, { id: "x8", date: "2026-02-20", label: "" }, { id: "x9", date: "2026-03-10", label: "" },
       ],
     }),
   }),

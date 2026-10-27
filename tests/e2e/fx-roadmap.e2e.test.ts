@@ -134,3 +134,30 @@ for (const q of ['', '&reducedmotion=1'])
     expect(Object.values((await state(page, 'rush')).ms)).toEqual(Array(9).fill('settled'))
     await page.close()
   }, 60_000)
+
+// The dots scene rushes ten dots (two on one day, all close) between labelled milestones: they pop in --k-accent with no
+// label, and the next step settles them. The walk above checks play equals seek on this scene too and that no dot is "too close".
+test('dots land in one rush without a label, take --k-accent, and settle', async () => {
+  const page = await open('#/a/dots/4')
+  const dots = () =>
+    page.evaluate(() => {
+      const scene = document.querySelector('g[data-scene="dots"]')!
+      const probe = document.body.appendChild(document.createElement('div'))
+      probe.style.color = 'var(--k-accent)'
+      const accent = getComputedStyle(probe).color
+      probe.remove()
+      const c = [...scene.querySelectorAll<SVGCircleElement>('circle')]
+      const fill = (e: Element) => getComputedStyle(e).fill
+      return {
+        circles: c.length,
+        boxes: document.querySelectorAll('div[data-scene="dots"] [data-k-roadmap-milestone]').length,
+        shown: c.filter((e) => getComputedStyle(e).visibility === 'visible').length,
+        accent: c.filter((e) => fill(e) === accent).length,
+      }
+    })
+  expect(await dots()).toEqual({ circles: 13, boxes: 3, shown: 12, accent: 10 })
+  await page.evaluate(() => void window.klappe.stepper.next())
+  await settle(page)
+  expect(await dots()).toEqual({ circles: 13, boxes: 3, shown: 13, accent: 1 })
+  await page.close()
+}, 60_000)

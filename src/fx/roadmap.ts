@@ -3,7 +3,7 @@ import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 export type RoadmapOpts = {
-  milestones: { id: string; date: string; label: string }[]; // dates as "YYYY-MM-DD"
+  milestones: { id: string; date: string; label: string }[]; // dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing
   today: string; // "YYYY-MM-DD", given by the deck: never the wall clock, so seek equals play and CI sees the same picture
 } & Rect;
 export interface RoadmapHandle {
@@ -62,14 +62,18 @@ export function roadmapLayout(opts: Omit<RoadmapOpts, "y" | "h">, lang = "en") {
   }
   const problems: string[] = [];
   const sorted = [...opts.milestones].sort((a, b) => ms.get(a.id)! - ms.get(b.id)!);
-  const xs = sorted.map((m) => px(ms.get(m.id)!));
+  const lab = sorted.filter((m) => m.label); // a dot (empty label) takes no side and no room
+  const xs = lab.map((m) => px(ms.get(m.id)!));
   const short = dateFmt(lang, { day: "numeric", month: "short", ...(months > 12 && { year: "numeric" }) });
-  const milestones = sorted.map((m, i) => {
+  const milestones = sorted.map((m) => {
+    const x = px(ms.get(m.id)!);
+    if (!m.label) return { id: m.id, label: "", x, above: false, left: x, width: 0, date: "", dot: true };
+    const i = lab.indexOf(m);
     const gap = (j: number) => (j >= 0 && j < xs.length ? Math.abs(xs[j] - xs[i]) - 16 : Infinity);
-    if (gap(i + 2) < MIN_W) problems.push(`roadmap: milestones "${m.id}" and "${sorted[i + 2].id}" are too close`);
+    if (gap(i + 2) < MIN_W) problems.push(`roadmap: milestones "${m.id}" and "${lab[i + 2].id}" are too close`);
     const width = Math.max(MIN_W, Math.min(LABEL_W, gap(i - 2), gap(i + 2)));
     // Centred on its dot, even at the axis ends, where it reaches past the area by up to half its width.
-    return { id: m.id, label: m.label, x: xs[i], above: i % 2 === 0, left: r2(xs[i] - width / 2), width: r2(width), date: short(ms.get(m.id)!) };
+    return { id: m.id, label: m.label, x, above: i % 2 === 0, left: r2(x - width / 2), width: r2(width), date: short(ms.get(m.id)!), dot: false };
   });
   return { start, end, px, ticks, milestones, today: px(today), problems };
 }
@@ -107,11 +111,12 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   }
 
   // A milestone: a dot on the axis, a stem to its label, the label (date over title) above or below.
-  const items = new Map(L.milestones.map((m) => {
+  const items = new Map<string, { dot: SVGElement; stem?: SVGElement; box?: HTMLElement; inner?: HTMLElement; text?: HTMLElement }>(L.milestones.map((m) => {
     const [y0, y1] = m.above ? [ay - DOT, ay - STEM] : [ay + DOT, ay + STEM];
-    const stem = svgEl("line", { x1: m.x, y1: y0, x2: m.x, y2: y1 }, { stroke: "var(--k-line)", strokeWidth: "3" });
+    const stem = m.dot ? undefined : svgEl("line", { x1: m.x, y1: y0, x2: m.x, y2: y1 }, { stroke: "var(--k-line)", strokeWidth: "3" });
     const dot = svgEl("circle", { cx: m.x, cy: ay, r: DOT }, { fill: "var(--k-line)", stroke: "var(--k-bg)", strokeWidth: "3" });
     gsap.set(dot, { scale: 0, svgOrigin: `${m.x} ${ay}` }); // the transform from load, as a seek back over reveal leaves it
+    if (m.dot) return [m.id, { dot }];
     const boxH = m.above ? ay - STEM - (opts.y + TODAY_H + 8) : opts.y + opts.h - (ay + STEM);
     const box = div({
       position: "absolute", left: `${m.left}px`, top: `${m.above ? ay - STEM - boxH : ay + STEM}px`, width: `${m.width}px`, height: `${boxH}px`,
@@ -144,6 +149,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     if (fitted) return;
     fitted = true;
     for (const [id, { box, inner, text }] of items) {
+      if (!box || !inner || !text) continue;
       let size = MAX_FONT;
       const over = () => text.offsetHeight > LINE_H * size * MAX_LINES + 1 || inner.offsetHeight > box.clientHeight || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
@@ -174,8 +180,8 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     const paint = (tl: gsap.core.Timeline, dot: string, fg: string, t: number) =>
       its.forEach((it) => {
         set(tl, it.dot, { fill: dot }, t);
-        set(tl, it.stem, { stroke: dot }, t);
-        set(tl, it.inner, { color: fg }, t);
+        if (it.stem) set(tl, it.stem, { stroke: dot }, t);
+        if (it.inner) set(tl, it.inner, { color: fg }, t);
       });
     const t = begin(tl, (tl, t) => paint(tl, "var(--k-line)", "var(--k-fg)", t));
     paint(tl, "var(--k-accent)", "var(--k-accent)", t);
@@ -184,6 +190,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       const punch = k / Math.max(1, its.length - 1);
       if (ctx.reducedMotion) set(tl, it.dot, { autoAlpha: 1, scale: 1 }, at);
       else tl.fromTo(it.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: `back.out(${2 + 2 * punch})`, immediateRender: false }, at);
+      if (!it.box) return;
       tl.to([it.stem, it.box], { autoAlpha: 1, duration: 0.4 }, at + 0.2);
       // Out and back to the load scale, so a seek back over it leaves the label as it was.
       if (punch && !ctx.reducedMotion) tl.to(it.box, { scale: 1 + 0.15 * punch, duration: 0.15, ease: "power2.out", yoyo: true, repeat: 1 }, at + 0.2);

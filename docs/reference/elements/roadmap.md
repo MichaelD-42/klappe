@@ -34,7 +34,7 @@ steps: [
 | Name               | Type                    | Default  | Meaning                                                                                                                          |
 | ------------------ | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `x`, `y`, `w`, `h` | numbers                 | required | the area; the top 72 px hold the today label, the axis runs across the middle of the rest                                        |
-| `milestones`       | `{ id, date, label }[]` | required | `date` as `"YYYY-MM-DD"`; in date order they sit above, below, above the axis and so on                                          |
+| `milestones`       | `{ id, date, label }[]` | required | `date` as `"YYYY-MM-DD"`; in date order they sit above, below, above the axis and so on. An empty `label` makes a dot (see Limits)                |
 | `today`            | `"YYYY-MM-DD"`          | required | where the today marker starts. The deck gives it, never the wall clock, so seek equals play and every run shows the same picture |
 
 A date that is not a real `"YYYY-MM-DD"` throws `roadmap: date "<date>" is not YYYY-MM-DD`.
@@ -59,14 +59,26 @@ steps: [
 ],
 ```
 
+A few labels and many dots show the pace. From `decks/demo/sections/305-roadmap/20-rush/scene.ts`:
+
+```ts
+milestones: [
+  { id: "a", date: "2020-06-15", label: "Release A" },
+  { id: "x1", date: "2024-08-01", label: "" }, // a dot
+  { id: "x2", date: "2024-12-05", label: "" },
+  { id: "i", date: "2026-05-15", label: "Release I" },
+],
+```
+
 ### Limits
 
 - The axis spans whole months, from the first month of the earliest date (milestones and `today`) to the end of the latest. A `move` date later than that is off the axis: put the date in a milestone or in `today` to widen it.
 - Ticks fall on month starts, every 1, 2, 3, 6 or 12 months, at least 120 px apart, counted from January so every January has one. The first tick and each January show the year. On an axis longer than 12 months, milestone dates show the year too.
 - The marker reads "today" in the deck language (`Intl.RelativeTimeFormat`), over the date. All dates are UTC, so a viewer's time zone never shifts one by a day.
 - A label is up to 300 px wide, less when a neighbour on its side is closer. It is centred on its dot, so at the axis ends it reaches past the area by up to 150 px: leave that margin. Two milestones on one side closer than 176 px show `roadmap: milestones "<a>" and "<b>" are too close`.
+- A milestone with `label: ""` is a dot: only the dot on the axis, with no stem, label or date. A dot takes no side, so the labelled milestones still alternate among themselves. A dot is not in the spacing check or the label width, and a dot may share its x with any milestone. `reveal` and `rush` show dots like the others, in `--k-accent` until the next roadmap step.
 - Titles wrap and shrink from 28 px to the 20 px floor. One that still needs more than 3 lines, or more than its band's height, shows `roadmap: label of "<id>" too long`. Fitting happens when the first step is added.
 
 ## `roadmapLayout`
 
-`roadmapLayout({ milestones, today, x, w }, lang?)` gives `{ start, end, px, ticks, milestones, today, problems }`: the axis span (UTC ms), the date-to-x function, the ticks `{ x, label }`, each milestone's `{ id, label, x, above, left, width, date }` in date order, the today x and the too-close problems. It is what `roadmap` draws; tests use it.
+`roadmapLayout({ milestones, today, x, w }, lang?)` gives `{ start, end, px, ticks, milestones, today, problems }`: the axis span (UTC ms), the date-to-x function, the ticks `{ x, label }`, each milestone's `{ id, label, x, above, left, width, date, dot }` in date order (a dot has `width` 0 and no date), the today x and the too-close problems. It is what `roadmap` draws; tests use it.
