@@ -43,7 +43,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Replay a conversation (typing dots, then the answer streams in) | a ```` ```chat ```` fence in `scene.md`; `chat` in `scene.ts` for avatars, its messages through `chatMessage` | [chat](klappe/docs/reference/elements/chat.md) | `217-chat/30-chat-md`, `217-chat/10-thread` |
 | Sort what the room wrote into themes (an affinity map) | `stickyNotes` | [stickyNotes](klappe/docs/reference/elements/stickyNotes.md) | `299-notes-cards/10-affinity` |
 | Talk through a hand of cards, one at a time | `cardStack` | [cardStack](klappe/docs/reference/elements/cardStack.md) | `299-notes-cards/20-stack` |
-| Tick off items | a task list (`- [ ]`) in `scene.md`; `checklist` | [checklist](klappe/docs/reference/elements/checklist.md) | `310-checklist-agenda/10-checklist` |
+| Tick off items; cross one out in `--k-bad` (an audit, a pre-mortem) | a task list (`- [ ]`) in `scene.md`; `checklist` with `tick` and `fail` | [checklist](klappe/docs/reference/elements/checklist.md) | `310-checklist-agenda/10-checklist`, `310-checklist-agenda/15-pre-mortem` |
 | Show the day | time-range list items in `scene.md`; `agenda` | [agenda](klappe/docs/reference/elements/agenda.md) | `310-checklist-agenda/20-day-agenda` |
 | A plan over months, with where we are now | `roadmap` | [roadmap](klappe/docs/reference/elements/roadmap.md) | `305-roadmap/10-release` |
 | Time an exercise; count to a clock time (end of a break) | `timer` with `minutes`; `timer` with `until` | [timer](klappe/docs/reference/elements/timer.md) | `320-timer/10-countdown`, `320-timer/30-until` |

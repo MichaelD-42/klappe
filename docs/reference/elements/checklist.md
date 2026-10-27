@@ -1,6 +1,6 @@
 # Checklist: `checklist`
 
-A list of square boxes. Each step ticks the next box: the check draws on in `--k-ok` and the item text brightens from `--k-muted` to `--k-fg`.
+A list of square boxes. Each step ticks the next box: the check draws on in `--k-ok` and the item text brightens from `--k-muted` to `--k-fg`. In `scene.ts`, `fail(i)` crosses a box in `--k-bad` instead, for an audit or a pre-mortem.
 
 Catalog: section `310-checklist-agenda` (`#/checklist-agenda/checklist/1`).
 
@@ -16,7 +16,7 @@ Task items in `scene.md`. The first step shows the list; each item is one step t
 
 ## `checklist`
 
-In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ el, show, tick(i) }`; `el` is the list's block, for a scene that places or moves it.
+In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ el, show, tick(i), fail(i) }`; `el` is the list's block, for a scene that places or moves it.
 
 ### Options
 
@@ -32,9 +32,11 @@ In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ el, show, tick
 | --- | --- |
 | `show` | fades the list in and draws the checks of `done` items |
 | `tick(i)` | draws item `i`'s check, brightens its text; the box is lit in `--k-accent` until the next tick. On a `done` item the check is not drawn again (`show` drew it); only the box highlight and text change |
+| `fail(i)` | as `tick(i)`, with a cross in `--k-bad` instead of a check; on a `done` item the check goes. Catalog: `#/checklist-agenda/pre-mortem/3` |
 
 ### Limits
 
 - Text is 40 px and shrinks to 20 px (14 px at 1366) to fit `h`. If it still does not fit, the deck shows `checklist: N items do not fit Hpx at 20px text` and nothing draws. The Markdown form passes the scene's list area as `h`.
-- `tick(i)` of an item that is not there shows `checklist: no item i`.
+- `tick(i)` or `fail(i)` of an item that is not there shows `checklist: no item i`.
+- The Markdown task list only ticks; a failed item needs `scene.ts`.
 - Long items wrap.

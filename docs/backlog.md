@@ -2,11 +2,10 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `checklist` `fail(i)` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `pyramid` `light(id)` and `shape: "inverted"` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## Effects
 
-- `checklist`: done or not only. `fail(i)`: a cross in `--k-bad`, for a pre-mortem or an audit.
 - `pyramid`: once built, a layer cannot be lit again. `light(id)` for "we are weak here", and `shape: "inverted"` for a funnel-shaped stack.
 - `stickyNotes`: dot voting. `vote(id, n)` drops `n` dots on a note, so a workshop deck can show the result of a vote after the affinity map.
 - `sequence`: no activation bars, notes or `alt`/`loop` frames, the three things readers expect after arrows.
