@@ -4,7 +4,6 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Effects
 
-- `flow`: one box shape. Node kinds for the common symbols (`decision` diamond, `store` cylinder, `actor`), and `dim(ids)` for "this part is out of scope", without a separate `focus`.
 - `roadmap`: milestones are points only. Phases as bars on the axis (`{ id, from, to, label }`), for "beta runs July to September".
 - `compareTable`: no column highlight. `column(i)` lights "our plan" across all rows, the usual end of a pricing or option comparison.
 - `code`: no line numbers (`lineNumbers: true`, so a speaker can say "line 12"), and no typing: `type(lines)` that types new lines in, for live-coding beats.
@@ -41,4 +40,5 @@ Open work only, ranked within each section; CHANGELOG.md lists what is done and 
 
 ## Tooling
 
+- `tests/e2e/review.e2e.test.ts` fails under a full `npm test` run (seen 2026-10-26 and 2026-10-27: "stepping in either window moves both…" expected 'Say it shorter.', and "a field focused before a step…") and passes alone every time. A wait on a save or a window sync is timed, not awaited; find it and wait on the condition.
 - `klappe test` writes `data/TODO.md` and `media/TODO.md`, which the `@deck/**/*.md` glob in `src/deck/load.ts` takes in, so a `klappe test` run reloads an open deck. Leave them out of the glob, as `review.md` is.

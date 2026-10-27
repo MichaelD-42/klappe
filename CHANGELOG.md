@@ -9,6 +9,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `roadmap`: a milestone with an empty `label` is a dot: no stem, label or date, and it does not count in the spacing check or the label width, so many dots show how dense releases get while a few labels carry the story. Labelled milestones keep alternating among themselves. Catalog: `#/roadmap/rush/3`.
 - `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
 - `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/technical-training/agenda/1`.
+- `flow`: node kinds for flowcharts, `kind: "decision"` (a diamond), `"store"` (a cylinder) and `"terminal"` (a pill); arrows meet the shape's outline. `dim(ids)` fades nodes and their arrows while you talk about the rest; `dim([])` brings them back. Catalog: `#/flow/flowchart/1`.
 - `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.
 - `callout`: `hide` fades the leader and the label out again. Catalog: `#/callout/point/2`.
 - `kpi`, `waffle` and `progress` take `to(value)`: the number, the cells or the ring move on to a new value in a later step, as `gauge` already did. Catalog: `#/numbers/shares/2`.

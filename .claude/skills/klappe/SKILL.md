@@ -25,7 +25,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Mark words as a pen would (ring, underline, frame, strike, arrow) | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
 | Nudge one element | `glow`, `pulse`, `shake` | [attention](klappe/docs/reference/elements/attention.md) | `268-attention/10-nudges` |
 | Hold back an answer, then reveal it (question and answer, myth and fact) | `flipCard` | [flipCard](klappe/docs/reference/elements/flipCard.md) | `275-flipcard/10-cards` |
-| Show a system and what flows through it | `flow` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/10-pipeline`, `270-flow/20-send` |
+| Show a system and what flows through it; a flowchart with decisions and data stores, `kind`; set a part aside, `dim` | `flow` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/10-pipeline`, `270-flow/20-send`, `270-flow/60-flowchart` |
 | Draw a small diagram of your own (boxes, a ring, a connector); change a colour to a theme token in a step | `shape`, `arrow`; `tint`, or `token` for your own tween | [shape](klappe/docs/reference/elements/shape.md) | `125-shapes/10-diagram` |
 | Move something along a route (a parcel to a customer) | `travel` | [travel](klappe/docs/reference/effects.md#travel) | `285-travel/10-parcel` |
 | A state machine: the current state lit, one transition firing per step | `flow` with `highlight` and `fire` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/50-state-machine` |
