@@ -2,11 +2,10 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `handwrite` several lines (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The demo story rework is done (12 scenes in 5 sections). The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `worldMap` `region(tl, iso)` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## Effects
 
-- `handwrite`: one line only. Lines from the list item's source lines, as `reveal` reads them.
 - `worldMap`: no region fill. `region(tl, iso)` fills a country in `--k-accent` at `MARKER_MIX`, for "where we sell".
 - `figure`: no seated pose, so meeting-room figures read as seated only by the table in front of them.
 - `swimlanes`: `walk` to a task with no link moves the token straight and reports nothing; report it as `flow.send` does.

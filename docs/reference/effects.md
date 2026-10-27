@@ -871,11 +871,11 @@ steps: [(tl, s) => s.run(tl)],
 Catalog: section `238-handwriting` (`#/handwriting/note/1`). A short phrase that writes itself in a hand font, glyph by glyph, left to right.
 
 ```ts
-build: (ctx) => handwrite(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 400, size: 160 }),
+build: (ctx) => handwrite(ctx, { text: ctx.doc!.steps[0].text, x: 160, y: 300, size: 128 }),
 steps: [(tl, h) => h.write(tl)],
 ```
 
-`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average; default 1). The phrase stays on one line. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, 0.09 s a character, 0.6 s to 4 s in all; a space is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
+`handwrite(ctx, { text, x, y, size?, color?, seed? })`: `text` is a string, whose lines are its line breaks (the source lines of a list item, as `reveal` reads them), or a list of strings, one line each; lines are trimmed and empty ones dropped. `x`, `y` the top-left corner; `size` the font size (default 96, Caveat weight 700); `color` a `--k-*` token (default `--k-fg`); `seed` varies each glyph's share of the time (0.8 to 1.2 of the average; default 1). A line never wraps. `write(tl)` shows it and uncovers each glyph in turn with a clip wipe from its left edge, line after line, 0.09 s a character, 0.6 s to 4 s a line; a space or a line break is a short pause. The wipe is written from `onUpdate` as a pure function of progress (`handwriteGlyphs`). The clip is in percent of each glyph's own box, so the font swapping in late keeps every glyph's share right; the box is absolutely placed, so nothing else moves. `el` is the text box; screen readers get the text, its lines joined by spaces. Reduced motion: the phrase fades in whole. The font, Caveat, ships with klappe from `@fontsource/caveat` under the SIL Open Font License 1.1 (OFL-1.1); it loads only when a deck calls `handwrite`.
 
 ## `reveal`
 

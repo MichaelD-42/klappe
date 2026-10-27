@@ -72,7 +72,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | One thing becomes the next (document to fact to card) | `morph` | [morph](klappe/docs/reference/effects.md#morph) | `160-motion/10-chain` |
 | One line that lands | `scramble` | [scramble](klappe/docs/reference/effects.md#scramble) | `160-motion/50-decode` |
 | A statement or a quote, line by line or word by word, key words in `**bold**` | `reveal` | [reveal](klappe/docs/reference/effects.md#reveal) | `215-reveal/10-quote` |
-| A personal aside in hand | `handwrite` | [handwrite](klappe/docs/reference/effects.md#handwrite) | `238-handwriting/10-note` |
+| A personal aside in hand, a line or a few | `handwrite` | [handwrite](klappe/docs/reference/effects.md#handwrite) | `238-handwriting/10-note` |
 | What changed in a text | `redline` | [redline](klappe/docs/reference/effects.md#redline) | `218-redline-flap/10-redline` |
 | A word or number flipped like an airport board | `splitFlap` | [splitFlap](klappe/docs/reference/effects.md#splitflap) | `218-redline-flap/20-board` |
 | What a group said, weighted, from a `data/` file | `wordCloud` | [wordCloud](klappe/docs/reference/effects.md#wordcloud) | `216-words/10-cloud` |

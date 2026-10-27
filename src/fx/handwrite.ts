@@ -3,7 +3,7 @@ import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 
 export interface HandwriteOpts {
-  text: string;
+  text: string | string[]; // a string's lines are its "\n" breaks (a list item's source lines); a list gives one line each
   x: number; // top-left corner, scene-local
   y: number;
   size?: number; // font size in scene px; default 96
@@ -42,27 +42,30 @@ export function handwriteGlyphs(text: string, p: number, seed: number): number[]
   });
 }
 
-// The write's length in seconds: by the number of characters, 0.6 s to 4 s.
-const duration = (text: string) => Math.min(MAX, Math.max(MIN, [...text].length * PER_GLYPH));
+// The write's length in seconds: by the number of characters, 0.6 s to 4 s a line.
+const duration = (lines: string[]) => lines.reduce((t, l) => t + Math.min(MAX, Math.max(MIN, [...l].length * PER_GLYPH)), 0);
 
-// A short phrase that writes itself in Caveat, glyph by glyph: each glyph is uncovered left to right by a
+// A short phrase, one line or a few, that writes itself in Caveat, glyph by glyph: each glyph is uncovered left to right by a
 // clip wipe in percent of its own box, so a font that swaps in mid-write keeps every glyph's share right.
 // The root is absolute: nothing else moves when the font loads. Reduced motion: the phrase fades in whole.
 export function handwrite(ctx: Ctx, opts: HandwriteOpts): HandwriteHandle {
   // Caveat (SIL OFL 1.1) loads only when a deck calls handwrite; its file is fetched on first use.
   void import("@fontsource/caveat/700.css").then(() => document.fonts.load("700 16px Caveat")).catch(() => {});
   const { x, y, size = 96, color = "--k-fg", seed = 1 } = opts;
+  // The lines as reveal reads them: trimmed, empty ones dropped; a line break is a glyph that writes as a pause.
+  const lines = (Array.isArray(opts.text) ? opts.text : opts.text.split("\n")).map((l) => l.trim()).filter(Boolean);
+  const text = lines.join("\n");
   const el = ctx.html.appendChild(document.createElement("div"));
   el.setAttribute("data-k-handwrite", "");
-  el.setAttribute("aria-label", opts.text);
+  el.setAttribute("aria-label", lines.join(" "));
   Object.assign(el.style, {
     position: "absolute", left: `${x}px`, top: `${y}px`, whiteSpace: "pre",
     font: `700 ${size}px/1.3 Caveat, cursive`, color: `var(${color})`,
   });
-  const spans = [...opts.text].map((c) => el.appendChild(Object.assign(document.createElement("span"), { textContent: c })));
+  const spans = [...text].map((c) => el.appendChild(Object.assign(document.createElement("span"), { textContent: c })));
   // Negative insets top, bottom and left keep ascenders, descenders and overhangs; whole glyphs drop the clip.
   const draw = (p: number) =>
-    handwriteGlyphs(opts.text, p, seed).forEach((f, i) => {
+    handwriteGlyphs(text, p, seed).forEach((f, i) => {
       spans[i].style.clipPath = f >= 1 ? "none" : f <= 0 ? "inset(0 100% 0 0)" : `inset(-0.5em ${((1 - f) * 100).toFixed(2)}% -0.5em -0.5em)`;
     });
   el.setAttribute("data-k-progress", "0");
@@ -78,7 +81,7 @@ export function handwrite(ctx: Ctx, opts: HandwriteOpts): HandwriteHandle {
       }
       tl.set(el, { autoAlpha: 1 });
       tl.to({}, {
-        duration: duration(opts.text),
+        duration: duration(lines),
         ease: "none",
         onUpdate(this: gsap.core.Tween) {
           const p = this.progress();
