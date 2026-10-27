@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/technical-training/agenda/1`.
 - `counter`: `prefix` and `unit`, smaller, on the number's line (`€ 2.4`, `98 %`). Catalog: `#/motion/counts/1`.
 - `callout`: `hide` fades the leader and the label out again. Catalog: `#/callout/point/2`.
 - `kpi`, `waffle` and `progress` take `to(value)`: the number, the cells or the ring move on to a new value in a later step, as `gauge` already did. Catalog: `#/numbers/shares/2`.
