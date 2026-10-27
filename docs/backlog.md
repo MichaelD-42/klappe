@@ -2,6 +2,8 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), ahead of it and not pushed. `npm test` is green except the flaky review test under Tooling. The Effects polish below is being worked top down, one commit each, test first, with a catalog scene, a reference entry and a CHANGELOG line; the next is `annotate` (not started). New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+
 ## Demo deck
 
 - Rework the story before the gallery (`10-opening` to `70-process-training`: 6 sections, 20 scenes). It is too long and shows one effect per scene. Make it shorter, with fewer sections that each combine several effects in one scene, so it reads as a talk, not a list. Leave charts out of it: the gallery shows them from `110-chart` on. Keep every rule the catalog teaches, and check the acceptance tests and deep links that name story scenes before you move them.
