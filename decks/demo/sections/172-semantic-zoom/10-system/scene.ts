@@ -4,7 +4,7 @@ import { captioned, captionOf } from "../../../caption";
 type R = { z: SemanticZoomHandle };
 
 // The caption sits outside the boxes: it fades for the dive and comes back at the top level.
-export default captioned('semanticZoom(ctx, { boxes, x, y, w, h }) — into(["Shop"]) flies in and builds what is inside', {
+export default captioned('semanticZoom(ctx, { boxes, links, … }) — into(["Shop"]) flies in and builds what is inside', {
   build: (ctx): R => ({
     z: semanticZoom(ctx, {
       x: 160, y: 120, w: 1600, h: 760,
@@ -19,6 +19,14 @@ export default captioned('semanticZoom(ctx, { boxes, x, y, w, h }) — into(["Sh
         },
         { label: "Payment provider" },
         { label: "Warehouse" },
+      ],
+      // Each level's arrows show with it.
+      links: [
+        { from: ["Online shop"], to: ["Payment provider"] },
+        { from: ["Online shop"], to: ["Warehouse"] },
+        { from: ["Online shop", "Web app"], to: ["Online shop", "API"] },
+        { from: ["Online shop", "API"], to: ["Online shop", "Database"] },
+        { from: ["Online shop", "API", "Orders"], to: ["Online shop", "API", "Payments"] },
       ],
     }),
   }),

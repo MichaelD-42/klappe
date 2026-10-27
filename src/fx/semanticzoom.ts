@@ -6,7 +6,10 @@ export interface ZoomBox {
   label: string;
   children?: ZoomBox[];
 }
-export type SemanticZoomOpts = { boxes: ZoomBox[] } & Rect;
+export type SemanticZoomOpts = {
+  boxes: ZoomBox[];
+  links?: { from: string[]; to: string[] }[]; // arrows between two boxes of one level, shown with that level
+} & Rect;
 export interface SemanticZoomHandle {
   show: StepAdder;
   into(path: string[]): StepAdder;
@@ -20,8 +23,10 @@ const FONT = 32; // a label's size on screen at the level it shows, scene px
 const HEADER = 2.2; // a box's header band, in its label's font sizes: its line and a gap above the children
 const PAD = 0.04; // a box's inner margin, as a share of its width
 const GAP = 0.06; // between boxes, as a share of a cell's width
+const LINKED_GAP = 0.3; // the same on a level with links, so an arrow has room to read
 const VIEW = 1.25; // the camera's view on a box, as a multiple of it: a margin all round
 const ASPECT = 16 / 9;
+const SVG = "http://www.w3.org/2000/svg";
 
 // The view the camera takes on a box, in the same units: the box with VIEW margin, at the frame's aspect.
 export const zoomView = (b: Rect): Rect => {
@@ -30,7 +35,7 @@ export const zoomView = (b: Rect): Rect => {
 };
 
 // n boxes of the frame's aspect in a grid inside `area`, as large as they fit, the grid centred.
-function grid(n: number, area: Rect): Rect[] {
+function grid(n: number, area: Rect, GAP: number): Rect[] {
   let best = { cols: 1, w: 0 };
   for (let cols = 1; cols <= n; cols++) {
     const rows = Math.ceil(n / cols);
@@ -51,10 +56,11 @@ function grid(n: number, area: Rect): Rect[] {
 // Every box, nested: the top level in a grid in rect, each box's children in a grid under its header. A box's
 // label is sized so that it reads FONT scene px with the camera on its parent's view (the scene's frame, frameW
 // wide, for the top level). Ids are the labels from the top joined with "/". Pure, for tests.
-export function zoomLayout(boxes: ZoomBox[], rect: Rect, frameW = 1920): ZoomCell[] {
+// linked: the ids of the boxes whose children have links ("" for the top level); their gaps are wider.
+export function zoomLayout(boxes: ZoomBox[], rect: Rect, frameW = 1920, linked: string[] = []): ZoomCell[] {
   const out: ZoomCell[] = [];
   const place = (list: ZoomBox[], area: Rect, depth: number, font: number, parent?: ZoomCell) => {
-    grid(list.length, area).forEach((r, i) => {
+    grid(list.length, area, linked.includes(parent?.id ?? "") ? LINKED_GAP : GAP).forEach((r, i) => {
       const b = list[i];
       const id = parent ? `${parent.id}/${b.label}` : b.label;
       const cell: ZoomCell = { id, label: b.label, depth, ...(parent ? { parent: parent.id } : {}), leaf: !b.children?.length, font, ...r };
@@ -73,7 +79,8 @@ export function zoomLayout(boxes: ZoomBox[], rect: Rect, frameW = 1920): ZoomCel
 // Boxes in boxes on the canvas: into(path) flies the camera into one box while the rest of its level fades,
 // and the box's insides build as it lands; out flies back up a level. Each level's labels read FONT px at their zoom.
 export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHandle {
-  const cells = zoomLayout(opts.boxes, opts, ctx.rect.w);
+  // A link's level is its from box's parent: the path without its last label.
+  const cells = zoomLayout(opts.boxes, opts, ctx.rect.w, (opts.links ?? []).map((l) => l.from.slice(0, -1).join("/")));
   const els = new Map<string, HTMLElement>();
   for (const c of cells) {
     const el = ctx.html.appendChild(document.createElement("div"));
@@ -92,9 +99,39 @@ export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHand
     gsap.set(text, { autoAlpha: 1 }); // the state into() fades a parent's label from, so a fresh load matches a seek
     els.set(c.id, el);
   }
-  // A box's children are built after it, so they paint over its fill.
-  const kids = (id?: string) => cells.filter((c) => c.parent === id).map((c) => els.get(c.id)!);
   const byId = new Map(cells.map((c) => [c.id, c]));
+  // Links paint over the boxes (an SVG in the HTML layer, after them): a line from one box's edge to the other's,
+  // 3 px on screen at its level, and a head at the far end, in --k-line.
+  const linksOf = new Map<string | undefined, SVGSVGElement[]>();
+  for (const l of opts.links ?? []) {
+    const [a, b] = [byId.get(l.from.join("/")), byId.get(l.to.join("/"))];
+    const name = `${l.from.join("/")} > ${l.to.join("/")}`;
+    if (!a || !b || a.parent !== b.parent || a === b) throw new Error(`semanticZoom: link ${name} needs two boxes on one level`);
+    const [ax, ay, bx, by] = [a.x + a.w / 2, a.y + a.h / 2, b.x + b.w / 2, b.y + b.h / 2];
+    const [dx, dy] = [bx - ax, by - ay];
+    const len = Math.hypot(dx, dy);
+    // How far from a box's centre along the line its edge is, plus a small gap.
+    const edge = (c: ZoomCell) => Math.min(c.w / 2 / Math.abs(dx || 1e-9), c.h / 2 / Math.abs(dy || 1e-9)) * len + a.font * 0.3;
+    const [s0, s1] = [edge(a), len - edge(b)];
+    const head = a.font * 0.6;
+    const [ux, uy] = [dx / len, dy / len];
+    const p = (d: number, side = 0) => `${(ax + ux * d - uy * side).toFixed(1)} ${(ay + uy * d + ux * side).toFixed(1)}`;
+    const svg = ctx.html.appendChild(document.createElementNS(SVG, "svg"));
+    svg.setAttribute("data-k-zoom-link", name);
+    svg.setAttribute("width", String(ctx.rect.w));
+    svg.setAttribute("height", String(ctx.rect.h));
+    Object.assign(svg.style, { position: "absolute", left: "0", top: "0", overflow: "visible", pointerEvents: "none" });
+    const line = svg.appendChild(document.createElementNS(SVG, "path"));
+    line.setAttribute("d", `M ${p(s0)} L ${p(s1 - head)}`);
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: String((3 * a.font) / FONT) });
+    const tip = svg.appendChild(document.createElementNS(SVG, "path"));
+    tip.setAttribute("d", `M ${p(s1)} L ${p(s1 - head, head / 2)} L ${p(s1 - head, -head / 2)} Z`);
+    tip.style.fill = "var(--k-line)";
+    gsap.set(svg, { autoAlpha: 0 });
+    linksOf.set(a.parent, [...(linksOf.get(a.parent) ?? []), svg]);
+  }
+  // A box's children are built after it, so they paint over its fill; a level's links come with it.
+  const kids = (id?: string): Element[] => [...cells.filter((c) => c.parent === id).map((c) => els.get(c.id)!), ...(linksOf.get(id) ?? [])];
   const label = (id?: string) => (id ? [els.get(id)!.firstElementChild!] : []);
   const abs = (r: Rect): Rect => ({ x: ctx.rect.x + r.x, y: ctx.rect.y + r.y, w: r.w, h: r.h });
 

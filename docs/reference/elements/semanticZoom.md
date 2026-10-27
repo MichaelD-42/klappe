@@ -34,6 +34,7 @@ steps: [
 | --- | --- | --- | --- |
 | `boxes` | `ZoomBox[]` | required | the top level; `ZoomBox` is `{ label, children?: ZoomBox[] }`, as deep as you like |
 | `x`, `y`, `w`, `h` | numbers | required | the area of the top level, scene-local |
+| `links` | `{ from, to }[]` | none | arrows between two boxes of one level, each a path of labels as for `into`. A link draws from the edge of `from` to the edge of `to`, in `--k-line`, 3 px on screen at its level, and shows and hides with its level. A level with links spaces its boxes 0.3 of a box's width apart instead of 0.06, so the arrows have room. Two boxes on different levels, or a path that is no box, throw `semanticZoom: link <from> > <to> needs two boxes on one level`. Catalog: `#/semantic-zoom/system/1` |
 
 Each level is a grid of 16:9 boxes, as large as they fit, centred in its area: the top level in `x, y, w, h`, a box's children under its label. A box with children has its label at the top left; a leaf has it in the middle. Boxes are `--k-surface` with a `--k-line` border, 3 px on screen at their level; the box the camera is in has a `--k-accent` border.
 
@@ -55,11 +56,10 @@ With reduced motion the flights are cuts; the fades stay.
 - One level at a time: `into` must name a child of the box the camera is in. Otherwise `semanticZoom: into "<path>" from "<box>"; go one level at a time` (or `from the top`); a path with no box `semanticZoom: no box "<path>"`; a box with no children `semanticZoom: "<path>" has nothing inside`; `out` at the top `semanticZoom: out at the top level`.
 - A label wider than its box shows `semanticZoom: label "<label>" too long` (checked when the first step is added) and is cut with an ellipsis.
 - The camera leaves the scene's frame: anything else in the scene that has text, such as a caption, must fade before `into` and come back after the last `out`, or the walk reports it outside the stage.
-- No lines between boxes. Draw them with `arrow` on `ctx.svg` and show them with the level they belong to.
 
 ## `zoomLayout`
 
-`zoomLayout(boxes, { x, y, w, h }, frameW = 1920)` gives every box as `{ id, label, depth, parent?, leaf, font, x, y, w, h }`, ids being the labels from the top joined with `/`, and `font` the label size in scene units that reads 32 px with the camera on its parent. It is what `semanticZoom` draws; tests use it.
+`zoomLayout(boxes, { x, y, w, h }, frameW = 1920, linked = [])` gives every box as `{ id, label, depth, parent?, leaf, font, x, y, w, h }`, ids being the labels from the top joined with `/`, and `font` the label size in scene units that reads 32 px with the camera on its parent. `linked` lists the boxes whose children have links (`""` for the top level); those levels get the wider gap. It is what `semanticZoom` draws; tests use it.
 
 ## `zoomView`
 
