@@ -57,7 +57,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Answers on an agree scale | `likert` | [likert](klappe/docs/reference/effects.md#likert) | `115-numbers/40-likert` |
 | A number that counts up or down | `counter` | [counter](klappe/docs/reference/effects.md#counter) | `160-motion/40-counts` |
 | Show where; fill the countries where we sell, `region` | `worldMap` | [worldMap](klappe/docs/reference/effects.md#worldmap) | `150-map/10-world` |
-| A person moving | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk` |
+| A person moving; seated at a table, `seated` or `sit` | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk`, `130-figure/30-table` |
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
 | An icon, or an icon on a tile | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |

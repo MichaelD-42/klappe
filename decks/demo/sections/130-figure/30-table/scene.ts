@@ -13,7 +13,7 @@ function line(g: SVGGElement, d: string, style: Partial<CSSStyleDeclaration> = {
 }
 
 // The table is drawn after the figures and filled, so it hides the one behind it.
-export default captioned("f.gather(tl, x, y) — figures walk to their places at a table", {
+export default captioned("f.gather(tl, x, y) — figures walk to their places at a table; f.sit(tl) seats them", {
   build(ctx) {
     const fs = [
       figure(ctx, { x: 1500, y: 860, scale: 1.25 * K, color: "var(--k-accent)", strokeWidth: 4 / K }),
@@ -37,5 +37,6 @@ export default captioned("f.gather(tl, x, y) — figures walk to their places at
       fs[1].gather(tl, 510, 860, "<", 2); // at the table's ends (582 and 1338 once scaled)
       fs[2].gather(tl, 1410, 860, "<", 2);
     },
+    (tl, { fs }) => fs.forEach((f: ReturnType<typeof figure>, i: number) => f.sit(tl, i ? "<" : undefined)),
   ],
 });

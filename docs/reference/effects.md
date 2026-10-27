@@ -293,6 +293,7 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `color` | string | required | stroke colour, a token such as `"var(--k-fg)"` |
 | `scale` | number | 1 | size; scaling is about the feet |
 | `strokeWidth` | number | 4 | line weight in figure units, before `scale`: raise it for a small figure |
+| `seated` | boolean | `false` | seated from load, on a chair (see `sit`): people at a meeting table |
 
 ### Step adders
 
@@ -301,6 +302,7 @@ steps: [(tl, { f }) => f.appear(tl), (tl, { f }) => f.walk(tl, "M260 860 C 700 6
 | `appear(tl, at?)` | fades in (0.5 s), at `at` on the timeline (default: the end) |
 | `walk(tl, path, { duration, at? })` | the feet follow `path`, a path string or an SVG path element you drew (`decks/demo/sections/130-figure/20-path`); the limbs swing as a pure function of progress |
 | `gather(tl, x, y, at?, duration?)` | walks in a straight line to `(x, y)`; `duration` defaults to 1.2 s |
+| `sit(tl, at?)`, `stand(tl, at?)` | sits down where it stands, or stands up, over 0.6 s: the hips come down 45 units, the thighs (seen from the front) shorten, the knees part, and a chair shows under it; the feet stay put. `walk` and `gather` only from standing. Catalog: `#/figure/table/3` |
 
 The handle's `el` is the figure's root group, for a scene that dims or moves it (`tl.to(f.el, { opacity: 0.3 })`).
 
