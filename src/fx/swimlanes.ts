@@ -245,6 +245,8 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
       [at, lastDot, lastLink] = [id, dot, link ?? undefined];
       return (tl) => {
         fit();
+        // As flow.send does: a hop with no link still moves, straight, and says so.
+        if (from && !link) ctx.problem(`swimlanes: no link from "${from}" to "${id}"`);
         const t = tl.duration();
         // The last walk's task, link and token settle as this one starts (sets, so they seek).
         if (prevTask) tl.set(taskEls.get(prevTask)!, { borderColor: "var(--k-line)", immediateRender: false }, t);
