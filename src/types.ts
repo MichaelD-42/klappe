@@ -24,7 +24,7 @@ export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups
   | { kind: "console"; command: number } // index of the "$ " line among the commands
   | { kind: "check"; done: boolean }
-  | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean }[] };
+  | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean; icon?: string }[] };
 export interface StepDoc {
   text: string;
   notes: string;

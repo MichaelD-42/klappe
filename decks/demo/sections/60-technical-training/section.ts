@@ -31,7 +31,8 @@ export function centre(el: HTMLElement, scale = 1): void {
 export const agendaScene: SceneModule = {
   build(ctx) {
     const part = ctx.doc!.steps.find((s) => s.part?.kind === "agenda")?.part;
-    const rows = part?.kind === "agenda" ? part.rows : [];
+    // The Markdown form has no icon: the break gets its coffee cup here.
+    const rows = (part?.kind === "agenda" ? part.rows : []).map((r) => (r.title === "Break" ? { ...r, icon: "coffee" } : r));
     const h = title(ctx, ctx.doc!.title);
     const a = agenda(ctx, { rows, x: 160, y: 0, w: 1600 });
     centre(a.el);

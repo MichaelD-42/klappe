@@ -36,6 +36,23 @@ test('too many rows for the rect report a problem at the floor', () => {
   expect(problems).toEqual(['agenda: 3 rows do not fit 300px at 20px text'])
 })
 
+test('a row with an icon shows the glyph before its title, in the row colour', () => {
+  const { made, problems, ctx } = setup()
+  agenda(ctx, { rows: [rows[0], { ...rows[1], icon: 'coffee' }], x: 0, y: 0, w: 1000 })
+  const [plain, withIcon] = [made[3], made[6]] // root, then row/time/text per row
+  expect(plain.innerHTML).toBeUndefined()
+  expect(plain.textContent).toBe('Basics')
+  expect(withIcon.innerHTML).toMatch(/^<svg [^>]*width="1em" height="1em"[^>]*stroke="currentColor"/)
+  expect(made).toHaveLength(8) // no element added for the icon
+  expect(problems).toEqual([])
+})
+
+test('an unknown icon reports the name', () => {
+  const { problems, ctx } = setup()
+  agenda(ctx, { rows: [{ ...rows[0], icon: 'no-such-icon' }], x: 0, y: 0, w: 1000 })
+  expect(problems).toEqual(["icon: unknown Lucide name 'no-such-icon'"])
+})
+
 const rec = () => {
   const log: { op: string; target: any; from?: any; vars?: any }[] = []
   const tl: any = {
