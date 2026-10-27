@@ -1,8 +1,8 @@
 # Roadmap: `roadmap`
 
-A time axis with month ticks, milestones that appear one per step, and a "today" marker that moves step by step. Dates are written in the deck language (`lang` in `deck.md`). For a day's time slots use `agenda`; for messages between actors use `sequence`.
+A time axis with month ticks, milestones that appear one per step (or a range of them in one step, faster and faster), and a "today" marker that moves step by step. Dates are written in the deck language (`lang` in `deck.md`). For a day's time slots use `agenda`; for messages between actors use `sequence`.
 
-Catalog: section `305-roadmap` (`#/roadmap/release/1`).
+Catalog: section `305-roadmap` (`#/roadmap/release/1`; `rush`: `#/roadmap/rush/3`).
 
 ## `roadmap`
 
@@ -45,13 +45,24 @@ A date that is not a real `"YYYY-MM-DD"` throws `roadmap: date "<date>" is not Y
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `show`       | a step adder itself (`r.r.show(tl)`): the axis and its month ticks fade in, then the today marker. No milestone shows yet                                                                                                                                                                             |
 | `reveal(id)` | the milestone's dot pops onto the axis and its stem and label (date over title) fade in. Dot, stem and title take `--k-accent`, the date stays `--k-muted`; they settle to `--k-line` and `--k-fg` on the next roadmap step. With reduced motion the dot shows at once. An unknown id throws `roadmap: unknown milestone "<id>"` |
+| `rush(from, to)` | the milestones from id `from` to id `to`, in date order, land in one step as `reveal` lands one: the first at once, each next one 0.7 times the gap before (0.6 s, 0.42 s, …), with its dot popping harder and its label popping out and back. All stay in `--k-accent` until the next roadmap step. With reduced motion the timing stays, the dots show at once and the labels do not pop. An unknown id throws `roadmap: unknown milestone "<id>"`; `from` after `to` throws `roadmap: rush "<from>" comes after "<to>"` |
 | `move(date)` | the today marker slides to `date` in 1.2 s, in `--k-accent` until the next roadmap step; its date counts along. With reduced motion it jumps. A date off the axis shows `roadmap: today "<date>" is outside the axis` and the marker stops at the axis end                                            |
 | `el`         | the today marker's element                                                                                                                                                                                                                                                                            |
+
+To show that things speed up, land the first milestone alone and the rest in one `rush`. From `decks/demo/sections/305-roadmap/20-rush/scene.ts`, nine releases over six years:
+
+```ts
+steps: [
+  (tl, r: { r: RoadmapHandle }) => r.r.show(tl),
+  (tl, r) => r.r.reveal("a")(tl),
+  (tl, r) => r.r.rush("b", "i")(tl),
+],
+```
 
 ### Limits
 
 - The axis spans whole months, from the first month of the earliest date (milestones and `today`) to the end of the latest. A `move` date later than that is off the axis: put the date in a milestone or in `today` to widen it.
-- Ticks fall on month starts, every 1, 2, 3, 6 or 12 months, at least 120 px apart. The first tick and each January show the year.
+- Ticks fall on month starts, every 1, 2, 3, 6 or 12 months, at least 120 px apart, counted from January so every January has one. The first tick and each January show the year. On an axis longer than 12 months, milestone dates show the year too.
 - The marker reads "today" in the deck language (`Intl.RelativeTimeFormat`), over the date. All dates are UTC, so a viewer's time zone never shifts one by a day.
 - A label is up to 300 px wide, less when a neighbour on its side is closer. It is centred on its dot, so at the axis ends it reaches past the area by up to 150 px: leave that margin. Two milestones on one side closer than 176 px show `roadmap: milestones "<a>" and "<b>" are too close`.
 - Titles wrap and shrink from 28 px to the 20 px floor. One that still needs more than 3 lines, or more than its band's height, shows `roadmap: label of "<id>" too long`. Fitting happens when the first step is added.

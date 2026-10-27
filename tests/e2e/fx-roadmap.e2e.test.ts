@@ -29,9 +29,9 @@ async function open(hash: string): Promise<Page> {
 }
 
 // The today label, the marker's x on screen, and whether each milestone label is in --k-accent (or hidden).
-const state = (page: Page) =>
-  page.evaluate(() => {
-    const scene = document.querySelector('div[data-scene="walk"]')!
+const state = (page: Page, name = 'walk') =>
+  page.evaluate((name) => {
+    const scene = document.querySelector(`div[data-scene="${name}"]`)!
     const probe = scene.appendChild(document.createElement('div'))
     probe.style.color = 'var(--k-accent)'
     const accent = getComputedStyle(probe).color
@@ -44,7 +44,7 @@ const state = (page: Page) =>
       ]),
     )
     return { today: marker.firstElementChild!.textContent, x: Math.round(marker.getBoundingClientRect().x), ms }
-  })
+  }, name)
 
 test('milestones appear in --k-accent and settle; the today marker moves and its date follows, in German', async () => {
   let page = await open('#/a/walk/3')
@@ -106,3 +106,31 @@ test('with reduced motion, the today marker jumps and the dot does not pop', asy
   expect(dot).toEqual({ shows: 'visible', scale: 1 })
   await page.close()
 }, 60_000)
+
+// The rush scene's step 3 lands b to i in one step, each gap 0.7 of the one before: 0.6 s, then 0.42 s, and so on.
+// The last label pops (its scale goes out and back to 1); with reduced motion the cadence stays and no label pops.
+for (const q of ['', '&reducedmotion=1'])
+  test(`rush lands its milestones sooner and sooner in one step, in --k-accent, and they settle${q}`, async () => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.clock.install()
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-roadmap${q}#/a/rush/2`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await page.clock.runFor(1000)
+    const scale = () =>
+      page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('[data-scene="rush"] [data-k-roadmap-milestone="i"]')!).transform).a)
+    await page.evaluate(() => void window.klappe.stepper.next())
+    await page.clock.runFor(700)
+    const early = (await state(page, 'rush')).ms
+    expect([early.a, early.b, early.c, early.i]).toEqual(['settled', 'accent', 'hidden', 'hidden'])
+    await page.clock.runFor(1490) // the last landing starts at 1.84 s; its label pops 0.2 s on and peaks 0.15 s later
+    expect(await scale()).toBeGreaterThan(q ? 0.99 : 1.05)
+    expect(await scale()).toBeLessThan(q ? 1.01 : 1.2)
+    await page.clock.runFor(1000)
+    const end = (await state(page, 'rush')).ms
+    expect(Object.values(end)).toEqual(['settled', ...Array(8).fill('accent')])
+    expect(await scale()).toBe(1)
+    await page.evaluate(() => void window.klappe.stepper.next())
+    await page.clock.runFor(100)
+    expect(Object.values((await state(page, 'rush')).ms)).toEqual(Array(9).fill('settled'))
+    await page.close()
+  }, 60_000)
