@@ -7,7 +7,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 ### Added
 
 - Small options: `spotlight` `shape: "circle"`; `wipe` `direction: "vertical"`; `loupe` `to(x, y, { zoom })` per stop; `shape` and `arrow` `dash` and `width` (at least 2); `pulse` `{ color }` token. Catalog: `#/spotlight/round/2`, `#/fullscreen/wipe-down/2`, `#/loupe/detail/3`, `#/shapes/diagram/2`, `#/attention/nudges/4`.
-- `figure`: a seated pose on a chair, `seated: true` from load or `sit(tl)` and `stand(tl)` in a step. The demo's meeting room seats its figures. Catalog: `#/figure/table/3`.
+- `figure`: a seated pose on a chair, `seated: true` from load or `sit(tl)` and `stand(tl)` in a step. Catalog: `#/figure/table/3`.
 - `worldMap`: `region(tl, country)` fills a country in the accent, by its world-atlas name or ISO 3166-1 numeric code, for "where we sell". Catalog: `#/map/world/6`.
 - `handwrite`: several lines, from a list item's source lines or a list of strings, written one after the other, each up to 4 s. Catalog: `#/handwriting/note/1`.
 - `image`: `credit: "Photo: …"` puts a small credit line in the picture's bottom-right corner, readable on any photo. Catalog: `#/fullscreen/cover/1`.
@@ -22,7 +22,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `annotate`: `kind: "bracket"` stands a curly brace beside a run of lines on `side`, and `kind: "cross"` draws an X over the target, in `--k-bad`. `color` takes a `--k-*` token name for any mark. Catalog: `#/draw/annotate/8`.
 - `roadmap`: a milestone with an empty `label` is a dot: no stem, label or date, and it does not count in the spacing check or the label width, so many dots show how dense releases get while a few labels carry the story. Labelled milestones keep alternating among themselves. Catalog: `#/roadmap/rush/3`.
 - `roadmap`: `rush(from, to)` lands a range of milestones in one step, each sooner and with more punch than the one before, to show that things speed up. Catalog: `#/roadmap/rush/3`.
-- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text. Demo: `#/training/agenda/1`.
+- `agenda`: a row takes an `icon`, a Lucide name such as `"coffee"` or `"utensils"`; it shows before the title, sized and coloured like the row text.
 - `chat`: a ```` ```chat ```` fence in `scene.md` replays a thread with no `scene.ts`, one message per line and step. `avatars: { Ana: "media/ana.jpeg" }` puts a round picture beside each sender's bubble, initials where there is none. Catalog: `#/chat/chat-md/1`, `#/chat/thread/1`.
 - `code`: `lineNumbers: true` shows a muted number before each line; `diff(src, { type: true })` types the added lines in, for live coding. Catalog: `#/code/live/1`.
 - `compareTable`: `column(i)` lights one column from its header through the last row, for the plan you recommend; `column(null)` clears it. Catalog: `#/table-card/compare/6`.
@@ -40,7 +40,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
-- Demo deck: the story before the gallery is 12 scenes in 5 sections instead of 20 in 6, and most scenes combine several effects. The title slide shatters and the CRT boots in one scene (`#/opening/old-way/1`); the two trainings are one section, `training`, where the retry bug runs from walkthrough to fix to green tests in one scene, the system turns into a sequence diagram, the swimlanes lead into the ship decision, and the call to work leads into the exercise. Deep links into `technical-training`, `process-training` and `opening/boot` are gone.
+- Demo deck: the story before the gallery is two sections, 5 scenes: the title slide gives way to a booting CRT, then the value stream, with the retry bug fixed in code at its Design stage. The global team, meeting room and training sections and the gallery's scene-reuse section are gone, and with them their deep links (`global-team`, `meeting`, `technical-training`, `process-training`, `opening/boot`, `reuse`).
 
 ### Fixed
 

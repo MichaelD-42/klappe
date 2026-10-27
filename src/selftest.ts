@@ -245,7 +245,7 @@ async function until(cond: () => boolean, ms = 2000): Promise<boolean> {
   return true;
 }
 
-// The acceptance criteria on the demo deck, as checks AC-1..AC-9, AC-12, AC-13 and History.
+// The acceptance criteria on the demo deck, as checks AC-1..AC-9, AC-13 and History.
 // AC-10 and AC-11 need missing files, so they run on a fixture deck (tests/e2e/acceptance.e2e.test.ts).
 // Each check returns its failures; a throw or a timeout is a failure too, so every check reports.
 async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<void> {
@@ -406,10 +406,11 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
   });
 
   await check("AC-6", async ({ stepper }) => {
-    const last = lastOf("value-stream");
+    // Within a section the camera flies from scene to scene on one canvas, with no transition.
+    const last = steps.map((a) => a.scene).lastIndexOf("analysis");
     const to = steps[last + 1];
-    if (to?.section !== "global-team" || to.canvas !== steps[last].canvas)
-      return ["the step after value-stream is not global-team on the same canvas"];
+    if (last < 0 || to?.scene !== "clarification" || to.canvas !== steps[last].canvas)
+      return ["the step after analysis is not clarification on the same canvas"];
     await stepper.goto(last, "cut");
     const el = canvases[to.canvas].world;
     const before = pose(el);
@@ -468,11 +469,12 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
   });
 
   await check("AC-9", async ({ stepper }) => {
-    const crack = stepOf("opening", "old-way", 2);
-    if (crack < 0) return ["the demo deck has no #/opening/old-way/2"];
-    const root = canvases[steps[crack].canvas].el.querySelector(`div[data-scene="old-way"]`);
-    const slide = root?.querySelector(".k-oldway-slide"); // the original: the shard copies come after it
-    if (!root || !slide) return ["old-way has no .k-oldway-slide"];
+    // The card's second crack, then its fall.
+    const crack = stepOf("shatter", "card", 3);
+    if (crack < 0) return ["the demo deck has no #/shatter/card/3"];
+    const root = canvases[steps[crack].canvas].el.querySelector(`div[data-scene="card"]`);
+    const slide = root?.querySelector("[data-shatter-card]"); // the original: the shard copies come after it
+    if (!root || !slide) return ["the shatter card has no [data-shatter-card]"];
     const shards = () => [...root.querySelectorAll('[style*="clip-path"]')].filter((e) => shows(e.parentElement!)).length;
     await stepper.goto(crack - 1, "cut");
     await stepper.next();
@@ -490,40 +492,9 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     ];
   });
 
-  await check("AC-12", async ({ stepper }) => {
-    const zoom = stepOf("global-team", "coming-together", 3);
-    if (zoom < 0) return ["the demo deck has no #/global-team/coming-together/3"];
-    await stepper.goto(zoom - 1, "cut");
-    await stepper.next();
-    const c = canvases[steps[zoom].canvas];
-    // The deck draws its own host label; the marker is the map's site dot nearest to it.
-    const label = [...c.el.querySelectorAll("*")].find((e) => !e.children.length && e.textContent === "[Host site]" && shows(e));
-    if (!label) return ["after zoomTo: no visible [Host site] label"];
-    const lr = label.getBoundingClientRect();
-    const gap = (e: Element) => {
-      const r = e.getBoundingClientRect();
-      return Math.hypot(r.left + r.width / 2 - lr.left, r.top + r.height / 2 - lr.bottom);
-    };
-    const dot = [...c.el.querySelectorAll("[data-k-map] circle")].filter(shows).sort((a, b) => gap(a) - gap(b))[0];
-    if (!dot || gap(dot) > 3 * lr.height) return ["after zoomTo: no visible host site marker next to the [Host site] label"];
-    // The check runs at any viewport; this is the size the label renders at 1366 (stage width 1366).
-    const px = parseFloat(getComputedStyle(label).fontSize) * Number(gsap.getProperty(c.world, "scaleX")) * (1366 / 1920);
-    const box = stage.getBoundingClientRect();
-    const inside = (e: Element) => {
-      const r = e.getBoundingClientRect();
-      return r.left >= box.left - 1 && r.top >= box.top - 1 && r.right <= box.right + 1 && r.bottom <= box.bottom + 1;
-    };
-    return [
-      stepper.index !== zoom && `next(): at ${at(stepper.index)}, want ${at(zoom)}`,
-      !inside(dot) && "the host site marker is outside the stage",
-      !inside(label) && "the host site label is outside the stage",
-      px < MIN_PX_1366 && `the host site label is ${px.toFixed(1)} px at 1366, want ≥ ${MIN_PX_1366} px`,
-    ];
-  });
-
   await check("AC-13", async ({ stepper, reach }) => {
-    const ready = stepOf("opening", "old-way", 7);
-    if (ready < 0) return ["the demo deck has no #/opening/old-way/7"];
+    const ready = stepOf("opening", "old-way", 5);
+    if (ready < 0) return ["the demo deck has no #/opening/old-way/5"];
     await stepper.goto(0, "cut");
     location.hash = formatHash(steps[ready]);
     const bad: (string | false)[] = [await reach(ready, "deep link")];

@@ -29,7 +29,7 @@ Frontmatter keys:
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
-- `shared-canvas`: section ids that share one canvas, for example `[value-stream, global-team]`. Use a list of lists for several groups.
+- `shared-canvas`: section ids that share one canvas, for example `[value-stream, results]`. Use a list of lists for several groups.
 - `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
 - `duration`: the talk's planned length in minutes, for example `45`. Only `klappe outline` reads it, to compare its timing estimate.
 
@@ -78,8 +78,8 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 When several scenes share one shape and differ only in their words or numbers, write the shape once as a function that takes options and returns a `SceneModule`. Put it in `decks/<id>/shared/`. klappe loads every `.ts` under `sections/` as a scene or section module, so a helper there would be taken for one. Each scene then needs two lines:
 
 ```ts
-import { checkpoint } from "../../../shared/checkpoint";
-export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: "It is round." });
+import { transitionCard } from "../../../shared/transition-card";
+export default transitionCard("layers", "right");
 ```
 
 - Return a new object from each call. Keep no DOM or state at module level: two scenes that use the factory can be built at once.
@@ -88,7 +88,7 @@ export default checkpoint({ ask: "Which chart shows a share of a whole?", hint: 
 - A factory result is a plain `SceneModule`, so another wrapper can take it, as the demo's `captioned(text, scene)` does.
 - The path counts folders: from `sections/<section>/<scene>/scene.ts` it is `../../../shared/`.
 
-Catalog: `#/reuse/check-data/1` and `#/reuse/check-motion/1` both call `checkpoint()` from `decks/demo/shared/checkpoint.ts`.
+Catalog: every card of the transition gallery (`#/tr-cut/cut-card/1` to `#/tr-magicmove/magicmove-card/1`) calls `transitionCard()` from `decks/demo/shared/transition-card.ts`.
 
 ### A speaker profile
 
@@ -231,7 +231,7 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
   steps: [(tl, s) => s.enter(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
 
 // A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
-{ transition: "zoom", zoomTarget: "hostSite" }
+{ transition: "zoom", zoomTarget: "countsAim" }
 { transition: "shatter", transitionOptions: { shards: 20 } }
 ```
 

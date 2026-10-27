@@ -22,7 +22,7 @@ In `scene.ts`: `agenda(ctx, { rows, x, y, w, h, current, slide })` returns `{ sh
 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `rows` | `{ from, to, title, current, icon }[]` | required | the rows, in order. `icon` (optional) is a Lucide name, as for [`icon`](../effects.md#icon): it shows before the title, as tall as the text and in the row's colour. For a training day: `"utensils"` for lunch, `"coffee"` for a break, `"pencil"` for an exercise. The Markdown form has no icon; set it in `scene.ts`, as `decks/demo/sections/50-training/section.ts` does for its break (`#/training/agenda/1`) |
+| `rows` | `{ from, to, title, current, icon }[]` | required | the rows, in order. `icon` (optional) is a Lucide name, as for [`icon`](../effects.md#icon): it shows before the title, as tall as the text and in the row's colour. For a training day: `"utensils"` for lunch, `"coffee"` for a break, `"pencil"` for an exercise. The Markdown form has no icon; set it in `scene.ts` |
 | `x`, `y`, `w` | number | required | the agenda's top-left corner and width, scene units |
 | `h` | number | none | the height the rows must fit |
 | `current` | string | the row marked `current` | the title of the current row |

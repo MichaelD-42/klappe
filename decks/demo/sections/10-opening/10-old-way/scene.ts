@@ -1,9 +1,8 @@
 import { gsap } from "gsap";
-import { crt, shatter, type CrtHandle, type CrtLine, type ShatterHandle } from "klappe/fx";
+import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
 import type { SceneModule } from "klappe/types";
 
 // The classic title slide from the spike (docs/superpowers/spikes/opening), in theme tokens.
-// The style sits on the scene, not the slide, so the 30 shard clones do not each carry a copy.
 const CSS = `
 .k-oldway-slide { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-family: var(--k-font); color: var(--k-fg);
@@ -39,12 +38,9 @@ const BOOT: [CrtLine, number][] = [
 const FIRST_LOADING = 5;
 const DIM = 0.3; // seconds for the stage to dim before power-on
 
-const CRACK_GAP = 0.5; // seconds between the first crack settling and the second impact (the spike's 1 s rhythm)
-const HOLD = 2; // "Let it sit in silence for two seconds."
 
 interface Refs {
   slide: HTMLElement;
-  fx: ShatterHandle;
   dim: HTMLElement;
   h: CrtHandle;
 }
@@ -60,16 +56,14 @@ const scene: SceneModule = {
   build(ctx): Refs {
     const style = document.createElement("style");
     style.textContent = CSS;
-    // Nothing under the slide: once the shards are gone, the section's dark stage backdrop shows.
     const slide = document.createElement("div");
     slide.className = "k-oldway-slide";
     slide.innerHTML = `${LOGO}<h1>Engineering Excellence 2026</h1><div class="k-oldway-rule"></div>
       <p class="k-oldway-sub">Annual engineering update</p>
       <div class="k-oldway-foot"><span>October 2026</span><span>Engineering</span></div>`;
     ctx.html.append(style, slide);
-    const fx = shatter(ctx, { target: slide });
     gsap.set(slide, { autoAlpha: 0 });
-    // Where the slide fell away, the screen powers on, with no camera move. The lit stage dims to the CRT's
+    // The screen powers on over the slide, with no camera move. The lit stage dims to the CRT's
     // own surround first (the .k-retro colour in src/fx/crt.ts), so power-on does not cut to near black.
     const dim = ctx.html.appendChild(document.createElement("div"));
     Object.assign(dim.style, { position: "absolute", inset: "0", background: "color-mix(in srgb, var(--k-bg) 40%, var(--k-blackout))" });
@@ -77,20 +71,10 @@ const scene: SceneModule = {
     // A soft flash: the power-on keeps the phosphor green instead of a near-white card.
     const h = crt(ctx, { lines: BOOT.map(([line]) => line), flash: "soft" });
     h.root.setAttribute("data-k-bleed", ""); // the bezel fills the frame by design
-    return { slide, fx, dim, h };
+    return { slide, dim, h };
   },
   steps: [
     (tl, { slide }: Refs) => void tl.to(slide, { autoAlpha: 1, duration: 0.6 }),
-    (tl, { fx }: Refs) => {
-      fx.crack(tl);
-      tl.to({}, { duration: CRACK_GAP });
-      fx.crack2(tl);
-    },
-    // The empty stage holds in the same step: silence needs no click.
-    (tl, { fx }: Refs) => {
-      fx.fall(tl);
-      tl.to({}, { duration: HOLD });
-    },
     (tl, { dim, h }: Refs) => {
       tl.to(dim, { autoAlpha: 1, duration: DIM });
       h.powerOn(tl);

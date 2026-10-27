@@ -8,7 +8,7 @@ import { writeTodos } from '../../bin/todo.mjs'
 import { files } from '../../src/deck/fixtures/acceptance-todo'
 import { runSelftest } from './driver'
 
-const AC = ['AC-1', 'AC-2', 'AC-3', 'AC-4', 'AC-5', 'AC-6', 'AC-7', 'AC-8', 'AC-9', 'AC-12', 'AC-13', 'History']
+const AC = ['AC-1', 'AC-2', 'AC-3', 'AC-4', 'AC-5', 'AC-6', 'AC-7', 'AC-8', 'AC-9', 'AC-13', 'History']
 
 // AC-10 and AC-11 run on the fixture deck acceptance-todo (ruling R16: the demo deck walks clean),
 // so they hold in any deck repo. On screen: the placeholders. On disk: the TODO lines klappe test writes.
@@ -59,7 +59,7 @@ describe('acceptance on missing files (fixture acceptance-todo)', () => {
 
 // The checks name the demo deck's sections and scenes, so they only hold for klappe's own decks/demo.
 describe.skipIf(!inject('IS_DEMO_DECK'))('acceptance on klappe decks/demo (skipped for any other deck)', () => {
-  test('acceptance criteria AC-1..AC-9, AC-12, AC-13 and history on the demo deck', async () => {
+  test('acceptance criteria AC-1..AC-9, AC-13 and history on the demo deck', async () => {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=ac`)
     expect(r.mode).toBe('ac')
     expect(r.checks.map((c) => c.name)).toEqual(AC)

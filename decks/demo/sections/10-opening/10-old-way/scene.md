@@ -1,12 +1,10 @@
 ## The old way
 
 - The usual title slide, the way every update starts.
-- It cracks.
-- It breaks and falls away; the empty stage stays.
 
-> Let it sit in silence for two seconds.
+> Let it sit for a moment. This is how every update has started.
 
-- An 80s computer screen powers on where the slide stood: scanlines and a green glow.
+- An 80s computer screen powers on over the slide: scanlines and a green glow.
 - Boot text types itself, line by line.
 - The last lines point to the new world: "Loading: AI agents", "Loading: knowledge graph", "Loading: new ways of working".
 - Prompt: "READY."

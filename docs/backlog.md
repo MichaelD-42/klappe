@@ -2,7 +2,7 @@
 
 Open work only, ranked within each section; CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), pushed. `npm test` is green. The demo story rework is done (12 scenes in 5 sections). The Effects polish list is done. Next: New effects, top down. New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
+State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0` (PRs #11 to #13), pushed. `npm test` is green. The demo story is two sections, 5 scenes (opening and value stream). The Effects polish list is done. Next: New effects, top down. New demo scenes need ids unique across the whole deck (`phases` and `markdown` are taken by the chart catalog).
 
 ## New effects
 
@@ -17,3 +17,8 @@ State on 2026-10-27: branch `release-0.6.0`, rebased onto `origin/release-0.6.0`
 - Org chart: people boxes with a portrait and a role, top-down. Check first whether `decisionTree` with an image per node does it.
 - Formula: a typeset equation that builds term by term, for technical trainings. Needs KaTeX or MathJax, a new dependency: a user decision.
 
+## Tooling
+
+- Story scene ids are named in many places: the acceptance checks in `src/selftest.ts`, unit tests (`router`, `scene`), `docs/reference` and the demo's own docs, so moving a story scene means a repo-wide search. Keep one list of the story scenes the checks depend on, and have a lint fail when a named id is gone.
+- A new effect option touches eight files: fixture, e2e test, source, catalog `scene.md` and `scene.ts`, reference row, the skill's intent table, CHANGELOG. A script that scaffolds the catalog scene and the doc rows would cut most of it; one shared fixture for small options (as `fx-options`) saves a file per option.
+- Scene ids collide late, and a scene's `data-scene` sits on both its SVG group and its HTML box, so `document.querySelector('[data-scene=…]')` finds the SVG one. A command that lists taken ids, and a test helper that finds a scene's elements in both layers, would catch both up front.

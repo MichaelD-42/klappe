@@ -4,8 +4,7 @@ import type { Ctx, Rect, SectionModule, StepFn } from "klappe/types";
 const SVG = "http://www.w3.org/2000/svg";
 const NAMES = ["Requirements", "Analysis", "Clarification", "Design", "Verification"];
 const ICONS = ["clipboard-list", "scan-search", "messages-square", "pencil-ruler", "shield-check"];
-// Stage centres keep Requirements in the overview scene (0..1920) and Verification left of
-// the global-team scene (from 5760). The band sits low, under the default scene text, with
+// Stage centres keep Requirements in the overview scene (0..1920). The band sits low, under the default scene text, with
 // room for the clarification answer line above it.
 const X0 = 1000;
 const GAP = 1100;
