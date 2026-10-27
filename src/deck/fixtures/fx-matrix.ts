@@ -44,6 +44,18 @@ const early: SceneModule = {
   steps: [(tl, r: R) => r.m.show(tl), (tl, r: { first: StepAdder }) => r.first(tl), (tl, r: { move: StepAdder }) => r.move(tl)],
 };
 
+// scores: items at 0-to-1 positions (y up), one moved to another point, and a point next to quadrant slots.
+const scores: SceneModule = {
+  build: (ctx) => ({ m: matrix(ctx, opts) }),
+  steps: [
+    (tl, r: R) => r.m.show(tl),
+    (tl, r: R) => r.m.place("sso", { x: 0.2, y: 0.9 })(tl),
+    (tl, r: R) => r.m.place("dark", { x: 0.8, y: 0.1 })(tl),
+    (tl, r: R) => r.m.place("sso", { x: 0.6, y: 0.5 })(tl),
+    (tl, r: R) => r.m.place("export", "tl")(tl),
+  ],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -52,6 +64,7 @@ export default () =>
       "sections/10-a/10-sort/scene.md": md("Place and move", 7),
       "sections/10-a/20-long/scene.md": md("Too long", 2),
       "sections/10-a/30-early/scene.md": md("Built early", 3),
+      "sections/10-a/40-scores/scene.md": md("Scores", 5),
     },
-    { "sections/10-a/10-sort/scene.ts": sort, "sections/10-a/20-long/scene.ts": long, "sections/10-a/30-early/scene.ts": early },
+    { "sections/10-a/10-sort/scene.ts": sort, "sections/10-a/20-long/scene.ts": long, "sections/10-a/30-early/scene.ts": early, "sections/10-a/40-scores/scene.ts": scores },
   );

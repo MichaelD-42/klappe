@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `matrix`: `place(id, { x, y })` puts an item at its scores, 0 to 1 on each axis, for a scored effort and impact map; a later place moves it. Catalog: `#/matrix/scored/1`.
 - `gitGraph`: `{ tag, on }` puts a tag over a branch tip, and `{ cherryPick, onto }` copies a commit (by its label) onto another branch, keeping the original. Catalog: `#/git/backport/7`.
 - `semanticZoom`: `links: [{ from, to }]` draws arrows between boxes of one level, shown and hidden with that level; a level with links spaces its boxes wider. Catalog: `#/semantic-zoom/system/1`.
 - `sequence`: `activations` draw bars on lifelines while an actor is busy, a `{ note, over }` row puts a note over one or two actors, and `frames` group rows in `alt`, `loop`, `opt` or `par` frames with an optional `else` line; each shows with its first row. Catalog: `#/sequence/frames/1`.

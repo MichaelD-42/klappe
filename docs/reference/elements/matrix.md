@@ -2,7 +2,7 @@
 
 A 2×2: an x and a y axis with titles, four quadrants with optional names, and items placed in a quadrant one step at a time. Placing an item again in another quadrant moves it there.
 
-Catalog: section `295-matrix` (`#/matrix/priorities/1`).
+Catalog: section `295-matrix` (`#/matrix/priorities/1`; scores with `place(id, { x, y })` at `#/matrix/scored/1`).
 
 ## `matrix`
 
@@ -42,6 +42,7 @@ steps: [
 | --- | --- |
 | `show` | a step adder itself (`r.m.show(tl)`): the axes and the dividers draw on with `drawOn`, then the arrowheads, titles and quadrant names fade in |
 | `place(id, quadrant)` | `quadrant` is `"tl"`, `"tr"`, `"bl"` or `"br"`. The first time, the item fades in at the lowest free slot of that quadrant. Later, it moves there from its old slot, 0.6 s. Placed in the quadrant it is already in, it stays put. The item has a 4 px `--k-accent` border during its step (its 2 px border and a 2 px outline, so nothing moves) and settles to a 2 px `--k-line` border when the next `place` starts. An unknown id throws `matrix: unknown item "<id>"`, an unknown quadrant `matrix: unknown quadrant "<q>"` |
+| `place(id, { x, y })` | puts the item at its scores instead of a slot: centred at `x` of the plot's width from the y axis and `y` of its height up from the x axis, both 0 to 1, kept inside the plot. It takes no slot, so quadrant items can share the space. A later `place` moves it, 0.6 s; the accent is as above. A score outside 0 to 1 throws `matrix: place "<id>" at x <x>, y <y>; both run from 0 to 1`. Catalog: `#/matrix/scored/5` |
 
 ### Limits
 
