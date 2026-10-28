@@ -309,7 +309,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
 ## 2026-10-28 (video on a clicker)
 
 - **An embedded YouTube or Vimeo player starts on its step by default; `autoplay: false` opts out.**
-  - Why: a presenter with only a clicker cannot click into a player, and a local file already played on its step. The step key is a user gesture, so the browser lets the muted start through. Muted stays the default: a start with sound may still be blocked, and then nothing plays at all.
+  - Why: a presenter with only a clicker cannot click into a player, and a local file already played on its step. The step key is a user gesture, so the browser lets the start through, with sound: a clip in a talk is there to be heard. `muted: true` keeps one silent. A deck window stepped only from the speaker view has had no gesture of its own, so a browser may block the sound there until the presenter clicks into it once.
 - **`play(tl)` is a step adder on the video handle, not an option.**
   - Why: "show it, talk, then start it" is one more click, which is a step. The handle keeps one start time that the last `show` or `play` set, read when the steps play, so there is still one listener and one stop rule: any step change stops the video.
 

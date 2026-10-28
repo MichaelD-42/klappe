@@ -1,6 +1,6 @@
 {
   "name": "klappe",
-  "version": "0.6.1",
+  "version": "0.6.0",
   "description": "",
   "scripts": {
     "test": "vitest run",

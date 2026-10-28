@@ -3,7 +3,7 @@ import { assembleDeck } from "../assemble";
 
 // One scene per media variant. The local files are tiny data URLs; the online clip is routed by the e2e test.
 // Variants: image, local video, direct-URL video, YouTube iframe, Vimeo iframe, and full-frame video() with no rect
-// (an online clip and a YouTube talk that the viewer starts), then players that start on their step: YouTube muted in a box,
+// (an online clip and a YouTube talk that the viewer starts), then players that start on their step: YouTube asked to stay muted in a box,
 // Vimeo asking for sound, and YouTube started by a play step after show. Missing files: see fixture media-layout.
 const PNG =
   "data:image/svg+xml," +
@@ -41,8 +41,8 @@ export default () => {
     {
       "sections/10-a/60-full-video/scene.ts": full(`${H}klappe.test/full.webm`, "A full-frame clip"),
       "sections/10-a/70-full-youtube/scene.ts": full(`${H}www.youtube.com/watch?v=dQw4w9WgXcQ`, "A full-frame talk", { autoplay: false }),
-      "sections/10-a/80-autoplay-muted/scene.ts": full(`${H}www.youtube.com/watch?v=dQw4w9WgXcQ`, "A muted talk", { rect: { x: 160, y: 140, w: 1600, h: 800 } }),
-      "sections/10-a/90-autoplay-sound/scene.ts": full(`${H}vimeo.com/76979871`, "A talk with sound", { muted: false }),
+      "sections/10-a/80-autoplay-muted/scene.ts": full(`${H}www.youtube.com/watch?v=dQw4w9WgXcQ`, "A muted talk", { muted: true, rect: { x: 160, y: 140, w: 1600, h: 800 } }),
+      "sections/10-a/90-autoplay-sound/scene.ts": full(`${H}vimeo.com/76979871`, "A talk with sound"),
       "sections/10-a/95-play-step/scene.ts": {
         build: (ctx: any) => video(ctx, { href: `${H}www.youtube.com/watch?v=dQw4w9WgXcQ`, title: "A talk on cue", rect: { x: 160, y: 140, w: 1600, h: 800 } }),
         steps: [(tl: gsap.core.Timeline, v: ReturnType<typeof video>) => v.show(tl), (tl: gsap.core.Timeline, v: ReturnType<typeof video>) => v.play(tl), null],

@@ -241,7 +241,7 @@ test('YouTube and Vimeo iframes are created one step before their scene', async 
 
 // An embed starts on its step unless autoplay: false: it loads its plain address one step early, its autoplay
 // address on its step, the plain one after. A presenter with only a clicker never needs the mouse.
-test('an embed starts on its step by default, muted, and stops on leave', async () => {
+test('an embed starts on its step by default, with sound unless muted, and stops on leave', async () => {
   const page = await open('?fixture=fx-media#/a/full-youtube/2')
   for (const host of ['https://www.youtube.com/**', 'https://player.vimeo.com/**']) await page.route(host, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
   const frame = (s: string) =>
@@ -283,7 +283,7 @@ test('a play step starts the player on that step, not on show', async () => {
   await page.waitForTimeout(1200)
   expect(await src()).toBe(yt)
   await step()
-  await until(`${yt}?autoplay=1&mute=1`)
+  await until(`${yt}?autoplay=1&mute=0`)
   await step()
   await until(yt)
   await page.close()

@@ -2,7 +2,7 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
-## 0.6.1 (unreleased)
+## 0.6.0 (unreleased)
 
 ### Added
 
@@ -25,25 +25,6 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `fishbone`: an Ishikawa diagram for root-cause training, the problem in a head and cause bones built one per step with their causes; `light(i)` marks the root cause. Catalog: `#/cycles/fishbone/1`.
 - `mindMap`: a centre topic with branches round it, each with its sub-branches, growing one branch per step with `next()`; it reports sub-branch labels that would overlap. Catalog: `#/tree/mind-map/1`.
 - `processSteps`: the "step 2 of 5" bar of a process training, numbered chevrons with the current stage lit; `to(i)` moves the light on and mutes the stages done. Catalog: `#/cycles/stage-bar/1`.
-
-### Changed
-
-- `callout`: the leader line draws over the scene's HTML, so a target on a picture or a card keeps its leader; it was hidden behind them.
-- `glow` and `pulse` on an HTML target measure it where the earlier steps leave it, and each later glow step moves the glow to where the target is; they stayed where the target was at load.
-- The walk's legibility check skips text that an ancestor's overflow cuts away whole, such as a page scrolled in its window; it reported it as outside the stage.
-- `annotate` highlight: on a target inside a box with its own background, such as a card, the band shows over the card and under the text; it was hidden behind the card.
-- `flow` and `swimlanes`: an arrow with a box in its way goes round it through the gaps between the cells (and, in `swimlanes`, along a lane border) instead of across it. A `flow` packet crosses each box it passes instead of vanishing and reappearing at the next edge.
-- `video`: a YouTube or Vimeo player starts on its step by default, as a local file does, so a clicker is enough; this includes Markdown video links. `autoplay: false` leaves the start to the mouse. New `play(tl)` gives the start its own step after `show`. Catalog: `#/media/youtube-autoplay/2`.
-- The walk's legibility and look checks skip text that draws nothing (zero-width characters, as a typesetter's struts), as they skipped whitespace; the legibility check also skips text kept for screen readers only in a visually hidden 1 px box (KaTeX's MathML copy).
-
-### Fixed
-
-- `chart`: a `values` step after `bar(i)` or `slice(i)` steps no longer counts those values up from zero again, which showed zero when stepping back.
-
-## 0.6.0 (unreleased)
-
-### Added
-
 - Rubrics and evals for the build loop (`docs/contrib/2026-10-28-rubrics-evals.md`):
   - Rubrics in `.rubrics/`: `intent_fidelity` and `scene_purpose`. The content reviewer prints one `RUBRIC` line per dimension.
   - `bin/verdict.mjs`, the gate after the reviews. It rejects a review in the wrong format and decides `merge`, `builder`, `planner` or `owner`. `--log` keeps a verdict log.
@@ -89,6 +70,13 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
+- `callout`: the leader line draws over the scene's HTML, so a target on a picture or a card keeps its leader; it was hidden behind them.
+- `glow` and `pulse` on an HTML target measure it where the earlier steps leave it, and each later glow step moves the glow to where the target is; they stayed where the target was at load.
+- The walk's legibility check skips text that an ancestor's overflow cuts away whole, such as a page scrolled in its window; it reported it as outside the stage.
+- `annotate` highlight: on a target inside a box with its own background, such as a card, the band shows over the card and under the text; it was hidden behind the card.
+- `flow` and `swimlanes`: an arrow with a box in its way goes round it through the gaps between the cells (and, in `swimlanes`, along a lane border) instead of across it. A `flow` packet crosses each box it passes instead of vanishing and reappearing at the next edge.
+- `video`: a YouTube or Vimeo player starts on its step by default, with sound, as a local file does, so a clicker is enough; this includes Markdown video links. `muted: true` keeps it silent; `muted` defaulted to `true` before. `autoplay: false` leaves the start to the mouse. New `play(tl)` gives the start its own step after `show`. Catalog: `#/media/youtube-autoplay/2`.
+- The walk's legibility and look checks skip text that draws nothing (zero-width characters, as a typesetter's struts), as they skipped whitespace; the legibility check also skips text kept for screen readers only in a visually hidden 1 px box (KaTeX's MathML copy).
 - `shot` and `pdf` wait until each picture on the page is decoded, so a large JPEG no longer shows blank.
 - The klappe agents: builders and reviewers test only what they touched (`--only`, or the changed e2e files) and leave the full `npm test` to the orchestrator, once per wave; they edit with the Edit and Write tools and never poll in a `sleep` loop. The three reviewers run on `model: sonnet`.
 - The repo's Markdown is left alone by Prettier and markdownlint (`.prettierrc.json`, `.markdownlint-cli2.jsonc`), so an editor or agent hook that formats on save does not rewrite hand-wrapped files.
@@ -96,6 +84,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `chart`: a `values` step after `bar(i)` or `slice(i)` steps no longer counts those values up from zero again, which showed zero when stepping back.
 - Review window: a read of review.md that lands late (a slow dev server) no longer replaces a newer one, which could blank a finding on screen after stepping back.
 - `klappe test`'s `data/TODO.md` and `media/TODO.md` are no longer loaded as part of the deck, so writing them does not reload an open one.
 - `swimlanes`: `walk` to a task with no link from the current one reports `swimlanes: no link from "<a>" to "<b>"` instead of moving straight in silence, as `flow`'s `send` does. The catalog scene that showed the silent hop is gone.

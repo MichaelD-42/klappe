@@ -40,7 +40,7 @@ export interface VideoOpts {
   rect?: Rect; // default: the full scene frame, cropped to cover, with no frame or caption
   fallback?: string; // an image href in media/, shown instead of an online video when there is no network
   autoplay?: boolean; // a YouTube or Vimeo player starts when its step arrives (default true); false: the viewer starts it
-  muted?: boolean; // a starting player has no sound (default true); false asks for sound, which a browser may block
+  muted?: boolean; // true: a starting player has no sound; default false: it starts with sound, as the step key allows
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -286,9 +286,9 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     return { ...fade(b), play: beat };
   }
   if (offline) ctx.problem(`${t("videoOffline", ctx.deck.lang)}: ${title}` + (opts.fallback ? ` (${t("imageMissing", ctx.deck.lang)}: ${key(opts.fallback)})` : ""));
-  // Muted by default: a browser may block an embed that starts with sound. A play step can start any embed.
+  // With sound by default: the step key that starts it counts as the viewer's gesture. A play step can start any embed.
   const autoplay = opts.autoplay !== false;
-  const auto = frame ? `${frame}?autoplay=1&${frame.includes("vimeo") ? "muted" : "mute"}=${opts.muted === false ? 0 : 1}` : undefined;
+  const auto = frame ? `${frame}?autoplay=1&${frame.includes("vimeo") ? "muted" : "mute"}=${opts.muted ? 1 : 0}` : undefined;
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;
