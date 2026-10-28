@@ -22,6 +22,7 @@ export * from "./figure";
 export * from "./flipcard";
 export * from "./fishbone";
 export * from "./flow";
+export * from "./formula";
 export * from "./focus";
 export * from "./gitgraph";
 export * from "./glitch";

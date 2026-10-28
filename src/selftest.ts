@@ -69,6 +69,17 @@ function firstDiff(a: string, b: string, names = ["play", "seek"]): string {
 // Every element with visible own text in the current scene: rendered size and on-stage box.
 // Earlier scenes on the same canvas keep their text, off camera, so they are not checked.
 // Section text (a backdrop for the whole canvas) is checked for size where it shows on stage.
+// Text that draws nothing: whitespace and zero-width characters (a typesetter's struts), which trim() keeps.
+const blank = (s: string | null) => !/[^\s\u200b-\u200d\ufeff]/.test(s ?? "");
+// Text for a screen reader only, in the usual visually hidden box (1 px, overflow hidden), as KaTeX's MathML copy.
+const unseen = (e: Element) => {
+  for (let a: Element | null = e; a; a = a.parentElement) {
+    const r = a.getBoundingClientRect();
+    if (r.width <= 1 && r.height <= 1 && getComputedStyle(a).overflow === "hidden") return true;
+  }
+  return false;
+};
+
 function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string[] {
   const fit = stage.getBoundingClientRect().width / 1920;
   const cam = Number(gsap.getProperty(c.world, "scaleX"));
@@ -83,7 +94,7 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = walker.nextNode(); t; t = walker.nextNode()) {
       const e = t.parentElement;
-      if (!e || seen.has(e) || !t.textContent?.trim()) continue;
+      if (!e || seen.has(e) || blank(t.textContent)) continue;
       seen.add(e);
       if (!e.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
       const r = e.getBoundingClientRect();
@@ -95,8 +106,10 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
       const outside = r.left < box.left - 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.bottom > box.bottom + 1;
       const offStage = r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom;
       if (section && offStage) continue;
-      const where = `${path(e, c.el)} "${t.textContent.trim().slice(0, 30)}"`;
-      if (innerWidth === 1366 && px < MIN_PX_1366) bad.push(`${where}: ${px.toFixed(1)} px < ${MIN_PX_1366} px`);
+      const small = innerWidth === 1366 && px < MIN_PX_1366;
+      if ((small || (!section && outside)) && unseen(e)) continue; // looked up only for text that would be flagged
+      const where = `${path(e, c.el)} "${t.textContent!.trim().slice(0, 30)}"`;
+      if (small) bad.push(`${where}: ${px.toFixed(1)} px < ${MIN_PX_1366} px`);
       if (!section && outside) bad.push(`${where}: box ${[r.left, r.top, r.right, r.bottom].map(Math.round)} outside stage`);
     }
   }
@@ -153,11 +166,11 @@ function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = walker.nextNode(); t; t = walker.nextNode()) {
       const e = t.parentElement;
-      if (!e || !t.textContent?.trim() || skip(e) || !shows(e)) continue;
+      if (!e || blank(t.textContent) || skip(e) || !shows(e)) continue;
       range.selectNodeContents(t);
       const r = boxOf(range.getBoundingClientRect());
       const shown = cut(r, clipOf(e));
-      const what = `"${t.textContent.trim().slice(0, 30)}"`;
+      const what = `"${t.textContent!.trim().slice(0, 30)}"`;
       if (shown[2] <= shown[0] || shown[3] <= shown[1]) continue; // hidden behind a mask, not clipped
       const tol = 2 * fit; // sub-pixel layout of a moved track is not a clip
       if (shown[0] > r[0] + tol || shown[1] > r[1] + tol || shown[2] < r[2] - tol || shown[3] < r[3] - tol)

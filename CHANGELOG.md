@@ -15,6 +15,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
 - The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
 - `chart` types `radar` (a profile over 3 to 12 dimensions, one or two series), `heatmap` (cells shaded by value, with `cell(row, col)` to point at one) and `treemap` (shares of a whole, up to 40 tiles, in groups with a second text column). `series(i)` works on a radar, `bar(i)` on a treemap. Catalog: `#/chart/radar/1`, `#/chart/heatmap/1`, `#/chart/treemap/1`.
+- `formula`: a typeset equation (KaTeX) that builds term by term, each term marked with `\step{…}` shown by `next()`. KaTeX, a new dependency, loads only for a deck whose code imports `formula`. Catalog: `#/code/formula/1`.
 - `fishbone`: an Ishikawa diagram for root-cause training, the problem in a head and cause bones built one per step with their causes; `light(i)` marks the root cause. Catalog: `#/cycles/fishbone/1`.
 - `mindMap`: a centre topic with branches round it, each with its sub-branches, growing one branch per step with `next()`; it reports sub-branch labels that would overlap. Catalog: `#/tree/mind-map/1`.
 - `processSteps`: the "step 2 of 5" bar of a process training, numbered chevrons with the current stage lit; `to(i)` moves the light on and mutes the stages done. Catalog: `#/cycles/stage-bar/1`.
@@ -59,6 +60,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 ### Changed
 
 - `shot` and `pdf` wait until each picture on the page is decoded, so a large JPEG no longer shows blank.
+- The walk's legibility and look checks skip text that draws nothing (zero-width characters, as a typesetter's struts), as they skipped whitespace; the legibility check also skips text kept for screen readers only in a visually hidden 1 px box (KaTeX's MathML copy).
 - The klappe agents: builders and reviewers test only what they touched (`--only`, or the changed e2e files) and leave the full `npm test` to the orchestrator, once per wave; they edit with the Edit and Write tools and never poll in a `sleep` loop. The three reviewers run on `model: sonnet`.
 - The repo's Markdown is left alone by Prettier and markdownlint (`.prettierrc.json`, `.markdownlint-cli2.jsonc`), so an editor or agent hook that formats on save does not rewrite hand-wrapped files.
 - Demo deck: the story before the gallery is two sections, 5 scenes: the title slide gives way to a booting CRT, then the value stream, with the retry bug fixed in code at its Design stage. The global team, meeting room and training sections and the gallery's scene-reuse section are gone, and with them their deep links (`global-team`, `meeting`, `technical-training`, `process-training`, `opening/boot`, `reuse`).

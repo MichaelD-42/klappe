@@ -8,6 +8,7 @@
 - Elements, one page each in `elements/`:
   - [basics](elements/basics.md): `title`, `text` boxes, and `show` and `hide` fades for any element.
   - [code](elements/code.md): code walkthrough and diff.
+  - [formula](elements/formula.md): a typeset equation that builds term by term.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
   - [pointer](elements/pointer.md): a mouse pointer that moves, clicks with a ripple and types, for a UI walkthrough.

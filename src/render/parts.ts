@@ -1,6 +1,7 @@
 import usedFx from "virtual:klappe-fx";
 import usedLangs from "virtual:klappe-langs";
 import { LANGS, loadHighlighter } from "../fx/code";
+import { loadKatex } from "../fx/formula";
 import { lazyTable } from "../lazy";
 import type { Ctx, Deck } from "../types";
 
@@ -56,5 +57,6 @@ export async function loadParts(deck: Deck, fixture = false): Promise<void> {
   await Promise.all([
     table.load(want.names),
     want.langs.length ? loadHighlighter(want.langs) : undefined,
+    fixture || usedFx.includes("formula") || usedFx.includes("*") ? loadKatex() : undefined,
   ]);
 }

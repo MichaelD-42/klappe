@@ -292,3 +292,16 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: `[data-scene="x"] .child` already matches in both; only the scene root itself needs its layer named (`div[…]` or `g[…]`), which the e2e tests already do. The builder agent's brief says so.
 - **Reopened review findings become eval cases by hand, from a recipe in `evals/README.md`, not by a generator.**
   - Why: no deck has a reopened finding yet, a fix commit's files do not apply cleanly over a later `HEAD`, and a generator could copy confidential deck content into this public repo.
+
+## 2026-10-28 (new effects)
+
+- **`formula` uses KaTeX, not MathJax, and loads it only for a deck whose code imports `formula`.**
+  - Why: KaTeX renders synchronously, so the formula is built at load like every other effect, and it is several times smaller. It loads the way Shiki does for `code`, through `loadParts`, so a deck without formulas never fetches it. Version 0.19, not 0.16: the older one has an advisory on prototype pollution bypassing `trust`, which `\step` relies on.
+- **`\step{…}` is a KaTeX macro for `\htmlClass{k-ft}{…}`, and `trust` allows only that command with that class.**
+  - Why: marking terms in the TeX keeps the formula in one string an author can read. Trusting only the one class keeps a deck's TeX from adding links, ids or styles.
+- **A formula's font floor is 30 px, not the 20 px of other text.**
+  - Why: KaTeX sets sub- and superscripts at 70 %: at 30 px they are 21 px, at the legibility floor; at 20 px they would be 14.
+- **Process steps, mind map and fishbone are their own elements, not modes of `agenda`, `flow` or `decisionTree`.**
+  - Why: `agenda` rows need times and stack vertically; `decisionTree` needs an edge label on every link and builds by level, top down. A mode would have bent both APIs for one layout each. They reuse the house patterns instead: the accent overlay and step-order bookkeeping of `pyramid`, a pure layout function with a unit test.
+- **The heatmap's `cell()` moves one outline, and the treemap's tiles stay in data order.**
+  - Why: one outline is one element to tween, from where the steps before left it, so seek equals play. Data order keeps `bars` and `bar(i)` meaning the same row for every chart type; the layout places the tiles largest first.

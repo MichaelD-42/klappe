@@ -19,6 +19,7 @@ export const ALLOW = [
   'irisHole', 'irisRadius', 'pushOffset', // push-iris: the transition geometry, for its unit test
   'glitchFrame', 'pagePeel', 'transitionCube', 'transitionGlitch', 'transitionPageTurn', // glitch-cube-page: the transitions (covered by their kinds); the glitch frame and the peel, for their unit test
   'handwriteGlyphs', // handwriting task: the per-glyph write timing, for its unit test
+  'loadKatex', // formula: KaTeX's one-time load, engine only
   'fishboneLayout', // fishbone: the bone layout, for its unit test
   'mindMapLayout', // mind map: the radial layout, for its unit test
   'magicBox', 'magicFit', 'transitionMagicMove', // magic-move: the transition (covered by its kind); the rect and pose maths, for its unit test
