@@ -30,6 +30,7 @@ export * from "./magic";
 export * from "./map";
 export * from "./matrix";
 export * from "./pointer";
+export * from "./process";
 export * from "./pyramid";
 export * from "./qr";
 export * from "./redline";

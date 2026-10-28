@@ -36,6 +36,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Teach git: commits, branches, a merge, a rebase, a tag, a cherry-pick, one per step | `gitGraph` | [gitGraph](klappe/docs/reference/elements/gitGraph.md) | `304-git/10-rebase`, `304-git/20-backport` |
 | Sort things on two axes (effort against impact) and move one when the view changes; place by score, `place(id, { x, y })` | `matrix` | [matrix](klappe/docs/reference/elements/matrix.md) | `295-matrix/10-priorities`, `295-matrix/20-scored` |
 | A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
+| Where a process training stands, "step 2 of 5": numbered chevrons with the current stage lit, `to(i)` | `processSteps` | [processSteps](klappe/docs/reference/elements/processSteps.md) | `296-cycles/30-stage-bar` |
 | What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
 | A layered model from the base up (a test pyramid, a capability stack, a funnel-shaped stack with `shape: "inverted"`); light one layer again, `light(id)` | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers`, `297-venn-pyramid/30-hiring` |
 | Compare options feature by feature, one row at a time | `compareTable` | [compareTable](klappe/docs/reference/elements/compareTable.md) | `298-table-card/10-compare` |

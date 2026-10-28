@@ -28,6 +28,7 @@
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
+  - [processSteps](elements/processSteps.md): the "step 2 of 5" bar, numbered chevrons with the current stage lit.
   - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
   - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.

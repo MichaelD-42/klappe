@@ -15,6 +15,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
 - The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
 - `chart` types `radar` (a profile over 3 to 12 dimensions, one or two series), `heatmap` (cells shaded by value, with `cell(row, col)` to point at one) and `treemap` (shares of a whole, up to 40 tiles, in groups with a second text column). `series(i)` works on a radar, `bar(i)` on a treemap. Catalog: `#/chart/radar/1`, `#/chart/heatmap/1`, `#/chart/treemap/1`.
+- `processSteps`: the "step 2 of 5" bar of a process training, numbered chevrons with the current stage lit; `to(i)` moves the light on and mutes the stages done. Catalog: `#/cycles/stage-bar/1`.
 - `max-words: <n>` in deck.md fails a step with more than n words on screen.
 - The skill's intent table lists `typed` for a line that types itself in the deck font.
 
