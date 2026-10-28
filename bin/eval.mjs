@@ -106,7 +106,7 @@ async function runOnce(suite, c, rubrics) {
     const overlay = path.join(c.dir, 'overlay')
     if (fs.existsSync(overlay)) {
       fs.cpSync(overlay, copy, { recursive: true })
-      git(copy, 'add', '-A') // .gitignore keeps the node_modules junction out
+      git(copy, 'add', '-A') // .gitignore keeps the node_modules link out (a junction on Windows, a symlink elsewhere)
       git(copy, '-c', 'user.name=klappe-eval', '-c', 'user.email=eval@klappe.invalid', 'commit', '-q', '-m', `eval: ${c.name}`)
     }
     const { tools, maxTurns } = SUITES[suite]
