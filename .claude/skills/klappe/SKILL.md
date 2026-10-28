@@ -70,6 +70,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Volume | `swarm` | [swarm](klappe/docs/reference/effects.md#swarm) | `220-swarm/10-stream` |
 | A milestone reached | `burst` | [burst](klappe/docs/reference/effects.md#burst) | `220-swarm/20-burst` |
 | One thing becomes the next (document to fact to card) | `morph` | [morph](klappe/docs/reference/effects.md#morph) | `160-motion/10-chain` |
+| A line that types itself in the deck font (not a code font) | `typed` into a `text()` box marked `data-k-text` | [typed](klappe/docs/reference/effects.md#typed) | `217-chat/20-typewriter` |
 | One line that lands | `scramble` | [scramble](klappe/docs/reference/effects.md#scramble) | `160-motion/50-decode` |
 | A statement or a quote, line by line or word by word, key words in `**bold**` | `reveal` | [reveal](klappe/docs/reference/effects.md#reveal) | `215-reveal/10-quote` |
 | A personal aside in hand, a line or a few | `handwrite` | [handwrite](klappe/docs/reference/effects.md#handwrite) | `238-handwriting/10-note` |
