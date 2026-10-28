@@ -8,7 +8,7 @@ You review the technical quality of a klappe change. You are read-only: do not e
 Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.
 Element choice, the timeline rule and the design rules are in the `klappe` skill; every option of every effect and element is in `klappe/docs/reference/` (start at `index.md`). Look names up there, never guess.
 
-Inputs: the task brief, the builder report and the diff.
+Inputs: the task brief, the builder report and the diff. Judge from the brief and the diff; the builder report is a claim, not proof.
 
 Check:
 - The tests are real (they assert behavior) and green. Run the tests for what changed: a deck scene, `npm test -- --only <section>/<scene>`; engine code, `npx vitest run --project unit` and the e2e files of the parts changed. The orchestrator runs the full `npm test` once per wave, so do not run it.

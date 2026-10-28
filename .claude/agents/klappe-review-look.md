@@ -13,8 +13,7 @@ Steps:
 2. Read every screenshot PNG.
 
 Check:
-- Design rules (spec section 2): no cream or off-white backgrounds, no italic accent words in headlines, no numbered "01/02/03" section labels, no monospace labels, no pill-shaped buttons.
-- Theme tokens are used, not ad-hoc colors.
+- Theme tokens are used, not ad-hoc colors. (`npm test` lints the other design rules; do not repeat them.)
 - Framing: nothing clipped at the frame edges. Text at 1366x768 renders at 14px or more. Letterboxing is clean.
 - Hierarchy, spacing, alignment and contrast.
 - Motion is smooth and has a meaning. Bold decks should wow. Board decks should stay calm.
