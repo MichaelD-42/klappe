@@ -14,6 +14,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `klappe test` stops before a browser starts when the deck has a problem the parser finds, such as a duplicate scene id, with `--only` too.
 - Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
 - The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
+- `chart` types `radar` (a profile over 3 to 12 dimensions, one or two series), `heatmap` (cells shaded by value, with `cell(row, col)` to point at one) and `treemap` (shares of a whole, up to 40 tiles, in groups with a second text column). `series(i)` works on a radar, `bar(i)` on a treemap. Catalog: `#/chart/radar/1`, `#/chart/heatmap/1`, `#/chart/treemap/1`.
 - `max-words: <n>` in deck.md fails a step with more than n words on screen.
 - The skill's intent table lists `typed` for a line that types itself in the deck font.
 
@@ -61,6 +62,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `chart`: a `values` step after `bar(i)` or `slice(i)` steps no longer counts those values up from zero again, which showed zero when stepping back.
 - Review window: a read of review.md that lands late (a slow dev server) no longer replaces a newer one, which could blank a finding on screen after stepping back.
 - `klappe test`'s `data/TODO.md` and `media/TODO.md` are no longer loaded as part of the deck, so writing them does not reload an open one.
 - `swimlanes`: `walk` to a task with no link from the current one reports `swimlanes: no link from "<a>" to "<b>"` instead of moving straight in silence, as `flow`'s `send` does. The catalog scene that showed the silent hop is gone.

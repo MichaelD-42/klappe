@@ -339,3 +339,27 @@ describe("tagSpread", () => {
       for (let j = i + 1; j < tags.length; j++) expect(Math.abs(ys[i] - ys[j])).toBeGreaterThanOrEqual(30 - 1e-9);
   });
 });
+
+describe("radar, heatmap and treemap data", () => {
+  const dims = (n: number, cols = 1) =>
+    Array.from({ length: n }, (_, i) => ({ skill: `S${i}`, ...Object.fromEntries(Array.from({ length: cols }, (_, k) => [`p${k}`, i + 1])) }));
+  test("a radar needs 3 to 12 dimensions, 1 or 2 series, none below zero", () => {
+    expect(dataError(dims(5, 2), "radar")).toBe("");
+    expect(dataError(dims(2), "radar")).toBe("2 dimensions; a radar needs at least 3");
+    expect(dataError(dims(13), "radar")).toBe("13 dimensions; a radar reads up to 12");
+    expect(dataError(dims(5, 3), "radar")).toBe("3 series; a radar reads up to 2");
+    expect(dataError([...dims(3), { skill: "X", p0: -1 }], "radar")).toBe("row 4, p0 below zero");
+  });
+  test("a heatmap reads up to 24 rows and 24 columns", () => {
+    expect(dataError(dims(7, 24), "heatmap")).toBe("");
+    expect(dataError(dims(25, 2), "heatmap")).toBe("25 rows; a heatmap reads up to 24");
+    expect(dataError(dims(3, 25), "heatmap")).toBe("25 columns; a heatmap reads up to 24");
+  });
+  test("a treemap: values not below zero, a total above zero, up to 40 tiles; a second text column is the group", () => {
+    expect(dataError(dims(8), "treemap")).toBe("");
+    expect(dataError([{ team: "A", area: "X", n: 3 }, { team: "B", area: "Y", n: 2 }], "treemap")).toBe("");
+    expect(dataError([{ team: "A", n: 0 }, { team: "B", n: 0 }], "treemap")).toBe("the values add up to zero");
+    expect(dataError([{ team: "A", n: 2 }, { team: "B", n: -1 }], "treemap")).toBe("row 2, n below zero");
+    expect(dataError(dims(41), "treemap")).toBe("41 tiles; a treemap reads up to 40: merge the small ones into Other");
+  });
+});
