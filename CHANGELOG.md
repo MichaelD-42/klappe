@@ -2,6 +2,20 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.6.1 (2026-10-28)
+
+### Added
+
+- The self-test walk takes `&part=<k>/<n>`: the k-th of n runs of whole sections, cut by step count. The whole-deck walk in `npm test` runs in up to four parts at each size, on a machine with the cores for it.
+
+### Changed
+
+- `npm test` takes about 65 s instead of 2:40 on a 28-core machine. A `?fixture=` page loads its fixture alone, not the deck and the other 97 fixtures (148 requests, was 782); e2e workers are half the cores, at least 6; the timer tests jump the fake clock over a long count.
+
+### Fixed
+
+- A review e2e test closed its window with a save still in flight, which could land in the next test's review file under load.
+
 ## 0.6.0 (2026-10-28)
 
 ### Added

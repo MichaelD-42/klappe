@@ -36,6 +36,14 @@ const ring = (page: Page) =>
   })
 const index = (page: Page, scene: string, step = 1) =>
   page.evaluate(([sc, n]) => window.klappe.steps.find((s: any) => s.scene.endsWith(sc) && s.step === n).index, [scene, step] as const)
+// Long waits: 2 s of frames for any move to finish, a jump over the count (the timer reads performance.now),
+// then 0.5 s of frames to draw it. Stepping 60 s frame by frame took most of this file's time.
+const runFor = async (page: Page, ms: number) => {
+  if (ms <= 2500) return page.clock.runFor(ms)
+  await page.clock.runFor(2000)
+  await page.clock.fastForward(ms - 2500)
+  await page.clock.runFor(500)
+}
 // Starts a move without awaiting it: its play only finishes as the fake clock runs.
 const move = async (page: Page, i: number, how: 'play' | 'cut') => {
   await page.evaluate(([i, how]) => void window.klappe.stepper.goto(i, how), [i, how] as const)
@@ -49,7 +57,7 @@ test('play onto the timer starts it as it shows: 61 s later a 10 minute timer re
   // The count waits out the 1.6 s camera flight, so the room first sees the full time.
   await page.clock.runFor(1600)
   expect(await ring(page)).toEqual({ text: '10:00', hint: '' })
-  await page.clock.runFor(61_000 + 40) // plus the frame the flight ends in and the frame that draws
+  await runFor(page, 61_000 + 40) // plus the frame the flight ends in and the frame that draws
   expect(await ring(page)).toEqual({ text: '8:59', hint: '' })
   await page.close()
 })
@@ -57,9 +65,9 @@ test('play onto the timer starts it as it shows: 61 s later a 10 minute timer re
 test('the next step in the scene keeps it running', async () => {
   const page = await open('', '#/a/intro/1')
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.clock.runFor(1600 + 10_500) // the camera flight, then the count
+  await runFor(page, 1600 + 10_500) // the camera flight, then the count
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.clock.runFor(10_000)
+  await runFor(page, 10_000)
   expect(await page.evaluate(() => location.hash)).toBe('#/a/ring/2')
   expect(await ring(page)).toEqual({ text: '9:40', hint: '' })
   // Back onto the timer's step within the scene is a cut and leaves it running.
@@ -71,14 +79,14 @@ test('the next step in the scene keeps it running', async () => {
 test('leaving the scene stops and resets it; a cut back finds it full and paused', async () => {
   const page = await open('', '#/a/intro/1')
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.clock.runFor(1600 + 30_500)
+  await runFor(page, 1600 + 30_500)
   expect((await ring(page)).text).toBe('9:30')
   await move(page, await index(page, 'bar'), 'play')
   // No frame loop is left running while the scene is away: the hidden timer does not move.
-  await page.clock.runFor(10_000)
+  await runFor(page, 10_000)
   expect(await ring(page)).toEqual({ text: '10:00', hint: 'Press T to start' })
   await move(page, await index(page, 'ring'), 'cut')
-  await page.clock.runFor(5000)
+  await runFor(page, 5000)
   expect(await ring(page)).toEqual({ text: '10:00', hint: 'Press T to start' })
   await page.close()
 })
@@ -86,13 +94,13 @@ test('leaving the scene stops and resets it; a cut back finds it full and paused
 test('a deep link shows it paused with the hint; t starts it, t again pauses it, a click resumes', async () => {
   const page = await open('', '#/a/ring/1')
   expect(await ring(page)).toEqual({ text: '10:00', hint: 'Press T to start' })
-  await page.clock.runFor(5000)
+  await runFor(page, 5000)
   expect((await ring(page)).text).toBe('10:00')
   await page.keyboard.press('t')
   await page.clock.runFor(1000 + 20)
   expect(await ring(page)).toEqual({ text: '9:59', hint: '' })
   await page.keyboard.press('t')
-  await page.clock.runFor(5000)
+  await runFor(page, 5000)
   expect((await ring(page)).text).toBe('9:59')
   await page.click('[data-scene$="ring"] [data-k-timer]')
   await page.clock.runFor(2000)
@@ -131,6 +139,7 @@ test('the speaker view timer button starts the timer, and is disabled on a scene
   await main.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const speaker = await context.newPage()
   await speaker.goto(`${inject('BASE_URL')}/?fixture=fx-timer&speaker=1`)
+  await speaker.waitForFunction(() => window.klappe?.speakerView, undefined, { timeout: 30_000 }) // the deck loads after the load event
   const button = speaker.getByRole('button', { name: 'Timer', exact: true })
   await expect.poll(() => speaker.locator('.k-sp-scene').textContent()).toBe('Intro')
   expect(await button.isDisabled()).toBe(true)
@@ -231,7 +240,7 @@ test('hide fades the timer out and stops it; t does nothing after; the label is 
       return { text: root.querySelector('[data-k-timer-text]')!.textContent, visible: getComputedStyle(root).visibility, label: root.querySelector('[data-k-timer-label]')?.textContent }
     })
   await page.evaluate(() => void window.klappe.stepper.next())
-  await page.clock.runFor(1600 + 20_500)
+  await runFor(page, 1600 + 20_500)
   expect(await read()).toEqual({ text: '9:40', visible: 'visible', label: 'Pairs' })
   await page.evaluate(() => void window.klappe.stepper.next())
   await page.clock.runFor(1000)
@@ -239,7 +248,7 @@ test('hide fades the timer out and stops it; t does nothing after; the label is 
   await page.clock.runFor(2000)
   expect(await read()).toMatchObject({ text: '10:00', visible: 'hidden' })
   await page.keyboard.press('t')
-  await page.clock.runFor(5000)
+  await runFor(page, 5000)
   expect(await read()).toMatchObject({ text: '10:00', visible: 'hidden' })
   await page.close()
 })

@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import type { IconHandle } from "klappe/fx";
 import type { SectionModule } from "klappe/types";
 

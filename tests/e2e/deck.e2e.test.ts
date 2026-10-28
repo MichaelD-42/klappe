@@ -18,6 +18,22 @@ test('deck content loads without errors', async () => {
   }
 })
 
+// Nearly every e2e test opens a fixture: it loaded the whole deck and every fixture with it, 780 requests a page.
+test('a fixture page loads that fixture alone, not the deck or the other fixtures', async () => {
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage()
+    const paths: string[] = []
+    page.on('request', (r) => paths.push(new URL(r.url()).pathname))
+    await page.goto(`${inject('BASE_URL')}/?fixture=two-scenes`)
+    await page.waitForFunction(() => window.klappe?.stepper, undefined, { timeout: 30_000 })
+    expect(paths.filter((p) => p.startsWith('/decks/'))).toEqual([])
+    expect(paths.filter((p) => p.startsWith('/src/deck/fixtures/'))).toEqual(['/src/deck/fixtures/two-scenes.ts'])
+  } finally {
+    await browser.close()
+  }
+})
+
 // A fractional offset left a 1 px sliver of the page background at the stage edge (left 0.33 px at 1366x768).
 test('the stage sits on whole pixels', async () => {
   const browser = await chromium.launch()

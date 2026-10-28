@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
 import type { SceneModule } from "klappe/types";
 import { captioned, captionOf } from "../../../caption";

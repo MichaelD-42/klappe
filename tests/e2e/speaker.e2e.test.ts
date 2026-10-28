@@ -13,6 +13,7 @@ async function speakerAt(width: number, height: number) {
   await main.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const speaker = await context.newPage()
   await speaker.goto(`${inject('BASE_URL')}/?fixture=two-scenes&speaker=1`)
+  await speaker.waitForFunction(() => window.klappe?.speakerView, undefined, { timeout: 30_000 }) // the deck loads after the load event
   await expect.poll(() => speaker.locator('.k-sp-text').textContent()).toBe('Step 2.')
   const r = await speaker.evaluate(() => {
     const px = (sel: string) => parseFloat(getComputedStyle(document.querySelector(sel)!).fontSize)

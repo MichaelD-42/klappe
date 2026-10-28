@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import { gitGraph, type GitGraphHandle, type GitOp } from "klappe/fx";
 import { captioned } from "../../../caption";
 

@@ -153,7 +153,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
 
 ## 2026-10-20 (deck.css)
 
-- **A deck may bring `decks/<id>/deck.css`. `src/deck/load.ts` imports it with `import.meta.glob("@deck/deck.css", { query: "?inline", eager: true })` and appends it as a `<style>` after the klappe styles. Fixture decks skip it.**
+- **A deck may bring `decks/<id>/deck.css`. `src/deck/files.ts` imports it with `import.meta.glob("@deck/deck.css", { query: "?inline", eager: true })` and appends it as a `<style>` after the klappe styles. Fixture decks skip it.**
   - Why: `?inline` runs the file through Vite, so `url()` resolves against the deck folder and the build bundles fonts and images. A plain CSS import would also apply to `?fixture=` decks, so a corporate `--k-font` or `--k-fg` could break klappe's e2e checks in a deck repo. No deck.css means an empty glob: nothing changes.
   - The design lint now scans `.css` under `decks/`. klappe has no single-file build yet; when it comes, it must inline these assets too (raise `build.assetsInlineLimit`).
 
@@ -325,3 +325,14 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: a hover state belongs to the product shown (a tint, a tooltip, a menu), so a generic one would mislead. The glow sits in the HTML layer above `ctx.svg`; a blend mode would only fix it on dark themes.
 - **A Markdown failed check is `- [!]`.**
   - Why: GitHub task lists have no fail state; `[!]` reads as "problem" and leaves `[ ]`, `[x]` untouched.
+
+## 2026-10-28 (test speed)
+
+- **The whole-deck walk runs in parts of whole sections (`&part=k/n`), each in its own browser, up to four at each size.**
+  - Why: it was the slowest test (45 s at each size here, 85 s on CI). A part starts from a cut to the step before it, as `--only` does, so state a full play-through carries across a part boundary is not checked there; within a part, and at every section boundary inside it, it is. The part count is `availableParallelism() / 6`, rounded down and capped at 4, so CI's 4-core runners still walk it whole.
+- **E2e workers are half the cores, at least 6.**
+  - Why: on 28 cores, 14 was fastest (20 was no faster, 27 crashed a renderer); 6 is what CI's runners always ran.
+- **The deck's eager globs live in `src/deck/files.ts`, which `loadDeck` imports only without `?fixture=`; fixtures load lazily.**
+  - Why: Vite hoists an eager glob into a static import, so every fixture page loaded the whole demo deck and all fixtures: 782 requests where 148 do. A built deck gets one more chunk. The page's load event now fires before the deck is in, so a test waits for `klappe.stepper` or `klappe.speakerView`, never for load.
+- **`noUnusedLocals` is on; no ESLint.**
+  - Why: the stricter tsc flags found 17 unused imports (fixed) and nothing else worth a rule; `noUncheckedIndexedAccess` gave 1645 findings. typescript-eslint's promise rules (`no-floating-promises`, `no-misused-promises`, `await-thenable`), tried with TypeScript 6 on 2026-10-28, gave 41 findings and no bug: GSAP timelines are thenables, so every `forEach((x) => tl.to(…))` is flagged, and a step started without `await` already fails the walk through `unhandledrejection` (`src/errors.ts`). typescript-eslint also cannot run on TypeScript 7, which has no JavaScript API.

@@ -1,5 +1,4 @@
 import { assembleDeck } from "../assemble";
-import type { gsap } from "gsap";
 import { icon, iconTile, type IconHandle } from "klappe/fx";
 import type { SceneModule } from "../../types";
 

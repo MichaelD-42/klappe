@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import { assembleDeck } from "../assemble";
 import { crt, type CrtHandle, type CrtLine } from "klappe/fx";
 import type { SceneModule } from "../../types";

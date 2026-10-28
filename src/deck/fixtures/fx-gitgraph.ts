@@ -1,6 +1,5 @@
 import { assembleDeck } from "../assemble";
 import { gitGraph, type GitGraphHandle, type GitOp } from "klappe/fx";
-import type { gsap } from "gsap";
 import type { SceneModule } from "../../types";
 
 // Every op once, one per step (a branch, commits on both lanes, a rebase, a merge), then the whole history at

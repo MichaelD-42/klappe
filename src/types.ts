@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 
 export interface Point {
   x: number;

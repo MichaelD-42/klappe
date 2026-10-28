@@ -9,13 +9,13 @@ describe("fixture discovery", () => {
     expect(fixtureNames).toContain("two-scenes");
     expect(fixtureNames).toContain("broken-step-count");
   });
-  it("loads a fixture by file name and nothing else", () => {
-    expect(loadFixture("two-scenes")?.deck.sections[0].scenes.map((s) => s.id)).toEqual(["first", "second"]);
+  it("loads a fixture by file name and nothing else", async () => {
+    expect((await loadFixture("two-scenes"))?.deck.sections[0].scenes.map((s) => s.id)).toEqual(["first", "second"]);
     for (const name of ["no-such-deck", "toString"]) {
-      const r = loadFixture(name);
+      const r = await loadFixture(name);
       expect(r?.problems).toEqual([`unknown fixture '${name}'`]);
       expect(r?.deck.meta.title).toBe("Unknown fixture");
     }
-    expect(loadFixture(null)).toBeUndefined();
+    expect(await loadFixture(null)).toBeUndefined();
   });
 });

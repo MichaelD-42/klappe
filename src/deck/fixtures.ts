@@ -3,7 +3,8 @@ import { assembleDeck } from "./assemble";
 // In-code decks for content-dependent tests, picked with ?fixture=<name>. Never used without it.
 // One deck per file in ./fixtures, named by the file; each default-exports a function that builds it.
 type Fixture = () => ReturnType<typeof assembleDeck>;
-const files = import.meta.glob<Fixture>("./fixtures/*.ts", { import: "default", eager: true });
+// Lazy: a page builds one fixture, so it loads that one alone.
+const files = import.meta.glob<Fixture>("./fixtures/*.ts", { import: "default" });
 const fixtures = new Map(Object.entries(files).map(([k, f]) => [k.slice("./fixtures/".length, -".ts".length), f]));
 
 export const fixtureNames = [...fixtures.keys()];
@@ -22,5 +23,5 @@ function unknown(name: string): ReturnType<typeof assembleDeck> {
   return r;
 }
 
-export const loadFixture = (name: string | null) =>
-  name === null ? undefined : (fixtures.get(name) ?? (() => unknown(name)))();
+export const loadFixture = async (name: string | null) =>
+  name === null ? undefined : ((await fixtures.get(name)?.())?.() ?? unknown(name));

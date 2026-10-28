@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import { text, typed, type BasicHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 

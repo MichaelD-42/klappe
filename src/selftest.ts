@@ -212,7 +212,11 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   // only=<section>[/<scene>],...: walk these scenes alone. bail: stop at the first failing step.
   const query = new URLSearchParams(location.search);
   const only = query.get("only")?.split(",").filter(Boolean).map((t) => t.replace(/^#?\/?/, "").split("/"));
-  const picked = (i: number) => !only || only.some(([section, scene]) => steps[i].section === section && (!scene || steps[i].scene === scene));
+  // part=k/N: walk the k-th of N runs of whole sections, cut by step count, so N browsers share a long walk.
+  const [k, n] = (query.get("part") ?? "1/1").split("/").map(Number);
+  const inPart = (i: number) => Math.floor((steps.findIndex((s) => s.section === steps[i].section) * n) / steps.length) === k - 1;
+  const picked = (i: number) =>
+    inPart(i) && (!only || only.some(([section, scene]) => steps[i].section === section && (!scene || steps[i].scene === scene)));
   const bail = query.has("bail");
   if (only && !steps.some((_, i) => picked(i))) checks.push({ name: `only=${query.get("only")}: no step matches`, ok: false });
 
@@ -390,8 +394,10 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     let load = loaded();
     frame.src = "?speaker=1";
     document.body.append(frame);
+    // The speaker page loads the deck after its load event: wait for its view before timing the sync.
+    const ready = async () => (await load, await until(() => !!(frame.contentWindow as Window | null)?.klappe?.speakerView, 6000));
     try {
-      await load;
+      await ready();
       const shows = (i: number) => frame.contentDocument?.querySelector(".k-sp-text")?.textContent === stepText(i);
       const bad = [!(await until(() => shows(0))) && "speaker on open: does not show step 0"];
       await stepper.next();
@@ -404,7 +410,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
       bad.push(await reach(2, "Next in the speaker", 1000));
       load = loaded();
       frame.contentWindow!.location.reload();
-      await load;
+      await ready();
       bad.push(!(await until(() => shows(stepper.index))) && "speaker after reload: does not show the current step");
       return bad;
     } finally {
