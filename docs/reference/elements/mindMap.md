@@ -40,3 +40,7 @@ The layout gives every sub-branch (and every branch without one) an even share o
 - Text is 26 scene units (18.5 px at 1366); the centre topic 34.
 - Two sub-branch labels that would touch report `mindMap: "<a>" and "<b>" overlap; use fewer sub-branches or a larger rect`.
 - A `next()` past the last branch reports `mindMap: next() past the last branch (<n> branches)` and holds a beat.
+
+## `mindMapLayout`
+
+`mindMapLayout(root, { x, y, w, h })` gives `{ centre, branches, leaves, problem? }`: the centre point, one `{ label, x, y, anchor, branch }` per branch and one per sub-branch with its `parent` branch, and the overlap problem when two sub-branch labels would touch. It is what `mindMap` draws; its unit test checks the order round the circle and that sub-branches lie outside their branch.
