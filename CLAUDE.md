@@ -11,7 +11,7 @@ Animated presentations as code: a deck folder of Markdown and TypeScript, played
 ## Commands
 
 - `npx tsc --noEmit`, then `npm test` (unit and lint, then e2e in Playwright's Chromium), as CI does.
-- `npx vitest run --project unit` for the fast part; `npx vitest run tests/e2e/<file>` for one e2e file.
+- `npx vitest run --project unit` for the fast part; `npx vitest run tests/e2e/<file>` for one e2e file; `node bin/klappe.mjs test --deck demo --only <section>/<scene>` walks one demo scene.
 - `npm run dev`, `npm run shot -- <section>[/<scene>[/<step>]]`, `npm run outline`, `npm run pdf`: all on the demo deck.
 
 ## Rules this repo holds

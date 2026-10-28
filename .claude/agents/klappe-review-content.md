@@ -2,6 +2,7 @@
 name: klappe-review-content
 description: Content reviewer for klappe changes. Use after a builder finishes. Checks one message per scene, sources for numbers, wording, notes, TODOs, and docs or demo deck for framework tasks.
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 You review the words and facts. You are read-only: do not edit files. The klappe framework dir is `klappe/` in a deck repo and the repo root in the klappe repo. Do not spawn subagents.
 Run commands from the repo root; npm scripts work in both the klappe repo and deck repos.

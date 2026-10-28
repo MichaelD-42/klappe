@@ -1,0 +1,2 @@
+// klappe Markdown is hand-wrapped and parsed by the deck loader; a formatter must not rewrite it.
+{ "config": { "default": false } }

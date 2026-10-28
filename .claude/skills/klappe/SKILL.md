@@ -121,13 +121,24 @@ One master GSAP timeline per canvas; seek must equal play.
 When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so.
 
 - Work a scene's entries from its last step to its first, so your own changes do not move a deep link still open.
-- For each finding, open the scene its deep link names (`npm run outline` lists the ids), make the change it asks for, and check it: `npm test` for the walk, and `npm run shot -- <section>/<scene>/<step>` for anything on screen.
+- For each finding, open the scene its deep link names (`npm run outline` lists the ids), make the change it asks for, and check it: `npm test -- --only <section>/<scene>` for the walk, and `npm run shot -- <section>/<scene>/<step>` for anything on screen.
 - Then delete that finding from the file, and the step's entry once it has no finding left. Leave text you do not understand in place. With nothing open, the file is `# Review` alone.
 - When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries still open, so each names its step again; the quote tells you which step it was.
 - When a finding is unclear, ask in the chat and leave it in the file until the author answers. Never add to the file.
 
 ## Check your work
 
-Run `npm test`. Shoot each scene's last step at 1920x1080 and 1366x768 with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
+While you work, check only the scenes you touched:
+
+- `npm test -- --only <section>/<scene>` walks those scenes at the three sizes in seconds and prints their look warnings (safe area, clipped text). Repeat `--only` or join targets with commas; `--bail` stops at the first failing step. It also catches a `scene.ts` whose step count differs from `scene.md`.
+- `npm run shot -- <section>/<scene> --last --size 1366x768` shoots one size. `--at <ms>` shoots a step that far into its play, to check motion. `--url http://localhost:<port>/` reuses a running `npm run dev` of the same deck, so each shot skips the server start.
+
+Before you hand back the whole deck, run the full `npm test` once. Shoot each scene's last step at both sizes with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
+
+Work fast:
+
+- Run one full `npm test` at a time on a machine; parallel full runs time out. With subagents, only the orchestrator runs it, once per wave.
+- Run a long check in the foreground with a timeout, or in the background and wait for its notification. Never poll with `sleep` in a loop, and never hand back while your own check still runs.
+- Edit files with the Edit and Write tools, not `sed -i`, heredocs or scripts: shell writes ask for permission and skip the edit checks.
 
 Building a whole deck from a storyboard: read [building a deck](.claude/skills/klappe/references/building-a-deck.md).

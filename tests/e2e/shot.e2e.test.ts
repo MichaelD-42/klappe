@@ -29,6 +29,23 @@ test('shot writes each picked step at both sizes, and a contact sheet per sectio
   }
 })
 
+test('shot with sizes and at shoots one size, mid-play', async () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-shot-'))
+  try {
+    const url = `${inject('BASE_URL')}/?fixture=two-scenes`
+    const sizes = [{ width: 1366, height: 768 }]
+    const end = await shoot(url, out, { targets: ['a/first/2'], sizes })
+    const mid = await shoot(url, out, { targets: ['a/first/2'], sizes, at: 0 })
+    expect([...end.files, ...mid.files].map((f) => path.relative(out, f))).toEqual(
+      ['a.first.2.png', 'a.first.2@0ms.png'].map((n) => path.join('1366x768', n)),
+    )
+    // At 0 ms step 2 has not drawn yet, so the picture differs from its end.
+    expect(fs.readFileSync(mid.files[0]).equals(fs.readFileSync(end.files[0]))).toBe(false)
+  } finally {
+    fs.rmSync(out, { recursive: true })
+  }
+})
+
 test('shot names a target that matches no step and writes nothing', async () => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-shot-'))
   try {
