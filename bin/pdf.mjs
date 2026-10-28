@@ -19,13 +19,26 @@ export async function openDeck(browser, url, viewport = { width: W, height: H },
   return page
 }
 
-// Shows step i (0-based) as it ends, painted and with its fonts in.
-export async function showStep(page, i) {
-  await page.evaluate(async (i) => {
-    await window.klappe.stepper.goto(i, 'cut')
+// Shows step i (0-based) as it ends, painted, with its fonts in and its pictures decoded. With at (ms): as it
+// stood that far into its play, by a seek of its canvas, so it is the same picture each run.
+export async function showStep(page, i, at) {
+  await page.evaluate(async ({ i, at }) => {
+    const k = window.klappe
+    await k.stepper.goto(i, 'cut')
+    if (at !== undefined) {
+      const c = k.canvases[k.steps[i].canvas]
+      let from = 0 // the step's play starts at the previous step on its canvas, as in the stepper's move
+      for (let j = i - 1; j >= 0; j--)
+        if (k.steps[j].canvas === k.steps[i].canvas) {
+          from = c.tl.labels[`e:${j}`]
+          break
+        }
+      c.tl.seek(Math.min(from + at / 1000, c.tl.labels[`e:${i}`]), false)
+    }
     await document.fonts.ready
+    await Promise.all([...document.images].map((im) => im.decode().catch(() => {}))) // a JPEG paints late without this
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))) // one painted frame
-  }, i)
+  }, { i, at })
 }
 
 // Prints the deck at url to the PDF out, one page per step: the step's end state, with no UI on top.

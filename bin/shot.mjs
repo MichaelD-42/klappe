@@ -4,7 +4,7 @@ import { chromium } from '@playwright/test'
 import { openDeck, showStep } from './pdf.mjs'
 
 // Screenshots of chosen steps at the two sizes the look review checks, each step as it ends with no UI on top.
-const SIZES = [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]
+export const SIZES = [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]
 const THUMB = { w: 480, h: 270, cols: 4 }
 
 // The steps a target names: "<section>", "<section>/<scene>" or "<section>/<scene>/<step>", as in a deep link
@@ -42,7 +42,8 @@ async function sheets(browser, outDir, shots) {
 
 // Writes <outDir>/<w>x<h>/<section>.<scene>.<step>.png for each picked step at both sizes, and with sheet,
 // <outDir>/sheet-<section>.png from the 1920x1080 shots of each scene's last step.
-export async function shoot(url, outDir, { targets = [], last = false, sheet = false, theme } = {}) {
+// sizes: a subset of SIZES for a quick check. at: shoot each step that many ms into its play, not as it ends.
+export async function shoot(url, outDir, { targets = [], last = false, sheet = false, theme, sizes = SIZES, at } = {}) {
   const browser = await chromium.launch()
   try {
     const files = []
@@ -50,7 +51,7 @@ export async function shoot(url, outDir, { targets = [], last = false, sheet = f
     let unknown = []
     let report = { problems: [], errors: [] }
     const lastShots = []
-    for (const size of SIZES) {
+    for (const size of sizes) {
       const page = await openDeck(browser, url, size, theme ? { theme } : {})
       const steps = await page.evaluate(() => window.klappe.steps)
       ;({ picked, unknown } = pickSteps(steps, targets, last))
@@ -58,11 +59,11 @@ export async function shoot(url, outDir, { targets = [], last = false, sheet = f
       const dir = path.join(outDir, `${size.width}x${size.height}`)
       fs.mkdirSync(dir, { recursive: true })
       for (const s of picked) {
-        await showStep(page, s.index)
-        const file = path.join(dir, name(s))
+        await showStep(page, s.index, at)
+        const file = path.join(dir, at === undefined ? name(s) : name(s).replace(/\.png$/, `@${at}ms.png`))
         await page.screenshot({ path: file })
         files.push(file)
-        if (size === SIZES[0] && steps[s.index + 1]?.scene !== s.scene) lastShots.push({ step: s, file })
+        if (size === sizes[0] && steps[s.index + 1]?.scene !== s.scene) lastShots.push({ step: s, file })
       }
       const r = await page.evaluate(() => ({ problems: [...window.klappe.problems], errors: [...window.klappe.errors] }))
       // A page error can come from one size only (a layout that breaks at 1366).

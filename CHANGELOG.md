@@ -38,8 +38,14 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart`: `highlight(i)` works on every chart type, not only sankey. The row's marks and values stay at full strength while the rest dims, and `highlight(null)` clears it. In a line chart, `i` is a series. `bar(i)` now also grows one stack, phase or funnel stage per step; the new `slice(i)` draws one donut slice and counts the total on; the new `series(i)` draws one line. Catalog: `#/chart/series/1`, `#/chart/slices/1`.
 - Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
 
+- `klappe test --only <section>[/<scene>]` walks those scenes alone, at the three sizes, in seconds, and prints their look warnings; `--bail` stops at the first failure, in the walk at the first failing step. Other arguments go to vitest: a file filter, `-t <name>`. The walk reads `?only=` and `?bail` for the same.
+- `klappe shot`: `--size 1366x768` (or a width, `1366`) shoots one size; `--at <ms>` shoots each step that far into its play, by a seek, as `<step>@<ms>ms.png`; `--url <dev server>` reuses a running `klappe dev` of the same deck.
+
 ### Changed
 
+- `shot` and `pdf` wait until each picture on the page is decoded, so a large JPEG no longer shows blank.
+- The klappe agents: builders and reviewers test only what they touched (`--only`, or the changed e2e files) and leave the full `npm test` to the orchestrator, once per wave; they edit with the Edit and Write tools and never poll in a `sleep` loop. The three reviewers run on `model: sonnet`.
+- The repo's Markdown is left alone by Prettier and markdownlint (`.prettierrc.json`, `.markdownlint-cli2.jsonc`), so an editor or agent hook that formats on save does not rewrite hand-wrapped files.
 - Demo deck: the story before the gallery is two sections, 5 scenes: the title slide gives way to a booting CRT, then the value stream, with the retry bug fixed in code at its Design stage. The global team, meeting room and training sections and the gallery's scene-reuse section are gone, and with them their deep links (`global-team`, `meeting`, `technical-training`, `process-training`, `opening/boot`, `reuse`).
 
 ### Fixed

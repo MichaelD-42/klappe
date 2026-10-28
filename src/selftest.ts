@@ -192,6 +192,12 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   };
   const active = (i: number) => canvases[steps[i].canvas];
   const state = (i: number) => `${shown(canvases)}\n${snapshot(active(i))}`;
+  // only=<section>[/<scene>],...: walk these scenes alone. bail: stop at the first failing step.
+  const query = new URLSearchParams(location.search);
+  const only = query.get("only")?.split(",").filter(Boolean).map((t) => t.replace(/^#?\/?/, "").split("/"));
+  const picked = (i: number) => !only || only.some(([section, scene]) => steps[i].section === section && (!scene || steps[i].scene === scene));
+  const bail = query.has("bail");
+  if (only && !steps.some((_, i) => picked(i))) checks.push({ name: `only=${query.get("only")}: no step matches`, ok: false });
 
   await stepper.goto(0, "cut"); // let main's first move land before resetting
   reset();
@@ -199,8 +205,14 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   gsap.globalTimeline.timeScale(PLAY_SPEED);
   try {
     for (let i = 0; i < steps.length; i++) {
+      if (!picked(i)) continue;
+      // A run of picked steps plays on from a cut to the step before it; the full walk checks that cut.
+      if (i > 0 && !picked(i - 1)) {
+        reset();
+        await stepper.goto(i - 1, "cut");
+      }
       await stepper.next();
-      played.push(state(i));
+      played[i] = state(i);
     }
   } finally {
     gsap.globalTimeline.timeScale(1);
@@ -213,6 +225,8 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   gsap.globalTimeline.timeScale(PLAY_SPEED);
   try {
     for (let i = 0; i < steps.length; i++) {
+      if (!picked(i)) continue;
+      if (bail && checks.some((c) => !c.ok)) break;
       reset();
       await stepper.goto(i, "cut");
       const hash = formatHash(steps[i]);

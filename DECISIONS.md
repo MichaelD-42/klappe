@@ -261,3 +261,16 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - Why: an axis from March with a 6-month stride showed "Mar 2020, Sep, Mar, Sep, …": the year was on the first tick only. Counted from January, every January has a tick with its year. The cost: an axis whose first month is off the stride has no tick at its left end.
 - **`rush(from, to)` is a handle step on `roadmap`, not a new effect.**
   - Why: it reuses the axis, the milestones, the accent and its settle; only the timing and the pop are new. With reduced motion it keeps the shrinking gaps, since they are the message, and drops the pops.
+
+## 2026-10-28 (agent speed)
+
+Source: an analysis of the session logs of the training deck build: full test runs, ad-hoc screenshot scripts and permission prompts took most of the agents' time.
+
+- **`klappe test --only` plays each run of picked steps on from a cut to the step before it, not from the deck's first step.**
+  - Why: a play from the start takes as long as the full walk. The cut is what the full walk checks (seek equals play), so the filtered walk trusts it; the full walk before a merge still covers it.
+- **No lock file keeps two full `klappe test` runs apart; the rule is in the skill and the agents: only the orchestrator runs the full walk, once per wave.**
+  - Why: most agents that ran tests were killed mid-run, so a lock file would go stale and block the next run.
+- **`shot --at` seeks the step's canvas timeline; it does not play and wait.**
+  - Why: a seek gives the same picture each run, on a busy machine too; seek equals play, so it is the picture the room sees.
+- **The look report is the walk's warnings, printed by `test --only`, not a new check in `shot`.**
+  - Why: the walk already measures the safe area and clipped text; a second copy in `shot` would drift.

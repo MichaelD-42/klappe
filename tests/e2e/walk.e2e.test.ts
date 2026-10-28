@@ -4,6 +4,10 @@ import { runSelftest } from './driver'
 // The driver's wait grows with the deck (selftestTimeout); this ceiling only stops a hung run.
 const WALK_CEILING_MS = 1_800_000
 
+// `klappe test --only <targets> [--bail]` sets these: walk only those scenes, and stop at the first failing step.
+const only = process.env.KLAPPE_ONLY
+const flags = (only ? `&only=${encodeURIComponent(only)}` : '') + (process.env.KLAPPE_BAIL ? '&bail' : '')
+
 // Review focus 4: play and deep link agree at every step, and text stays legible off 16:9.
 for (const vp of [
   { w: 1920, h: 1080 },
@@ -12,7 +16,9 @@ for (const vp of [
 ]) {
   // Concurrent: each walks the whole demo in its own browser, and one after another they are the slowest file.
   test.concurrent(`walk passes at ${vp.w}x${vp.h}`, async ({ expect }) => {
-    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk`, vp)
+    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk${flags}`, vp)
+    // The look report for the scenes in hand; a whole deck would print hundreds of lines.
+    if (only) console.log(`look at ${vp.w}x${vp.h}: ${r.warnings.length ? '\n' + r.warnings.join('\n') : 'no warnings'}`)
     expect(r.problems).toEqual([])
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
@@ -29,6 +35,28 @@ test('walk passes on a canvas with two scenes and a camera flight', async () => 
   expect(r.checks.filter((c) => !c.ok)).toEqual([])
   expect(r.steps).toBe(7)
   expect(r.ok).toBe(true)
+})
+
+// only walks the named scene alone, played on from a cut to the step before it.
+test('walk with only checks the named scene alone', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=two-scenes&only=a/second`, { w: 1366, h: 768 })
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.checks.length).toBeGreaterThan(0)
+  expect(r.checks.every((c) => c.name.startsWith('step #/a/second/'))).toBe(true)
+  expect(r.ok).toBe(true)
+  const none = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=two-scenes&only=a/nope`, { w: 1366, h: 768 })
+  expect(none.ok).toBe(false)
+})
+
+// bail stops the walk at the first failing step: the fixture fails at both steps, so only step 1 reports.
+test('walk with bail stops at the first failing step', async () => {
+  const url = `${inject('BASE_URL')}/?selftest=walk&fixture=tiny-two-steps`
+  const stepOf = (c: { name: string }) => c.name.split(':')[0]
+  const all = await runSelftest(url, { w: 1366, h: 768 })
+  expect(new Set(all.checks.filter((c) => !c.ok).map(stepOf))).toEqual(new Set(['step #/a/b/1', 'step #/a/b/2']))
+  const bailed = await runSelftest(`${url}&bail`, { w: 1366, h: 768 })
+  expect(bailed.ok).toBe(false)
+  expect(new Set(bailed.checks.map(stepOf))).toEqual(new Set(['step #/a/b/1']))
 })
 
 // Review focus 3: a step-count mismatch must fail the self-test and name the file.

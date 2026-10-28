@@ -15,7 +15,12 @@ if (cmd === '--version' || cmd === '-v') {
 }
 
 if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
-  console.error('usage: klappe dev|build|test|pdf|outline|init [--deck <id>] | klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] | --version')
+  console.error(
+    'usage: klappe dev|build|pdf|outline|init [--deck <id>]\n' +
+      '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [<vitest file filter>] [-t <name>]\n' +
+      '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
+      '       klappe --version',
+  )
   process.exit(1)
 }
 
@@ -124,8 +129,29 @@ async function writeTodos() {
 if (cmd === 'build' || cmd === 'test') await writeTodos()
 
 if (cmd === 'test') {
-  const { startVitest } = await import('vitest/node')
-  const vitest = await startVitest('test', [], { root: klappeDir, run: true, project: ['e2e'] })
+  // --only <section>[/<scene>] (repeat it, or join with commas) walks those scenes alone, at the 3 sizes, and prints
+  // their look warnings. --bail stops at the first failure, in the walk at the first failing step. Other words go to
+  // vitest: a file filter (`fx-chart`, relative to klappe/), `-t <test name>`.
+  const only = rest.flatMap((a, k) => (rest[k - 1] === '--only' ? a.split(',') : [])).filter(Boolean)
+  if (rest.includes('--only') && !only.length) {
+    console.error('--only needs <section>[/<scene>], as in a deep link')
+    process.exit(1)
+  }
+  const bail = rest.includes('--bail')
+  const own = new Set(['--deck', '--only'])
+  const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail')
+  if (only.length) process.env.KLAPPE_ONLY = only.join(',')
+  if (bail) process.env.KLAPPE_BAIL = '1'
+  const { startVitest, parseCLI } = await import('vitest/node')
+  const { filter, options } = parseCLI(['vitest', ...args])
+  const vitest = await startVitest('test', only.length ? ['tests/e2e/walk.e2e.test.ts'] : filter, {
+    ...options,
+    ...(only.length && { testNamePattern: 'walk passes at', silent: false }), // the look report: vitest hides a passing test's log under an agent
+    ...(bail && { bail: 1 }),
+    root: klappeDir,
+    run: true,
+    project: ['e2e'],
+  })
   await vitest?.close()
   process.exit(vitest && vitest.state.getCountOfFailedTests() === 0 && !vitest.state.getUnhandledErrors().length ? 0 : 1)
 }
@@ -161,23 +187,38 @@ if (cmd === 'build') {
   }
 } else if (cmd === 'shot') {
   // Targets are the words that are neither a flag nor a flag's value.
-  const valued = new Set(['--deck', '--theme'])
+  const valued = new Set(['--deck', '--theme', '--size', '--at', '--url'])
   const targets = rest.filter((a, k) => !a.startsWith('-') && !valued.has(rest[k - 1]))
-  const t = rest.lastIndexOf('--theme')
-  const { shoot } = await import('./shot.mjs')
-  const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
-  await server.listen()
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const { shoot, SIZES } = await import('./shot.mjs')
+  // --size 1366x768, or a width alone for one of the two look sizes.
+  const size = arg('--size')
+  const m = size?.match(/^(\d+)(?:x(\d+))?$/)
+  const sizes = size === undefined ? SIZES : m && (m[2] ? [{ width: +m[1], height: +m[2] }] : SIZES.filter((s) => s.width === +m[1]))
+  if (!sizes?.length) {
+    console.error(`--size needs <width>x<height>, or ${SIZES.map((s) => s.width).join(' or ')}`)
+    process.exit(1)
+  }
+  const at = arg('--at')
+  if (at !== undefined && !/^\d+$/.test(at)) {
+    console.error('--at needs the milliseconds into the step, for example --at 400')
+    process.exit(1)
+  }
+  // --url: a running `klappe dev` of the same deck, so each shot skips the server start.
+  const url = arg('--url')
+  const server = url ? null : await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
+  await server?.listen()
   const out = path.join(process.cwd(), 'dist', 'shots', id)
   try {
-    const opts = { targets, last: rest.includes('--last'), sheet: rest.includes('--sheet'), theme: t >= 0 ? rest[t + 1] : undefined }
-    const r = await shoot(server.resolvedUrls.local[0], out, opts)
+    const opts = { targets, last: rest.includes('--last'), sheet: rest.includes('--sheet'), theme: arg('--theme'), sizes, at: at === undefined ? undefined : +at }
+    const r = await shoot(url ?? server.resolvedUrls.local[0], out, opts)
     for (const u of r.unknown) console.error(`no step matches ${u}; a target is <section>, <section>/<scene> or <section>/<scene>/<step>`)
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     for (const f of [...r.files, ...r.sheets]) console.log(path.relative(process.cwd(), f))
     process.exitCode = r.unknown.length || r.errors.length ? 1 : 0
   } finally {
-    await server.close()
+    await server?.close()
   }
 } else {
   const server = await createServer({ configFile })

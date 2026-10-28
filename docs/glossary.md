@@ -116,7 +116,7 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Warning.** A soft finding of the walk (ink outside the safe area, clipped text): reported, never failing.
 
-**Self-test.** `?selftest=walk` plays and jumps to every step and compares snapshots (the timeline rule), checks text size and the safe area. `?selftest=ac` runs the acceptance checks. `klappe test` runs both in a browser.
+**Self-test.** `?selftest=walk` plays and jumps to every step and compares snapshots (the timeline rule), checks text size and the safe area. `?selftest=ac` runs the acceptance checks. `klappe test` runs both in a browser. `&only=<section>[/<scene>]` walks those scenes alone; `&bail` stops at the first failing step.
 
 **Snapshot.** The self-test's record of a canvas at one step: the camera pose and the inline state of every element. Elements under `data-k-ignore` are left out; `data-k-text` and `data-k-progress` mark DOM written from a tween's progress.
 
