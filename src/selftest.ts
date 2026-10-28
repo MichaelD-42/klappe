@@ -212,7 +212,11 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   // only=<section>[/<scene>],...: walk these scenes alone. bail: stop at the first failing step.
   const query = new URLSearchParams(location.search);
   const only = query.get("only")?.split(",").filter(Boolean).map((t) => t.replace(/^#?\/?/, "").split("/"));
-  const picked = (i: number) => !only || only.some(([section, scene]) => steps[i].section === section && (!scene || steps[i].scene === scene));
+  // part=k/N: walk the k-th of N runs of whole sections, cut by step count, so N browsers share a long walk.
+  const [k, n] = (query.get("part") ?? "1/1").split("/").map(Number);
+  const inPart = (i: number) => Math.floor((steps.findIndex((s) => s.section === steps[i].section) * n) / steps.length) === k - 1;
+  const picked = (i: number) =>
+    inPart(i) && (!only || only.some(([section, scene]) => steps[i].section === section && (!scene || steps[i].scene === scene)));
   const bail = query.has("bail");
   if (only && !steps.some((_, i) => picked(i))) checks.push({ name: `only=${query.get("only")}: no step matches`, ok: false });
 

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
 import { klappeScan } from './bin/scan-plugin.mjs'
+import { availableParallelism } from 'node:os'
 
 const src = (p: string) => fileURLToPath(new URL(`./src/${p}`, import.meta.url))
 
@@ -27,8 +28,10 @@ export default defineConfig({
           globalSetup: ['tests/e2e/setup.ts'],
           testTimeout: 120_000,
           hookTimeout: 120_000,
-          // Each file drives its own browser; more at once timed out tests on a busy machine.
-          maxWorkers: 6,
+          // Each file drives its own browsers: half the cores, measured fastest on 28; more crashed a renderer.
+          // At least 6, what CI's 4-core runners have always run.
+          maxWorkers: Math.max(6, Math.floor(availableParallelism() / 2)),
+          maxConcurrency: 12, // the whole-deck walk's parts (walk.e2e.test.ts)
           sequence: { groupOrder: 1 }, // vitest needs its own group for a different maxWorkers; unit runs first
         },
       },

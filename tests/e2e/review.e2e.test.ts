@@ -264,7 +264,8 @@ test('a save the server refuses does not block the saves after it', async () => 
 test('each save names its window and a number that grows', async () => {
   const { context, review } = await pair()
   const sent: { from?: string; seq?: number }[] = []
-  review.on('request', (r) => r.method() === 'POST' && r.url().includes('/__klappe/review') && sent.push(JSON.parse(r.postData()!)))
+  // Counted once answered: a save still in flight at close would land in the next test's file.
+  review.on('requestfinished', (r) => r.method() === 'POST' && r.url().includes('/__klappe/review') && sent.push(JSON.parse(r.postData()!)))
   await field(review, 'content').fill('One.')
   await expect.poll(() => sent.length, { timeout: 10_000 }).toBe(1)
   await field(review, 'visuals').fill('Two.')

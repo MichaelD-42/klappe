@@ -1,4 +1,5 @@
 import { expect, inject, test } from 'vitest'
+import { availableParallelism } from 'node:os'
 import { runSelftest } from './driver'
 
 // The driver's wait grows with the deck (selftestTimeout); this ceiling only stops a hung run.
@@ -10,15 +11,19 @@ const only = process.env.KLAPPE_ONLY
 const strict = !!process.env.KLAPPE_STRICT
 const flags = (only ? `&only=${encodeURIComponent(only)}` : '') + (process.env.KLAPPE_BAIL ? '&bail' : '')
 
+// The whole-deck walk is the slowest test: on a machine with cores to spare it runs in parts of whole sections,
+// each in its own browser. --only picks scenes itself, so it walks in one part.
+const parts = only ? 1 : Math.max(1, Math.min(4, Math.floor(availableParallelism() / 6)))
+
 // Review focus 4: play and deep link agree at every step, and text stays legible off 16:9.
 for (const vp of [
   { w: 1920, h: 1080 },
   { w: 1366, h: 768 },
   { w: 1024, h: 768 },
-]) {
-  // Concurrent: each walks the whole demo in its own browser, and one after another they are the slowest file.
-  test.concurrent(`walk passes at ${vp.w}x${vp.h}`, async ({ expect }) => {
-    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk${flags}`, vp)
+]) for (let k = 1; k <= parts; k++) {
+  // Concurrent: each walks the whole demo, or a part of it, in its own browser.
+  test.concurrent(`walk passes at ${vp.w}x${vp.h}${parts > 1 ? ` (part ${k}/${parts})` : ''}`, async ({ expect }) => {
+    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk${flags}&part=${k}/${parts}`, vp)
     // The look report for the scenes in hand; a whole deck would print hundreds of lines.
     if (only) console.log(`look at ${vp.w}x${vp.h}: ${r.warnings.length ? '\n' + r.warnings.join('\n') : 'no warnings'}`)
     expect(r.problems).toEqual([])
@@ -49,6 +54,19 @@ test('walk with only checks the named scene alone', async () => {
   expect(r.ok).toBe(true)
   const none = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=two-scenes&only=a/nope`, { w: 1366, h: 768 })
   expect(none.ok).toBe(false)
+})
+
+// part=k/N walks the k-th of N runs of whole sections; together the parts cover every step once.
+test('walk with part splits the deck by section', async () => {
+  const stepsOf = async (part: string) => {
+    const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=blackout&part=${part}`, { w: 1366, h: 768 })
+    expect(r.ok).toBe(true)
+    return [...new Set(r.checks.map((c) => c.name.split(':')[0]))]
+  }
+  expect(await stepsOf('1/3')).toEqual(['step #/a/one/1'])
+  expect(await stepsOf('2/3')).toEqual(['step #/b/two/1'])
+  expect(await stepsOf('3/3')).toEqual(['step #/c/three/1'])
+  expect(await stepsOf('1/1')).toEqual(['step #/a/one/1', 'step #/b/two/1', 'step #/c/three/1'])
 })
 
 // bail stops the walk at the first failing step: the fixture fails at both steps, so only step 1 reports.
