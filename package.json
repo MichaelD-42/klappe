@@ -10,7 +10,9 @@
     "shot": "node bin/klappe.mjs shot --deck demo",
     "outline": "node bin/klappe.mjs outline --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
-    "test:e2e": "vitest run tests/e2e"
+    "test:e2e": "vitest run tests/e2e",
+    "eval:reviewers": "node bin/eval.mjs reviewers",
+    "eval:skill": "node bin/eval.mjs skill"
   },
   "repository": {
     "type": "git",

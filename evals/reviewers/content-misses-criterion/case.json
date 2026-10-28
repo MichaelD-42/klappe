@@ -1,0 +1,6 @@
+{
+  "agent": "klappe-review-content",
+  "kind": "deck",
+  "brief": "Task E-C2. Task kind: deck.\nFiles: decks/demo/sections/250-terminal/30-publish/scene.md (new).\nGoal: a terminal scene that shows how a release goes out, after terminal/prompt.\nAcceptance criteria:\n- AK-1: The scene terminal/publish follows terminal/prompt, with no scene.ts.\n- AK-2: A console fence types three commands in this order, each with its output: `npm version minor`, `git push --follow-tags`, `npm publish`.\n- AK-3: One step per command, and a speaker note under each step that says what the command does.\n- AK-4: `npm test -- --only terminal/publish` passes.",
+  "expect": { "verdict": "FAIL", "rubric": { "intent_fidelity": "partial" } }
+}

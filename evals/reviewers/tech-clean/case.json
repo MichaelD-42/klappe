@@ -1,0 +1,6 @@
+{
+  "agent": "klappe-review-tech",
+  "kind": "deck",
+  "brief": "Task E-T1. Task kind: deck.\nFiles: decks/demo/sections/106-basics/20-badge/scene.md and scene.ts (new).\nGoal: a catalog scene that shows an entrance tween that keeps the timeline rule.\nAcceptance criteria:\n- AK-1: The scene basics/badge follows basics/text-and-fades.\n- AK-2: Step 1 shows the title; step 2 slides a badge with the second step's text in from the left.\n- AK-3: The scene keeps the timeline rule: a deep link to each step and a walk through the steps give the same picture.\n- AK-4: `npm test -- --only basics/badge` passes.",
+  "expect": { "verdict": "PASS" }
+}

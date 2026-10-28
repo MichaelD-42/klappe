@@ -1,0 +1,9 @@
+{
+  "prompt": "Task E-S5. Task kind: deck.\nIn the demo deck (decks/demo), add a scene at decks/demo/sections/106-basics/20-motto/ where the team motto \"Ship small, ship often.\" types itself out letter by letter, in the deck's normal text font, not a code font.\nAcceptance criteria:\n- AK-1: The scene is in decks/demo/sections/106-basics/20-motto/.\n- AK-2: The line types out on one step, in the deck font.\n- AK-3: `npm test -- --only basics/motto` passes.",
+  "expect": {
+    "match": {
+      "decks/demo/sections/106-basics/20-motto/scene.ts": "\\btyped\\("
+    },
+    "absent": { "decks/demo/shared/**": "[\\s\\S]" }
+  }
+}

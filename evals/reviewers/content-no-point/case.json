@@ -1,0 +1,6 @@
+{
+  "agent": "klappe-review-content",
+  "kind": "deck",
+  "brief": "Task E-C1. Task kind: deck.\nFiles: decks/demo/sections/106-basics/20-odds-and-ends/scene.md (new).\nGoal: a Markdown-only scene after basics/text-and-fades.\nAcceptance criteria:\n- AK-1: The scene basics/odds-and-ends follows basics/text-and-fades, with no scene.ts.\n- AK-2: It has three steps: \"Blue.\", \"Tuesday.\" and \"The kitchen.\", in this order.\n- AK-3: Each step has a speaker note under it.\n- AK-4: `npm test -- --only basics/odds-and-ends` passes.",
+  "expect": { "verdict": "FAIL", "rubric": { "scene_purpose": "unclear" } }
+}
