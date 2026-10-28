@@ -1,0 +1,8 @@
+{
+  "prompt": "Task E-S2. Task kind: deck.\nIn the demo deck (decks/demo), add a scene at decks/demo/sections/106-basics/20-fresh-clone/ that shows what a new team member runs on day one, and what they see: they install the dependencies with npm ci, then run npm test, and each command prints its result.\nAcceptance criteria:\n- AK-1: The scene is in decks/demo/sections/106-basics/20-fresh-clone/.\n- AK-2: One step per command.\n- AK-3: `npm test -- --only basics/fresh-clone` passes.",
+  "expect": {
+    "match": {
+      "decks/demo/sections/106-basics/20-fresh-clone/*": "^```console|\\bterminal\\("
+    }
+  }
+}

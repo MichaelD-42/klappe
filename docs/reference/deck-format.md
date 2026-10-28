@@ -31,6 +31,7 @@ Frontmatter keys:
 - `confidential`: `true` or `false`. Default `false`.
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, results]`. Use a list of lists for several groups.
 - `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
+- `max-words`: the most words a step's on-screen text may have, for example `12`. Only the list item counts, not its notes. `klappe test` fails for each step over it and names it: `#/<section>/<scene>/<step>: 14 words > 12`. Without the key, nothing is checked.
 - `duration`: the talk's planned length in minutes, for example `45`. Only `klappe outline` reads it, to compare its timing estimate.
 
 ## deck.css
@@ -286,7 +287,7 @@ Review mode exists only on the dev server, which saves the file: a built deck ha
 
 ## Look checks
 
-`?selftest=walk` checks the look of the current scene at every step, once the step has settled. The findings are warnings: they go to `warnings` in the self-test result (the `script#klappe-selftest` JSON) and never fail the self-test. Each finding is listed once, at the first step that shows it.
+`?selftest=walk` checks the look of the current scene at every step, once the step has settled. The findings are warnings: they go to `warnings` in the self-test result (the `script#klappe-selftest` JSON) and never fail the self-test. `klappe test --strict` fails the walk on any warning; without `--strict`, warnings never fail a test. Each finding is listed once, at the first step that shows it.
 
 - Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the 1920x1080 frame). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
 - Clipped text: shown text that a parent's `overflow: hidden` or `clip` cuts off, which includes `text-overflow: ellipsis` and line clamps. Text that a mask hides completely is not counted.

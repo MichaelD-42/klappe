@@ -6,6 +6,14 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Rubrics and evals for the build loop (`docs/contrib/2026-10-28-rubrics-evals.md`):
+  - Rubrics in `.rubrics/`: `intent_fidelity` and `scene_purpose`. The content reviewer prints one `RUBRIC` line per dimension.
+  - `bin/verdict.mjs`, the gate after the reviews. It rejects a review in the wrong format and decides `merge`, `builder`, `planner` or `owner`. `--log` keeps a verdict log.
+  - `npm run eval:reviewers` and `npm run eval:skill` (`bin/eval.mjs`, `evals/README.md`) run planted-defect and element-choice cases with `claude -p` in a throwaway copy. They are not part of `npm test`, and each run costs money.
+- `klappe test --strict` makes a look warning fail the walk.
+- `max-words: <n>` in deck.md fails a step with more than n words on screen.
+- The skill's intent table lists `typed` for a line that types itself in the deck font.
+
 - Small options: `spotlight` `shape: "circle"`; `wipe` `direction: "vertical"`; `loupe` `to(x, y, { zoom })` per stop; `shape` and `arrow` `dash` and `width` (at least 2); `pulse` `{ color }` token. Catalog: `#/spotlight/round/2`, `#/fullscreen/wipe-down/2`, `#/loupe/detail/3`, `#/shapes/diagram/2`, `#/attention/nudges/4`.
 - `figure`: a seated pose on a chair, `seated: true` from load or `sit(tl)` and `stand(tl)` in a step. Catalog: `#/figure/table/3`.
 - `worldMap`: `region(tl, country)` fills a country in the accent, by its world-atlas name or ISO 3166-1 numeric code, for "where we sell". Catalog: `#/map/world/6`.

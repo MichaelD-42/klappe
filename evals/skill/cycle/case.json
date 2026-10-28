@@ -1,0 +1,8 @@
+{
+  "prompt": "Task E-S4. Task kind: deck.\nIn the demo deck (decks/demo), add a scene at decks/demo/sections/106-basics/20-improve-loop/ about the improvement loop the team runs each sprint: plan, do, check, act, and then round again. The speaker talks through one phase per step, and the room sees which phase is current.\nAcceptance criteria:\n- AK-1: The scene is in decks/demo/sections/106-basics/20-improve-loop/.\n- AK-2: One step per phase, and the current phase stands out.\n- AK-3: `npm test -- --only basics/improve-loop` passes.",
+  "expect": {
+    "match": {
+      "decks/demo/sections/106-basics/20-improve-loop/*": "\\bcycle\\("
+    }
+  }
+}

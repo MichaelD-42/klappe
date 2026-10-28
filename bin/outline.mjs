@@ -25,13 +25,28 @@ function markdown(deckDir) {
 
 const quote = (notes, pad) => notes.split('\n').filter((l) => l.trim()).map((l) => `${pad}> ${l}`)
 
-// Returns the outline as Markdown and the deck problems the parser found.
-export async function outline(klappeDir, deckDir) {
+// The deck from its Markdown alone: the steps come from scene.md, and the step count check is the self-test's.
+async function readDeck(klappeDir, deckDir) {
   const load = async (p) => (await runnerImport(path.join(klappeDir, p), { configFile: false, logLevel: 'error' })).module
   const [{ assembleDeck }, { parseFrontmatter }] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts')])
   const files = markdown(deckDir)
-  // Without the scene.ts modules: the steps come from scene.md, and the step count check is the self-test's.
-  const { deck, problems } = assembleDeck(files, {})
+  return { ...assembleDeck(files, {}), files, parseFrontmatter }
+}
+
+// deck.md max-words: one line per step whose on-screen text has more words, or the problem with the key. No key, no lines.
+export async function overWords(klappeDir, deckDir) {
+  const { deck, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
+  const n = parseFrontmatter(files['deck.md'] ?? '').data['max-words']
+  if (n === undefined) return []
+  if (!(Number.isInteger(n) && n > 0)) return ['deck.md: max-words needs a whole number of words, for example 12']
+  return deck.sections.flatMap((s) =>
+    s.scenes.flatMap((c) => c.steps.flatMap((st, i) => (words(st.text) > n ? [`#/${s.id}/${c.id}/${i + 1}: ${words(st.text)} words > ${n}`] : []))),
+  )
+}
+
+// Returns the outline as Markdown and the deck problems the parser found.
+export async function outline(klappeDir, deckDir) {
+  const { deck, problems, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
   const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
   if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
 

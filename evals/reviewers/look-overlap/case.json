@@ -1,0 +1,6 @@
+{
+  "agent": "klappe-review-look",
+  "kind": "deck",
+  "brief": "Task E-L1. Task kind: deck.\nFiles: decks/demo/sections/106-basics/20-claim-and-answer/scene.md and scene.ts (new).\nGoal: a catalog scene that puts a claim on screen, then its answer under it.\nAcceptance criteria:\n- AK-1: The scene basics/claim-and-answer follows basics/text-and-fades.\n- AK-2: Step 1 shows the title and the claim; step 2 adds the answer under the claim in --k-accent.\n- AK-3: On the last step both lines are fully readable at 1920x1080 and 1366x768.\nThe scene's last step is the deep link #/basics/claim-and-answer/2. Shoot it with `npm run shot -- basics/claim-and-answer --last`; no dev server runs yet, the shot command starts its own.",
+  "expect": { "verdict": "FAIL" }
+}

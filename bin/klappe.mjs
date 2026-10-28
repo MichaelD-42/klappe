@@ -17,7 +17,7 @@ if (cmd === '--version' || cmd === '-v') {
 if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
   console.error(
     'usage: klappe dev|build|pdf|outline|init [--deck <id>]\n' +
-      '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [<vitest file filter>] [-t <name>]\n' +
+      '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
       '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
       '       klappe --version',
   )
@@ -130,18 +130,23 @@ if (cmd === 'build' || cmd === 'test') await writeTodos()
 
 if (cmd === 'test') {
   // --only <section>[/<scene>] (repeat it, or join with commas) walks those scenes alone, at the 3 sizes, and prints
-  // their look warnings. --bail stops at the first failure, in the walk at the first failing step. Other words go to
-  // vitest: a file filter (`fx-chart`, relative to klappe/), `-t <test name>`.
+  // their look warnings. --bail stops at the first failure, in the walk at the first failing step. --strict fails the
+  // walk on look warnings. Other words go to vitest: a file filter (`fx-chart`, relative to klappe/), `-t <test name>`.
   const only = rest.flatMap((a, k) => (rest[k - 1] === '--only' ? a.split(',') : [])).filter(Boolean)
   if (rest.includes('--only') && !only.length) {
     console.error('--only needs <section>[/<scene>], as in a deep link')
     process.exit(1)
   }
   const bail = rest.includes('--bail')
+  const strict = rest.includes('--strict')
   const own = new Set(['--deck', '--only'])
-  const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail')
+  const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail' && a !== '--strict')
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'
+  if (strict) process.env.KLAPPE_STRICT = '1'
+  // deck.md max-words: reported before the tests, fails the run after them.
+  const long = await (await import('./outline.mjs')).overWords(klappeDir, deckDir)
+  for (const l of long) console.error(`max-words: ${l}`)
   const { startVitest, parseCLI } = await import('vitest/node')
   const { filter, options } = parseCLI(['vitest', ...args])
   const vitest = await startVitest('test', only.length ? ['tests/e2e/walk.e2e.test.ts'] : filter, {
@@ -153,7 +158,7 @@ if (cmd === 'test') {
     project: ['e2e'],
   })
   await vitest?.close()
-  process.exit(vitest && vitest.state.getCountOfFailedTests() === 0 && !vitest.state.getUnhandledErrors().length ? 0 : 1)
+  process.exit(!long.length && vitest && vitest.state.getCountOfFailedTests() === 0 && !vitest.state.getUnhandledErrors().length ? 0 : 1)
 }
 
 if (cmd === 'outline') {

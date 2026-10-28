@@ -4,8 +4,10 @@ import { runSelftest } from './driver'
 // The driver's wait grows with the deck (selftestTimeout); this ceiling only stops a hung run.
 const WALK_CEILING_MS = 1_800_000
 
-// `klappe test --only <targets> [--bail]` sets these: walk only those scenes, and stop at the first failing step.
+// `klappe test --only <targets> [--bail] [--strict]` sets these: walk only those scenes, stop at the first failing step,
+// and fail on look warnings.
 const only = process.env.KLAPPE_ONLY
+const strict = !!process.env.KLAPPE_STRICT
 const flags = (only ? `&only=${encodeURIComponent(only)}` : '') + (process.env.KLAPPE_BAIL ? '&bail' : '')
 
 // Review focus 4: play and deep link agree at every step, and text stays legible off 16:9.
@@ -22,6 +24,7 @@ for (const vp of [
     expect(r.problems).toEqual([])
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
+    if (strict) expect(r.warnings).toEqual([])
     expect(r.steps).toBeGreaterThan(0)
     expect(r.ok).toBe(true)
   }, WALK_CEILING_MS)
