@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler",
-    "strict": true, "noEmit": true, "skipLibCheck": true, "lib": ["ES2022", "DOM"],
+    "strict": true, "noUnusedLocals": true, "noEmit": true, "skipLibCheck": true, "lib": ["ES2022", "DOM"],
     "types": ["vite/client", "node"],
     "paths": { "@deck/*": ["./decks/demo/*"], "klappe/types": ["./src/types"], "klappe/fx": ["./src/fx"], "klappe/fx/*": ["./src/fx/*"] }
   },

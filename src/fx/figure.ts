@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import type { Ctx, StepAdder } from "../types";
+import type { Ctx } from "../types";
 
 gsap.registerPlugin(MotionPathPlugin);
 

@@ -334,3 +334,5 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: on 28 cores, 14 was fastest (20 was no faster, 27 crashed a renderer); 6 is what CI's runners always ran.
 - **The deck's eager globs live in `src/deck/files.ts`, which `loadDeck` imports only without `?fixture=`; fixtures load lazily.**
   - Why: Vite hoists an eager glob into a static import, so every fixture page loaded the whole demo deck and all fixtures: 782 requests where 148 do. A built deck gets one more chunk.
+- **`noUnusedLocals` is on; no ESLint.**
+  - Why: the stricter tsc flags found 17 unused imports (fixed) and nothing else worth a rule; `noUncheckedIndexedAccess` gave 1645 findings. typescript-eslint's promise rules (`no-floating-promises`, `no-misused-promises`, `await-thenable`), tried with TypeScript 6 on 2026-10-28, gave 41 findings and no bug: GSAP timelines are thenables, so every `forEach((x) => tl.to(…))` is flagged, and a step started without `await` already fails the walk through `unhandledrejection` (`src/errors.ts`). typescript-eslint also cannot run on TypeScript 7, which has no JavaScript API.

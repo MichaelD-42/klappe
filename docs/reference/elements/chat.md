@@ -27,7 +27,6 @@ Ana: I can pair with you on it after lunch.
 From `decks/demo/sections/217-chat/10-thread/scene.ts`, with one message per list item in `scene.md`:
 
 ```ts
-import type { gsap } from "gsap";
 import { chat, chatMessage, type ChatHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 

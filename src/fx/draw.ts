@@ -1,4 +1,3 @@
-import { gsap } from "gsap";
 import type { Ctx, StepAdder } from "../types";
 import { glow } from "./attention";
 

@@ -1,6 +1,5 @@
 import type { IconNode } from "lucide";
 import named from "virtual:klappe-icons";
-import type { gsap } from "gsap";
 import type { Ctx } from "../types";
 import { drawOn, token } from "./draw";
 

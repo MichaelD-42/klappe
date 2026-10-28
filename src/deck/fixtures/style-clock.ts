@@ -1,4 +1,3 @@
-import { gsap } from "gsap";
 import { assembleDeck } from "../assemble";
 import type { SceneModule } from "../../types";
 

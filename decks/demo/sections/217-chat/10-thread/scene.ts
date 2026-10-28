@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import { chat, chatMessage, type ChatHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 

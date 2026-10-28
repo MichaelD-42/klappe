@@ -1,4 +1,3 @@
-import type { gsap } from "gsap";
 import type { Ctx, Rect } from "../types";
 
 // An element's box in the scene's units, measured when a step is added (the timeline is built after
