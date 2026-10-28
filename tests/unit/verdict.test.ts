@@ -51,6 +51,18 @@ test('AK-2: parseReport reads a good report; the scene id is the ref', () => {
   expect(p.rubric).toEqual([{ dimension: 'scene_purpose', level: 'clear', ref: 's1/intro', evidence: 'the room learns X' }]);
 });
 
+test('AK-2: VERDICT: FAIL with nothing blocking is a format problem', () => {
+  const r = run(['--kind', 'framework'], 'VERDICT: FAIL\nx:1 — Minor — p — e\nRUBRIC intent_fidelity: unassessable — no criteria');
+  expect(r.status).toBe(2);
+  expect(r.stderr).toMatch(/^format: .*r0\.txt: VERDICT: FAIL but nothing blocks$/m);
+});
+
+test('AK-2: VERDICT: PASS with a blocking finding or RUBRIC line is a format problem', () => {
+  const r = run(['--kind', 'framework'], 'VERDICT: PASS\nx:1 — Critical — p — e\nRUBRIC intent_fidelity: partial — AK-2 open');
+  expect(r.status).toBe(2);
+  expect(r.stderr).toMatch(/^format: .*r0\.txt: VERDICT: PASS but 2 blocking$/m);
+});
+
 test('AK-2: every dimension of the kind needs a RUBRIC line across the reports', () => {
   const p = [parseReport(`VERDICT: PASS\n${FULL}`, rubrics)];
   expect(missingDimensions(p, rubrics, 'framework')).toEqual([]);

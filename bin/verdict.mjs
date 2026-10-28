@@ -66,6 +66,11 @@ export function parseReport(text, rubrics) {
       findings.push({ line, severity })
     }
   })
+  // A verdict that disagrees with its own findings means the reviewer misread the rule; reject it.
+  const blocking = (s) => s === 'Critical' || s === 'Important'
+  const n = findings.filter((f) => blocking(f.severity)).length + rubric.filter((r) => blocking(rubrics[r.dimension].rule[r.level].severity)).length
+  if (verdict === 'FAIL' && !n) problems.push('VERDICT: FAIL but nothing blocks')
+  if (verdict === 'PASS' && n) problems.push(`VERDICT: PASS but ${n} blocking`)
   return { verdict, findings, rubric, problems }
 }
 
