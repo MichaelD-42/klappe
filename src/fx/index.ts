@@ -20,6 +20,7 @@ export * from "./draw";
 export * from "./exercisecard";
 export * from "./figure";
 export * from "./flipcard";
+export * from "./fishbone";
 export * from "./flow";
 export * from "./focus";
 export * from "./gitgraph";

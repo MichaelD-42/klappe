@@ -27,6 +27,7 @@
   - [gitGraph](elements/gitGraph.md): a git history, one commit, branch, merge or rebase per step.
   - [semanticZoom](elements/semanticZoom.md): boxes in boxes; the camera flies into one and its insides build, level by level.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [fishbone](elements/fishbone.md): an Ishikawa diagram, cause bones built one per step, the root cause lit.
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
   - [processSteps](elements/processSteps.md): the "step 2 of 5" bar, numbered chevrons with the current stage lit.
