@@ -65,10 +65,22 @@ export function summarize(suite, cases) {
   }
 }
 
+// On Windows a headless claude may pick the PowerShell tool, and the agents name Bash: without a shell, a reviewer
+// cannot run npm test. Point it at Git's bash (git --exec-path is <git>/mingw64/libexec/git-core) unless the
+// user already chose.
+function shellEnv() {
+  const env = { ...process.env }
+  if (process.platform !== 'win32' || 'CLAUDE_CODE_USE_POWERSHELL_TOOL' in env) return env
+  env.CLAUDE_CODE_USE_POWERSHELL_TOOL = '0'
+  const bash = path.resolve(git(root, '--exec-path').trim(), '../../../bin/bash.exe')
+  if (!env.CLAUDE_CODE_GIT_BASH_PATH && fs.existsSync(bash)) env.CLAUDE_CODE_GIT_BASH_PATH = bash
+  return env
+}
+
 function claude(cwd, args) {
   const bin = process.env.KLAPPE_CLAUDE || 'claude'
   const [cmd, argv] = /\.m?js$/.test(bin) ? [process.execPath, [bin, ...args]] : [bin, args]
-  const r = spawnSync(cmd, argv, { cwd, encoding: 'utf8', maxBuffer: 64 << 20, timeout: 30 * 60_000 })
+  const r = spawnSync(cmd, argv, { cwd, env: shellEnv(), encoding: 'utf8', maxBuffer: 64 << 20, timeout: 30 * 60_000 })
   if (r.error) throw r.error
   let out
   try {
