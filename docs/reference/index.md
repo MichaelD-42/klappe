@@ -23,6 +23,7 @@
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [mindMap](elements/mindMap.md): a centre topic with branches that grow out one per step.
   - [gitGraph](elements/gitGraph.md): a git history, one commit, branch, merge or rebase per step.
   - [semanticZoom](elements/semanticZoom.md): boxes in boxes; the camera flies into one and its insides build, level by level.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.

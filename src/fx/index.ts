@@ -29,6 +29,7 @@ export * from "./loupe";
 export * from "./magic";
 export * from "./map";
 export * from "./matrix";
+export * from "./mindmap";
 export * from "./pointer";
 export * from "./process";
 export * from "./pyramid";
