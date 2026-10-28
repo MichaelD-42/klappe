@@ -100,7 +100,7 @@ One master GSAP timeline per canvas; seek must equal play.
 
 - With `build()`, klappe draws nothing for the scene, not even its title. Put `ctx.doc.title` into an `h2` you build hidden and show in step 1.
 - `ctx.html` paints over `ctx.svg`: an HTML box with a background hides the SVG helpers under it. Within a layer, what you build later paints on top.
-- klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem.
+- klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem, and `klappe test` stops on it at once. `npm run outline` lists the ids taken.
 - Reach an effect's elements only through its handle (`el` and the named parts), never with `lastElementChild` or `children[i]`. If the handle lacks a part, ask for it in klappe.
 - A scene that plays in several places (a break, an agenda hop) is one function outside `sections/` that returns a `SceneModule`; each `scene.ts` calls it.
 

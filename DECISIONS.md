@@ -281,3 +281,14 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: Claude and the author both read the file as text, and the history (what was fixed, why it came back) is what a reviewer-recall eval needs. The window escapes a typed `#` line, so a finding cannot fake a state. Approve and reopen apply only to a finding still fixed on disk, so a stale window cannot approve one Claude has reopened or rewritten.
 - **The deck window always asks for a screen wake lock; there is no flag to turn it off.**
   - Why: a deck page is open to be presented, and the browser drops the lock when the tab is hidden. No fallback for pages without `navigator.wakeLock` (plain `http` from another host): the dev server and an `https` host have it.
+
+## 2026-10-28 (tooling)
+
+- **The demo steps the acceptance checks use are one `DEMO` list in `src/selftest.ts`, and a lint (`tests/lint/deep-links.test.ts`) checks every demo deep link in it, the author docs, the skill and the agents.**
+  - Why: a moved story scene broke checks and docs that only a repo-wide search found. The lint reads the demo's Markdown, so it runs in the fast unit pass. Unit tests that build their own steps (`router`, `scene`) are not tied to the demo and stay as they are.
+- **No scaffold script for a new effect option.**
+  - Why: an option's real cost is its content (the catalog scene that shows it, the reference row that explains it), which a script can only stub; the stubs would then have to be caught. The intent-table row is only for new exports, and the shared `fx-options` fixture and e2e file save the other two files.
+- **No test helper for a scene's elements in both layers.**
+  - Why: `[data-scene="x"] .child` already matches in both; only the scene root itself needs its layer named (`div[…]` or `g[…]`), which the e2e tests already do. The builder agent's brief says so.
+- **Reopened review findings become eval cases by hand, from a recipe in `evals/README.md`, not by a generator.**
+  - Why: no deck has a reopened finding yet, a fix commit's files do not apply cleanly over a later `HEAD`, and a generator could copy confidential deck content into this public repo.

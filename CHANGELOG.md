@@ -11,6 +11,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
   - `bin/verdict.mjs`, the gate after the reviews. It rejects a review in the wrong format and decides `merge`, `builder`, `planner` or `owner`. `--log` keeps a verdict log.
   - `npm run eval:reviewers` and `npm run eval:skill` (`bin/eval.mjs`, `evals/README.md`) run planted-defect and element-choice cases with `claude -p` in a throwaway copy. They are not part of `npm test`, and each run costs money.
 - `klappe test --strict` makes a look warning fail the walk.
+- `klappe test` stops before a browser starts when the deck has a problem the parser finds, such as a duplicate scene id, with `--only` too.
 - Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
 - The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
 - `max-words: <n>` in deck.md fails a step with more than n words on screen.
