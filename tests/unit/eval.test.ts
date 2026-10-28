@@ -72,7 +72,7 @@ test('a skill case grades the files the run wrote', () => {
 }, 120_000);
 
 test('a failed Claude run and a report with no verdict count as errors, not in recall', () => {
-  for (const env of [{ STUB_IS_ERROR: '1', STUB_RESULT: 'max turns' }, { STUB_RESULT: 'I looked at it.' }]) {
+  for (const env of [{ STUB_IS_ERROR: '1', STUB_RESULT: 'max turns' }, { STUB_RESULT: 'I looked at it.' }] as Record<string, string>[]) {
     const r = run(['reviewers', '--case', 'tech-step-dom'], env);
     expect(r.status).toBe(1);
     expect(r.stdout).toContain('recall: 0/0 runs');
