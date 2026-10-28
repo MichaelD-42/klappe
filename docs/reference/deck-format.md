@@ -253,6 +253,8 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Home, End: first and last step.
 - `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 
+While the deck window shows, it keeps the screen awake: no screensaver or sleep mid-talk. The browser allows this on `localhost` and `https`, not on a built deck served over plain `http` from another machine.
+
 ## URL flags
 
 - `?instant=1`: every play becomes a seek.
@@ -281,7 +283,19 @@ To review your own deck, run it with `npm run dev` and press `R`. A review windo
 "stream" should be "value stream" in the caption.
 ```
 
-One entry per step with findings, in deck order, each with the step's text as a quote. Then ask Claude Code to work through the review: it fixes each finding, deletes it from the file, and asks in the chat when one is unclear (the klappe skill says how). When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
+One entry per step with findings, in deck order, each with the step's text as a quote. Then ask Claude Code to work through the review: it fixes each finding, marks it fixed with a line on what changed and the commit, and asks in the chat when one is unclear (the klappe skill says how). A fixed finding stays in the file:
+
+```markdown
+### Content
+
+"stream" should be "value stream" in the caption.
+
+#### Fixed
+
+Caption reads "value stream" (a1b2c3d).
+```
+
+In the window a fixed finding is read-only, with Claude's line under it. **Approve** removes it from the file. **Reopen** takes a note on what is still wrong and adds it as `#### Reopened`, and the finding is open again. The status line counts the fixed findings waiting for your approval. When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
 
 Review mode exists only on the dev server, which saves the file: a built deck has no `R`, and `?review=1` says so. The deck does not load `review.md`, so a save never reloads it.
 

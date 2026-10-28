@@ -274,3 +274,10 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: a seek gives the same picture each run, on a busy machine too; seek equals play, so it is the picture the room sees.
 - **The look report is the walk's warnings, printed by `test --only`, not a new check in `shot`.**
   - Why: the walk already measures the safe area and clipped text; a second copy in `shot` would drift.
+
+## 2026-10-28 (review states, wake lock)
+
+- **A finding's state is the last of its `#### Fixed` and `#### Reopened` sections in `review.md`, not a flag or a second file.**
+  - Why: Claude and the author both read the file as text, and the history (what was fixed, why it came back) is what a reviewer-recall eval needs. The window escapes a typed `#` line, so a finding cannot fake a state. Approve and reopen apply only to a finding still fixed on disk, so a stale window cannot approve one Claude has reopened or rewritten.
+- **The deck window always asks for a screen wake lock; there is no flag to turn it off.**
+  - Why: a deck page is open to be presented, and the browser drops the lock when the tab is hidden. No fallback for pages without `navigator.wakeLock` (plain `http` from another host): the dev server and an `https` host have it.

@@ -119,13 +119,13 @@ One master GSAP timeline per canvas; seek must equal play.
 
 ## Work through a review
 
-When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so.
+When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so. A finding is open unless its last `####` section is `#### Fixed`: one you fixed earlier waits there for the author's approval, and one with `#### Reopened` last came back with the author's note on what is still wrong. Work the open ones only.
 
 - Work a scene's entries from its last step to its first, so your own changes do not move a deep link still open.
 - For each finding, open the scene its deep link names (`npm run outline` lists the ids), make the change it asks for, and check it: `npm test -- --only <section>/<scene>` for the walk, and `npm run shot -- <section>/<scene>/<step>` for anything on screen.
-- Then delete that finding from the file, and the step's entry once it has no finding left. Leave text you do not understand in place. With nothing open, the file is `# Review` alone.
-- When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries still open, so each names its step again; the quote tells you which step it was.
-- When a finding is unclear, ask in the chat and leave it in the file until the author answers. Never add to the file.
+- Then commit the fix and mark the finding fixed: add `#### Fixed` at the end of its `###` section, then one line on what changed and the short commit hash. Never delete a finding: the author approves it in the review window, which removes it. Leave text you do not understand in place.
+- When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries, fixed ones too, so each names its step again; the quote tells you which step it was.
+- When a finding is unclear, ask in the chat and leave it in the file until the author answers. Add nothing to the file but the `#### Fixed` lines.
 
 ## Check your work
 

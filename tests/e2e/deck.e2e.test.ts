@@ -75,3 +75,22 @@ for (const vp of [
       await browser.close()
     }
   })
+
+// A talk must not run into the screensaver or sleep; the browser drops the lock when the tab is hidden.
+test('the deck keeps the screen awake, and asks again when it is shown again', async () => {
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage()
+    await page.addInitScript(() => {
+      const asked: string[] = ((window as any).asked = [])
+      Object.defineProperty(navigator, 'wakeLock', { value: { request: async (type: string) => (asked.push(type), {}) } })
+    })
+    await page.goto(`${inject('BASE_URL')}/?fixture=two-scenes`)
+    await page.waitForFunction(() => window.klappe?.stepper, undefined, { timeout: 30_000 })
+    expect(await page.evaluate(() => (window as any).asked)).toEqual(['screen'])
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+    expect(await page.evaluate(() => (window as any).asked)).toEqual(['screen', 'screen'])
+  } finally {
+    await browser.close()
+  }
+})

@@ -11,6 +11,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
   - `bin/verdict.mjs`, the gate after the reviews. It rejects a review in the wrong format and decides `merge`, `builder`, `planner` or `owner`. `--log` keeps a verdict log.
   - `npm run eval:reviewers` and `npm run eval:skill` (`bin/eval.mjs`, `evals/README.md`) run planted-defect and element-choice cases with `claude -p` in a throwaway copy. They are not part of `npm test`, and each run costs money.
 - `klappe test --strict` makes a look warning fail the walk.
+- Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
+- The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
 - `max-words: <n>` in deck.md fails a step with more than n words on screen.
 - The skill's intent table lists `typed` for a line that types itself in the deck font.
 
@@ -44,7 +46,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart` scatter and bubble: `group: "<column>"` colours the dots by a text column, with a legend. Catalog: `#/chart/scatter/1`.
 - `chart`: `lines: [{ value, label }]` draws dashed reference lines (a goal, last year, a limit) across bar, stacked, line, waterfall and slope charts, and down a timeline. The value axis reaches them. Catalog: `#/chart/bars/1`.
 - `chart`: `highlight(i)` works on every chart type, not only sankey. The row's marks and values stay at full strength while the rest dims, and `highlight(null)` clears it. In a line chart, `i` is a series. `bar(i)` now also grows one stack, phase or funnel stage per step; the new `slice(i)` draws one donut slice and counts the total on; the new `series(i)` draws one line. Catalog: `#/chart/series/1`, `#/chart/slices/1`.
-- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
+- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, mark each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
 
 - `klappe test --only <section>[/<scene>]` walks those scenes alone, at the three sizes, in seconds, and prints their look warnings; `--bail` stops at the first failure, in the walk at the first failing step. Other arguments go to vitest: a file filter, `-t <name>`. The walk reads `?only=` and `?bail` for the same.
 - `klappe shot`: `--size 1366x768` (or a width, `1366`) shoots one size; `--at <ms>` shoots each step that far into its play, by a seek, as `<step>@<ms>ms.png`; `--url <dev server>` reuses a running `klappe dev` of the same deck.

@@ -68,6 +68,45 @@
   outline-offset: 1px;
 }
 
+/* A finding Claude marked fixed: its note in --k-ok, then Approve, a reopen note and Reopen on one row. */
+.k-rv-fixed:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: -6px;
+}
+
+.k-rv-fixed-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--k-ok);
+}
+
+.k-rv-fixed input {
+  flex: 1;
+  min-width: 12em;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--k-fg);
+  background: var(--k-surface);
+  border: 1px solid var(--k-line);
+  border-radius: 6px;
+}
+
+.k-rv-fixed .k-btn {
+  font-size: clamp(15px, 1.1vw, 18px);
+  padding: 6px 14px;
+}
+
+.k-rv-fixed .k-btn:disabled {
+  opacity: 0.5;
+}
+
+.k-rv-label textarea:read-only {
+  color: var(--k-muted);
+}
+
 .k-rv-buttons {
   display: flex;
   gap: 16px;
