@@ -48,6 +48,24 @@ const drag: SceneModule = {
   ],
 };
 
+// scroll: a tall page in a clipped window, scrolled twice; the pointer rests on the window's centre.
+type S = { p: PointerHandle; page: HTMLElement };
+const scroll: SceneModule = {
+  build(ctx): S {
+    const view = box(ctx, 600, 200, 600, 600);
+    view.style.overflow = "hidden";
+    const page = view.appendChild(document.createElement("div"));
+    Object.assign(page.style, { position: "relative", height: "2000px", background: "repeating-linear-gradient(var(--k-surface) 0 100px, var(--k-bg) 100px 200px)" });
+    // Text far below the window: cut away by its overflow, so the walk must not count it as off the stage.
+    const end = page.appendChild(document.createElement("div"));
+    Object.assign(end.style, { position: "absolute", top: "1900px", font: "600 32px var(--k-font)", color: "var(--k-fg)" });
+    end.textContent = "The end of the page";
+    gsap.set(view, { autoAlpha: 1 });
+    return { p: pointer(ctx, { at: { x: 1500, y: 900 } }), page };
+  },
+  steps: [(tl, r: S) => r.p.show(tl), (tl, r: S) => r.p.scroll(r.page, 300)(tl), (tl, r: S) => r.p.scroll(r.page, 200)(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -56,6 +74,7 @@ export default () =>
       "sections/10-a/10-walk/scene.md": "## Walk\n\n- Show.\n- Click and type.\n- Click the button.\n- Hide.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- Type into nothing.\n",
       "sections/10-a/30-drag/scene.md": "## Drag\n\n- Show.\n- Drag the card onto the zone.\n- Drag it on.\n",
+      "sections/10-a/40-scroll/scene.md": "## Scroll\n\n- Show.\n- Scroll down.\n- Scroll on.\n",
     },
-    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-drag/scene.ts": drag },
+    { "sections/10-a/10-walk/scene.ts": walk, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-drag/scene.ts": drag, "sections/10-a/40-scroll/scene.ts": scroll },
   );

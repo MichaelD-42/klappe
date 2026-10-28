@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { applyEdit, parseReview, stepsWithFindings } from '../../src/review/file'
+import { applyEdit, parseReview, stepsWithFindings, waitingForApproval } from '../../src/review/file'
 
 const T = (n: number) => `#/a/s/${n}`
 const order = [T(1), T(2), T(3)]
@@ -128,4 +128,47 @@ test('a finding keeps the indentation of its first line', () => {
   const text = '    const x = 1;\n    return x;'
   const t = applyEdit('', { hash: T(1), quote: 'One.', set: { content: `\n${text}\n\n` } }, order)
   expect(parseReview(t)[0].findings.content).toBe(text)
+})
+
+// Claude marks a finding fixed instead of deleting it; the owner approves it (gone) or reopens it with a note.
+const fixedFile = '# Review\n\n## #/a/s/1\n\n> One.\n\n### Content\n\nToo long.\n\n#### Fixed\n\nCut to four words (a1b2c3d).\n'
+
+test('a finding with a Fixed section reads as fixed, with its note, and survives an edit elsewhere', () => {
+  expect(parseReview(fixedFile)[0]).toEqual({ hash: T(1), quote: 'One.', findings: { content: 'Too long.' }, fixed: { content: 'Cut to four words (a1b2c3d).' } })
+  const t = applyEdit(fixedFile, { hash: T(2), quote: 'Two.', set: { visuals: 'V' } }, order)
+  expect(t.startsWith(fixedFile)).toBe(true)
+})
+
+test('approving a fixed finding removes it; approving an open one does nothing', () => {
+  expect(applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, approve: ['content'] }, order)).toBe('# Review\n')
+  const open = applyEdit('', { hash: T(1), quote: 'One.', set: { content: 'C' } }, order)
+  expect(applyEdit(open, { hash: T(1), quote: 'One.', set: {}, approve: ['content'] }, order)).toBe(open)
+})
+
+test('reopening adds the note under Reopened; the finding is open again, and a second fix makes it fixed', () => {
+  const t = applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'Still wraps on a phone.' } }, order)
+  expect(t).toBe(`${fixedFile}\n#### Reopened\n\nStill wraps on a phone.\n`)
+  expect(parseReview(t)[0]).toEqual({ hash: T(1), quote: 'One.', findings: { content: 'Too long.' } })
+  expect(parseReview(`${t}\n#### Fixed\n\nThree words.\n`)[0].fixed).toEqual({ content: 'Three words.' })
+  // Reopening an open finding adds nothing.
+  expect(applyEdit(t, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'Again.' } }, order)).toBe(t)
+})
+
+test('editing a reopened finding keeps its history; clearing it removes the history too', () => {
+  let t = applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'No.' } }, order)
+  t = applyEdit(t, { hash: T(1), quote: 'One.', set: { content: 'Far too long.' } }, order)
+  expect(t).toContain('### Content\n\nFar too long.\n\n#### Fixed\n\nCut to four words (a1b2c3d).\n\n#### Reopened\n\nNo.\n')
+  expect(applyEdit(t, { hash: T(1), quote: 'One.', set: { content: '' } }, order)).toBe('# Review\n')
+})
+
+test('a Fixed heading typed into a finding stays text', () => {
+  const t = applyEdit('', { hash: T(1), quote: 'One.', set: { content: 'A\n#### Fixed\nB' } }, order)
+  expect(parseReview(t)[0]).toEqual({ hash: T(1), quote: 'One.', findings: { content: 'A\n#### Fixed\nB' } })
+})
+
+test('steps with findings count open ones only; fixed ones wait for approval', () => {
+  const t = applyEdit(fixedFile, { hash: T(2), quote: 'Two.', set: { visuals: 'V' } }, order)
+  expect(stepsWithFindings(t)).toBe(1)
+  expect(waitingForApproval(t)).toBe(1)
+  expect(waitingForApproval('')).toBe(0)
 })

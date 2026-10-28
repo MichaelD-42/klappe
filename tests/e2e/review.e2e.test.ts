@@ -274,3 +274,40 @@ test('each save names its window and a number that grows', async () => {
   expect(sent[1].seq!).toBeGreaterThan(sent[0].seq!)
   await context.close()
 })
+
+// Claude marks a finding fixed; the owner sees it read-only with Claude's note, and approves or reopens it.
+const fixedOnDisk = '# Review\n\n## #/a/first/2\n\n> Step 2.\n\n### Content\n\nToo long.\n\n#### Fixed\n\nCut to four words.\n'
+
+test('a fixed finding shows read-only with Claude\'s note, counts as waiting, and Approve removes it', async () => {
+  writeFileSync(inject('REVIEW_FILE'), fixedOnDisk)
+  const { context, review } = await pair()
+  const box = review.locator('[data-k-fixed="content"]')
+  await expect.poll(() => box.textContent(), { timeout: 10_000 }).toContain('Cut to four words.')
+  expect(await field(review, 'content').inputValue()).toBe('Too long.')
+  expect(await field(review, 'content').evaluate((t: HTMLTextAreaElement) => t.readOnly)).toBe(true)
+  expect(await review.locator('[data-k-fixed="visuals"]').isVisible()).toBe(false)
+  await expect.poll(() => review.locator('.k-rv-status').textContent(), { timeout: 10_000 }).toContain('approval: 1')
+  await box.getByRole('button', { name: 'Approve', exact: true }).click()
+  await expect.poll(onDisk, { timeout: 10_000 }).toBe('# Review\n')
+  await expect.poll(() => values(review), { timeout: 10_000 }).toEqual(['', '', ''])
+  expect(await box.isVisible()).toBe(false)
+  expect(await field(review, 'content').evaluate((t: HTMLTextAreaElement) => t.readOnly)).toBe(false)
+  await context.close()
+})
+
+test('Reopen needs a note, writes it under the finding and makes the finding editable again', async () => {
+  writeFileSync(inject('REVIEW_FILE'), fixedOnDisk)
+  const { context, deck, review } = await pair()
+  const box = review.locator('[data-k-fixed="content"]')
+  await expect.poll(() => box.isVisible(), { timeout: 10_000 }).toBe(true)
+  const reopen = box.getByRole('button', { name: 'Reopen', exact: true })
+  expect(await reopen.isDisabled()).toBe(true)
+  await box.locator('input').fill('Still wraps.')
+  await review.keyboard.press('ArrowRight') // typing a note does not step the deck
+  await reopen.click()
+  await expect.poll(onDisk, { timeout: 10_000 }).toBe(`${fixedOnDisk}\n#### Reopened\n\nStill wraps.\n`)
+  await expect.poll(() => box.isVisible(), { timeout: 10_000 }).toBe(false)
+  expect(await field(review, 'content').evaluate((t: HTMLTextAreaElement) => t.readOnly)).toBe(false)
+  expect(await deckIndex(deck)).toBe(1)
+  await context.close()
+})

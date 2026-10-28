@@ -19,6 +19,7 @@ Animated presentations as code: a deck folder of Markdown and TypeScript, played
 - Seek must equal play (the timeline rule, [motion](docs/reference/motion.md)). `?selftest=walk` checks it; a change that breaks the walk is wrong, not the walk.
 - Test first. A backlog defect whose test already passes was stale: drop the entry.
 - A new `klappe/fx` export needs, or a lint fails: a heading in `docs/reference/`, a call in the demo catalog (or a place in `tests/lint/fx-internal.ts` if authors never call it), and a row in the skill's "Choose the element by intent" table. A new `--k-*` token needs a line in `docs/reference/themes.md`.
+- A small option on an existing effect goes into the shared fixture `src/deck/fixtures/fx-options.ts` and `tests/e2e/fx-options.e2e.test.ts`, not a new fixture and test file.
 - Effects take colours only from `--k-*` tokens; the design lint (`tests/lint/design.test.ts`) lists the look rules.
 - Every user-visible change gets a CHANGELOG line; a choice someone will later question gets a DECISIONS entry.
 - Look at what you changed: `npm run shot` and read the PNGs. `shot` runs with reduced motion, where camera flights are cuts, so a step timed against a flight's end shows up there.

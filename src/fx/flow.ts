@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn } from "./draw";
 import { iconGlyph, type IconName } from "./icons";
+import { detour, spread } from "./route";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
@@ -104,8 +105,9 @@ export function edgePath(a: Rect, b: Rect, o?: Ports): string {
 const SPREAD = 36; // widest gap between ports on one face
 const LANE = 28; // gap between parallel middle runs
 
-// Every edge's route with its own port on each face and its own middle run, so no two edges share a
+// Every edge's route with its own port on each face and its own middle runs, so no two edges share a
 // segment or an end point. Faces with several edges spread them along the face, ordered by where the other end is.
+// An edge with a box in its way goes round it through the gaps between the cells.
 export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: Pt[] }[] {
   const { grid } = opts;
   const [cw, ch] = [grid.w / grid.cols, grid.h / grid.rows];
@@ -133,7 +135,7 @@ export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: 
     if (face === "d") return [p(x1, B), p(x1, B + gy), p(x0, B + gy), p(x0, B)];
     return [p(L, y1), p(L - gx, y1), p(L - gx, y0), p(L, y0)];
   };
-  const ports = opts.edges.map(() => ({ out: 0, in: 0, mid: 0 }));
+  const ports = opts.edges.map(() => ({ out: 0, in: 0 }));
   // face users: node id + face -> [edge index, role, position of the other end]
   const faces = new Map<string, { i: number; role: "out" | "in"; at: number; extent: number }[]>();
   opts.edges.forEach((e, i) => {
@@ -155,17 +157,16 @@ export function flowRoutes(opts: FlowOpts): { from: string; to: string; points: 
     const step = Math.min(SPREAD, (users[0].extent * 0.6) / users.length);
     users.forEach((u, k) => (ports[u.i][u.role] = (k - (users.length - 1) / 2) * step));
   }
-  const route = () => opts.edges.map((e, i) => (e.from === e.to ? loop(e.from, box(e.from)) : edgePoints(box(e.from), box(e.to), ports[i])));
-  // Bent routes in the same lane (same middle line) get side-by-side lanes.
-  const lanes = new Map<string, number[]>();
-  route().forEach((pts, i) => {
-    if (pts.length === 4 && opts.edges[i].from !== opts.edges[i].to) {
-      const k = pts[1].x === pts[2].x ? `v${pts[1].x}` : `h${pts[1].y}`;
-      lanes.set(k, [...(lanes.get(k) ?? []), i]);
-    }
+  const xs = Array.from({ length: grid.cols + 1 }, (_, c) => grid.x + c * cw);
+  const ys = Array.from({ length: grid.rows + 1 }, (_, r) => grid.y + r * ch);
+  const routes = opts.edges.map((e, i) => {
+    const [a, b] = [box(e.from), box(e.to)];
+    if (e.from === e.to) return loop(e.from, a);
+    return detour(edgePoints(a, b, ports[i]), [...boxes.values()].filter((r) => r !== a && r !== b), xs, ys);
   });
-  for (const ids of lanes.values()) ids.forEach((i, k) => (ports[i].mid = (k - (ids.length - 1) / 2) * LANE));
-  return route().map((points, i) => ({ from: opts.edges[i].from, to: opts.edges[i].to, points }));
+  // Middle runs on one line get side-by-side lanes; a self-loop has none.
+  spread(routes.filter((_, i) => opts.edges[i].from !== opts.edges[i].to), LANE);
+  return routes.map((points, i) => ({ from: opts.edges[i].from, to: opts.edges[i].to, points }));
 }
 
 
@@ -454,14 +455,17 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
           gsap.set(dot, { autoAlpha: 0, x: legs[0][0].x, y: legs[0][0].y });
           let t = at + k * GAP;
           pulse(path[0], t);
+          tl.set(dot, { autoAlpha: 1 }, t);
           legs.forEach((pts, i) => {
-            tl.set(dot, { autoAlpha: 1 }, t);
             tl.to(dot, { motionPath: { path: fmt(pts) }, duration: hop, ease: "none" }, t);
             t += hop;
             pulse(path[i + 1], t);
+            // Across the box to where the next edge leaves it, so the packet is seen to pass through.
+            const next = legs[i + 1];
+            if (next) tl.to(dot, { x: next[0].x, y: next[0].y, duration: WAIT, ease: "none" }, t);
             t += WAIT;
-            tl.set(dot, { autoAlpha: 0 }, t); // the packet passes through the box unseen and leaves by the next edge
           });
+          tl.set(dot, { autoAlpha: 0 }, t);
         }
       };
     },

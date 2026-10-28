@@ -10,8 +10,8 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 | shout-out | `### Who owns the release?` and a paragraph `The team that ships it.` | three steps: enter, fade, answer; a `> note` goes on the answer | [shout](effects.md#shout) |
 | code fence with groups | ```` ```ts {1-2\|4} ```` | one step per group, its lines lit; list items after the block are the steps' text | [code](elements/code.md) |
 | console fence | ```` ```console ```` with `$ npm test` and output lines | each `$ ` line types and its output appears; one step per command | [terminal](elements/terminal.md) |
-| chat fence | ```` ```chat ```` with `user: Where do I start?` and `Start with the tests.` | a messenger thread in the right-hand slot; one step per message line; list items after the block are the steps' text | [chat](elements/chat.md) |
-| task list | `- [ ] Restore tested` and `- [x] Backup verified` | a checklist; each item is a step that ticks its box; `[x]` starts ticked | [checklist](elements/checklist.md) |
+| chat fence | ```` ```chat ```` with `user: Where do I start?` and `Start with the tests.` | a messenger thread in the right-hand slot; one step per message line; list items after the block are the steps' text; a line `![Ana](media/ana.jpeg)` gives that sender an avatar | [chat](elements/chat.md) |
+| task list | `- [ ] Restore tested`, `- [x] Backup verified` and `- [!] Owners told` | a checklist; each item is a step that ticks its box; `[x]` starts ticked; `[!]` fails on its step | [checklist](elements/checklist.md) |
 | agenda rows | `- 09:45–10:30 Practice ←` | all list items start with a time range: one step shows an agenda; `←` marks the current row | [agenda](elements/agenda.md) |
 
 Notes:

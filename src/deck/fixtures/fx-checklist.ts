@@ -44,7 +44,7 @@ export default () =>
       "sections/10-a/30-tall/scene.md": md("Too tall", 1),
       "sections/10-a/35-order/scene.md": md("Out of order", 4),
       "sections/10-a/37-fail/scene.md": md("Fail", 4),
-      "sections/10-a/40-markdown/scene.md": "## From Markdown\n\n- [x] Backup verified\n- [ ] Restore tested\n- [ ] Owners told\n",
+      "sections/10-a/40-markdown/scene.md": "## From Markdown\n\n- [x] Backup verified\n- [ ] Restore tested\n- [!] Owners told\n",
     },
     { "sections/10-a/10-ticks/scene.ts": ticks, "sections/10-a/20-missing/scene.ts": missing, "sections/10-a/30-tall/scene.ts": tall, "sections/10-a/35-order/scene.ts": order, "sections/10-a/37-fail/scene.ts": fail },
   );

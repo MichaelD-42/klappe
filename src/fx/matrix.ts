@@ -8,6 +8,7 @@ export type MatrixOpts = {
   axes: { x: string; y: string };
   quadrants?: Partial<Record<Quadrant, string>>;
   items: { id: string; label: string }[];
+  compact?: boolean; // an item that leaves a quadrant: the ones after it move up a slot; default: they keep their slots
 } & Rect;
 export interface MatrixHandle {
   show: StepAdder;
@@ -145,6 +146,15 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   // A slot in a quadrant, or a point (p) that takes no slot.
   const where = new Map<string, { q?: Quadrant; k: number; p?: { x: number; y: number } }>();
   let last: string | undefined; // the item placed by the latest place(), in the accent until the next one
+  // compact: id leaves the slot `from` and the items after it in that quadrant move up one, from t.
+  const close = (id: string, from: { q?: Quadrant; k: number } | undefined, tl: gsap.core.Timeline, t: number) => {
+    if (!opts.compact || !from?.q) return;
+    for (const [o, w] of where)
+      if (o !== id && w.q === from.q && w.k > from.k) {
+        const s = slots[from.q][--w.k];
+        tl.to(items.get(o)!.el, { x: s.x, y: s.y, duration: motion.step, ease: "power2.inOut" }, t);
+      }
+  };
 
   return {
     show(tl) {
@@ -172,6 +182,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
           last = id;
           fit();
           const t = tl.duration();
+          close(id, from, tl, t);
           if (prev && prev !== id) tl.set(items.get(prev)!.el, { borderColor: "var(--k-line)", outlineColor: "transparent", zIndex: 2, immediateRender: false }, t);
           tl.set(item.el, { borderColor: "var(--k-accent)", outlineColor: "var(--k-accent)", zIndex: 3, immediateRender: false }, t);
           if (!from) tl.fromTo(item.el, { ...s, autoAlpha: 0 }, { ...s, autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
@@ -201,6 +212,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
         const s = slots[q][to!.k] ?? quads[q];
         fit();
         const t = tl.duration();
+        if (from?.q !== q) close(id, from, tl, t);
         // The previous item settles as this one starts (sets, so they seek).
         if (prev && prev !== id) tl.set(items.get(prev)!.el, { borderColor: "var(--k-line)", outlineColor: "transparent", zIndex: 2, immediateRender: false }, t);
         tl.set(item.el, { borderColor: "var(--k-accent)", outlineColor: "var(--k-accent)", zIndex: 3, immediateRender: false }, t);

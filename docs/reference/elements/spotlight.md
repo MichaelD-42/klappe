@@ -39,4 +39,3 @@ steps: [
 
 - An element target is measured when its step is added, like a `callout` target: it must be in its final place by then. One with no size reports `spotlight: target has no size to measure` and the step shows no spotlight.
 - The dim covers the scene's own content only, not the gallery caption (z-index 6) or other scenes.
-- The hole is a rounded rectangle; for a circle, use a hand-drawn annotation.

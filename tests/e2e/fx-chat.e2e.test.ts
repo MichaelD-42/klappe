@@ -133,3 +133,13 @@ test('avatars: a picture where the deck has one, initials otherwise; the user\'s
   expect(r.every((x) => x.round === '50%')).toBe(true)
   await page.close()
 })
+
+// A picture line in a Markdown chat fence gives that sender an avatar; the assistant, with none, shows initials.
+test('a Markdown chat fence takes avatars from picture lines', async () => {
+  const page = await open('markdown/2')
+  const r = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-scene="markdown"] [data-k-chat-avatar]')].map((f) => [f.dataset.kChatAvatar, !!f.querySelector('img')]),
+  )
+  expect(r).toEqual([['user', true], ['assistant', false]])
+  await page.close()
+}, 60_000)

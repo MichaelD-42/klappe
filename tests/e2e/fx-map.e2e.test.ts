@@ -112,3 +112,25 @@ test('region fills a country by name or by ISO numeric code', async () => {
     await browser.close()
   }
 }, 60_000)
+
+// A major site's label reads at world zoom: it shows with its site, hides while the camera zooms in, and comes back.
+test('a major site shows a large label at world zoom, hidden while zoomed', async () => {
+  const { chromium } = await import('@playwright/test')
+  const browser = await chromium.launch()
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  const at = async (step: number) => {
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-map#/a/world/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await page.waitForTimeout(2500)
+    return page.evaluate(() => {
+      const t = document.querySelector<SVGTextElement>('[data-scene="world"] text[data-k-map-major]')
+      return t && { shown: getComputedStyle(t).visibility !== 'hidden' && Number(getComputedStyle(t).opacity) > 0.9, px: t.getBoundingClientRect().height }
+    })
+  }
+  const world = await at(2)
+  expect(world?.shown).toBe(true)
+  expect(world!.px).toBeGreaterThanOrEqual(14.2)
+  expect((await at(4))?.shown).toBe(false)
+  expect((await at(5))?.shown).toBe(true)
+  await browser.close()
+}, 90_000)

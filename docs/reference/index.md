@@ -8,6 +8,7 @@
 - Elements, one page each in `elements/`:
   - [basics](elements/basics.md): `title`, `text` boxes, and `show` and `hide` fades for any element.
   - [code](elements/code.md): code walkthrough and diff.
+  - [formula](elements/formula.md): a typeset equation that builds term by term.
   - [terminal](elements/terminal.md): a console session that types itself.
   - [callout](elements/callout.md): a label with a leader line to a target.
   - [pointer](elements/pointer.md): a mouse pointer that moves, clicks with a ripple and types, for a UI walkthrough.
@@ -23,11 +24,17 @@
   - [sequence](elements/sequence.md): messages between lifelines.
   - [swimlanes](elements/swimlanes.md): who does what, in lanes.
   - [decisionTree](elements/decisionTree.md): a tree with a route lit through it.
+  - [mindMap](elements/mindMap.md): a centre topic with branches that grow out one per step.
   - [gitGraph](elements/gitGraph.md): a git history, one commit, branch, merge or rebase per step.
   - [semanticZoom](elements/semanticZoom.md): boxes in boxes; the camera flies into one and its insides build, level by level.
   - [matrix](elements/matrix.md): a 2×2 with items placed and moved between quadrants.
+  - [fishbone](elements/fishbone.md): an Ishikawa diagram, cause bones built one per step, the root cause lit.
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
+  - [processSteps](elements/processSteps.md): the "step 2 of 5" bar, numbered chevrons with the current stage lit.
+  - [layerStack](elements/layerStack.md): an architecture as isometric layers that pull apart and light one at a time.
+  - [depGraph](elements/depGraph.md): what depends on what, laid out from the links, traced hop by hop or by blast radius.
+  - [calendar](elements/calendar.md): a month grid with days marked and runs of days spanned, one per step.
   - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
   - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.

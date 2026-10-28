@@ -9,7 +9,8 @@ const VIDEO = /^(?:https?:)?\/\/(?:[\w-]+\.)*(?:youtube(?:-nocookie)?\.com|youtu
 const CHART = /^(?:\.\/)?data\/[^/?#]+\.(?:csv|json)$/i;
 const GROUPS = /^\{([\d,\- |]+)\}$/;
 const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
-const CHECK = /^\[([ xX])\]\s+/;
+const CHECK = /^\[([ xX!])\]\s+/;
+const AVATAR = /^!\[([^\]]+)\]\(\s*(\S+?)\s*\)$/;
 
 // The first image, video or chart link in a step. Its link shows as its label; other links stay as written.
 // An image after a video link is the video's offline fallback and does not show in the text.
@@ -56,7 +57,14 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
         if (!n) problems.push(`${folder}/scene.md: console block has no "$ " command`);
         parts = Array.from({ length: n }, (_, command) => ({ kind: "console", command }));
       } else if (lang === "chat") {
-        const n = src.split("\n").filter((l) => l.trim()).length;
+        // A picture line, "![Ana](media/ana.jpeg)", is a sender's avatar, not a message.
+        const lines = src.split("\n").filter((l) => l.trim());
+        const pics = lines.map((l) => AVATAR.exec(l.trim()));
+        if (pics.some(Boolean)) {
+          fence.avatars = Object.fromEntries(pics.flatMap((a) => (a ? [[a[1], a[2]]] : [])));
+          fence.src = lines.filter((_, i) => !pics[i]).join("\n");
+        }
+        const n = fence.src.split("\n").filter((l) => l.trim()).length;
         if (!n) problems.push(`${folder}/scene.md: chat block has no message`);
         parts = Array.from({ length: n }, (_, message) => ({ kind: "chat", message }));
       } else parts = fence.groups.map((_, group) => ({ kind: "code", group }));
@@ -70,7 +78,7 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
       fenceAt = steps.length;
     } else if (b.type === "item") {
       const box = CHECK.exec(b.text);
-      if (box) steps.push({ ...withMedia(b.text.slice(box[0].length)), part: { kind: "check", done: box[1] !== " " } });
+      if (box) steps.push({ ...withMedia(b.text.slice(box[0].length)), part: { kind: "check", done: /x/i.test(box[1]), ...(box[1] === "!" && { fail: true }) } });
       else steps.push(withMedia(b.text));
     }
     else if (b.type === "h3" && b.text.endsWith("?")) {

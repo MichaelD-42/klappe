@@ -4,14 +4,16 @@ import type { Ctx, Rect, StepAdder } from "../types";
 import { drawOn } from "./draw";
 
 // One change to the history: a commit on a branch, a new branch from another's tip, a merge, a rebase, a tag on
-// a branch's tip, a cherry-pick of one commit (by its label) onto a branch.
+// a branch's tip, a cherry-pick of one commit (by its label) onto a branch, a squash merge, a checkout (HEAD).
 export type GitOp =
   | { commit: string; label: string }
   | { branch: string; from: string }
   | { merge: string; into: string; label?: string }
   | { rebase: string; onto: string }
   | { tag: string; on: string }
-  | { cherryPick: string; onto: string };
+  | { cherryPick: string; onto: string }
+  | { squash: string; into: string; label?: string }
+  | { checkout: string };
 export type GitGraphOpts = { ops: GitOp[] } & Rect;
 export interface GitGraphHandle {
   next: StepAdder;
@@ -21,7 +23,8 @@ export interface GitGraphHandle {
 export interface GitCommit { id: string; label: string; lane: number; parents: string[]; op: number; gone?: number; copyOf?: string; x: number; y: number }
 export interface GitLane { name: string; op: number; y: number }
 export interface GitTag { name: string; commit: string; op: number }
-export interface GitLayout { commits: GitCommit[]; lanes: GitLane[]; tags: GitTag[]; lit: string[][]; colW: number; problems: string[] }
+// head[k]: the commit HEAD points at after op k; undefined until the first checkout.
+export interface GitLayout { commits: GitCommit[]; lanes: GitLane[]; tags: GitTag[]; lit: string[][]; head: (string | undefined)[]; colW: number; problems: string[] }
 
 const SVG = "http://www.w3.org/2000/svg";
 const NAME_W = 220; // the branch names' column at the left
@@ -32,6 +35,7 @@ const MIN_LANE = 110; // a dot, its label below and room for the curve to the ne
 const DOT = 36;
 const FONT = 20; // legibility floor, scene px (14.2 px at 1366)
 const LANES = 6; // one series colour each
+const PILL = 36; // a tag's or HEAD's height and gap: pills on one commit stack this far apart
 
 // Replays the ops into commits on lanes, one column per commit in the order they are made, a rebase's copies
 // after everything before it. Ids are "c0", "c1", … in that order. Pure, for tests.
@@ -41,6 +45,8 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
   const commits: Omit<GitCommit, "x" | "y">[] = [];
   const lit: string[][] = [];
   const tags: GitTag[] = [];
+  const head: (string | undefined)[] = [];
+  let cur: string | undefined; // the branch checked out
   const problems: string[] = [];
   const lane = (name: string, op: number) => {
     branches.set(name, { lane: branches.size, own: [] });
@@ -56,7 +62,7 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
     b.own.push(id);
     return id;
   };
-  ops.forEach((o, k) => {
+  const play = (o: GitOp, k: number) => {
     if ("commit" in o) {
       // The first commit makes the first branch; every other branch comes from a branch op.
       const b = branches.get(o.commit) ?? (branches.size ? known(o.commit) : lane(o.commit, k));
@@ -78,6 +84,16 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
       if (!src) problems.push(`gitGraph: no commit "${o.cherryPick}" to cherry-pick`);
       if (!src || !onto?.tip) return void lit.push([]);
       lit.push([add(onto, `${src.label}′`, [onto.tip], k, src.id)]);
+    } else if ("checkout" in o) {
+      const b = known(o.checkout);
+      if (b) cur = o.checkout;
+      lit.push(b?.tip ? [b.tip] : []);
+    } else if ("squash" in o) {
+      // One commit on the target with the branch's work in it: its only parent is the target's tip.
+      const [src, dst] = [known(o.squash), known(o.into)];
+      if (!src?.tip || !dst?.tip) return void lit.push([]);
+      lit.push([add(dst, o.label ?? `squash ${o.squash}`, [dst.tip], k, src.tip)]);
+      src.own = [];
     } else if ("merge" in o) {
       const [src, dst] = [known(o.merge), known(o.into)];
       if (!src?.tip || !dst?.tip) return void lit.push([]);
@@ -98,6 +114,10 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
       }
       lit.push([...b.own]);
     }
+  };
+  ops.forEach((o, k) => {
+    play(o, k);
+    head.push(cur && branches.get(cur)?.tip);
   });
   if (branches.size > LANES) problems.push(`gitGraph: ${branches.size} branches; at most ${LANES}`);
   const colW = Math.min(MAX_COL, (rect.w - NAME_W) / Math.max(1, commits.length));
@@ -110,6 +130,7 @@ export function gitLayout(ops: GitOp[], rect: Rect): GitLayout {
     lanes: lanes.map((l, i) => ({ ...l, y: y(i) })),
     tags,
     lit,
+    head,
     colW,
     problems,
   };
@@ -177,19 +198,42 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
   }));
 
   // A tag: a pill over the commit it marks, shown with its op.
-  const tagEls = lay.tags.map((g) => {
+  const tagEls = lay.tags.map((g, i) => {
     const c = byId.get(g.commit)!;
+    const below = lay.tags.slice(0, i).filter((o) => o.commit === g.commit).length; // earlier tags on it: stack above them
     const el = ctx.html.appendChild(document.createElement("div"));
     el.textContent = g.name;
     el.dataset.kGitTag = g.name;
     Object.assign(el.style, {
-      position: "absolute", left: `${c.x}px`, top: `${c.y - DOT / 2 - 14}px`, translate: "-50% -100%", padding: "2px 10px", zIndex: "2",
+      position: "absolute", left: `${c.x}px`, top: `${c.y - DOT / 2 - 14 - below * PILL}px`, translate: "-50% -100%", padding: "2px 10px", zIndex: "2",
       border: "2px solid var(--k-line)", borderRadius: "6px", background: "var(--k-surface)", color: "var(--k-fg)",
       font: `600 ${FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
     });
     gsap.set(el, { autoAlpha: 0 });
     return { el, op: g.op };
   });
+
+  // HEAD: a pill over the commit it points at, above that commit's tags; it moves when it changes.
+  const headAt = (k: number) => {
+    const id = lay.head[k];
+    if (!id) return undefined;
+    const c = byId.get(id)!;
+    const n = lay.tags.filter((g) => g.commit === id && g.op <= k).length;
+    return { x: c.x, y: c.y - DOT / 2 - 14 - n * PILL };
+  };
+  const first = lay.head.findIndex(Boolean);
+  const headEl = first < 0 ? undefined : ctx.html.appendChild(document.createElement("div"));
+  if (headEl) {
+    headEl.textContent = "HEAD";
+    headEl.dataset.kGitHead = "";
+    Object.assign(headEl.style, {
+      position: "absolute", left: "0", top: "0", padding: "2px 10px", zIndex: "2",
+      border: "2px solid var(--k-accent)", borderRadius: "6px", background: "var(--k-bg)", color: "var(--k-fg)",
+      font: `700 ${FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
+    });
+    gsap.set(headEl, { autoAlpha: 0, xPercent: -50, yPercent: -100, ...headAt(first) }); // not CSS translate: GSAP folds it into x, y
+  }
+  let headWas: { x: number; y: number } | undefined; // where the ops added so far left HEAD
 
   let k = 0;
   let checked = false;
@@ -213,6 +257,12 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     if (settle.length) tl.to(rings(settle), { autoAlpha: 0, duration: motion.step }, at);
     lay.lanes.forEach((l, i) => l.op === k && tl.to(names[i], { autoAlpha: 1, duration: motion.step }, at));
     tagEls.forEach((g) => g.op === k && tl.to(g.el, { autoAlpha: 1, duration: motion.step }, at));
+    const h = headAt(k);
+    if (headEl && h) {
+      if (!headWas) tl.to(headEl, { autoAlpha: 1, duration: motion.step }, at);
+      else if (h.x !== headWas.x || h.y !== headWas.y) tl.to(headEl, { ...h, duration: motion.step, ease: "power2.inOut" }, at);
+      headWas = h;
+    }
     let t = at;
     // Copies (a rebase's, a cherry-pick's) show where their originals are, then fly; a rebase's originals and
     // their lines fade first.

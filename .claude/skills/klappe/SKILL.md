@@ -16,9 +16,11 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Intent | Use | Reference | Catalog scene |
 |---|---|---|---|
 | A title or a text box in a `scene.ts` scene; fade any element in or out | `title`, `text`; `show`, `hide` | [basics](klappe/docs/reference/elements/basics.md) | `106-basics/10-text-and-fades` |
+| An equation that builds term by term, for a technical training: `\step{…}` around each term | `formula` | [formula](klappe/docs/reference/elements/formula.md) | `240-code/40-formula` |
 | Show code, one part at a time; code changing | a fence with `{1-2\|4}` groups in `scene.md`; `code` with `diff` | [code](klappe/docs/reference/elements/code.md) | `240-code/10-walkthrough`, `240-code/20-diff` |
 | Show a command and its output | a ```` ```console ```` fence; `terminal` in `scene.ts` | [terminal](klappe/docs/reference/elements/terminal.md) | `250-terminal/10-replay` |
 | Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
+| Numbered places on a picture, explained one per step | `callout` with `focus` on your own marks | [callout](klappe/docs/reference/elements/callout.md#hotspots) | `260-callout/30-hotspots` |
 | Walk through a screen: move, click, type, drag (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in`, `239-pointer/20-drag` |
 | Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
 | Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
@@ -33,9 +35,15 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Zoom into a system level by level (systems, containers, components), with arrows per level | `semanticZoom` | [semanticZoom](klappe/docs/reference/elements/semanticZoom.md) | `172-semantic-zoom/10-system` |
 | Show who does what in a process | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process` |
 | Show how a decision was made | `decisionTree` | [decisionTree](klappe/docs/reference/elements/decisionTree.md) | `300-tree/10-route` |
+| Lay out a topic before going into it: a centre and branches round it, one per step | `mindMap` | [mindMap](klappe/docs/reference/elements/mindMap.md) | `300-tree/30-mind-map` |
 | Teach git: commits, branches, a merge, a rebase, a tag, a cherry-pick, one per step | `gitGraph` | [gitGraph](klappe/docs/reference/elements/gitGraph.md) | `304-git/10-rebase`, `304-git/20-backport` |
 | Sort things on two axes (effort against impact) and move one when the view changes; place by score, `place(id, { x, y })` | `matrix` | [matrix](klappe/docs/reference/elements/matrix.md) | `295-matrix/10-priorities`, `295-matrix/20-scored` |
 | A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
+| Find a root cause: the problem in a head, cause bones built one per step, the root cause lit, `light(i)` | `fishbone` | [fishbone](klappe/docs/reference/elements/fishbone.md) | `296-cycles/40-fishbone` |
+| Where a process training stands, "step 2 of 5": numbered chevrons with the current stage lit, `to(i)` | `processSteps` | [processSteps](klappe/docs/reference/elements/processSteps.md) | `296-cycles/30-stage-bar` |
+| A system in layers, whole, then pulled apart to talk through each: `apart`, `light(i)`, `together` | `layerStack` | [layerStack](klappe/docs/reference/elements/layerStack.md) | `297-venn-pyramid/40-layer-stack` |
+| What depends on what, laid out for you; a dependency chain or a blast radius lit hop by hop | `depGraph` | [depGraph](klappe/docs/reference/elements/depGraph.md) | `270-flow/70-dependencies` |
+| A plan in days: deadlines and sprints on a month grid, `mark(date)` and `span(from, to)` | `calendar` | [calendar](klappe/docs/reference/elements/calendar.md) | `305-roadmap/40-calendar` |
 | What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
 | A layered model from the base up (a test pyramid, a capability stack, a funnel-shaped stack with `shape: "inverted"`); light one layer again, `light(id)` | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers`, `297-venn-pyramid/30-hiring` |
 | Compare options feature by feature, one row at a time | `compareTable` | [compareTable](klappe/docs/reference/elements/compareTable.md) | `298-table-card/10-compare` |
@@ -50,7 +58,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | An 80s computer screen that boots and types | `crt` | [crt](klappe/docs/reference/elements/crt.md) | `180-crt/10-power-on` |
 | A character who speaks | `bubble` | [bubble](klappe/docs/reference/elements/bubble.md) | `160-motion/30-talk` |
 | A quiet companion with moods that runs by itself | `mesh3d` | [mesh3d](klappe/docs/reference/elements/mesh3d.md) | `340-mesh3d/10-avatar` |
-| Compare numbers from a `data/` file: bar, stacked, line, waterfall, timeline, donut, slope; drop-off through stages, `type: "funnel"`; where a total goes, `type: "sankey"`; two numbers per item, `type: "scatter"`, a third as size, `type: "bubble"`, moving year by year with `period(i)`; one bar, slice or line at a time, `bar(i)`, `slice(i)`, `series(i)`; one row lit, the rest dimmed, `highlight(i)` | `chart` | [chart](klappe/docs/reference/effects.md#chart) | `110-chart/10-bars`, `110-chart/70-bar-steps`, `110-chart/72-series`, `110-chart/74-slices`, `110-chart/76-bubble` |
+| Compare numbers from a `data/` file: bar, stacked, line, waterfall, timeline, donut, slope; drop-off through stages, `type: "funnel"`; where a total goes, `type: "sankey"`; two numbers per item, `type: "scatter"`, a third as size, `type: "bubble"`, moving year by year with `period(i)`; a profile over a few dimensions, `type: "radar"`; a grid such as day by hour, `type: "heatmap"`, one cell pointed at with `cell(row, col)`; shares with many parts or two levels, `type: "treemap"`; one bar, slice or line at a time, `bar(i)`, `slice(i)`, `series(i)`; one row lit, the rest dimmed, `highlight(i)` | `chart` | [chart](klappe/docs/reference/effects.md#chart) | `110-chart/10-bars`, `110-chart/70-bar-steps`, `110-chart/72-series`, `110-chart/74-slices`, `110-chart/76-bubble`, `110-chart/77-radar`, `110-chart/78-heatmap`, `110-chart/79-treemap` |
 | Who led, who climbed, period by period | `barRace` | [barRace](klappe/docs/reference/effects.md#barrace) | `110-chart/59-race` |
 | One number for a board slide: a KPI with a sparkline, a share, progress | `kpi`, `waffle`, `progress` | [kpi](klappe/docs/reference/effects.md#kpi-waffle-progress) | `115-numbers/10-kpis`, `115-numbers/20-shares` |
 | One reading against a fixed range (load, a score), maybe changing on a later step | `gauge` | [gauge](klappe/docs/reference/effects.md#gauge) | `115-numbers/30-gauge` |
@@ -61,7 +69,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
 | An icon, or an icon on a tile | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
-| A clip; full screen with no `rect`; running as its scene arrives with `autoplay: true` (muted unless `muted: false`) | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
+| A clip; full screen with no `rect`; it plays on its step (with sound unless `muted: true`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
 | Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
@@ -100,7 +108,7 @@ One master GSAP timeline per canvas; seek must equal play.
 
 - With `build()`, klappe draws nothing for the scene, not even its title. Put `ctx.doc.title` into an `h2` you build hidden and show in step 1.
 - `ctx.html` paints over `ctx.svg`: an HTML box with a background hides the SVG helpers under it. Within a layer, what you build later paints on top.
-- klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem.
+- klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem, and `klappe test` stops on it at once. `npm run outline` lists the ids taken.
 - Reach an effect's elements only through its handle (`el` and the named parts), never with `lastElementChild` or `children[i]`. If the handle lacks a part, ask for it in klappe.
 - A scene that plays in several places (a break, an agenda hop) is one function outside `sections/` that returns a `SceneModule`; each `scene.ts` calls it.
 
@@ -119,13 +127,13 @@ One master GSAP timeline per canvas; seek must equal play.
 
 ## Work through a review
 
-When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so.
+When the user asks you to work on their review, read `decks/<id>/review.md`. The author wrote it in the review window (`R` on the dev server): one `## <deep link>` entry per step, the step's text as a `>` quote, and a `### Content`, `### Storytelling` or `### Visuals` finding under it. A finding about a whole story arc sits on its first or last step and says so. A finding is open unless its last `####` section is `#### Fixed`: one you fixed earlier waits there for the author's approval, and one with `#### Reopened` last came back with the author's note on what is still wrong. Work the open ones only.
 
 - Work a scene's entries from its last step to its first, so your own changes do not move a deep link still open.
 - For each finding, open the scene its deep link names (`npm run outline` lists the ids), make the change it asks for, and check it: `npm test -- --only <section>/<scene>` for the walk, and `npm run shot -- <section>/<scene>/<step>` for anything on screen.
-- Then delete that finding from the file, and the step's entry once it has no finding left. Leave text you do not understand in place. With nothing open, the file is `# Review` alone.
-- When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries still open, so each names its step again; the quote tells you which step it was.
-- When a finding is unclear, ask in the chat and leave it in the file until the author answers. Never add to the file.
+- Then commit the fix and mark the finding fixed: add `#### Fixed` at the end of its `###` section, then one line on what changed and the short commit hash. Never delete a finding: the author approves it in the review window, which removes it. Leave text you do not understand in place.
+- When a change adds, removes or merges steps in a scene, rewrite the deep links of that scene's entries, fixed ones too, so each names its step again; the quote tells you which step it was.
+- When a finding is unclear, ask in the chat and leave it in the file until the author answers. Add nothing to the file but the `#### Fixed` lines.
 
 ## Check your work
 

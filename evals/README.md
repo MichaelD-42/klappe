@@ -55,6 +55,8 @@ A skill case has these fields:
 - `expect.match`: maps a glob to a regex. At least one file under each glob must match its regex.
 - `expect.absent`: optional. Maps a glob to a regex. No file the run changed under the glob may match.
 
+A finding the author reopened in review mode (`#### Reopened` in a deck's `review.md`) is a reviewer case the reviewers missed: the fix passed review, and the author still saw the defect. Make it a reviewer case with `expect.verdict` `FAIL`: the `brief` is the finding and Claude's `#### Fixed` line, the `overlay` the files the fix commit changed (`git show --stat <hash>`), and the author's reopen note says what the reviewer should have caught. Only from the demo deck or after rewriting the content as made-up.
+
 Put the planted change in `overlay/`, with the same paths as in the repo. The runner copies it over the copy and commits it. A reviewer sees that commit as the change to review. Keep overlays small: the reviewer prompt holds the whole diff.
 
 The repo is public. Cases must not hold confidential deck content. Use the demo deck or made-up content.

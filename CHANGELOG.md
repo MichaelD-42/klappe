@@ -6,6 +6,25 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `calendar`: a month grid in the deck language; `mark(date)` lights a day with a label, `span(from, to)` lays a bar across days, one piece per week. Catalog: `#/roadmap/calendar/5`.
+- `depGraph`: what depends on what, laid out in columns from the links alone; `trace(id)` lights a box's dependencies hop by hop, `trace(id, { up: true })` its blast radius. Catalog: `#/flow/dependencies/2`.
+- `layerStack`: an architecture as isometric slabs that pull apart, light one layer at a time with its note, and close up again. Catalog: `#/venn-pyramid/layer-stack/3`.
+- Catalog: numbered hotspots on a picture, explained one per step, from `callout` and `focus` (`#/callout/hotspots/2`).
+- `gitGraph` ops `squash` (a squash merge: one commit on the target) and `checkout` (a `HEAD` pill that follows the checked-out branch's tip); two tags on one commit now stack. Catalog: `#/git/squash/8`.
+- Markdown: a `- [!]` task item fails on its step (a cross in `--k-bad`), and a picture line in a chat fence, `![Ana](media/ana.jpeg)`, gives that sender an avatar. Catalog: `#/checklist-agenda/checklist/3`, `#/chat/chat-md/1`.
+- `worldMap` site option `major`: its label reads at world zoom too, and hides while the map is zoomed in. Catalog: `#/map/world/2`.
+- `pointer.scroll(content, by)`: the pointer rests on the window and the content moves up inside it. Catalog: `#/pointer/scroll/2`.
+- `callout`: `follow()` moves the leader and label with a target that moves, such as a code line after `diff`; `show` measures the target where the earlier steps leave it. Catalog: `#/callout/code/3`.
+- `matrix` and `stickyNotes` option `compact`: when an item leaves a quadrant or a note leaves a group, the ones after it move up a slot instead of leaving a gap.
+- `shape` options `fill` (rect and circle, in `--k-surface`, fading in once the outline has drawn) and `radius` (a rect's corners). Catalog: `#/shapes/diagram/1`.
+- `klappe test` stops before a browser starts when the deck has a problem the parser finds, such as a duplicate scene id, with `--only` too.
+- Review mode: Claude marks a finding fixed (`#### Fixed` and a line on what changed and the commit) instead of deleting it. The review window shows it read-only with that line; **Approve** removes it, **Reopen** sends it back with a note (`#### Reopened`). The status line counts findings waiting for approval.
+- The deck window keeps the screen awake while it shows, so a talk does not run into the screensaver or sleep.
+- `chart` types `radar` (a profile over 3 to 12 dimensions, one or two series), `heatmap` (cells shaded by value, with `cell(row, col)` to point at one) and `treemap` (shares of a whole, up to 40 tiles, in groups with a second text column). `series(i)` works on a radar, `bar(i)` on a treemap. Catalog: `#/chart/radar/1`, `#/chart/heatmap/1`, `#/chart/treemap/1`.
+- `formula`: a typeset equation (KaTeX) that builds term by term, each term marked with `\step{…}` shown by `next()`. KaTeX, a new dependency, loads only for a deck whose code imports `formula`. Catalog: `#/code/formula/1`.
+- `fishbone`: an Ishikawa diagram for root-cause training, the problem in a head and cause bones built one per step with their causes; `light(i)` marks the root cause. Catalog: `#/cycles/fishbone/1`.
+- `mindMap`: a centre topic with branches round it, each with its sub-branches, growing one branch per step with `next()`; it reports sub-branch labels that would overlap. Catalog: `#/tree/mind-map/1`.
+- `processSteps`: the "step 2 of 5" bar of a process training, numbered chevrons with the current stage lit; `to(i)` moves the light on and mutes the stages done. Catalog: `#/cycles/stage-bar/1`.
 - Rubrics and evals for the build loop (`docs/contrib/2026-10-28-rubrics-evals.md`):
   - Rubrics in `.rubrics/`: `intent_fidelity` and `scene_purpose`. The content reviewer prints one `RUBRIC` line per dimension.
   - `bin/verdict.mjs`, the gate after the reviews. It rejects a review in the wrong format and decides `merge`, `builder`, `planner` or `owner`. `--log` keeps a verdict log.
@@ -44,13 +63,20 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart` scatter and bubble: `group: "<column>"` colours the dots by a text column, with a legend. Catalog: `#/chart/scatter/1`.
 - `chart`: `lines: [{ value, label }]` draws dashed reference lines (a goal, last year, a limit) across bar, stacked, line, waterfall and slope charts, and down a timeline. The value axis reaches them. Catalog: `#/chart/bars/1`.
 - `chart`: `highlight(i)` works on every chart type, not only sankey. The row's marks and values stay at full strength while the rest dims, and `highlight(null)` clears it. In a line chart, `i` is a series. `bar(i)` now also grows one stack, phase or funnel stage per step; the new `slice(i)` draws one donut slice and counts the total on; the new `series(i)` draws one line. Catalog: `#/chart/series/1`, `#/chart/slices/1`.
-- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, delete each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
+- Review mode: on the dev server, `R` opens a review window beside the deck that follows it step by step, with a field each for Content, Storytelling and Visuals. Findings save as you type to `decks/<id>/review.md`, one entry per step under its deep link, and come back when you return to the step. The klappe skill tells Claude Code to work through the file, mark each finding it fixes, and ask in the chat when one is unclear. A built deck has no review mode.
 
 - `klappe test --only <section>[/<scene>]` walks those scenes alone, at the three sizes, in seconds, and prints their look warnings; `--bail` stops at the first failure, in the walk at the first failing step. Other arguments go to vitest: a file filter, `-t <name>`. The walk reads `?only=` and `?bail` for the same.
 - `klappe shot`: `--size 1366x768` (or a width, `1366`) shoots one size; `--at <ms>` shoots each step that far into its play, by a seek, as `<step>@<ms>ms.png`; `--url <dev server>` reuses a running `klappe dev` of the same deck.
 
 ### Changed
 
+- `callout`: the leader line draws over the scene's HTML, so a target on a picture or a card keeps its leader; it was hidden behind them.
+- `glow` and `pulse` on an HTML target measure it where the earlier steps leave it, and each later glow step moves the glow to where the target is; they stayed where the target was at load.
+- The walk's legibility check skips text that an ancestor's overflow cuts away whole, such as a page scrolled in its window; it reported it as outside the stage.
+- `annotate` highlight: on a target inside a box with its own background, such as a card, the band shows over the card and under the text; it was hidden behind the card.
+- `flow` and `swimlanes`: an arrow with a box in its way goes round it through the gaps between the cells (and, in `swimlanes`, along a lane border) instead of across it. A `flow` packet crosses each box it passes instead of vanishing and reappearing at the next edge.
+- `video`: a YouTube or Vimeo player starts on its step by default, with sound, as a local file does, so a clicker is enough; this includes Markdown video links. `muted: true` keeps it silent; `muted` defaulted to `true` before. `autoplay: false` leaves the start to the mouse. New `play(tl)` gives the start its own step after `show`. Catalog: `#/media/youtube-autoplay/2`.
+- The walk's legibility and look checks skip text that draws nothing (zero-width characters, as a typesetter's struts), as they skipped whitespace; the legibility check also skips text kept for screen readers only in a visually hidden 1 px box (KaTeX's MathML copy).
 - `shot` and `pdf` wait until each picture on the page is decoded, so a large JPEG no longer shows blank.
 - The klappe agents: builders and reviewers test only what they touched (`--only`, or the changed e2e files) and leave the full `npm test` to the orchestrator, once per wave; they edit with the Edit and Write tools and never poll in a `sleep` loop. The three reviewers run on `model: sonnet`.
 - The repo's Markdown is left alone by Prettier and markdownlint (`.prettierrc.json`, `.markdownlint-cli2.jsonc`), so an editor or agent hook that formats on save does not rewrite hand-wrapped files.
@@ -58,6 +84,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `chart`: a `values` step after `bar(i)` or `slice(i)` steps no longer counts those values up from zero again, which showed zero when stepping back.
 - Review window: a read of review.md that lands late (a slow dev server) no longer replaces a newer one, which could blank a finding on screen after stepping back.
 - `klappe test`'s `data/TODO.md` and `media/TODO.md` are no longer loaded as part of the deck, so writing them does not reload an open one.
 - `swimlanes`: `walk` to a task with no link from the current one reports `swimlanes: no link from "<a>" to "<b>"` instead of moving straight in silence, as `flow`'s `send` does. The catalog scene that showed the silent hop is gone.

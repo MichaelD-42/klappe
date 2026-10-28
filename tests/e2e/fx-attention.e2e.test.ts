@@ -133,3 +133,22 @@ test('an SVG target glows through blurred copies of itself', async () => {
   expect(r).toEqual({ circles: 3, shows: true })
   await page.close()
 }, 60_000)
+
+// A glow and a pulse sit round the box where the steps before left it, also after it moved again.
+test('glow and pulse land on a target that earlier steps moved', async () => {
+  for (const [step, sel] of [[2, '[data-k-glow]'], [3, '[data-k-glow]'], [4, '[data-k-pulse]']] as const) {
+    const page = await open(`#/a/moved/${step}`)
+    if (step === 4) await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index, 'play'))
+    const r = await page.evaluate((q) => {
+      const root = document.querySelector('div[data-scene="moved"]')!
+      const mid = (e: Element) => {
+        const b = e.getBoundingClientRect()
+        return [Math.round(b.x + b.width / 2), Math.round(b.y + b.height / 2)]
+      }
+      const target = [...root.children].find((e) => e.textContent === 'Moved')!
+      return { box: mid(root.querySelector(q)!), target: mid(target) }
+    }, sel)
+    expect(r.box, `step ${step}`).toEqual(r.target)
+    await page.close()
+  }
+}, 60_000)

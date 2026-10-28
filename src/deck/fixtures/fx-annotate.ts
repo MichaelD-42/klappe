@@ -5,7 +5,8 @@ import type { SceneModule } from "../../types";
 
 // A paragraph with marked words: each kind of mark on its own step, one on a plain rect, a highlight and then an
 // underline on a phrase that wraps onto a second line, then all fade out.
-// A second scene marks an element with no size (the fixture's only problem); a third rings one line of dense code.
+// A second scene marks an element with no size (the fixture's only problem); a third rings one line of dense code;
+// a fourth highlights a word on a card with its own background.
 const WORDS = ["circle", "underline", "box", "strike", "arrow"] as const;
 
 const marks: SceneModule = {
@@ -74,6 +75,22 @@ const colors: SceneModule = {
   steps: [(tl, r: { a: AnnotateHandle[] }) => r.a.forEach((h) => h.show(tl))],
 };
 
+const onCard: SceneModule = {
+  build(ctx) {
+    const card = ctx.html.appendChild(document.createElement("div"));
+    Object.assign(card.style, { position: "absolute", left: "460px", top: "340px", width: "1000px", padding: "48px", border: "3px solid var(--k-line)", borderRadius: "16px", background: "var(--k-surface)" });
+    const p = card.appendChild(document.createElement("p"));
+    Object.assign(p.style, { margin: "0", font: "600 56px/1.4 var(--k-font)", color: "var(--k-fg)" });
+    p.append("The ");
+    const word = p.appendChild(document.createElement("span"));
+    word.textContent = "key point";
+    word.dataset.word = "card";
+    p.append(" of the card");
+    return { a: annotate(ctx, word, { kind: "highlight" }) };
+  },
+  steps: [(tl, r: { a: AnnotateHandle }) => r.a.show(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -84,11 +101,13 @@ export default () =>
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
       "sections/10-a/30-code/scene.md": "## Code\n\n- The code.\n- Ring a line.\n",
       "sections/10-a/40-colors/scene.md": "## Colors\n\n- Four marks in their colours.\n",
+      "sections/10-a/50-card/scene.md": "## Card\n\n- A highlighted word on a card.\n",
     },
     {
       "sections/10-a/10-marks/scene.ts": marks,
       "sections/10-a/20-no-size/scene.ts": noSize,
       "sections/10-a/30-code/scene.ts": onCode,
       "sections/10-a/40-colors/scene.ts": colors,
+      "sections/10-a/50-card/scene.ts": onCard,
     },
   );

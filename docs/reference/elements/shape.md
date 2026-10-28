@@ -1,6 +1,6 @@
 # Shapes, arrows and colour tweens: `shape`, `arrow`, `tint`, `token`
 
-A rectangle, circle, line or arrow on `ctx.svg`, for a small diagram of your own, without `createElementNS`. The stroke is `--k-line`, or `--k-accent` with `accent: true`, 4 px, round caps, no fill. Each shape is hidden at load until its `draw` or `show` step. For boxes joined by routed arrows with packets, use [flow](flow.md).
+A rectangle, circle, line or arrow on `ctx.svg`, for a small diagram of your own, without `createElementNS`. The stroke is `--k-line`, or `--k-accent` with `accent: true`, 4 px, round caps, no fill unless `fill: true`. Each shape is hidden at load until its `draw` or `show` step. For boxes joined by routed arrows with packets, use [flow](flow.md).
 
 `tint` and `token` let a colour tween start and end on theme tokens: GSAP cannot tween `var(--k-…)`.
 
@@ -39,6 +39,8 @@ Call `shape` and `arrow` in `build`, so the shapes exist at load; the steps only
 | `accent`   | boolean                            | `false`               | stroke in `--k-accent` instead of `--k-line`                                |
 | `dash` | boolean | `false` | a dashed stroke, dashes three widths long; it draws on solid, then shows its dashes. An arrow's head stays solid. Catalog: `#/shapes/diagram/2` |
 | `width` | number | 4 | the stroke in scene px; under 2 shows `<shape \| arrow>: width <n> is under the 2 px floor` and draws 2 |
+| `fill` | boolean | `false` | rect and circle: `--k-surface` inside; with `draw` it fades in once the outline has drawn, with `show` it comes with it. Catalog: `#/shapes/diagram/1` |
+| `radius` | number | 0 | rect: the corner radius in scene px |
 
 ### Step adders
 
@@ -88,5 +90,5 @@ Both colours are read when the step is added, at load. A second `tint` on the sa
 
 ## Limits
 
-- No fill, no corner radius, no dash and no stroke width option: for more, build the SVG yourself and draw it with `drawOn`.
+- A fill is always `--k-surface`; for another, build the SVG yourself and draw it with `drawOn`.
 - With reduced motion the shapes still draw on, as `lineArt` does: a stroke reveal does not move anything.

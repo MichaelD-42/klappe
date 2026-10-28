@@ -4,7 +4,8 @@ import type { StepAdder, SceneModule } from "../../types";
 
 // Two boxes and an SVG circle: box 1 glows on, breathes and goes off; box 2 pulses and shakes; the circle
 // glows. A second scene glows a target with no size (the fixture's only problem). A second section is
-// another canvas, where box 1's breathe loop must pause.
+// another canvas, where box 1's breathe loop must pause. A third scene moves a box, glows it there, moves it again
+// and pulses it: both land where the steps before left it.
 interface Refs {
   boxes: HTMLElement[];
   g: GlowHandle;
@@ -51,6 +52,19 @@ const noSize: SceneModule = {
   steps: [(tl, r: { g: GlowHandle }) => r.g.on(tl)],
 };
 
+const moved: SceneModule = {
+  build(ctx) {
+    const b = box(ctx, 200, "Moved");
+    return { b, g: glow(ctx, b), p: pulse(ctx, b) };
+  },
+  steps: [
+    (tl, r: { b: HTMLElement }) => void tl.to(r.b, { x: 600, duration: 0.6 }),
+    (tl, r: { g: GlowHandle }) => r.g.on(tl),
+    (tl, r: { b: HTMLElement; g: GlowHandle }) => (tl.to(r.b, { x: 1100, duration: 0.6 }), r.g.on(tl)),
+    (tl, r: { p: StepAdder }) => r.p(tl),
+  ],
+};
+
 const other: SceneModule = { build() {}, steps: [() => {}] };
 
 export default () =>
@@ -60,8 +74,9 @@ export default () =>
       "sections/10-a/section.md": "# Attention\n",
       "sections/10-a/10-boxes/scene.md": "## Boxes\n\n- Glow on.\n- Breathe.\n- Off.\n- Pulse.\n- Shake.\n- The circle glows.\n",
       "sections/10-a/20-no-size/scene.md": "## No size\n\n- A target with no size.\n",
+      "sections/10-a/30-moved/scene.md": "## Moved\n\n- Move.\n- Glow.\n- Move on, still glowing.\n- Pulse.\n",
       "sections/20-b/section.md": "# Other\n",
       "sections/20-b/10-other/scene.md": "## Other\n\n- Elsewhere.\n",
     },
-    { "sections/10-a/10-boxes/scene.ts": boxes, "sections/10-a/20-no-size/scene.ts": noSize, "sections/20-b/10-other/scene.ts": other },
+    { "sections/10-a/10-boxes/scene.ts": boxes, "sections/10-a/20-no-size/scene.ts": noSize, "sections/10-a/30-moved/scene.ts": moved, "sections/20-b/10-other/scene.ts": other },
   );

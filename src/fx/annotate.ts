@@ -159,6 +159,15 @@ export function scribble(kind: AnnotationKind, box: Rect, opts: { pad: number; s
   return [shaft, ...head];
 }
 
+// The nearest box from el up to the scene that paints its own background, such as a card: a band behind it is hidden.
+function backed(ctx: Ctx, el: Element): HTMLElement | null {
+  for (let e: Element | null = el; e && e !== ctx.html; e = e.parentElement) {
+    const s = getComputedStyle(e);
+    if (s.backgroundImage !== "none" || !/^(transparent|rgba\(.*,\s*0\))$/.test(s.backgroundColor)) return e as HTMLElement;
+  }
+  return null;
+}
+
 // A hand-drawn mark on a target, in --k-accent (a cross in --k-bad) or opts.color: it draws on, then hide fades it out. It sits in its own SVG
 // above the scene's HTML, so it can mark text; a highlight's SVG goes just before the target's top-level element
 // instead, so it paints behind the text. An element target is measured by its content (its text, not
@@ -191,6 +200,16 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
       const box = target instanceof Element ? measure(ctx, target, true) : target;
       const boxes = perLine ? lines(ctx, target) : box ? [box] : [];
       if (!boxes.length) return ctx.problem(`annotate: ${opts.kind} target has no size to measure`);
+      // On a box with its own background the band goes inside it, under its content: isolation makes the box the
+      // band's stacking context, so z-index -1 paints over its background. The SVG keeps scene coordinates.
+      const host = hl && target instanceof Element ? backed(ctx, target) : null;
+      if (host) {
+        host.style.isolation = "isolate";
+        svg.style.zIndex = "-1";
+        host.prepend(svg);
+        const o = measure(ctx, svg);
+        if (o) Object.assign(svg.style, { left: `${-o.x}px`, top: `${-o.y}px` });
+      }
       const seed = opts.seed ?? 1;
       // A ring on a code line stays in the line gap: from the line's middle to the next line's text.
       const row = opts.kind === "circle" && target instanceof Element ? target.closest(".k-code [data-line]") : null;

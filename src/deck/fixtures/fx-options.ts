@@ -1,10 +1,11 @@
 import { assembleDeck } from "../assemble";
-import { arrow, loupe, pulse, shape, spotlight, wipe, type LoupeHandle, type ShapeHandle, type SpotlightHandle, type WipeHandle } from "klappe/fx";
+import { arrow, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
 // The small options, one scene each: a round spotlight, a vertical wipe, a loupe stop with its own zoom, dashed
-// and wider shapes and arrows (one too thin: the fixture's only problem), and a pulse in another token.
+// and wider shapes and arrows (one too thin: the fixture's only problem), a pulse in another token, and a matrix
+// and sticky notes that close the gap an item leaves (compact).
 const picture = (fill: string, mark: string) =>
   "data:image/svg+xml," +
   encodeURIComponent(
@@ -34,8 +35,9 @@ const lines: SceneModule = {
     rect: shape(ctx, { kind: "rect", x: 160, y: 200, w: 600, h: 300, dash: true, width: 6 }),
     arrow: arrow(ctx, { from: { x: 900, y: 350 }, to: { x: 1600, y: 350 }, dash: true }),
     thin: shape(ctx, { kind: "line", x: 160, y: 700, x2: 1600, y2: 700, width: 1 }),
+    card: shape(ctx, { kind: "rect", x: 160, y: 780, w: 600, h: 160, fill: true, radius: 24 }),
   }),
-  steps: [(tl, r: { rect: ShapeHandle; arrow: ShapeHandle; thin: ShapeHandle }) => (r.rect.draw(tl), r.arrow.draw(tl), r.thin.draw(tl))],
+  steps: [(tl, r: { rect: ShapeHandle; arrow: ShapeHandle; thin: ShapeHandle; card: ShapeHandle }) => (r.rect.draw(tl), r.arrow.draw(tl), r.thin.draw(tl), r.card.draw(tl))],
 };
 const warn: SceneModule = {
   build: (ctx) => {
@@ -44,6 +46,16 @@ const warn: SceneModule = {
     return { p: pulse(ctx, b, { color: "--k-warn" }) };
   },
   steps: [(tl, r: { p: StepAdder }) => r.p(tl)],
+};
+
+const ids = ["a", "b", "c"];
+const compactMatrix: SceneModule = {
+  build: (ctx) => matrix(ctx, { axes: { x: "Effort", y: "Value" }, items: ids.map((id) => ({ id, label: id.toUpperCase() })), compact: true, x: 160, y: 100, w: 1600, h: 800 }),
+  steps: [(tl, m: MatrixHandle) => m.show(tl), ...ids.map((id) => (tl: gsap.core.Timeline, m: MatrixHandle) => m.place(id, "tl")(tl)), (tl, m: MatrixHandle) => m.place("a", "tr")(tl)],
+};
+const compactNotes: SceneModule = {
+  build: (ctx) => stickyNotes(ctx, { notes: ids.map((id) => ({ id, text: id.toUpperCase() })), groups: [{ id: "g1", label: "One" }, { id: "g2", label: "Two" }], compact: true, x: 160, y: 100, w: 1600, h: 800 }),
+  steps: [(tl, s: StickyNotesHandle) => s.show()(tl), (tl, s: StickyNotesHandle) => s.group("g1", ids)(tl), (tl, s: StickyNotesHandle) => s.group("g2", ["a"])(tl)],
 };
 
 export default () => {
@@ -56,6 +68,8 @@ export default () => {
       "sections/10-a/30-zoom/scene.md": "## Zoom\n\n- The lens.\n- Closer.\n- Back to the base zoom.\n",
       "sections/10-a/40-lines/scene.md": "## Lines\n\n- Dashed and wide.\n",
       "sections/10-a/50-warn/scene.md": "## Warn\n\n- A pulse in --k-warn.\n",
+      "sections/10-a/60-compact-matrix/scene.md": "## Compact matrix\n\n- Axes.\n- A.\n- B.\n- C.\n- A leaves.\n",
+      "sections/10-a/70-compact-notes/scene.md": "## Compact notes\n\n- Scattered.\n- Grouped.\n- A leaves.\n",
     },
     {
       "sections/10-a/10-round/scene.ts": round,
@@ -63,6 +77,8 @@ export default () => {
       "sections/10-a/30-zoom/scene.ts": zoom,
       "sections/10-a/40-lines/scene.ts": lines,
       "sections/10-a/50-warn/scene.ts": warn,
+      "sections/10-a/60-compact-matrix/scene.ts": compactMatrix,
+      "sections/10-a/70-compact-notes/scene.ts": compactNotes,
     },
   );
   r.deck.files = { data: {}, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f") } };

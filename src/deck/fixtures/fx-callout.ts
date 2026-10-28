@@ -1,10 +1,11 @@
 import { assembleDeck } from "../assemble";
-import { callout, code, type CodeHandle } from "klappe/fx";
+import { callout, code, type CalloutHandle, type CodeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule } from "../../types";
 
 // One scene per target kind: a code line, a plain box standing in for a flow node, and a point; plus one
-// callout whose label cannot fit the frame (the fixture's only problem); and a callout that shows, then hides.
+// callout whose label cannot fit the frame (the fixture's only problem); a callout that shows, then hides; one that
+// follows its code line down when a diff adds a line above it; and one shown on a line an earlier diff moved.
 const md = (title: string) => `## ${title}\n\n- Show.\n- Callout.\n`;
 const SRC = "const data = load();\nconst bad = check(data);\nsave(bad);";
 
@@ -47,6 +48,35 @@ const onOff: SceneModule = {
   steps: [(tl, r) => r.c.show(tl), (tl, r) => r.c.hide(tl)],
 };
 
+const MORE = "// load, check, save\n" + SRC;
+type Follow = { h: CodeHandle; c: CalloutHandle };
+const follows: SceneModule = {
+  build(ctx) {
+    const h = code(ctx, { src: SRC, lang: "js", x: 160, y: 200, w: 1000, h: 400 });
+    return { h, c: callout(ctx, { target: h.line(2), text: "This line is the bug", side: "right" }) };
+  },
+  steps: [(tl, r: Follow) => (r.h.show(tl), r.c.show(tl)), (tl, r: Follow) => (r.h.diff(MORE)(tl), r.c.follow(tl))],
+};
+const afterMove: SceneModule = {
+  build(ctx) {
+    const h = code(ctx, { src: SRC, lang: "js", x: 160, y: 200, w: 1000, h: 400 });
+    return { h, c: callout(ctx, { target: h.line(2), text: "This line is the bug", side: "right" }) };
+  },
+  steps: [(tl, r: Follow) => r.h.show(tl), (tl, r: Follow) => r.h.diff(MORE)(tl), (tl, r: Follow) => r.c.show(tl)],
+};
+
+// A callout on a mark over an opaque HTML panel (a picture): its leader must show over the panel.
+const overHtml: SceneModule = {
+  build(ctx) {
+    const panel = ctx.html.appendChild(document.createElement("div"));
+    Object.assign(panel.style, { position: "absolute", left: "160px", top: "100px", width: "1200px", height: "700px", background: "var(--k-surface)" });
+    const mark = ctx.html.appendChild(document.createElement("div"));
+    Object.assign(mark.style, { position: "absolute", left: "600px", top: "300px", width: "56px", height: "56px", borderRadius: "50%", background: "var(--k-accent)" });
+    return { c: callout(ctx, { target: mark, text: "A mark on the picture", side: "bottom", offset: 160 }) };
+  },
+  steps: [(tl, r: { c: CalloutHandle }) => r.c.show(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -57,6 +87,9 @@ export default () =>
       "sections/10-a/30-point/scene.md": "## Point\n\n- Callout.\n",
       "sections/10-a/40-far/scene.md": "## Out of frame\n\n- Callout.\n",
       "sections/10-a/50-off/scene.md": "## On and off\n\n- Callout.\n- Gone.\n",
+      "sections/10-a/60-follow/scene.md": "## Follow\n\n- Callout.\n- A line above.\n",
+      "sections/10-a/70-after-move/scene.md": "## After a move\n\n- Code.\n- A line above.\n- Callout.\n",
+      "sections/10-a/80-over-html/scene.md": "## Over HTML\n\n- Callout.\n",
     },
     {
       "sections/10-a/10-code/scene.ts": onCode,
@@ -64,5 +97,8 @@ export default () =>
       "sections/10-a/30-point/scene.ts": onPoint,
       "sections/10-a/40-far/scene.ts": tooFar,
       "sections/10-a/50-off/scene.ts": onOff,
+      "sections/10-a/60-follow/scene.ts": follows,
+      "sections/10-a/70-after-move/scene.ts": afterMove,
+      "sections/10-a/80-over-html/scene.ts": overHtml,
     },
   );

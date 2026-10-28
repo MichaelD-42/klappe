@@ -144,8 +144,13 @@ if (cmd === 'test') {
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'
   if (strict) process.env.KLAPPE_STRICT = '1'
+  // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
+  const { outline, overWords } = await import('./outline.mjs')
+  const { problems } = await outline(klappeDir, deckDir)
+  for (const p of problems) console.error(`deck problem: ${p}`)
+  if (problems.length) process.exit(1)
   // deck.md max-words: reported before the tests, fails the run after them.
-  const long = await (await import('./outline.mjs')).overWords(klappeDir, deckDir)
+  const long = await overWords(klappeDir, deckDir)
   for (const l of long) console.error(`max-words: ${l}`)
   const { startVitest, parseCLI } = await import('vitest/node')
   const { filter, options } = parseCLI(['vitest', ...args])

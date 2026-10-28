@@ -1,6 +1,6 @@
 # Git history: `gitGraph`
 
-A git history built one change per step: commits as dots on one lane per branch, lines to their parents, the branch names at the left. Each step plays the next op (a commit, a new branch, a merge, a rebase, a tag or a cherry-pick), and what it made is ringed in `--k-accent` until the next one. For developer trainings.
+A git history built one change per step: commits as dots on one lane per branch, lines to their parents, the branch names at the left. Each step plays the next op (a commit, a new branch, a merge, a rebase, a tag, a cherry-pick, a squash or a checkout), and what it made is ringed in `--k-accent` until the next one. For developer trainings.
 
 Catalog: section `304-git` (`#/git/rebase/6` is the rebase, `#/git/rebase/7` the merge; `#/git/backport/2` a tag, `#/git/backport/7` a cherry-pick).
 
@@ -44,6 +44,8 @@ steps: [(tl, r: { g: GitGraphHandle }) => r.g.next(tl), /* one per op */],
 | `{ rebase: "feature", onto: "main" }` | the branch's own commits (since it started, its last rebase or its last merge) fade out, and their copies, labelled with a prime (`form′`), fly to the branch's lane after `onto`'s tip |
 | `{ tag: "v1.0", on: "main" }` | a tag on the branch's tip: a pill in `--k-surface` over the commit, which is ringed. It takes no column. A later rebase leaves the tag on the old commit, as git does |
 | `{ cherryPick: "hotfix", onto: "main" }` | a copy of the latest commit labelled `hotfix` (`hotfix′`) flies from it to `onto`'s lane after its tip; the original stays |
+| `{ squash: "feature", into: "main", label? }` | one commit (label `squash feature` by default) flies from the branch's tip to `into`'s lane after its tip, with that tip as its only parent: no line from the branch. The branch's commits stay. Catalog: `#/git/squash/8` |
+| `{ checkout: "feature" }` | HEAD: from the first checkout a `HEAD` pill with an `--k-accent` border sits over the commit HEAD points at, above that commit's tags, and moves with every op that moves the checked-out branch's tip (a commit, a merge or squash into it, a rebase of it). The tip is ringed. It takes no column. Catalog: `#/git/squash/2` |
 
 Dots are 36 px in the lane's `--k-series-1` to `--k-series-6` colour; lines are 5 px in the child's lane colour, a merge's line from the merged branch in that branch's. Labels are 20 px `--k-fg` under the dots, on a `--k-bg` patch that lines pass behind.
 
@@ -60,8 +62,7 @@ Both are step adders themselves: `r.g.next(tl)`.
 
 - The layout is fixed in `build`: more commits than columns of 110 px fit in `w` shows `gitGraph: <n> commits do not fit in <w>px`; more lanes than 110 px each in `h` shows `gitGraph: <n> branches do not fit in <h>px`; more than six branches shows `gitGraph: <n> branches; at most 6`. A rebase's and a cherry-pick's copies are commits too.
 - A label wider than its column shows `gitGraph: label "<label>" too long` (checked when the first step is added) and is cut with an ellipsis.
-- An unknown branch shows `gitGraph: no branch "<name>"`, a repeat `gitGraph: branch "<name>" already exists`, a branch from a branch with no commit `gitGraph: "<name>" has no commit to branch from`. A rebase with nothing to replay (the branch was just merged or rebased) shows `gitGraph: rebase of "<a>" onto "<b>" has nothing to replay`; one that would replay a merge commit draws it as a plain commit and says so. A tag on a branch with no commit shows `gitGraph: "<name>" has no commit to tag`; a cherry-pick of a label no commit has, `gitGraph: no commit "<label>" to cherry-pick`. Two tags on one commit sit on top of each other. `next` after the last op shows `gitGraph: next() after the last op`.
-- No tags, `HEAD`, cherry-pick or squash.
+- An unknown branch shows `gitGraph: no branch "<name>"`, a repeat `gitGraph: branch "<name>" already exists`, a branch from a branch with no commit `gitGraph: "<name>" has no commit to branch from`. A rebase with nothing to replay (the branch was just merged or rebased) shows `gitGraph: rebase of "<a>" onto "<b>" has nothing to replay`; one that would replay a merge commit draws it as a plain commit and says so. A tag on a branch with no commit shows `gitGraph: "<name>" has no commit to tag`; a cherry-pick of a label no commit has, `gitGraph: no commit "<label>" to cherry-pick`. `next` after the last op shows `gitGraph: next() after the last op`.
 
 ## `gitLayout`
 

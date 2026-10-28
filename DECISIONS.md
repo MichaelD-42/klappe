@@ -274,3 +274,54 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: a seek gives the same picture each run, on a busy machine too; seek equals play, so it is the picture the room sees.
 - **The look report is the walk's warnings, printed by `test --only`, not a new check in `shot`.**
   - Why: the walk already measures the safe area and clipped text; a second copy in `shot` would drift.
+
+## 2026-10-28 (review states, wake lock)
+
+- **A finding's state is the last of its `#### Fixed` and `#### Reopened` sections in `review.md`, not a flag or a second file.**
+  - Why: Claude and the author both read the file as text, and the history (what was fixed, why it came back) is what a reviewer-recall eval needs. The window escapes a typed `#` line, so a finding cannot fake a state. Approve and reopen apply only to a finding still fixed on disk, so a stale window cannot approve one Claude has reopened or rewritten.
+- **The deck window always asks for a screen wake lock; there is no flag to turn it off.**
+  - Why: a deck page is open to be presented, and the browser drops the lock when the tab is hidden. No fallback for pages without `navigator.wakeLock` (plain `http` from another host): the dev server and an `https` host have it.
+
+## 2026-10-28 (tooling)
+
+- **The demo steps the acceptance checks use are one `DEMO` list in `src/selftest.ts`, and a lint (`tests/lint/deep-links.test.ts`) checks every demo deep link in it, the author docs, the skill and the agents.**
+  - Why: a moved story scene broke checks and docs that only a repo-wide search found. The lint reads the demo's Markdown, so it runs in the fast unit pass. Unit tests that build their own steps (`router`, `scene`) are not tied to the demo and stay as they are.
+- **No scaffold script for a new effect option.**
+  - Why: an option's real cost is its content (the catalog scene that shows it, the reference row that explains it), which a script can only stub; the stubs would then have to be caught. The intent-table row is only for new exports, and the shared `fx-options` fixture and e2e file save the other two files.
+- **No test helper for a scene's elements in both layers.**
+  - Why: `[data-scene="x"] .child` already matches in both; only the scene root itself needs its layer named (`div[…]` or `g[…]`), which the e2e tests already do. The builder agent's brief says so.
+- **Reopened review findings become eval cases by hand, from a recipe in `evals/README.md`, not by a generator.**
+  - Why: no deck has a reopened finding yet, a fix commit's files do not apply cleanly over a later `HEAD`, and a generator could copy confidential deck content into this public repo.
+
+## 2026-10-28 (new effects)
+
+- **`formula` uses KaTeX, not MathJax, and loads it only for a deck whose code imports `formula`.**
+  - Why: KaTeX renders synchronously, so the formula is built at load like every other effect, and it is several times smaller. It loads the way Shiki does for `code`, through `loadParts`, so a deck without formulas never fetches it. Version 0.19, not 0.16: the older one has an advisory on prototype pollution bypassing `trust`, which `\step` relies on.
+- **`\step{…}` is a KaTeX macro for `\htmlClass{k-ft}{…}`, and `trust` allows only that command with that class.**
+  - Why: marking terms in the TeX keeps the formula in one string an author can read. Trusting only the one class keeps a deck's TeX from adding links, ids or styles.
+- **A formula's font floor is 30 px, not the 20 px of other text.**
+  - Why: KaTeX sets sub- and superscripts at 70 %: at 30 px they are 21 px, at the legibility floor; at 20 px they would be 14.
+- **Process steps, mind map and fishbone are their own elements, not modes of `agenda`, `flow` or `decisionTree`.**
+  - Why: `agenda` rows need times and stack vertically; `decisionTree` needs an edge label on every link and builds by level, top down. A mode would have bent both APIs for one layout each. They reuse the house patterns instead: the accent overlay and step-order bookkeeping of `pyramid`, a pure layout function with a unit test.
+- **The heatmap's `cell()` moves one outline, and the treemap's tiles stay in data order.**
+  - Why: one outline is one element to tween, from where the steps before left it, so seek equals play. Data order keeps `bars` and `bar(i)` meaning the same row for every chart type; the layout places the tiles largest first.
+
+## 2026-10-28 (video on a clicker)
+
+- **An embedded YouTube or Vimeo player starts on its step by default; `autoplay: false` opts out.**
+  - Why: a presenter with only a clicker cannot click into a player, and a local file already played on its step. The step key is a user gesture, so the browser lets the start through, with sound: a clip in a talk is there to be heard. `muted: true` keeps one silent. A deck window stepped only from the speaker view has had no gesture of its own, so a browser may block the sound there until the presenter clicks into it once.
+- **`play(tl)` is a step adder on the video handle, not an option.**
+  - Why: "show it, talk, then start it" is one more click, which is a step. The handle keeps one start time that the last `show` or `play` set, read when the steps play, so there is still one listener and one stop rule: any step change stops the video.
+
+## 2026-10-28 (effect improvements)
+
+- **`callout`, `glow` and `pulse` measure their target at the timeline's current end (`atEnd` in `measure.ts`), as shatter does (R12).**
+  - Why: a target an earlier step moved (a code line after `diff`, a box tweened aside) was measured where it sat at load. Seeking to the end and back is pure: every effect writes from progress.
+- **Arrow routing round boxes lives in `src/fx/route.ts`, shared by `flow` and `swimlanes`, though the two otherwise keep copies of each other's code.**
+  - Why: the detour and lane spreading are one algorithm on grid channels; two copies would drift. It is not an element, so the "no imports across element files" rule holds.
+- **The walk counts text an ancestor's overflow cuts away whole as unseen.**
+  - Why: a page scrolled in its window (`pointer.scroll`) has text below the window that nobody sees; flagging it as outside the stage was a false positive. Text cut in part is still a clipped-text look failure.
+- **`pointer` has no hover; an HTML glow still covers SVG lines next to its target.**
+  - Why: a hover state belongs to the product shown (a tint, a tooltip, a menu), so a generic one would mislead. The glow sits in the HTML layer above `ctx.svg`; a blend mode would only fix it on dark themes.
+- **A Markdown failed check is `- [!]`.**
+  - Why: GitHub task lists have no fail state; `[!]` reads as "problem" and leaves `[ ]`, `[x]` untouched.

@@ -142,3 +142,23 @@ test('each mark strokes in its colour token', async () => {
   expect(r).toEqual({ cross: ['var(--k-bad)'], bracket: ['var(--k-ok)'], box: ['var(--k-warn)'], underline: ['var(--k-accent)'] })
   await page.close()
 }, 60_000)
+
+// On a card with its own background the band paints above the card and below the text, on the word.
+test('a highlight on a card shows between the card and the text', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-annotate#/a/card/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await settle(page)
+  const r = await page.evaluate(() => {
+    const word = document.querySelector('[data-word="card"]')!
+    const card = word.closest('p')!.parentElement!
+    const band = document.querySelector<SVGPathElement>('[data-scene="card"] svg[data-k-annotation="highlight"] path')!
+    band.style.pointerEvents = 'auto'
+    const q = word.getBoundingClientRect()
+    const stack = document.elementsFromPoint(q.left + q.width / 2, q.top + q.height / 2)
+    const [w, b, c] = [stack.indexOf(word), stack.indexOf(band), stack.indexOf(card)]
+    return { order: w >= 0 && b > w && c > b }
+  })
+  expect(r.order).toBe(true)
+  await page.close()
+}, 60_000)

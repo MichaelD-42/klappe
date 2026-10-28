@@ -21,7 +21,7 @@ Steps:
 
 1. Read the task, its acceptance criteria and the spec sections it names. If the task has no criteria, ask the orchestrator for them.
 2. Implement exactly what the criteria say, and nothing they do not ask for.
-3. Run the tests for what you touched. A deck scene: `npm test -- --only <section>/<scene>` (seconds; it prints the look warnings). Engine code in the klappe repo: `npx vitest run --project unit` and the e2e files of the parts you changed (`npx vitest run tests/e2e/<file>`). Fix failures. Run the full `npm test` only if the task says so; the orchestrator runs it once per wave.
+3. Run the tests for what you touched. A deck scene: `npm test -- --only <section>/<scene>` (seconds; it prints the look warnings). Engine code in the klappe repo: `npx vitest run --project unit` and the e2e files of the parts you changed (`npx vitest run tests/e2e/<file>`). Fix failures. Run the full `npm test` only if the task says so; the orchestrator runs it once per wave. In an e2e test, a scene's `data-scene` sits on both its SVG group and its HTML box: name the layer (`div[data-scene="x"]`, `g[data-scene="x"]`), since a bare `[data-scene="x"]` finds the SVG one.
 4. If the change is visible, take screenshots with `npm run shot -- <section>/<scene> --last` for each scene you changed (PNGs at 1920x1080 and 1366x768 in `dist/shots/<deck>/`; `--size 1366x768` for one size, `--at <ms>` mid-step, `--url <dev server>` if the task gives one), and read them.
 5. Commit with a clear message. Stage by path. Other builders may share the worktree: never amend, reset or rebase; fix a mistake with a new commit.
 

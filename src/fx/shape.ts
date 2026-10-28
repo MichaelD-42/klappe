@@ -7,8 +7,9 @@ type P = { x: number; y: number };
 // dash: a dashed stroke (it draws on solid, then shows its dashes); width: the stroke in scene px, at least 2.
 type Line = { accent?: boolean; dash?: boolean; width?: number };
 export type ShapeOpts = Line & (
-  | { kind: "rect"; x: number; y: number; w: number; h: number } // top-left corner and size, scene-local
-  | { kind: "circle"; x: number; y: number; r: number } // centre and radius
+  // fill: --k-surface inside, faded in once the outline has drawn; radius: the rect's corner radius.
+  | { kind: "rect"; x: number; y: number; w: number; h: number; fill?: boolean; radius?: number } // top-left corner and size, scene-local
+  | { kind: "circle"; x: number; y: number; r: number; fill?: boolean } // centre and radius
   | { kind: "line"; x: number; y: number; x2: number; y2: number }
 );
 export interface ArrowOpts extends Line {
@@ -75,11 +76,26 @@ export function shape(ctx: Ctx, opts: ShapeOpts): ShapeHandle {
       : opts.kind === "circle"
         ? ["circle", { cx: opts.x, cy: opts.y, r: opts.r }]
         : ["line", { x1: opts.x, y1: opts.y, x2: opts.x2, y2: opts.y2 }];
-  const { g } = group(ctx, "shape", opts, [part]);
+  const { g, els } = group(ctx, "shape", opts, [part]);
+  const el = els[0] as SVGElement;
+  if (opts.kind === "rect" && opts.radius) el.setAttribute("rx", String(opts.radius));
+  const fill = opts.kind !== "line" && opts.fill;
+  if (fill) {
+    el.style.fill = "var(--k-surface)";
+    gsap.set(el, { fillOpacity: 0 });
+  }
   return {
     el: g,
-    draw: (tl) => void tl.set(g, { autoAlpha: 1 }, drawOn(g)(tl)),
-    show: show(g),
+    draw(tl) {
+      const start = drawOn(g)(tl);
+      const end = tl.duration();
+      tl.set(g, { autoAlpha: 1 }, start);
+      if (fill) tl.to(el, { fillOpacity: 1, duration: motion.step }, end);
+    },
+    show(tl) {
+      show(g)(tl);
+      if (fill) tl.set(el, { fillOpacity: 1 }, "<");
+    },
   };
 }
 

@@ -35,6 +35,7 @@ Call `stickyNotes` in `build`; the steps only use what it returns.
 | `notes` | `{ id, text }[]` | required | the notes, all built hidden. Note `i` takes `--k-series-((i % 6) + 1)` at 30 % over `--k-bg` (`NOTE_MIX`); `--k-fg` on it holds 5.9:1 or more in every built-in theme |
 | `groups` | `{ id, label }[]` | none | the group columns, left to right. A label is one line, 26 px bold, over a 3 px underline |
 | `seed` | number | `1` | picks the scatter. The same seed gives the same places and tilts |
+| `compact` | boolean | `false` | when a note leaves a group for another, the notes after it in the old column move up one slot each, so the column has no gap |
 
 ### Step adders
 
@@ -49,7 +50,7 @@ Call `stickyNotes` in `build`; the steps only use what it returns.
 - The note size follows the columns: two columns of notes per group when the group is 376 px wide or more, notes 180 to 240 px wide and 0.7 as high. Without groups, notes are 240 × 168.
 - Scattered notes sit below the label band, spread evenly: as few rows as hold them, each row's notes across the width, each with a seeded nudge and lean, one note per cell, so they do not overlap. Once a group forms they keep out of its column. More notes than cells overlap; give them a bigger area. Notes left scattered after every group formed stay where they are and may overlap a column.
 - Each column has a fixed number of slots, filled row by row: 6 per group at the catalog's 1600 × 670 with three groups. One more shows `stickyNotes: group "<id>" is full` and puts the note on the last slot.
-- Notes that leave a group leave a gap; the next note grouped there fills it.
+- Without `compact`, notes that leave a group leave a gap; the next note grouped there fills it.
 - A note holds 12 vote dots, in rows of as many as fit its width (6 on a 180 px note). A second row stands above the note and can cover the bottom of the note above it in a column.
 - Note text wraps and shrinks from 22 px to the 20 px floor. Text that still does not fit shows `stickyNotes: text of "<id>" too long`. Fitting happens when the first step is added. Group labels are not fitted: they cut with an ellipsis.
 

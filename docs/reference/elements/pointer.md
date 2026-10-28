@@ -2,7 +2,7 @@
 
 A mouse pointer that walks through a screen: it moves to a target on a slight curve, clicks with a ripple and types into a field. For tool trainings over a screenshot or a screen drawn in the scene. `loupe` and `spotlight` point at a place; `pointer` shows the action.
 
-Catalog: section `239-pointer` (`#/pointer/sign-in/2`; a drag at `#/pointer/drag/2`).
+Catalog: section `239-pointer` (`#/pointer/sign-in/2`; a drag at `#/pointer/drag/2`, a scroll at `#/pointer/scroll/2`).
 
 ## `pointer`
 
@@ -31,7 +31,7 @@ The pointer is the classic arrow in `--k-fg` with a `--k-bg` outline, above the 
 
 ### Step adders
 
-`show`, `hide` and `click` are step adders themselves: `r.p.click(tl)`. `move` and `type` return one.
+`show`, `hide` and `click` are step adders themselves: `r.p.click(tl)`. `move`, `type`, `drag` and `scroll` return one.
 
 | Handle | Step |
 | --- | --- |
@@ -40,6 +40,7 @@ The pointer is the classic arrow in `--k-fg` with a `--k-bg` outline, above the 
 | `click` | the pointer presses in and back, and a ring in `--k-accent` grows out of the tip and fades |
 | `type(field, text)` | the field, an element or a rect, gets a `--k-surface` patch with a `--k-accent` border (focused), and `text` types into it at 14 characters a second with a caret; the field typed into before loses its accent border. Text is half the field's height, at least 20 px |
 | `drag(item, to, { duration? })` | the pointer moves to the item's centre (if it is not there), presses, carries the item so its centre lands on `to` (an element's centre or a point), 1 s by default, and lets go. The item moves by its transform, so a later `drag` of it starts where this one left it. An item or target with no size shows `pointer: drag item or target has no size to measure` |
+| `scroll(content, by, { duration? })` | the pointer moves to the centre of the content's parent (the window that clips it, if it is not there) and the content moves up `by` scene px by its transform, 1 s by default; a later `scroll` of it goes on from there. The parent needs `overflow: hidden`. A window with no size shows `pointer: scroll window has no size to measure`. Catalog: `#/pointer/scroll/2` |
 | `el` | the pointer's element. Not a step |
 
 Each step starts where the steps before left the pointer, so add them in order.
@@ -48,4 +49,4 @@ Each step starts where the steps before left the pointer, so add them in order.
 
 - The typed text sits on its own patch, so it reads on any picture; the patch hides what the screenshot shows in the field.
 - A target with no size shows `pointer: move target has no size to measure` or `pointer: type field has no size to measure`; a field too low for 20 px text shows `pointer: field <h> px high is too low for 20 px text`.
-- No scrolling, dragging or hover states: draw those with your own tweens.
+- No hover states: a product's hover (a tint, a tooltip, a menu) is its own; draw it with your own tweens.

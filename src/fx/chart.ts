@@ -12,8 +12,12 @@ import type { Ctx, Rect, StepAdder } from "../types";
 // funnel uses the first series as stages; sankey reads its columns by position: source, target, value.
 // scatter and bubble use the first two (x, y) and three (x, y, size) series; a column named period, year, date,
 // month, quarter or week is not a series but the time, one row per name and period (see scatterTracks).
+// radar: rows are dimensions round the circle, one or two series; heatmap: rows by number columns, one cell each;
+// treemap: the first series as tiles, and a second text column, if any, as the tile names under the first (groups).
 export type Row = Record<string, string | number>;
-export type ChartType = "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope" | "funnel" | "sankey" | "scatter" | "bubble";
+export type ChartType =
+  | "bar" | "stacked" | "line" | "waterfall" | "timeline" | "donut" | "slope" | "funnel" | "sankey" | "scatter" | "bubble"
+  | "radar" | "heatmap" | "treemap";
 export interface ChartOpts {
   src: string; // the data file, as in the Markdown link: "data/x.csv"
   data?: Row[] | null; // null: the file is missing; left out: read src from ctx.files.data
@@ -36,8 +40,11 @@ export interface ChartHandle {
   bar(i: number): StepAdder;
   // Donut only: slice i draws round, its legend values count up and the total counts on to the slices so far.
   slice(i: number): StepAdder;
-  // Line only: series i (0 is the first number column) draws left to right with its markers and values.
+  // Line and radar: series i (0 is the first number column) draws with its markers and values.
   series(i: number): StepAdder;
+  // Heatmap only: an outline in --k-accent moves to the cell in row `row`, column `col` (0 is the first number
+  // column); null hides it.
+  cell(row: number | null, col?: number): StepAdder;
   // The bar rects in data order: waterfall then its total, stacked series by series, funnel stages, sankey nodes
   // in sankeyLayout order; none for a line or a placeholder.
   bars: SVGElement[];
@@ -142,6 +149,26 @@ export function dataError(rows: unknown[], type: ChartType): string {
   if (!series.length) return "no number column";
   for (const [i, r] of data.entries())
     for (const k of series) if (typeof r[k] !== "number") return `row ${i + 1}, column ${k} not a number`;
+  const below = (k: string) => {
+    const i = data.findIndex((r) => num(r, k) < 0);
+    return i >= 0 ? `row ${i + 1}, ${k} below zero` : "";
+  };
+  if (type === "radar") {
+    if (data.length < 3) return `${data.length} dimensions; a radar needs at least 3`;
+    if (data.length > RADAR_MAX) return `${data.length} dimensions; a radar reads up to ${RADAR_MAX}`;
+    if (series.length > 2) return `${series.length} series; a radar reads up to 2`;
+    for (const k of series) if (below(k)) return below(k);
+  }
+  if (type === "heatmap") {
+    if (data.length > HEAT_MAX) return `${data.length} rows; a heatmap reads up to ${HEAT_MAX}`;
+    if (series.length > HEAT_MAX) return `${series.length} columns; a heatmap reads up to ${HEAT_MAX}`;
+  }
+  if (type === "treemap") {
+    const k = series[0];
+    if (below(k)) return below(k);
+    if (!(d3.sum(data, (r) => num(r, k)) > 0)) return "the values add up to zero";
+    if (data.length > TREEMAP_MAX) return `${data.length} tiles; a treemap reads up to ${TREEMAP_MAX}: merge the small ones into Other`;
+  }
   if (type === "donut") {
     const k = series[0];
     const i = data.findIndex((r) => num(r, k) < 0);
@@ -167,6 +194,9 @@ export function dataError(rows: unknown[], type: ChartType): string {
 // A donut stops reading past this many slices; more is a data error that says to merge them.
 const DONUT_MAX = 6;
 const FUNNEL_MAX = 8;
+const RADAR_MAX = 12; // dimensions: past this the names crowd the circle
+const HEAT_MAX = 24; // rows and columns: a day by hour fits
+const TREEMAP_MAX = 40;
 // A sankey's limits: past these its labels no longer fit a slide.
 const SANKEY_MAX_NODES = 16;
 const SANKEY_MAX_COLUMNS = 6;
@@ -416,7 +446,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bar: () => show, slice: () => show, series: () => show, bars: [], highlight: () => show, period: () => show };
+  return { axes: show, grow: show, values: show, bar: () => show, slice: () => show, series: () => show, cell: () => show, bars: [], highlight: () => show, period: () => show };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -450,7 +480,18 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
   const keys =
-    type === "scatter" || type === "bubble" ? [] : type === "stacked" || type === "line" ? series : type === "slope" ? series.slice(0, 2) : type === "sankey" ? [Object.keys(data[0])[2]] : [series[0]];
+    type === "scatter" || type === "bubble"
+      ? []
+      : type === "stacked" || type === "line" || type === "radar" || type === "heatmap"
+        ? series
+        : type === "slope"
+          ? series.slice(0, 2)
+          : type === "sankey"
+            ? [Object.keys(data[0])[2]]
+            : [series[0]];
+  // A treemap's second text column: the tile names, under the groups of the first.
+  const leaf = type === "treemap" ? Object.keys(data[0]).find((k) => k !== label && !series.includes(k)) : undefined;
+  const tileGroups = leaf ? [...new Set(data.map((r) => String(r[label])))] : [];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push(t("total", ctx.deck.lang));
   // Band keys are row indices, so repeated names (or a data row called "Total") never share a band.
@@ -463,9 +504,12 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const groups = groupOf ? [...new Set(data.map((r) => String(r[opts.group!])))] : [];
   const groupFill = (name: string) => SLICES[groups.indexOf(groupOf!(name)) % SLICES.length];
   // Colour means direction in a waterfall and a slope; the legend says which is which.
+  // A treemap's groups are named on the map: no legend.
   const legend = groups.length
     ? groups.map((g, k) => ({ name: g, fill: SLICES[k % SLICES.length] }))
-    : type === "waterfall" || type === "slope"
+    : type === "heatmap" || type === "treemap"
+      ? []
+      : type === "waterfall" || type === "slope"
       ? [
           { name: t("increase", ctx.deck.lang), fill: UP },
           { name: t("decrease", ctx.deck.lang), fill: DOWN },
@@ -481,17 +525,18 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   // A slope's value column: about 13 units per character at FONT.
   const valW = 13 * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
   const m = {
-    top: 56 + (legend.length ? 40 : 0) + 40 + (type === "slope" ? 36 : 0), // a slope's column headers sit above the plot
+    // A slope's and a heatmap's column headers sit above the plot; a heatmap's ramp is in the legend row.
+    top: 56 + (legend.length || type === "heatmap" ? 40 : 0) + 40 + (type === "slope" || type === "heatmap" ? 36 : 0),
     left:
-      type === "timeline" || type === "funnel"
+      type === "timeline" || type === "funnel" || type === "heatmap"
         ? Math.min(R.w * 0.3, 24 + longest * 13)
         : type === "slope"
           ? Math.min(R.w * 0.4, 48 + valW + longest * 13)
-          : type === "sankey"
+          : type === "sankey" || type === "radar" || type === "treemap"
             ? 0
             : 90,
-    right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : type === "sankey" ? 0 : 30,
-    bottom: type === "scatter" || type === "bubble" ? 96 : 56, // room for the x axis's name
+    right: type === "timeline" ? 130 : type === "slope" ? 40 + valW : type === "sankey" || type === "radar" || type === "treemap" ? 0 : 30,
+    bottom: type === "scatter" || type === "bubble" ? 96 : type === "radar" || type === "treemap" || type === "heatmap" ? 0 : 56, // room for the x axis's name
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
 
@@ -530,7 +575,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   // part: the row (a line chart: the series) a mark or value belongs to, for bar(), slice(), series() and
   // highlight(); -1 for what belongs to the whole chart. Marks take the part being built, cur.
   let cur = -1;
-  const grown: { el: SVGElement; origin: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number; label?: SVGElement; part: number }[] = [];
+  // svgOrigin: a point in the chart's coordinates to scale from, where the element's own box has no such point (a radar shape's centre).
+  const grown: { el: SVGElement; origin: string; svgOrigin?: string; scale: "scaleX" | "scaleY" | "scale"; dur?: number; label?: SVGElement; part: number }[] = [];
   const grow = (g: Omit<(typeof grown)[number], "part">) => grown.push({ ...g, part: cur });
   const bars: SVGElement[] = [];
   const values: { el: SVGTextElement; from: number; to: number; show: (n: number) => string; part: number }[] = [];
@@ -555,6 +601,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   let donutTotal = -1; // the index in values of a donut's total, which slice() counts on
   let accents: SVGElement[] = []; // a sankey's links again in --k-accent, hidden until highlight()
   let moveTo: ((p: number | string, tl: gsap.core.Timeline) => void) | undefined; // a scatter's period()
+  let cellAt: ((row: number, col: number) => { x: number; y: number }) | undefined; // a heatmap cell's corner, for cell()
+  let outline: SVGElement | undefined; // the heatmap's lit-cell outline
   let scatterAxes = false; // a scatter's axes keep their ticks; the frame draws their lines
   let xAxis: d3.Axis<any> | undefined;
   let yAxis: d3.Axis<any> | undefined;
@@ -766,6 +814,119 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         }, "<");
         at = to;
       };
+  } else if (type === "radar") {
+    // Dimensions round the circle from 12 o'clock, clockwise; rings at the value ticks; one closed shape per series,
+    // which grows from the centre. Values sit just inside each corner, for one series only: two would collide.
+    const n = data.length;
+    const [cx, cy] = [P.x + P.w / 2, P.y + P.h / 2];
+    const r0 = Math.max(60, Math.min(P.h / 2 - FONT * 2.5, P.w / 2 - 13 * longest - 32));
+    const rv = d3.scaleLinear().domain([0, d3.max(data.flatMap((r) => keys.map((k) => num(r, k)))) || 1]).nice().range([0, r0]);
+    const at = (i: number, value: number, out = 0): [number, number] => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+      return [cx + (rv(value) + out) * Math.cos(a), cy + (rv(value) + out) * Math.sin(a)];
+    };
+    const top = rv.domain()[1];
+    const ring = (value: number) => data.map((_, i) => at(i, value).join(" ")).join("L");
+    for (const tick of rv.ticks(4).filter((x) => x > 0)) {
+      const g = svg(root, "path", { d: `M${ring(tick)}Z`, fill: "none", "stroke-width": 2 });
+      g.style.stroke = "var(--k-line)";
+      labels.push(g);
+      if (keys.length === 1) continue; // one series shows its values, which say more than the rings
+      const tag = text(root, fmt(tick), { x: cx + 8, y: cy - rv(tick) - 6 });
+      tag.style.fill = "var(--k-muted)";
+      labels.push(tag);
+    }
+    data.forEach((_, i) => {
+      const [x, y] = at(i, top);
+      const spoke = svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y, "stroke-width": 2 });
+      spoke.style.stroke = "var(--k-line)";
+      const [nx, ny] = at(i, top, 20);
+      const c = (nx - cx) / (r0 + 20);
+      const anchor = c > 0.3 ? "start" : c < -0.3 ? "end" : "middle";
+      labels.push(spoke, text(root, names[i], { x: nx, y: ny + FONT * 0.35 + ((ny - cy) / (r0 + 20)) * FONT * 0.6, "text-anchor": anchor, "font-weight": 700 }));
+    });
+    keys.forEach((k, si) => {
+      cur = si;
+      const shape = svg(marks, "path", { d: `M${data.map((r, i) => at(i, num(r, k)).join(" ")).join("L")}Z`, "stroke-width": 4, "stroke-linejoin": "round" });
+      Object.assign(shape.style, { fill: color(si), fillOpacity: "0.25", stroke: color(si) });
+      grow({ el: shape, origin: "50% 50%", svgOrigin: `${cx} ${cy}`, scale: "scale" });
+      data.forEach((r, i) => {
+        const [x, y] = at(i, num(r, k));
+        const dot = svg(root, "circle", { cx: x, cy: y, r: 7 });
+        dot.style.fill = color(si);
+        grow({ el: dot, origin: "50% 50%", scale: "scale" });
+        if (keys.length > 1) return;
+        const [vx, vy] = at(i, num(r, k), -30);
+        valueAt({ x: vx, y: vy + FONT * 0.35, "text-anchor": "middle" }, 0, num(r, k), fmt);
+      });
+    });
+    cur = -1;
+  } else if (type === "heatmap") {
+    // Rows down, number columns across; each cell shaded from near --k-bg (the lowest value) to --k-accent (the
+    // highest). A value shows in its cell where it fits. cell() moves an accent outline from cell to cell.
+    const all = data.flatMap((r) => keys.map((k) => num(r, k)));
+    const [lo, hi] = d3.extent(all) as [number, number];
+    const share = (n: number) => (hi > lo ? (n - lo) / (hi - lo) : 1);
+    const shade = (n: number) => `color-mix(in srgb, var(--k-accent) ${Math.round(12 + 88 * share(n))}%, var(--k-bg))`;
+    const [cw, ch] = [P.w / keys.length, P.h / data.length];
+    const GAP = 4;
+    keys.forEach((k, j) => labels.push(text(root, k, { x: P.x + (j + 0.5) * cw, y: P.y - 14, "text-anchor": "middle", "font-weight": 700 })));
+    data.forEach((r, i) => {
+      cur = i;
+      labels.push(text(root, names[i], { x: P.x - 16, y: P.y + (i + 0.5) * ch + FONT * 0.35, "text-anchor": "end" }));
+      keys.forEach((k, j) => {
+        const n = num(r, k);
+        const c = svg(marks, "rect", { x: P.x + j * cw + GAP / 2, y: P.y + i * ch + GAP / 2, width: cw - GAP, height: ch - GAP, rx: 4 });
+        c.style.fill = shade(n);
+        bars.push(c);
+        grow({ el: c, origin: "50% 50%", scale: "scale" });
+        if (13 * fmt(n).length + 16 > cw || ch < FONT + 8) return;
+        valueAt({ x: P.x + (j + 0.5) * cw, y: P.y + (i + 0.5) * ch + FONT * 0.35, "text-anchor": "middle" }, 0, n, fmt).style.strokeWidth = "4px";
+      });
+    });
+    cur = -1;
+    // The ramp in the legend row: the lowest value, five shades, the highest.
+    const ramp = svg(root, "g", {});
+    text(ramp, fmt(lo), { x: R.x, y: R.y + 79 });
+    const x0 = R.x + 13 * fmt(lo).length + 16;
+    for (let q = 0; q < 5; q++) svg(ramp, "rect", { x: x0 + q * 30, y: R.y + 62, width: 26, height: 18, rx: 3 }).style.fill = shade(lo + ((hi - lo) * q) / 4);
+    text(ramp, fmt(hi), { x: x0 + 5 * 30 + 8, y: R.y + 79 });
+    head.push(ramp);
+    cellAt = (row, col) => ({ x: P.x + col * cw, y: P.y + row * ch });
+    outline = svg(root, "rect", { x: P.x, y: P.y, width: cw, height: ch, rx: 6, fill: "none", "stroke-width": 5, "data-k-cell": "" });
+    outline.style.stroke = "var(--k-fg)";
+  } else if (type === "treemap") {
+    // Tiles by value, largest first (squarified); with groups, each group a block under its name, tiles in its colour.
+    // A tile names itself and gives its value and share where they fit.
+    const k = keys[0];
+    const total = d3.sum(data, (r) => num(r, k));
+    type Node = { i?: number; children?: Node[] };
+    const leaves: Node[] = data.map((_, i) => ({ i }));
+    const tree: Node = { children: leaf ? tileGroups.map((g) => ({ children: leaves.filter((n) => String(data[n.i!][label]) === g) })) : leaves };
+    const h = d3.hierarchy(tree).sum((n) => (n.i === undefined ? 0 : num(data[n.i], k))).sort((a, b) => b.value! - a.value!);
+    d3.treemap<Node>().size([P.w, P.h]).paddingInner(4).paddingTop((n) => (n.depth === 1 ? FONT + 16 : 0))(h);
+    if (leaf)
+      for (const g of (h.children ?? []) as d3.HierarchyRectangularNode<Node>[])
+        labels.push(text(root, String(data[g.leaves()[0].data.i!][label]), { x: P.x + g.x0 + 4, y: P.y + g.y0 + FONT, "font-weight": 700 }));
+    // In data order, as bars and bar(i) are; the layout placed them largest first.
+    for (const n of (h.leaves() as d3.HierarchyRectangularNode<Node>[]).sort((a, b) => a.data.i! - b.data.i!)) {
+      const i = n.data.i!;
+      cur = i;
+      const fill = leaf ? SLICES[tileGroups.indexOf(String(data[i][label])) % SLICES.length] : color(0);
+      const [x, y, w, hh] = [P.x + n.x0, P.y + n.y0, n.x1 - n.x0, n.y1 - n.y0];
+      const tile = svg(marks, "rect", { x, y, width: Math.max(1, w), height: Math.max(1, hh), rx: 4 });
+      tile.style.fill = fill;
+      bars.push(tile);
+      const nm = leaf ? String(data[i][leaf]) : names[i];
+      const fits = w >= 13 * Math.max(nm.length, fmt(num(data[i], k)).length + 6) + 24 && hh >= FONT * 2 + 28;
+      const on = barInk(token(ctx.html, fill.slice(4, -1)), token(ctx.html, "--k-bg"), token(ctx.html, "--k-fg"));
+      const ink = (el: SVGElement) => Object.assign(el.style, on ? { fill: on, stroke: "none" } : { stroke: "var(--k-bg)", strokeWidth: "4px", strokeLinejoin: "round", paintOrder: "stroke" });
+      const name = fits ? text(root, nm, { x: x + 12, y: y + FONT + 8, "font-weight": 700 }) : undefined;
+      if (name) ink(name);
+      grow({ el: tile, origin: "50% 50%", scale: "scale", label: name });
+      if (fits) ink(valueAt({ x: x + 12, y: y + 2 * FONT + 16 }, 0, num(data[i], k), (v) => `${fmt(v)} · ${Math.round((v / total) * 100)} %`));
+    }
+    cur = -1;
   } else if (type === "timeline") {
     const [a, b] = span(series);
     const x = d3.scaleLinear().domain(v.domain()).range([P.x, P.x + P.w]);
@@ -881,7 +1042,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   };
   const axesEls: SVGElement[] = [...(xAxis ? [axisAt(xAxis, 0, P.y + P.h)] : []), ...(yAxis ? [axisAt(yAxis, P.x, 0)] : []), ...labels];
   if (scatterAxes) axesEls.slice(0, 2).forEach((g) => g.querySelector(".domain")?.remove());
-  if (!["timeline", "donut", "slope", "funnel", "sankey", "scatter", "bubble"].includes(type)) {
+  if (!["timeline", "donut", "slope", "funnel", "sankey", "scatter", "bubble", "radar", "heatmap", "treemap"].includes(type)) {
     axesEls[0].querySelector(".domain")?.remove();
     const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
     z.style.stroke = "var(--k-fg)";
@@ -901,11 +1062,13 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   for (const { el, from, show } of values) el.textContent = show(from);
   for (const e of values) e.el.setAttribute("data-k-text", "");
   gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents, ...grown.flatMap((g) => g.label ?? [])], { autoAlpha: 0 });
-  for (const { el, origin, scale } of grown) gsap.set(el, { [scale]: 0, transformOrigin: origin });
+  for (const { el, origin, svgOrigin, scale } of grown) gsap.set(el, { [scale]: 0, ...(svgOrigin ? { svgOrigin } : { transformOrigin: origin }) });
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
   let lit = -1; // the sankey flow the steps added so far end on
   let litPart: number | null = null; // the part highlight() left lit, in step order
   let sliced = 0; // the donut total the slice() steps added so far count to
+  let litCell: { x: number; y: number } | null = null; // where the cell() steps so far left the heatmap outline
+  if (outline) gsap.set(outline, { autoAlpha: 0 });
   const parts = 1 + Math.max(-1, ...[...grown, ...values, ...sweeps].map((e) => e.part));
   // What dims with each part: its marks (not the clips that draw a line on), strokes and values.
   const partEls = Array.from({ length: parts }, (_, p) => [
@@ -913,13 +1076,18 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     ...[...sweeps, ...strokes, ...values].filter((e) => e.part === p).map((e) => e.el),
   ]);
   // Grows part i's marks, draws its arcs round and fades in and counts its values: one bar, slice or series.
+  const counted = new Set<number>(); // the parts bar(), slice() and series() steps so far counted up
   const reveal = (i: number, tl: gsap.core.Timeline, extra: (typeof values)[number][] = []) => {
+    counted.add(i);
     const t0 = tl.duration();
     for (const { el, len } of sweeps.filter((e) => e.part === i))
       tl.to(el, { strokeDashoffset: 0, duration: Math.max(motion.step, 1.2 * len), ease: "power2.out", autoRound: false }, t0);
     const gs = grown.filter((g) => g.part === i);
     const stagger = Math.min(0.12, 1 / gs.length);
-    gs.forEach(({ el, scale, dur }, k) => tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, t0 + k * stagger));
+    gs.forEach(({ el, scale, dur, label }, k) => {
+      tl.to(el, { [scale]: 1, duration: dur ?? motion.step, ease: "power2.out" }, t0 + k * stagger);
+      if (label) tl.to(label, { autoAlpha: 1, duration: motion.step }, "<");
+    });
     const vs = [...values.filter((e) => e.part === i), ...extra];
     tl.to(vs.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 }, t0);
     // Count up as a pure function of this tween's progress, so play equals seek.
@@ -954,13 +1122,18 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       });
     },
     values(tl) {
-      tl.to(values.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 });
+      // A value an earlier bar() or slice() step counted stays; a donut's total counts on from the slices shown.
+      const vs = values
+        .filter((e) => !counted.has(e.part))
+        .map((e) => (values.indexOf(e) === donutTotal ? { ...e, from: sliced } : e));
+      if (!vs.length) return; // a radar with two series has none
+      tl.to(vs.map((e) => e.el), { autoAlpha: 1, duration: motion.step / 2 });
       // Count up as a pure function of this tween's progress, so play equals seek.
       const count = {
         duration: motion.step * 2,
         onUpdate(this: gsap.core.Tween) {
           const p = ease(this.progress());
-          for (const { el, from, to, show } of values) el.textContent = show(from + (to - from) * p);
+          for (const { el, from, to, show } of vs) el.textContent = show(from + (to - from) * p);
         },
       };
       tl.to({}, count, "<");
@@ -977,7 +1150,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         lit = to;
         return;
       }
-      if (row !== null && outOf(type === "line" ? "series" : "row", row, parts)) return;
+      if (row !== null && outOf(type === "line" || type === "radar" ? "series" : "row", row, parts)) return;
       if (row === litPart) return;
       const level = (p: number, on: number | null) => (on === null || p === on ? 1 : DIM);
       const t0 = tl.duration();
@@ -992,8 +1165,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       moveTo(p, tl);
     },
     bar: (i) => (tl) => {
-      if (!["bar", "waterfall", "stacked", "timeline", "funnel"].includes(type))
-        return ctx.problem(`chart: bar(${i}) is for bar, waterfall, stacked, timeline and funnel charts, not ${type}`);
+      if (!["bar", "waterfall", "stacked", "timeline", "funnel", "treemap"].includes(type))
+        return ctx.problem(`chart: bar(${i}) is for bar, waterfall, stacked, timeline, funnel and treemap charts, not ${type}`);
       if (!outOf("bar", i, parts)) reveal(i, tl);
     },
     slice: (i) => (tl) => {
@@ -1006,8 +1179,20 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       sliced = to;
     },
     series: (i) => (tl) => {
-      if (type !== "line") return ctx.problem(`chart: series(${i}) is for a line chart, not ${type}`);
+      if (type !== "line" && type !== "radar") return ctx.problem(`chart: series(${i}) is for a line or radar chart, not ${type}`);
       if (!outOf("series", i, parts)) reveal(i, tl);
+    },
+    // The step order, not the call order, decides where the outline comes from.
+    cell: (row, col = 0) => (tl) => {
+      if (!cellAt || !outline) return ctx.problem(`chart: cell() is for a heatmap, not ${type}`);
+      if (row !== null && !(row >= 0 && row < data.length && col >= 0 && col < keys.length))
+        return ctx.problem(`chart: no cell ${row}, ${col}; the rows are 0 to ${data.length - 1}, the columns 0 to ${keys.length - 1}`);
+      const to = row === null ? null : cellAt(row, col);
+      const d = { duration: motion.step, immediateRender: false };
+      if (to && litCell) tl.fromTo(outline, { attr: litCell }, { attr: to, ...d });
+      else if (to) tl.fromTo(outline, { attr: to, autoAlpha: 0 }, { attr: to, autoAlpha: 1, ...d });
+      else if (litCell) tl.fromTo(outline, { autoAlpha: 1 }, { autoAlpha: 0, ...d });
+      litCell = to;
     },
   };
 }

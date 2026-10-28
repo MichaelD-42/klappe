@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "./render/world";
-import { formatHash } from "./router";
+import { formatHash, resolveHash } from "./router";
 import type { Stepper } from "./stepper";
 import { t } from "./strings";
 import { motion } from "./theme";
@@ -69,6 +69,21 @@ function firstDiff(a: string, b: string, names = ["play", "seek"]): string {
 // Every element with visible own text in the current scene: rendered size and on-stage box.
 // Earlier scenes on the same canvas keep their text, off camera, so they are not checked.
 // Section text (a backdrop for the whole canvas) is checked for size where it shows on stage.
+// Text that draws nothing: whitespace and zero-width characters (a typesetter's struts), which trim() keeps.
+const blank = (s: string | null) => !/[^\s\u200b-\u200d\ufeff]/.test(s ?? "");
+// Text for a screen reader only, in the usual visually hidden box (1 px, overflow hidden), as KaTeX's MathML copy.
+// Text an ancestor's overflow cuts away whole, as a page scrolled in its window, is not seen either.
+const unseen = (e: Element) => {
+  const t = e.getBoundingClientRect();
+  for (let a: Element | null = e; a; a = a.parentElement) {
+    const r = a.getBoundingClientRect();
+    const o = getComputedStyle(a).overflow;
+    if (r.width <= 1 && r.height <= 1 && o === "hidden") return true;
+    if (a !== e && hides(o) && (t.bottom <= r.top || t.top >= r.bottom || t.right <= r.left || t.left >= r.right)) return true;
+  }
+  return false;
+};
+
 function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string[] {
   const fit = stage.getBoundingClientRect().width / 1920;
   const cam = Number(gsap.getProperty(c.world, "scaleX"));
@@ -83,7 +98,7 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = walker.nextNode(); t; t = walker.nextNode()) {
       const e = t.parentElement;
-      if (!e || seen.has(e) || !t.textContent?.trim()) continue;
+      if (!e || seen.has(e) || blank(t.textContent)) continue;
       seen.add(e);
       if (!e.checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
       const r = e.getBoundingClientRect();
@@ -95,8 +110,10 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
       const outside = r.left < box.left - 1 || r.top < box.top - 1 || r.right > box.right + 1 || r.bottom > box.bottom + 1;
       const offStage = r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom;
       if (section && offStage) continue;
-      const where = `${path(e, c.el)} "${t.textContent.trim().slice(0, 30)}"`;
-      if (innerWidth === 1366 && px < MIN_PX_1366) bad.push(`${where}: ${px.toFixed(1)} px < ${MIN_PX_1366} px`);
+      const small = innerWidth === 1366 && px < MIN_PX_1366;
+      if ((small || (!section && outside)) && unseen(e)) continue; // looked up only for text that would be flagged
+      const where = `${path(e, c.el)} "${t.textContent!.trim().slice(0, 30)}"`;
+      if (small) bad.push(`${where}: ${px.toFixed(1)} px < ${MIN_PX_1366} px`);
       if (!section && outside) bad.push(`${where}: box ${[r.left, r.top, r.right, r.bottom].map(Math.round)} outside stage`);
     }
   }
@@ -153,11 +170,11 @@ function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = walker.nextNode(); t; t = walker.nextNode()) {
       const e = t.parentElement;
-      if (!e || !t.textContent?.trim() || skip(e) || !shows(e)) continue;
+      if (!e || blank(t.textContent) || skip(e) || !shows(e)) continue;
       range.selectNodeContents(t);
       const r = boxOf(range.getBoundingClientRect());
       const shown = cut(r, clipOf(e));
-      const what = `"${t.textContent.trim().slice(0, 30)}"`;
+      const what = `"${t.textContent!.trim().slice(0, 30)}"`;
       if (shown[2] <= shown[0] || shown[3] <= shown[1]) continue; // hidden behind a mask, not clipped
       const tol = 2 * fit; // sub-pixel layout of a moved track is not a clip
       if (shown[0] > r[0] + tol || shown[1] > r[1] + tol || shown[2] < r[2] - tol || shown[3] < r[3] - tol)
@@ -248,6 +265,16 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   }
 }
 
+// The demo steps the acceptance checks stand on. Moving one of these scenes means editing this list:
+// tests/lint/deep-links.test.ts fails when a link here, or in the docs, no longer reaches its step.
+export const DEMO = {
+  deepLink: "#/value-stream/clarification/2", // AC-1: a deep link lands here
+  flightFrom: "#/value-stream/analysis/1", // AC-4: its overview marker; AC-6: its last step flies on to flightTo
+  flightTo: "#/value-stream/clarification/1",
+  sectionEnd: "#/opening/old-way/5", // AC-5: its section's last step fades to the next section
+  crack: "#/shatter/card/3", // AC-9: the card's second crack, then its fall
+  boot: "#/opening/old-way/5", // AC-13: the boot screen fully typed
+};
 const AC_SPEED = 50;
 const AC_HOLD_MS = 50;
 const CHECK_MS = 8000; // 12 checks: 96 s only if most time out; the driver waits 110 s plus 200 ms per step
@@ -275,8 +302,10 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     deck.sections.find((s: any) => s.id === steps[i].section)?.scenes.find((s: any) => s.id === steps[i].scene);
   const stepText = (i: number): string => sceneOf(i)?.steps[steps[i].step - 1]?.text ?? "";
   const pose = (el: HTMLElement) => ["x", "y", "scaleX", "scaleY"].map((p) => gsap.getProperty(el, p)).join(",");
-  const stepOf = (section: string, scene: string, step: number) =>
-    steps.findIndex((a) => a.section === section && a.scene === scene && a.step === step);
+  const stepOf = (hash: string) => {
+    const r = resolveHash(hash, steps);
+    return r.exact ? r.index : -1;
+  };
   const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
 
   // A timed-out check runs on in the background. Its helpers throw once it is dead, so it stops
@@ -337,9 +366,9 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
 
   await check("AC-1", async ({ stepper, reach }) => {
     await stepper.goto(0, "cut");
-    const want = steps.findIndex((a) => a.section === "value-stream" && a.scene === "clarification" && a.step === 2);
-    if (want < 0) return ["the demo deck has no #/value-stream/clarification/2"];
-    location.hash = "#/value-stream/clarification/2";
+    const want = stepOf(DEMO.deepLink);
+    if (want < 0) return [`the demo deck has no ${DEMO.deepLink}`];
+    location.hash = DEMO.deepLink;
     return [await reach(want, "deep link")];
   });
 
@@ -390,20 +419,25 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const tiles = document.querySelectorAll(".k-overlay .k-ov-thumb").length;
     const markers = [...document.querySelectorAll<HTMLElement>(".k-overlay .k-ov-marker")];
     const scenes = deck.sections.flatMap((s: any) => s.scenes);
-    const title = scenes.find((s: any) => s.id === "analysis")?.title;
+    const target = stepOf(DEMO.flightFrom);
+    if (target < 0) return [`the demo deck has no ${DEMO.flightFrom}`];
+    const id = steps[target].scene;
+    const title = scenes.find((s: any) => s.id === id)?.title;
     const bad = [
       tiles !== scenes.length && `${tiles} tiles, want ${scenes.length} scenes`,
       markers.length !== scenes.length && `${markers.length} markers, want ${scenes.length} scenes`,
     ];
     const marker = markers.find((m) => m.querySelector(".k-ov-title")?.textContent === title);
-    if (!marker) return [...bad, `no marker for analysis ("${title}")`];
+    if (!marker) return [...bad, `no marker for ${id} ("${title}")`];
     marker.click();
-    const landed = await until(() => steps[stepper.index]?.scene === "analysis");
-    return [...bad, !landed && `marker click: at ${at(stepper.index)}, want scene analysis`, overview.isOpen && "overview still open"];
+    const landed = await until(() => steps[stepper.index]?.scene === id);
+    return [...bad, !landed && `marker click: at ${at(stepper.index)}, want scene ${id}`, overview.isOpen && "overview still open"];
   });
 
   await check("AC-5", async ({ stepper }) => {
-    const last = lastOf("opening");
+    const end = stepOf(DEMO.sectionEnd);
+    if (end < 0) return [`the demo deck has no ${DEMO.sectionEnd}`];
+    const last = lastOf(steps[end].section);
     await stepper.goto(last, "cut");
     const n = log.length;
     await stepper.next();
@@ -414,17 +448,18 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     return [
       (fades.length !== 1 || fades[0] !== "fade") && `transitions on next(): [${fades}], want [fade]`,
       stepper.index !== last && `prev(): at ${at(stepper.index)}, want ${at(last)}`,
-      (shown.opacity !== "1" || shown.visibility !== "visible") && "opening canvas not visible after prev()",
-      other.visibility !== "hidden" && "value-stream canvas still visible after prev()",
+      (shown.opacity !== "1" || shown.visibility !== "visible") && `${steps[last].section} canvas not visible after prev()`,
+      other.visibility !== "hidden" && `${steps[last + 1].section} canvas still visible after prev()`,
     ];
   });
 
   await check("AC-6", async ({ stepper }) => {
     // Within a section the camera flies from scene to scene on one canvas, with no transition.
-    const last = steps.map((a) => a.scene).lastIndexOf("analysis");
+    const from = stepOf(DEMO.flightFrom);
+    const last = from < 0 ? -1 : steps.map((a) => a.scene).lastIndexOf(steps[from].scene);
     const to = steps[last + 1];
-    if (last < 0 || to?.scene !== "clarification" || to.canvas !== steps[last].canvas)
-      return ["the step after analysis is not clarification on the same canvas"];
+    if (last < 0 || to?.scene !== steps[stepOf(DEMO.flightTo)]?.scene || to.canvas !== steps[last].canvas)
+      return [`the step after ${DEMO.flightFrom}'s scene is not ${DEMO.flightTo} on the same canvas`];
     await stepper.goto(last, "cut");
     const el = canvases[to.canvas].world;
     const before = pose(el);
@@ -484,9 +519,9 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
 
   await check("AC-9", async ({ stepper }) => {
     // The card's second crack, then its fall.
-    const crack = stepOf("shatter", "card", 3);
-    if (crack < 0) return ["the demo deck has no #/shatter/card/3"];
-    const root = canvases[steps[crack].canvas].el.querySelector(`div[data-scene="card"]`);
+    const crack = stepOf(DEMO.crack);
+    if (crack < 0) return [`the demo deck has no ${DEMO.crack}`];
+    const root = canvases[steps[crack].canvas].el.querySelector(`div[data-scene="${CSS.escape(steps[crack].scene)}"]`);
     const slide = root?.querySelector("[data-shatter-card]"); // the original: the shard copies come after it
     if (!root || !slide) return ["the shatter card has no [data-shatter-card]"];
     const shards = () => [...root.querySelectorAll('[style*="clip-path"]')].filter((e) => shows(e.parentElement!)).length;
@@ -507,12 +542,12 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
   });
 
   await check("AC-13", async ({ stepper, reach }) => {
-    const ready = stepOf("opening", "old-way", 5);
-    if (ready < 0) return ["the demo deck has no #/opening/old-way/5"];
+    const ready = stepOf(DEMO.boot);
+    if (ready < 0) return [`the demo deck has no ${DEMO.boot}`];
     await stepper.goto(0, "cut");
     location.hash = formatHash(steps[ready]);
     const bad: (string | false)[] = [await reach(ready, "deep link")];
-    const root = canvases[steps[ready].canvas].el.querySelector(`div[data-scene="old-way"]`);
+    const root = canvases[steps[ready].canvas].el.querySelector(`div[data-scene="${CSS.escape(steps[ready].scene)}"]`);
     const lines = [...(root?.querySelectorAll(".k-crt-term > [data-k-text]") ?? [])].map((e) => e.textContent ?? "");
     const row = [...(root?.querySelectorAll(".k-crt-term > div") ?? [])].find((e) => e.textContent?.startsWith("READY."));
     for (const want of ["MEMORY TEST: 640K OK", "Loading: new ways of working .. OK"])

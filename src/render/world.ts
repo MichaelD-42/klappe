@@ -127,7 +127,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const talk = fence?.lang === "chat";
   const fenceN = firstOf(term ? "console" : talk ? "chat" : "code");
   const chatFx = fence && fenceN && talk
-    ? part(fenceN, "chat", slot, (c) => fxPart("chat")(c, { lines: fence.src.split("\n").filter((l) => l.trim()), ...slot }))
+    ? part(fenceN, "chat", slot, (c) => fxPart("chat")(c, { lines: fence.src.split("\n").filter((l) => l.trim()), ...(fence.avatars && { avatars: fence.avatars }), ...slot }))
     : undefined;
   const codeFx = fence && fenceN && !term && !talk ? part(fenceN, "code", slot, (c) => code(c, { src: fence.src, lang: fence.lang, ...slot })) : undefined;
   const termFx = fence && fenceN && term ? part(fenceN, "terminal", slot, (c) => fxPart("terminal")(c, { lines: fence.src.split("\n"), ...slot })) : undefined;
@@ -160,7 +160,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       const k = checks.indexOf(s);
       return fx.set(n, (tl) => {
         if (n === checkN) (list.h?.show ?? list.miss!)(tl);
-        list.h?.tick(k)(tl);
+        list.h?.[pt.fail ? "fail" : "tick"](k)(tl);
       });
     }
     if (pt?.kind === "agenda") {

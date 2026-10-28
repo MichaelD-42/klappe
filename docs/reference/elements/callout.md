@@ -36,14 +36,19 @@ export default captioned("callout() — a leader line draws on, then the label a
 
 | Handle | Step |
 | --- | --- |
-| `show` | the leader draws on from the target edge (`--k-accent`), the label box (`--k-surface`, 2px `--k-accent` border) fades in, then its text |
+| `show` | the leader draws on from the target edge (`--k-accent`, over the scene's HTML, so a picture under the target does not hide it), the label box (`--k-surface`, 2px `--k-accent` border) fades in, then its text |
 | `hide` | the leader and the label fade out. Add it in a step after `show`; on a callout that did not draw (see Limits) it does nothing. Catalog: `#/callout/point/2` |
+| `follow` | the leader and the label move to where the target is once this step has played, from the step's start, as the target moves. Add it in the step that moves the target, after the move: `(tl, r) => (r.c.diff(src)(tl), r.note.follow(tl))`. Before `show` it reports `callout: follow of "<text>" before it shows`; a place out of the frame reports the frame problem and leaves the callout where it was. Catalog: `#/callout/code/3` |
+
+### Hotspots
+
+Numbered marks on a picture, each explained on its step while the others dim, need no effect of their own: draw the marks as small `--k-accent` circles in `ctx.html`, pass them to [`focus`](focus.md), and give each a callout. Each step hides the previous callout, moves the focus and shows the next. Catalog: `#/callout/hotspots/2`, from `decks/demo/sections/260-callout/30-hotspots/scene.ts`.
 
 ### Limits
 
-- Coordinates are scene-local, like `ctx.svg` and `ctx.html`. The target is measured when `show` is added, as a ratio of its rect to the scene's, so the camera does not matter. The target must have a size and be laid out then; if not, the deck shows `callout: target of "<text>" has no size to measure` and nothing draws.
+- Coordinates are scene-local, like `ctx.svg` and `ctx.html`. The target is measured when `show` is added, where the steps before leave it (a line an earlier `diff` moved), as a ratio of its rect to the scene's, so the camera does not matter. The target must have a size and be laid out then; if not, the deck shows `callout: target of "<text>" has no size to measure` and nothing draws.
 - The label is 32 px text, up to 520 units wide. If it would leave the frame, the deck shows `callout: "<text>" does not fit the frame on side <side>`; nothing is drawn and the label is not moved. Pick another `side` or a smaller `offset`.
-- The target must be laid out and in its final position when `show` is added: no earlier step may move, scale or jump it. After a code `diff`, both the leader and the label stay where they were.
+- A target that moves after `show` leaves the callout behind unless a `follow` step moves it along.
 
 ## `anchor`
 

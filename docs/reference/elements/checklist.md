@@ -6,12 +6,12 @@ Catalog: section `310-checklist-agenda` (`#/checklist-agenda/checklist/1`).
 
 ## Markdown
 
-Task items in `scene.md`. The first step shows the list; each item is one step that ticks it. `[x]` items are ticked when the list shows. From `decks/demo/sections/310-checklist-agenda/10-checklist/scene.md`:
+Task items in `scene.md`. The first step shows the list; each item is one step that ticks it. `[x]` items are ticked when the list shows; a `[!]` item fails on its step, as `fail(i)` does. From `decks/demo/sections/310-checklist-agenda/10-checklist/scene.md`:
 
 ```md
 - [x] Backup verified
 - [ ] Restore tested
-- [ ] Owners told
+- [!] Owners told
 ```
 
 ## `checklist`
@@ -38,5 +38,4 @@ In `scene.ts`: `checklist(ctx, { items, x, y, w, h })` returns `{ el, show, tick
 
 - Text is 40 px and shrinks to 20 px (14 px at 1366) to fit `h`. If it still does not fit, the deck shows `checklist: N items do not fit Hpx at 20px text` and nothing draws. The Markdown form passes the scene's list area as `h`.
 - `tick(i)` or `fail(i)` of an item that is not there shows `checklist: no item i`.
-- The Markdown task list only ticks; a failed item needs `scene.ts`.
 - Long items wrap.

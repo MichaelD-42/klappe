@@ -54,9 +54,9 @@ Call all three in `build`, so their parts exist at load; the steps only use what
 
 ## Limits
 
-- An HTML target is measured when its first step is added, like a `spotlight` target: it must be in its final place by then. One with no size reports `glow: target has no size to measure` (or `pulse: …`) and shows nothing.
+- An HTML target is measured where the steps before leave it (a box an earlier step moved). Each later `on`, `breathe` or `off` moves the glow to where the target is then, over the step; between glow steps it does not follow a moving target. One with no size reports `glow: target has no size to measure` (or `pulse: …`) and shows nothing.
 - The breathe loop runs on the wall clock, outside the timeline, so a step back or a seek lands on the glow but not on a point in the breath. The self-test leaves it out.
 - Do not tween the target's `x` in an earlier step: the shake would snap it back to the `x` it read when its step was added.
 - Pulse and shake play in full with reduced motion: they are short and run once.
 - An SVG glow copy repaints its blur every frame while a breathe shows. A dashed line glows solid.
-- An HTML glow sits in the HTML layer, so it covers SVG edges next to the target. It does not follow the target's own transform.
+- An HTML glow sits in the HTML layer, so it covers SVG edges next to the target.

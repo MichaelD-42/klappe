@@ -128,6 +128,11 @@ async function startDeck(svg: Record<string, string>) {
     problems.push(msg);
     panel.add(msg);
   };
+  // No screensaver or sleep mid-talk. The browser drops the lock when the tab is hidden, so it is asked for again on return;
+  // a page over plain http from another machine has no wakeLock.
+  const keepAwake = () => void (document.visibilityState === "visible" && navigator.wakeLock?.request("screen").catch(() => {}));
+  keepAwake();
+  document.addEventListener("visibilitychange", keepAwake);
   const first = stepper.goto(router.start(), "cut");
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
   // The self-test loads only when asked.

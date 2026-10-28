@@ -5,7 +5,7 @@ import type { Channel } from "../speaker/channel";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
 import { button } from "../ui/panel";
-import { CATEGORIES, parseReview, stepsWithFindings, type Category, type Edit } from "./file";
+import { CATEGORIES, parseReview, stepsWithFindings, waitingForApproval, type Category, type Edit } from "./file";
 
 const ROUTE = "/__klappe/review";
 const SAVE_AFTER_MS = 500; // after the last key
@@ -35,6 +35,8 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   const said = el("p", "k-rv-text");
   const moved = el("p", "k-rv-moved");
   const fields = {} as Record<Category, HTMLTextAreaElement>;
+  // A finding Claude marked fixed: read-only, with Claude's note, until the owner approves or reopens it.
+  const fixed = {} as Record<Category, { box: HTMLElement; said: HTMLElement; note: HTMLInputElement; reopen: HTMLButtonElement }>;
   const form = el("div", "k-rv-fields");
   for (const k of CATEGORIES) {
     const label = el("label", "k-rv-label", t(k, lang));
@@ -42,8 +44,18 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     area.rows = 4;
     area.dataset.kReview = k;
     label.append(area);
-    form.append(label);
+    const box = el("div", "k-rv-fixed");
+    box.dataset.kFixed = k;
+    box.hidden = true;
+    const said = el("p", "k-rv-fixed-note");
+    const note = document.createElement("input");
+    note.placeholder = t("reopenNote", lang);
+    const reopen = button(t("reopen", lang), () => act(k, { reopen: { [k]: note.value } }));
+    note.addEventListener("input", () => (reopen.disabled = !note.value.trim()));
+    box.append(said, button(t("approve", lang), () => act(k, { approve: [k] })), note, reopen);
+    form.append(label, box);
     fields[k] = area;
+    fixed[k] = { box, said, note, reopen };
   }
   const status = el("p", "k-rv-status");
   const send = (cmd: "next" | "prev" | "goto", i?: number) => channel.send({ t: "cmd", cmd, index: i });
@@ -60,6 +72,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
       : [
           path && `${t("savedTo", lang)} ${path}`,
           `${t("stepsWithFindings", lang)}: ${stepsWithFindings(text)}`,
+          waitingForApproval(text) && `${t("waitingForApproval", lang)}: ${waitingForApproval(text)}`,
           lost && `${t("notInDeck", lang)}: ${lost}`,
           refused && `${t("saveRefused", lang)}: ${refused}`,
         ]
@@ -112,6 +125,14 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   const save = () => {
     if (take() || queue.length) void flush();
   };
+  // Approve or reopen goes through the queue too, behind any text still unsent.
+  const act = (k: Category, change: Pick<Edit, "approve" | "reopen">) => {
+    take();
+    queue.push({ hash: order[index], quote: stepText(steps[index]), set: {}, ...change, seq: seq++ });
+    fixed[k].note.value = "";
+    show();
+    void flush().then(show);
+  };
   for (const k of CATEGORIES) {
     fields[k].addEventListener("input", () => {
       dirty.add(k);
@@ -139,7 +160,18 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     const entry = parseReview(text).find((e) => e.hash === order[index]);
     // A queued save is newer than the file: its latest value for the category shows.
     const queued = (k: Category) => [...queue].reverse().find((e) => e.hash === order[index] && k in e.set)?.set[k];
-    for (const k of CATEGORIES) if (!dirty.has(k)) fields[k].value = queued(k) ?? entry?.findings[k] ?? "";
+    // An approve or reopen still queued: the finding shows as it will be once saved.
+    const acted = (k: Category) => [...queue].reverse().find((e) => e.hash === order[index] && (e.approve?.includes(k) || (e.reopen && k in e.reopen)));
+    for (const k of CATEGORIES) {
+      const a = acted(k);
+      if (!dirty.has(k)) fields[k].value = a?.approve ? "" : (queued(k) ?? entry?.findings[k] ?? "");
+      const note = a ? undefined : entry?.fixed?.[k];
+      fields[k].readOnly = note !== undefined;
+      fixed[k].box.hidden = note === undefined;
+      fixed[k].said.textContent = `${t("fixed", lang)}: ${note ?? ""}`;
+      if (note === undefined) fixed[k].note.value = "";
+      fixed[k].reopen.disabled = !fixed[k].note.value.trim();
+    }
     const written = entry?.quote && entry.quote !== stepText(a) ? entry.quote : "";
     moved.textContent = written && `${t("writtenFor", lang)}: “${written}”`;
     moved.hidden = !written;
@@ -176,7 +208,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   addEventListener("blur", save);
   // Keys in a field type; elsewhere they step the deck, as in the speaker view.
   addEventListener("keydown", (e) => {
-    if (e.target instanceof HTMLTextAreaElement) return;
+    if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
     const a = keyAction(e);
     if (a === "next" || a === "prev") send(a);
     else if (a === "home") send("goto", 0);

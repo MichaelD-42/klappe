@@ -1,3 +1,4 @@
+import type { gsap } from "gsap";
 import type { Ctx, Rect } from "../types";
 
 // An element's box in the scene's units, measured when a step is added (the timeline is built after
@@ -34,4 +35,17 @@ export function lines(ctx: Ctx, target: Element): Rect[] {
   const s = hr.width / ctx.rect.w;
   if (!(s > 0)) return [];
   return out.sort((a, b) => a.top - b.top).map((q) => ({ x: (q.left - hr.left) / s, y: (q.top - hr.top) / s, w: q.width / s, h: q.height / s }));
+}
+
+// Step adders run while the timeline is built, at load. To see a target where the steps added so far leave it
+// (a box an earlier step moved, a code line a diff moved), seek to the timeline's current end, look, seek back,
+// as shatter does (DECISIONS R12).
+export function atEnd<T>(tl: gsap.core.Timeline, look: () => T): T {
+  const t = tl.time();
+  tl.time(tl.duration(), false);
+  try {
+    return look();
+  } finally {
+    tl.time(t, false);
+  }
 }

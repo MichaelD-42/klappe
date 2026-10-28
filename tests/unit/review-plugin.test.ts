@@ -27,3 +27,10 @@ test('a save without a window and number is applied as sent', () => {
   expect(readEdit({ hash: '#/a/s/1', quote: 'Q', set: {}, order: [], from: 'w1', seq: 3 })).toMatchObject({ from: 'w1', seq: 3 })
   expect(readEdit({ hash: '#/a/s/1', quote: 'Q', set: {}, order: [], from: 'w1', seq: -1 })).toBeNull()
 })
+
+test('approve and reopen pass with categories; anything else in them is refused', () => {
+  const base = { hash: '#/a/s/1', quote: 'Q', set: {}, order: [] }
+  expect(readEdit({ ...base, approve: ['content'], reopen: { visuals: 'Still dark.' } })?.edit).toEqual({ ...base, order: undefined, approve: ['content'], reopen: { visuals: 'Still dark.' } })
+  for (const bad of [{ approve: 'content' }, { approve: ['nope'] }, { reopen: { content: 7 } }, { reopen: { nope: 'x' } }, { reopen: ['content'] }])
+    expect(readEdit({ ...base, ...bad }), JSON.stringify(bad)).toBeNull()
+})

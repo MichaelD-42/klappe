@@ -1,0 +1,12 @@
+# source: klappe demo sample
+area,team,people
+Product,Web,14
+Product,Mobile,9
+Product,Design,5
+Platform,Infra,11
+Platform,Data,8
+Platform,Security,4
+Sales,Field,10
+Sales,Inside,6
+Support,Tier 1,7
+Support,Tier 2,3

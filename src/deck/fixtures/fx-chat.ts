@@ -59,7 +59,7 @@ export default () => {
         "",
       ].join("\n"),
       "sections/10-a/20-order/scene.md": "## Order\n\n- One.\n- Two.\n- Three.\n",
-      "sections/10-a/30-markdown/scene.md": "## Markdown\n\n```chat\nuser: Where do I start?\nWith the three checks that block a release.\n```\n\n- Ask.\n- The answer streams in.\n",
+      "sections/10-a/30-markdown/scene.md": "## Markdown\n\n```chat\n![user](media/user.png)\nuser: Where do I start?\nWith the three checks that block a release.\n```\n\n- Ask.\n- The answer streams in.\n",
       "sections/10-a/40-faces/scene.md": "## Faces\n\n- One.\n- Two.\n- Three.\n- Four.\n",
     },
     { "sections/10-a/10-thread/scene.ts": thread, "sections/10-a/20-order/scene.ts": order, "sections/10-a/40-faces/scene.ts": faces },

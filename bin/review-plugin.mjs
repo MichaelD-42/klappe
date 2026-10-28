@@ -8,18 +8,21 @@ const MAX_TEXT = 20_000 // characters in one finding or quote
 const MAX_STEPS = 10_000
 const MAX_BODY = 2_000_000 // bytes
 
-// One edit from a POST body ({ hash, quote, set, order, from?, seq? }), or null when it is not one.
+// One edit from a POST body ({ hash, quote, set, approve?, reopen?, order, from?, seq? }), or null when it is not one.
 // from names the review window, seq numbers its saves: see fresh().
 export function readEdit(body) {
   if (!body || typeof body !== 'object') return null
-  const { hash, quote, set, order, from, seq } = body
+  const { hash, quote, set, approve, reopen, order, from, seq } = body
   const text = (v) => typeof v === 'string' && v.length <= MAX_TEXT
+  const texts = (o) => !!o && typeof o === 'object' && !Array.isArray(o) && Object.entries(o).every(([k, v]) => CATEGORIES.includes(k) && text(v))
   if (typeof hash !== 'string' || !HASH.test(hash) || !text(quote)) return null
-  if (!set || typeof set !== 'object' || !Object.entries(set).every(([k, v]) => CATEGORIES.includes(k) && text(v))) return null
+  if (!texts(set)) return null
+  if (approve !== undefined && !(Array.isArray(approve) && approve.every((k) => CATEGORIES.includes(k)))) return null
+  if (reopen !== undefined && !texts(reopen)) return null
   if (!Array.isArray(order) || order.length > MAX_STEPS || !order.every((h) => typeof h === 'string' && HASH.test(h))) return null
   if (from !== undefined && (typeof from !== 'string' || from.length > 64)) return null
   if (seq !== undefined && !(Number.isSafeInteger(seq) && seq >= 0)) return null
-  return { edit: { hash, quote, set }, order, from, seq }
+  return { edit: { hash, quote, set, approve, reopen }, order, from, seq }
 }
 
 // The edit without the categories a newer save from the same window already set on that step: a closing window

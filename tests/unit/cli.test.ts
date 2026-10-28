@@ -66,3 +66,23 @@ test('outline prints a fresh deck from init, and init adds the shot and outline 
   expect(r.status).toBe(0);
   expect(r.stdout).toContain('### intro/hello: Hello (1 step)\n1. Welcome.');
 });
+
+// A duplicate id otherwise shows only in the full e2e run; `test --only` never assembles the whole deck.
+test('test stops before the browser on a deck problem, such as a duplicate scene id', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  const files: Record<string, string> = {
+    'decks/x/deck.md': '---\ntitle: T\n---\n',
+    'decks/x/sections/10-a/section.md': '# A\n',
+    'decks/x/sections/10-a/10-same/scene.md': '## One\n\n- One.\n',
+    'decks/x/sections/20-b/section.md': '# B\n',
+    'decks/x/sections/20-b/10-same/scene.md': '## Two\n\n- Two.\n',
+  };
+  for (const [f, text] of Object.entries(files)) {
+    mkdirSync(join(cwd, f, '..'), { recursive: true });
+    writeFileSync(join(cwd, f), text);
+  }
+  const r = cli(cwd, 'test', '--deck', 'x', '--only', 'a/same');
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain("deck problem: duplicate scene id 'same'");
+  expect(r.stdout).not.toContain('RUN'); // vitest never started
+}, 30_000);
