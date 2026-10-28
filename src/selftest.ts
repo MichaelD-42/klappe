@@ -72,10 +72,14 @@ function firstDiff(a: string, b: string, names = ["play", "seek"]): string {
 // Text that draws nothing: whitespace and zero-width characters (a typesetter's struts), which trim() keeps.
 const blank = (s: string | null) => !/[^\s\u200b-\u200d\ufeff]/.test(s ?? "");
 // Text for a screen reader only, in the usual visually hidden box (1 px, overflow hidden), as KaTeX's MathML copy.
+// Text an ancestor's overflow cuts away whole, as a page scrolled in its window, is not seen either.
 const unseen = (e: Element) => {
+  const t = e.getBoundingClientRect();
   for (let a: Element | null = e; a; a = a.parentElement) {
     const r = a.getBoundingClientRect();
-    if (r.width <= 1 && r.height <= 1 && getComputedStyle(a).overflow === "hidden") return true;
+    const o = getComputedStyle(a).overflow;
+    if (r.width <= 1 && r.height <= 1 && o === "hidden") return true;
+    if (a !== e && hides(o) && (t.bottom <= r.top || t.top >= r.bottom || t.right <= r.left || t.left >= r.right)) return true;
   }
   return false;
 };

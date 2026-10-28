@@ -44,7 +44,7 @@ steps: [(tl, r: { s: SwimlanesHandle }) => r.s.show(tl), (tl, r) => r.s.walk("or
 ### Limits
 
 - Task labels wrap and shrink from 32 px to the 20 px floor (lane labels from 28 px). One that still needs more than 3 lines shows `swimlanes: label of "<id>" too long`, or `swimlanes: label of lane "<id>" too long` for a lane. The text is not cut. Fitting happens when the first step is added.
-- Links get their own port on each box face and their own middle run, so no two share a segment or an arrowhead. They are not routed around other boxes.
+- Links get their own port on each box face and their own middle runs, so no two share a segment or an arrowhead. A link with a task in its way goes round it, between the task columns or along a lane border.
 - The token rests on a task's top edge near its left corner, clear of the label, and moves in straight segments between rest points and the link's ends.
 
 ## `swimlaneRoutes`

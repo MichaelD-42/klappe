@@ -6,10 +6,12 @@ Catalog: section `217-chat` (`#/chat/thread/1`).
 
 ## Markdown
 
-A ```` ```chat ```` fence in `scene.md`, one message per line, in the form `chatMessage` reads; blank lines are skipped. Each message is one step, and the list items after the fence are the steps' text, in the left column; the thread sits in the right-hand slot. From `decks/demo/sections/217-chat/30-chat-md/scene.md`:
+A ```` ```chat ```` fence in `scene.md`, one message per line, in the form `chatMessage` reads; blank lines are skipped. Each message is one step, and the list items after the fence are the steps' text, in the left column; the thread sits in the right-hand slot. A line that is only a picture, `![Ana](media/ana.jpeg)`, is not a message: it gives that sender an avatar, as the `avatars` option does. From `decks/demo/sections/217-chat/30-chat-md/scene.md`:
 
 ````md
 ```chat
+![user](media/avatar-user.jpeg)
+![Ana](media/avatar-ana.jpeg)
 user: Can the build run on my laptop?
 Yes. Run npm ci once, then npm test.
 Ana: I can pair with you on it after lunch.
@@ -72,7 +74,6 @@ Reduced motion: no typing dots, and every message fades in whole.
 ### Limits
 
 - A bubble is at most 72 % of `w` wide. A message taller than `h` shows the problem `chat: message N is taller than the panel (H px)`.
-- The Markdown form (below) has no avatars: they need `scene.ts`.
 
 ## `chatMessage`
 

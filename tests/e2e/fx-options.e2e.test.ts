@@ -74,7 +74,26 @@ test('shape and arrow: dash draws dashed, width sets the stroke', async () => {
     { width: '6px', dashed: true },
     { width: '4px', dashed: true },
     { width: '2px', dashed: false },
+    { width: '4px', dashed: false },
   ])
+  await page.close()
+}, 60_000)
+
+test('shape fill and radius: a rounded box filled in --k-surface once it has drawn', async () => {
+  const page = await open('#/a/lines/1')
+  await page.waitForTimeout(1500)
+  const r = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('[data-scene="lines"] [data-k-shape] rect')].pop()!
+    const s = getComputedStyle(el)
+    const probe = document.body.appendChild(document.createElement('div'))
+    probe.style.color = 'var(--k-surface)'
+    const surface = getComputedStyle(probe).color
+    probe.remove()
+    return { rx: el.getAttribute('rx'), fill: s.fill, opacity: s.fillOpacity, surface }
+  })
+  expect(r.rx).toBe('24')
+  expect(r.fill).toBe(r.surface)
+  expect(r.opacity).toBe('1')
   await page.close()
 }, 60_000)
 
@@ -84,3 +103,22 @@ test('pulse takes a colour token', async () => {
   expect(r).toBe('var(--k-warn)')
   await page.close()
 }, 60_000)
+
+// compact: when A leaves, B and C move up into the slots A and B held.
+for (const [scene, sel, last] of [['compact-matrix', '[data-k-matrix-item="ID"]', 5], ['compact-notes', '[data-k-sticky="ID"]', 3]] as const)
+  test(`${scene}: the items after one that leaves close its gap`, async () => {
+    const at = async (step: number) => {
+      const page = await open(`#/a/${scene}/${step}`)
+      await page.waitForTimeout(1500)
+      const r = await page.evaluate((s) => Object.fromEntries(['a', 'b', 'c'].map((id) => {
+        const b = document.querySelector(s.replace('ID', id))!.getBoundingClientRect()
+        return [id, [Math.round(b.x), Math.round(b.y)]]
+      })), sel)
+      await page.close()
+      return r
+    }
+    const before = await at(last - 1)
+    const after = await at(last)
+    expect(after.b).toEqual(before.a)
+    expect(after.c).toEqual(before.b)
+  }, 60_000)

@@ -76,3 +76,35 @@ test('tags sit over their commits; a cherry-pick copies the commit onto main and
   expect(s.commits['hotfix′'].x).toBeGreaterThan(s.commits.hotfix.x)
   await page.close()
 }, 60_000)
+
+// Two tags on one commit stack instead of covering each other; HEAD sits over the commit it points at, above its tags.
+test('tags on one commit stack, and HEAD follows the checked-out tip', async () => {
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
+  const at = async (step: number) => {
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-gitgraph#/a/head/${step}`)
+    await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+    await settle(page)
+    return page.evaluate(() => {
+      const shows = (e: Element) => getComputedStyle(e).visibility === 'visible' && +getComputedStyle(e).opacity > 0.9
+      const box = (e: Element) => {
+        const b = e.getBoundingClientRect()
+        return { x: b.x + b.width / 2, top: b.top, bottom: b.bottom }
+      }
+      const root = document.querySelector('div[data-scene="head"]')!
+      const commits = Object.fromEntries([...root.querySelectorAll<HTMLElement>('[data-k-git-commit]')].filter(shows).map((e) => [e.textContent, box(e.firstElementChild!)]))
+      const tags = Object.fromEntries([...root.querySelectorAll<HTMLElement>('[data-k-git-tag]')].filter(shows).map((e) => [e.textContent, box(e)]))
+      const h = root.querySelector('[data-k-git-head]')
+      return { commits, tags, head: h && shows(h) ? box(h) : null }
+    })
+  }
+  let s = await at(3)
+  expect(s.tags.lts.bottom).toBeLessThanOrEqual(s.tags['v1.0'].top)
+  expect(s.head).toBeNull()
+  s = await at(4)
+  expect(s.head!.x).toBeCloseTo(s.commits.init.x, 0)
+  expect(s.head!.bottom).toBeLessThanOrEqual(s.tags.lts.top)
+  s = await at(7)
+  expect(s.head!.x).toBeCloseTo(s.commits.work.x, 0)
+  expect(s.head!.bottom).toBeLessThanOrEqual(s.commits.work.top)
+  await page.close()
+}, 60_000)

@@ -90,6 +90,18 @@ describe("parseScene parts", () => {
     ]);
   });
 
+  it("reads a picture line in a chat fence as a sender's avatar, not a message", () => {
+    const { scene } = parse(fence("chat", "![Ana](media/ana.jpeg)\nuser: Who reviews this?\nAna: I do.") + "- Ask.\n- Answer.\n");
+    expect(scene.steps.map((s) => s.part)).toEqual([{ kind: "chat", message: 0 }, { kind: "chat", message: 1 }]);
+    expect(scene.fence?.src).toBe("user: Who reviews this?\nAna: I do.");
+    expect(scene.fence?.avatars).toEqual({ Ana: "media/ana.jpeg" });
+  });
+
+  it("reads [!] as a check that fails on its step", () => {
+    const { scene } = parse("- [!] c\n");
+    expect(scene.steps.map((s) => [s.text, s.part])).toEqual([["c", { kind: "check", done: false, fail: true }]]);
+  });
+
   it("turns a list of time ranges into one agenda step", () => {
     const { scene } = parse("- 09:00–09:45 Basics\n- 09:45-10:30 Practice ←\n- 10:30 – 11:00 Wrap-up\n");
     expect(scene.steps).toHaveLength(1);

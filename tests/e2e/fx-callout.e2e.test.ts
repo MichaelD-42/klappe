@@ -69,3 +69,37 @@ test('hide fades the leader and the label out', async () => {
   expect(await shown(1)).toEqual([true, true])
   expect(await shown(2)).toEqual([false, false])
 })
+
+// The label's middle sits level with its code line's, after a diff moved the line: with follow in the diff's
+// step, or shown in a later step.
+for (const [scene, step] of [['follow', 2], ['after-move', 3]] as const)
+  test(`a callout on a line a diff moved points at the line (${scene})`, async () => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    await page.goto(`${inject('BASE_URL')}/?fixture=fx-callout#/a/${scene}/${step}`)
+    await page.waitForFunction((i) => window.klappe?.stepper?.steps?.[window.klappe.stepper.index]?.scene?.endsWith(i), scene, { timeout: 30_000 })
+    await settle(page)
+    const r = await page.evaluate((s) => {
+      const root = document.querySelector(`div[data-scene$="${s}"]`)!
+      const label = root.querySelector<HTMLElement>('div[data-k-callout]')!.getBoundingClientRect()
+      const row = [...root.querySelectorAll<HTMLElement>('[data-line]')].find((e) => e.textContent!.includes('check(data)'))!.getBoundingClientRect()
+      return { label: label.top + label.height / 2, line: row.top + row.height / 2 }
+    }, scene)
+    expect(Math.abs(r.label - r.line)).toBeLessThan(2)
+    await page.close()
+  })
+
+// The leader paints over an HTML picture or panel under the mark, not behind it.
+test('the leader shows over an opaque HTML panel', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-callout#/a/over-html/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await settle(page)
+  const top = await page.evaluate(() => {
+    const line = document.querySelector<SVGLineElement>('[data-scene$="over-html"] line[data-k-callout], div[data-scene$="over-html"] line[data-k-callout]')!
+    line.style.pointerEvents = 'auto'
+    const b = line.getBoundingClientRect()
+    return document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2) === line
+  })
+  expect(top).toBe(true)
+  await page.close()
+})

@@ -4,7 +4,7 @@ import type { SceneModule } from "../../types";
 
 // Placeholder sites at plausible land coordinates; not real locations of anyone.
 const sites = [
-  { id: "s1", label: "[Site 1]", lon: 10, lat: 50 },
+  { id: "s1", label: "[Site 1]", lon: 10, lat: 50, major: true }, // its label reads at world zoom
   { id: "s2", label: "[Site 2]", lon: -95, lat: 40 },
   { id: "s3", label: "[Site 3]", lon: 105, lat: 35 },
   { id: "s4", label: "[Site 4]", lon: -55, lat: -12 },

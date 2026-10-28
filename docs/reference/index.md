@@ -32,6 +32,9 @@
   - [cycle](elements/cycle.md): `cycle`, phases round a ring with the current one lit, and `vModel`, the V model with its levels and links lit.
   - [venn](elements/venn.md): two or three circles whose regions light up one per step.
   - [processSteps](elements/processSteps.md): the "step 2 of 5" bar, numbered chevrons with the current stage lit.
+  - [layerStack](elements/layerStack.md): an architecture as isometric layers that pull apart and light one at a time.
+  - [depGraph](elements/depGraph.md): what depends on what, laid out from the links, traced hop by hop or by blast radius.
+  - [calendar](elements/calendar.md): a month grid with days marked and runs of days spanned, one per step.
   - [pyramid](elements/pyramid.md): a test pyramid or capability stack built bottom-up.
   - [stickyNotes](elements/stickyNotes.md): workshop notes that appear scattered, then fly into labelled groups (an affinity map).
   - [checklist](elements/checklist.md): boxes that tick.

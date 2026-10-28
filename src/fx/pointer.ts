@@ -14,6 +14,8 @@ export interface PointerHandle {
   click: StepAdder;
   type(field: Element | Rect, text: string): StepAdder;
   drag(item: Element, to: Element | Point, opts?: { duration?: number }): StepAdder; // grab the item, carry it, let go
+  // The pointer rests on the content's parent (a window that clips it) and the content moves up `by` scene px.
+  scroll(content: Element, by: number, opts?: { duration?: number }): StepAdder;
   hide: StepAdder;
 }
 
@@ -41,6 +43,7 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
   let pos = opts.at; // where the pointer is at the end of the steps added so far
   let focused: HTMLElement | undefined; // the field typed into last: it loses its accent border when the next one gets it
   const moved = new Map<Element, Point>(); // how far drag has carried each item, after the steps added so far
+  const scrolled = new Map<Element, number>(); // how far scroll has moved each content up, after the steps added so far
   const glide = (tl: gsap.core.Timeline, targets: Element[], to: (e: Element) => Point, duration: number) => {
     // x and y on different eases: the path bows, as a hand's does.
     tl.to(targets, { x: (_, e) => to(e).x, duration, ease: "power2.inOut" });
@@ -73,6 +76,18 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
         glide(tl, [el, item], (e) => (e === el ? p : by), o.duration ?? 1);
         tl.to(el, { scale: 1, duration: 0.1 });
         pos = p;
+      };
+    },
+    scroll: (content, by, o = {}) => {
+      if (!scrolled.has(content)) gsap.set(content, { y: 0 }); // where a seek back before the first scroll leaves it
+      return (tl) => {
+        const p = content.parentElement && spot(ctx, content.parentElement);
+        if (!p) return ctx.problem("pointer: scroll window has no size to measure");
+        if (p.x !== pos.x || p.y !== pos.y) glide(tl, [el], () => p, 0.8);
+        pos = p;
+        const to = (scrolled.get(content) ?? 0) + by;
+        scrolled.set(content, to);
+        tl.to(content, { y: -to, duration: o.duration ?? 1, ease: "power2.inOut" });
       };
     },
     click(tl) {

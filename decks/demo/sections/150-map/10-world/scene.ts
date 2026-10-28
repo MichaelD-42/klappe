@@ -3,7 +3,7 @@ import { captioned, captionOf } from "../../../caption";
 
 // Placeholder sites at plausible land coordinates; not real locations of anyone.
 const sites = [
-  { id: "s1", label: "[Site 1]", lon: 10, lat: 50 },
+  { id: "s1", label: "[Site 1]", lon: 10, lat: 50, major: true },
   { id: "s2", label: "[Site 2]", lon: -95, lat: 40 },
   { id: "s3", label: "[Site 3]", lon: 105, lat: 35 },
   { id: "s4", label: "[Site 4]", lon: -55, lat: -12 },
@@ -13,7 +13,7 @@ const toHost = sites.slice(1).map((s) => ({ from: s.id, to: "s1" }));
 
 // The caption leaves with the camera on the zoom and comes back with the whole world.
 export default captioned(
-  "worldMap(ctx, { rect, sites, arcs }) — m.draw, m.site, m.arc, m.zoomTo, m.world, m.region",
+  "worldMap(ctx, { rect, sites: [{ …, major }], arcs }) — m.draw, m.site, m.arc, m.zoomTo, m.world, m.region",
   {
     build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 40, w: 1800, h: 880 }, sites, arcs: toHost }),
     steps: [

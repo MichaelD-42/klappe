@@ -76,3 +76,18 @@ test('a tag on a branch with no commit and a cherry-pick of no such commit are p
   const l = gitLayout([{ commit: 'main', label: 'init' }, { tag: 'v0', on: 'nope' }, { cherryPick: 'ghost', onto: 'main' }], rect)
   expect(l.problems).toEqual(['gitGraph: no branch "nope"', 'gitGraph: no commit "ghost" to cherry-pick'])
 })
+
+test('a squash puts one commit on the target with its tip as the only parent, copied from the branch tip', () => {
+  const l = gitLayout([...base, { squash: 'feature', into: 'main' }], rect)
+  expect(l.problems).toEqual([])
+  expect(l.commits[1].gone).toBeUndefined()
+  expect(l.commits.at(-1)).toMatchObject({ label: 'squash feature', lane: 0, parents: ['c2'], copyOf: 'c1', op: 4 })
+  expect(l.lit.at(-1)).toEqual(['c3'])
+})
+
+test('HEAD shows from the first checkout and follows the tip of the branch checked out', () => {
+  const l = gitLayout([...base, { checkout: 'feature' }, { commit: 'feature', label: 'more' }, { checkout: 'nope' }], rect)
+  expect(l.head).toEqual([undefined, undefined, undefined, undefined, 'c1', 'c3', 'c3'])
+  expect(l.lit[4]).toEqual(['c1'])
+  expect(l.problems).toEqual(['gitGraph: no branch "nope"'])
+})

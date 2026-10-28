@@ -50,8 +50,8 @@ Each method returns a step adder: call it with the timeline, `r.f.show()(tl)`.
 - Labels wrap and shrink from 32 px to the 20 px floor. A label that still needs more than 3 lines at the floor shows `flow: label of "<id>" too long`; the box stays and the text is not cut.
 - Labels are fitted when the first step is added (the layout exists then, not at build), so a flow needs at least one step for the too-long check to run.
 - `callout` needs the target in its final position when its `show` is added: boxes never move, so `callout(ctx, { target: f.node("api"), … })` works at any point; see the callout entry.
-- Every edge has its own port on each box face (spread along the face, ordered by where the other end is) and its own middle run, so no two edges share a segment or an arrowhead. Edges still cross boxes and each other where the layout forces it; they are not routed around other boxes.
-- A packet disappears at its resting point and reappears at the exit of the next edge: it passes through the box unseen.
+- Every edge has its own port on each box face (spread along the face, ordered by where the other end is) and its own middle runs, so no two edges share a segment or an arrowhead. An edge with a box in its way goes round it through the gaps between the cells; it can still cross other edges.
+- A packet rests inside the box it arrives at, then crosses the box to where the next edge leaves; it passes over the box's label on the way.
 
 ## `flowRoutes`
 

@@ -14,6 +14,7 @@ export interface Site {
   label?: string; // none: no text, for a deck that places its own labels
   lon: number;
   lat: number;
+  major?: boolean; // its label also reads at world zoom: it shows with site() and hides while zoomTo is in
 }
 export interface WorldMapOpts {
   rect: Rect;
@@ -44,6 +45,7 @@ const COUNTRIES = feature(countryTopo as unknown as Topology, (countryTopo as un
 // A fixed zoom box (canvas units) gives camera scale 4, so an 8-unit label renders at 8 * 4 * 1366/1920 = 22.8 px.
 const ZOOM = { w: 480, h: 270 };
 const LABEL_SIZE = 8;
+const MAJOR_SIZE = 24; // a major site's label at world zoom (scale 1): 17 px at 1366, over the 14.2 px floor
 // Stroke widths in map units at world zoom (scale 1) and at zoom (scale 4): about 1.75 and 3.4 px at 1920.
 const STROKE = { world: { land: 1.75, arc: 1.5 }, zoom: { land: 0.85, arc: 0.75 } };
 
@@ -79,7 +81,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
   );
   const arcLayer = node(g, "g", {});
 
-  const sites = new Map<string, { at: [number, number]; dot: SVGCircleElement; label?: SVGTextElement }>();
+  const sites = new Map<string, { at: [number, number]; dot: SVGCircleElement; label?: SVGTextElement; major?: SVGTextElement }>();
   for (const s of opts.sites) {
     const at = Number.isFinite(s.lon) && Number.isFinite(s.lat) ? proj([s.lon, s.lat]) : null;
     if (!at) {
@@ -94,8 +96,15 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       label.textContent = s.label!;
       gsap.set(label, { autoAlpha: 0 });
     }
+    const major = s.label && s.major
+      ? node(g, "text", { x: at[0] + 10, y: at[1] + MAJOR_SIZE * 0.35, "data-k-map-major": "", style: `fill: var(--k-fg); font-family: var(--k-font); font-weight: 600; font-size: ${MAJOR_SIZE}px; paint-order: stroke; stroke: var(--k-bg); stroke-width: 4` })
+      : undefined;
+    if (major) {
+      major.textContent = s.label!;
+      gsap.set(major, { autoAlpha: 0 });
+    }
     gsap.set(dot, { autoAlpha: 0, scale: 0, transformOrigin: "50% 50%" }); // transform written at load, as seek(0) leaves it
-    sites.set(s.id, { at, dot, label });
+    sites.set(s.id, { at, dot, label, major });
   }
 
   const get = (id: string) => {
@@ -106,6 +115,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
 
   // Zoom state while the timeline is built, in step order, so a lazily created arc gets the right width.
   let zoomed = false;
+  const shown = new Set<SVGTextElement>(); // the major labels the site() steps so far showed
   const arcs = new Map<string, SVGPathElement>();
   const makeArc = (fromId: string, toId: string) => {
     const [a, b] = [get(fromId), get(toId)];
@@ -144,8 +154,10 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
     draw: (tl) => tl.fromTo(land, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 2.4, ease: "power1.inOut" }),
     site(tl, id) {
       const s = get(id);
-      if (s)
-        tl.fromTo(s.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)" });
+      if (!s) return;
+      tl.fromTo(s.dot, { autoAlpha: 0, scale: 0 }, { autoAlpha: 1, scale: 1, duration: motion.step, ease: "back.out(2)" });
+      if (s.major && !zoomed) tl.to(s.major, { autoAlpha: 1, duration: motion.step }, "<");
+      if (s.major) shown.add(s.major);
     },
     arc(tl, fromId, toId, at) {
       // An arc not declared in opts.arcs is created here, while the timeline is built at load,
@@ -165,6 +177,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       const others = [...sites.values()].filter((o) => o !== s).flatMap((o) => (o.label ? [o.label] : []));
       tl.to(s.dot, { autoAlpha: 1, scale: 1, duration: 0.3 });
       if (others.length) tl.to(others, { autoAlpha: 0, duration: 0.3 }, "<");
+      if (shown.size) tl.to([...shown], { autoAlpha: 0, duration: 0.3 }, "<"); // world-size labels would be 4 times as big
       const [x, y] = [ctx.rect.x + s.at[0], ctx.rect.y + s.at[1]];
       ctx.camera.to(tl, { x: x - ZOOM.w / 2, y: y - ZOOM.h / 2, ...ZOOM }, { at: "<" });
       strokes(tl, STROKE.zoom);
@@ -176,6 +189,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       if (labels.length) tl.to(labels, { autoAlpha: 0, duration: 0.3 });
       ctx.camera.to(tl, ctx.rect, { at: "<" });
       strokes(tl, STROKE.world);
+      if (shown.size) tl.to([...shown], { autoAlpha: 1, duration: motion.step });
       zoomed = false;
     },
   };

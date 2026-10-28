@@ -68,3 +68,26 @@ test('drag moves the element with the pointer to the target', async () => {
     await browser.close()
   }
 }, 90_000)
+
+test('scroll moves the content up inside its window, the pointer on the window', async () => {
+  const browser = await chromium.launch()
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+    const at = async (step: number) => {
+      await page.goto(`${inject('BASE_URL')}/?fixture=fx-pointer#/a/scroll/${step}`)
+      await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+      await settle(page)
+      return page.evaluate(() => {
+        const content = document.querySelector<HTMLElement>('[data-scene="scroll"] > div:not([data-k-pointer]) > div')!
+        const [view, inner, tip] = [content.parentElement!, content, document.querySelector('[data-scene="scroll"] [data-k-pointer]')!].map((e) => e.getBoundingClientRect())
+        return { by: Math.round(view.top + 3 - inner.top), tip: { x: Math.round(tip.x), y: Math.round(tip.y) }, mid: { x: Math.round(view.x + view.width / 2), y: Math.round(view.y + view.height / 2) } }
+      })
+    }
+    const one = await at(2)
+    expect(one.by).toBe(300)
+    expect(one.tip).toEqual(one.mid)
+    expect((await at(3)).by).toBe(500)
+  } finally {
+    await browser.close()
+  }
+}, 90_000)

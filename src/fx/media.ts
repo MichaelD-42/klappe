@@ -39,8 +39,8 @@ export interface VideoOpts {
   title: string;
   rect?: Rect; // default: the full scene frame, cropped to cover, with no frame or caption
   fallback?: string; // an image href in media/, shown instead of an online video when there is no network
-  autoplay?: boolean; // a YouTube or Vimeo player starts when its step arrives; default: the viewer starts it
-  muted?: boolean; // with autoplay: start without sound (default true); false asks for sound, which a browser may block
+  autoplay?: boolean; // a YouTube or Vimeo player starts when its step arrives (default true); false: the viewer starts it
+  muted?: boolean; // a starting player has no sound (default true); false asks for sound, which a browser may block
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -233,18 +233,26 @@ export function embed(href: string): string | null {
   return vi ? `https://player.vimeo.com/video/${vi[1]}` : null;
 }
 
-export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
+// The step still takes a beat, so a play step on a video that cannot play is not an empty step.
+const beat: StepAdder = (tl) => void tl.set({}, {}, tl.duration() + 0.4);
+
+export interface VideoHandle {
+  show: StepAdder; // fades the box in; a local file, or an embed with autoplay, starts on this step
+  play: StepAdder; // starts the video on this step instead of on show's: the box waits on its poster until then
+}
+
+export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
   const { href, title } = opts;
   const full = !opts.rect;
   const rect = opts.rect ?? { x: 0, y: 0, w: ctx.rect.w, h: ctx.rect.h };
   const shape = full ? rect : fit(rect);
   const online = /^https?:\/\//.test(href);
   const src = online ? href : ctx.files.media[key(href)];
-  if (src === undefined) return fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${key(href)} — ${title}`));
+  if (src === undefined) return { ...fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${key(href)} — ${title}`)), play: beat };
   const frame = embed(href);
   // A video host's page that is not one video (a channel, a playlist page) cannot play in a box.
   if (online && !frame && VIDEO_HOST.test(new URL(href).hostname))
-    return fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${href} has no video id; link one video — ${title}`));
+    return { ...fade(missing(ctx, shape, t("videoMissing", ctx.deck.lang), `${href} has no video id; link one video — ${title}`)), play: beat };
   // A border and a caption, so the box reads as a video even when it cannot load (offline). A full frame has neither.
   const area = full ? rect : { ...rect, h: rect.h - CAPTION };
   const b = box(ctx, full ? rect : fit(area), "#000"); // black letterbox bars
@@ -275,11 +283,12 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
     Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" });
     caption.textContent = t("videoOffline", ctx.deck.lang);
     b.append(img, caption);
-    return fade(b);
+    return { ...fade(b), play: beat };
   }
   if (offline) ctx.problem(`${t("videoOffline", ctx.deck.lang)}: ${title}` + (opts.fallback ? ` (${t("imageMissing", ctx.deck.lang)}: ${key(opts.fallback)})` : ""));
-  // Muted by default: a browser may block an embed that starts with sound.
-  const auto = frame && opts.autoplay ? `${frame}?autoplay=1&${frame.includes("vimeo") ? "muted" : "mute"}=${opts.muted === false ? 0 : 1}` : undefined;
+  // Muted by default: a browser may block an embed that starts with sound. A play step can start any embed.
+  const autoplay = opts.autoplay !== false;
+  const auto = frame ? `${frame}?autoplay=1&${frame.includes("vimeo") ? "muted" : "mute"}=${opts.muted === false ? 0 : 1}` : undefined;
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;
@@ -287,7 +296,7 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   el.setAttribute("data-k-ignore", ""); // playback is decoration outside the timeline
   if (el instanceof HTMLIFrameElement) {
     el.src = frame!;
-    el.allow = auto ? "autoplay; fullscreen; picture-in-picture" : "fullscreen; picture-in-picture";
+    el.allow = autoplay ? "autoplay; fullscreen; picture-in-picture" : "fullscreen; picture-in-picture";
     el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
     // The fallback still (or an empty box) holds the player's place; the player replaces it, so the caption
@@ -319,33 +328,53 @@ export function video(ctx: Ctx, opts: VideoOpts): { show: StepAdder } {
   if (!frame) b.append(el);
   if (!frame && !full) b.append(caption);
 
+  // When playback starts: on show's step, or on a play step's. Steps are built before any is played, so the
+  // listener reads the last value.
+  let start: number | undefined;
+  let cued = false; // a play step owns the start
+  let armed = false;
+  const arm = (tl: gsap.core.Timeline) => {
+    if (armed) return;
+    armed = true;
+    // An embed starts by loading its autoplay address and stops by loading its plain one: no player API needed.
+    const halt = () => (el instanceof HTMLIFrameElement ? el.getAttribute("src") === auto && (el.src = frame!) : el.pause());
+    let wait: (() => void) | undefined;
+    const stop = () => {
+      if (wait) gsap.ticker.remove(wait);
+      wait = undefined;
+    };
+    ctx.onStep(({ play, span }) => {
+      stop();
+      halt();
+      const at = start!;
+      if (!play || !span || !(span[0] <= at && at < span[1])) return;
+      // The step's tween starts at `at`; a long transition holds the timeline before that.
+      wait = () => {
+        if (tl.time() <= at) return;
+        stop();
+        if (el instanceof HTMLIFrameElement) el.src = auto!;
+        else el.play().catch(() => {}); // blocked or broken file: the box stays on the poster frame
+      };
+      gsap.ticker.add(wait);
+    });
+  };
+
   return {
     show(tl) {
-      const start = tl.duration(); // after the step's padding, so this step spans [start - pad, ...]
+      const at = tl.duration(); // after the step's padding, so this step spans [at - pad, ...]
       // A full frame fades in over the camera flight, slowly at first, like a full-frame picture.
       if (full) tl.to(b, { autoAlpha: 1, duration: motion.camera, ease: "power2.in" }, tl.labels[STEP_LABEL]);
       else tl.to(b, { autoAlpha: 1, duration: motion.step });
-      if (el instanceof HTMLIFrameElement && !auto) return; // the viewer starts an embedded player
-      // An embed starts by loading its autoplay address and stops by loading its plain one: no player API needed.
-      const halt = () => (el instanceof HTMLIFrameElement ? el.getAttribute("src") === auto && (el.src = frame!) : el.pause());
-      let wait: (() => void) | undefined;
-      const stop = () => {
-        if (wait) gsap.ticker.remove(wait);
-        wait = undefined;
-      };
-      ctx.onStep(({ play, span }) => {
-        stop();
-        halt();
-        if (!play || !span || !(span[0] <= start && start < span[1])) return;
-        // The box starts to show at `start`; a long transition holds the timeline before that.
-        wait = () => {
-          if (tl.time() <= start) return;
-          stop();
-          if (el instanceof HTMLIFrameElement) el.src = auto!;
-          else el.play().catch(() => {}); // blocked or broken file: the box stays on the poster frame
-        };
-        gsap.ticker.add(wait);
-      });
+      if (cued || (el instanceof HTMLIFrameElement && !autoplay)) return; // the viewer starts an embedded player
+      start = at;
+      arm(tl);
+    },
+    play(tl) {
+      cued = true;
+      start = tl.duration();
+      if (el instanceof HTMLIFrameElement) el.allow = "autoplay; fullscreen; picture-in-picture";
+      arm(tl);
+      beat(tl);
     },
   };
 }

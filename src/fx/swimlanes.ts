@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn } from "./draw";
+import { detour, spread } from "./route";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
@@ -76,13 +77,13 @@ function layout(opts: SwimlanesOpts) {
   return { bands, boxes, labelW, laneH };
 }
 
-// Every link's route with its own port on each face and its own middle run, so no two links share a
-// segment or an end point (copied from flow.ts's flowRoutes).
+// Every link's route with its own port on each face and its own middle runs, so no two links share a
+// segment or an end point, round any task in its way (copied from flow.ts's flowRoutes).
 export function swimlaneRoutes(opts: SwimlanesOpts): { from: string; to: string; points: Pt[] }[] {
-  const { boxes } = layout(opts);
+  const { bands, boxes, labelW } = layout(opts);
   const box = (id: string) => boxes.get(id)!;
   const mid = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
-  const ports = opts.links.map(() => ({ out: 0, in: 0, mid: 0 }));
+  const ports = opts.links.map(() => ({ out: 0, in: 0 }));
   const faces = new Map<string, { i: number; role: "out" | "in"; at: number; extent: number }[]>();
   opts.links.forEach((e, i) => {
     const [a, b] = [box(e.from), box(e.to)];
@@ -102,16 +103,17 @@ export function swimlaneRoutes(opts: SwimlanesOpts): { from: string; to: string;
     const step = Math.min(SPREAD, (users[0].extent * 0.6) / users.length);
     users.forEach((u, k) => (ports[u.i][u.role] = (k - (users.length - 1) / 2) * step));
   }
-  const route = () => opts.links.map((e, i) => edgePoints(box(e.from), box(e.to), ports[i]));
-  const runs = new Map<string, number[]>();
-  route().forEach((pts, i) => {
-    if (pts.length === 4) {
-      const k = pts[1].x === pts[2].x ? `v${pts[1].x}` : `h${pts[1].y}`;
-      runs.set(k, [...(runs.get(k) ?? []), i]);
-    }
+  // The free channels: between the task columns, and the lane borders.
+  const cols = Math.max(0, ...opts.tasks.map((t) => t.col)) + 1;
+  const cell = (opts.w - labelW) / cols;
+  const xs = Array.from({ length: cols + 1 }, (_, c) => opts.x + labelW + c * cell);
+  const ys = [...[...bands.values()].map((b) => b.y), opts.y + opts.h];
+  const routes = opts.links.map((e, i) => {
+    const [a, b] = [box(e.from), box(e.to)];
+    return detour(edgePoints(a, b, ports[i]), [...boxes.values()].filter((r) => r !== a && r !== b), xs, ys);
   });
-  for (const ids of runs.values()) ids.forEach((i, k) => (ports[i].mid = (k - (ids.length - 1) / 2) * LANE));
-  return route().map((points, i) => ({ from: opts.links[i].from, to: opts.links[i].to, points }));
+  spread(routes, LANE);
+  return routes.map((points, i) => ({ from: opts.links[i].from, to: opts.links[i].to, points }));
 }
 
 // Horizontal lanes with their label on the left, tasks as boxes, links as arrows. walk() moves a token between tasks.

@@ -24,7 +24,7 @@ export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups
   | { kind: "console"; command: number } // index of the "$ " line among the commands
   | { kind: "chat"; message: number } // index of the message among the chat fence's non-empty lines
-  | { kind: "check"; done: boolean }
+  | { kind: "check"; done: boolean; fail?: boolean } // fail: "- [!]", crossed on its step
   | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean; icon?: string }[] };
 export interface StepDoc {
   text: string;
@@ -41,7 +41,7 @@ export interface SceneDoc {
   notes: string;
   steps: StepDoc[];
   // The scene's one code or console block. groups: the highlight groups, line lists, 1-based.
-  fence?: { lang: string; src: string; groups: number[][] };
+  fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
 }
 export interface SectionDoc {
   id: string;

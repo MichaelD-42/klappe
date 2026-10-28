@@ -22,5 +22,8 @@ export const ALLOW = [
   'loadKatex', // formula: KaTeX's one-time load, engine only
   'fishboneLayout', // fishbone: the bone layout, for its unit test
   'mindMapLayout', // mind map: the radial layout, for its unit test
+  'layerStackLayout', // layer stack: the slab geometry, for its unit test
+  'depLayout', 'depReach', // dependency graph: the columns and the trace's hops, for their unit test
+  'calendarLayout', 'calendarSpan', // calendar: the month grid and a span's week bars, for their unit test
   'magicBox', 'magicFit', 'transitionMagicMove', // magic-move: the transition (covered by its kind); the rect and pose maths, for its unit test
 ]

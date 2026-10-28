@@ -20,6 +20,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Show code, one part at a time; code changing | a fence with `{1-2\|4}` groups in `scene.md`; `code` with `diff` | [code](klappe/docs/reference/elements/code.md) | `240-code/10-walkthrough`, `240-code/20-diff` |
 | Show a command and its output | a ```` ```console ```` fence; `terminal` in `scene.ts` | [terminal](klappe/docs/reference/elements/terminal.md) | `250-terminal/10-replay` |
 | Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
+| Numbered places on a picture, explained one per step | `callout` with `focus` on your own marks | [callout](klappe/docs/reference/elements/callout.md#hotspots) | `260-callout/30-hotspots` |
 | Walk through a screen: move, click, type, drag (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in`, `239-pointer/20-drag` |
 | Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
 | Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
@@ -40,6 +41,9 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A loop of phases (PDCA) with the current one lit; the V model, each level linked to its test | `cycle`; `vModel` | [cycle](klappe/docs/reference/elements/cycle.md) | `296-cycles/10-pdca`, `296-cycles/20-v-model` |
 | Find a root cause: the problem in a head, cause bones built one per step, the root cause lit, `light(i)` | `fishbone` | [fishbone](klappe/docs/reference/elements/fishbone.md) | `296-cycles/40-fishbone` |
 | Where a process training stands, "step 2 of 5": numbered chevrons with the current stage lit, `to(i)` | `processSteps` | [processSteps](klappe/docs/reference/elements/processSteps.md) | `296-cycles/30-stage-bar` |
+| A system in layers, whole, then pulled apart to talk through each: `apart`, `light(i)`, `together` | `layerStack` | [layerStack](klappe/docs/reference/elements/layerStack.md) | `297-venn-pyramid/40-layer-stack` |
+| What depends on what, laid out for you; a dependency chain or a blast radius lit hop by hop | `depGraph` | [depGraph](klappe/docs/reference/elements/depGraph.md) | `270-flow/70-dependencies` |
+| A plan in days: deadlines and sprints on a month grid, `mark(date)` and `span(from, to)` | `calendar` | [calendar](klappe/docs/reference/elements/calendar.md) | `305-roadmap/40-calendar` |
 | What two or three groups share, one overlap at a time | `venn` | [venn](klappe/docs/reference/elements/venn.md) | `297-venn-pyramid/10-overlaps` |
 | A layered model from the base up (a test pyramid, a capability stack, a funnel-shaped stack with `shape: "inverted"`); light one layer again, `light(id)` | `pyramid` | [pyramid](klappe/docs/reference/elements/pyramid.md) | `297-venn-pyramid/20-layers`, `297-venn-pyramid/30-hiring` |
 | Compare options feature by feature, one row at a time | `compareTable` | [compareTable](klappe/docs/reference/elements/compareTable.md) | `298-table-card/10-compare` |
@@ -65,7 +69,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
 | An icon, or an icon on a tile | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
-| A clip; full screen with no `rect`; running as its scene arrives with `autoplay: true` (muted unless `muted: false`) | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
+| A clip; full screen with no `rect`; it plays on its step (muted unless `muted: false`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
 | Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |

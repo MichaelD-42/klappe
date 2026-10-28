@@ -44,16 +44,18 @@ test('tick adders built out of step order light the box of the latest tick only'
 }, 90_000)
 
 // fail(i) crosses the box in --k-bad and brightens the text; on a done item the check goes. tick still checks.
-test('fail(i) draws a cross in --k-bad instead of a check', async () => {
+// A Markdown "- [!]" item is the same as fail(i) on its step.
+for (const scene of ['fail', 'markdown'])
+test(`fail(i) draws a cross in --k-bad instead of a check (${scene})`, async () => {
   const browser = await chromium.launch()
   try {
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
     const marks = async (step: number) => {
-      await page.goto(`${inject('BASE_URL')}/?fixture=fx-checklist#/a/fail/${step}`)
+      await page.goto(`${inject('BASE_URL')}/?fixture=fx-checklist#/a/${scene}/${step}`)
       await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
       await settle(page)
-      return page.evaluate(() => {
-        const root = document.querySelector<HTMLElement>('div[data-scene="fail"]')!
+      return page.evaluate((s) => {
+        const root = document.querySelector<HTMLElement>(`div[data-scene="${s}"]`)!
         const probe = root.appendChild(document.createElement('i'))
         const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
         const tk = { ok: token('--k-ok'), bad: token('--k-bad') }
@@ -64,8 +66,9 @@ test('fail(i) draws a cross in --k-bad instead of a check', async () => {
             .map((p) => (getComputedStyle(p).stroke === tk.ok ? 'check' : getComputedStyle(p).stroke === tk.bad ? 'cross' : '?'))
             .join(''),
         )
-      })
+      }, scene)
     }
+    if (scene === 'markdown') return expect(await marks(3)).toEqual(['check', 'check', 'cross'])
     expect(await marks(3)).toEqual(['check', 'check', 'cross'])
     expect(await marks(4)).toEqual(['cross', 'check', 'cross'])
   } finally {

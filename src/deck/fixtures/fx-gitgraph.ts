@@ -41,6 +41,21 @@ const pick: SceneModule = {
   steps: release.map(() => (tl: gsap.core.Timeline, r: R) => r.g.next(tl)),
 };
 
+// head: two tags on one commit stack; HEAD sits over them, then moves with a checkout and a commit.
+const heads: GitOp[] = [
+  { commit: "main", label: "init" },
+  { tag: "v1.0", on: "main" },
+  { tag: "lts", on: "main" },
+  { checkout: "main" },
+  { branch: "feature", from: "main" },
+  { checkout: "feature" },
+  { commit: "feature", label: "work" },
+];
+const head: SceneModule = {
+  build: (ctx) => ({ g: gitGraph(ctx, { ops: heads, ...rect }) }),
+  steps: heads.map(() => (tl: gsap.core.Timeline, r: R) => r.g.next(tl)),
+};
+
 export default () =>
   assembleDeck(
     {
@@ -49,6 +64,7 @@ export default () =>
       "sections/10-a/10-steps/scene.md": `## Steps\n\n${ops.map((_, i) => `- Op ${i + 1}.\n`).join("")}`,
       "sections/10-a/20-all/scene.md": "## All\n\n- All at once.\n- One too many.\n",
       "sections/10-a/30-pick/scene.md": `## Pick\n\n${release.map((_, i) => `- Op ${i + 1}.\n`).join("")}`,
+      "sections/10-a/40-head/scene.md": `## Head\n\n${heads.map((_, i) => `- Op ${i + 1}.\n`).join("")}`,
     },
-    { "sections/10-a/10-steps/scene.ts": steps, "sections/10-a/20-all/scene.ts": all, "sections/10-a/30-pick/scene.ts": pick },
+    { "sections/10-a/10-steps/scene.ts": steps, "sections/10-a/20-all/scene.ts": all, "sections/10-a/30-pick/scene.ts": pick, "sections/10-a/40-head/scene.ts": head },
   );

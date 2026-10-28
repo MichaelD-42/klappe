@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
-import { measure } from "./measure";
+import { atEnd, measure } from "./measure";
 import { motion } from "../theme";
-import type { Ctx, StepAdder } from "../types";
+import type { Ctx, Rect, StepAdder } from "../types";
 
 export interface GlowOpts {
   color?: string; // a theme token name; default "--k-accent"
@@ -16,12 +16,17 @@ const SVG = "http://www.w3.org/2000/svg";
 const PAD = 16; // scene units between the target and the glow or ring box
 const BREATH_MS = 1400; // one half of a breath: bright to dim
 
-// An absolute box PAD around the target, in ctx.html. Measured when the first step is added (see measure).
-function place(ctx: Ctx, box: HTMLElement, target: Element, what: string): boolean {
-  const r = measure(ctx, target);
-  if (!r) return (ctx.problem(`${what}: target has no size to measure`), false);
-  Object.assign(box.style, { left: `${r.x - PAD}px`, top: `${r.y - PAD}px`, width: `${r.w + 2 * PAD}px`, height: `${r.h + 2 * PAD}px` });
-  return true;
+// An absolute box PAD around the target, in ctx.html, where the steps added so far leave the target (see atEnd).
+function around(ctx: Ctx, tl: gsap.core.Timeline, target: Element): Rect | undefined {
+  const r = atEnd(tl, () => measure(ctx, target));
+  return r && { x: r.x - PAD, y: r.y - PAD, w: r.w + 2 * PAD, h: r.h + 2 * PAD };
+}
+const css = (r: Rect) => ({ left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
+function place(ctx: Ctx, tl: gsap.core.Timeline, box: HTMLElement, target: Element, what: string): Rect | undefined {
+  const r = around(ctx, tl, target);
+  if (!r) return void ctx.problem(`${what}: target has no size to measure`);
+  Object.assign(box.style, css(r));
+  return r;
 }
 
 // A copy of an SVG target in the glow colour, without ids, classes or the draw-on's dash, so selectors and the draw skip it.
@@ -96,11 +101,19 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
     });
   };
 
-  let placed = false;
+  let placed: (Rect | undefined)[] | undefined; // each HTML box's place after the steps added so far
   let cur = { s: 0, l: 0 }; // the steady and the breathing layer's opacity at the end of the steps added so far
   const go = (s: number, l: number): StepAdder => (tl) => {
-    if (!placed) for (const [box, el] of boxes) place(ctx, box, el, "glow");
-    placed = true;
+    // Placed at the first step; a later step moves a box to a target an earlier step moved.
+    if (!placed) placed = boxes.map(([box, el]) => place(ctx, tl, box, el, "glow"));
+    else
+      boxes.forEach(([box, el], i) => {
+        const was = placed![i];
+        const r = was && around(ctx, tl, el);
+        if (!was || !r || (r.x === was.x && r.y === was.y && r.w === was.w && r.h === was.h)) return;
+        tl.to(box, { ...css(r), duration: motion.step }, tl.duration());
+        placed![i] = r;
+      });
     // immediateRender off: a later step's start values must not apply at load.
     tl.fromTo(steady, { autoAlpha: cur.s }, { autoAlpha: s, duration: motion.step, immediateRender: false });
     const l0 = cur.l;
@@ -126,7 +139,7 @@ export function pulse(ctx: Ctx, target: Element, opts: { color?: string } = {}):
   });
   gsap.set(ring, { autoAlpha: 0, scale: 1 });
   return (tl) => {
-    if (!place(ctx, ring, target, "pulse")) return;
+    if (!place(ctx, tl, ring, target, "pulse")) return;
     tl.fromTo(ring, { autoAlpha: 1, scale: 1 }, { autoAlpha: 0, scale: 1.3, duration: motion.step * 1.2, ease: "power2.out", immediateRender: false });
   };
 }

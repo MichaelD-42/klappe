@@ -305,3 +305,23 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: `agenda` rows need times and stack vertically; `decisionTree` needs an edge label on every link and builds by level, top down. A mode would have bent both APIs for one layout each. They reuse the house patterns instead: the accent overlay and step-order bookkeeping of `pyramid`, a pure layout function with a unit test.
 - **The heatmap's `cell()` moves one outline, and the treemap's tiles stay in data order.**
   - Why: one outline is one element to tween, from where the steps before left it, so seek equals play. Data order keeps `bars` and `bar(i)` meaning the same row for every chart type; the layout places the tiles largest first.
+
+## 2026-10-28 (video on a clicker)
+
+- **An embedded YouTube or Vimeo player starts on its step by default; `autoplay: false` opts out.**
+  - Why: a presenter with only a clicker cannot click into a player, and a local file already played on its step. The step key is a user gesture, so the browser lets the muted start through. Muted stays the default: a start with sound may still be blocked, and then nothing plays at all.
+- **`play(tl)` is a step adder on the video handle, not an option.**
+  - Why: "show it, talk, then start it" is one more click, which is a step. The handle keeps one start time that the last `show` or `play` set, read when the steps play, so there is still one listener and one stop rule: any step change stops the video.
+
+## 2026-10-28 (effect improvements)
+
+- **`callout`, `glow` and `pulse` measure their target at the timeline's current end (`atEnd` in `measure.ts`), as shatter does (R12).**
+  - Why: a target an earlier step moved (a code line after `diff`, a box tweened aside) was measured where it sat at load. Seeking to the end and back is pure: every effect writes from progress.
+- **Arrow routing round boxes lives in `src/fx/route.ts`, shared by `flow` and `swimlanes`, though the two otherwise keep copies of each other's code.**
+  - Why: the detour and lane spreading are one algorithm on grid channels; two copies would drift. It is not an element, so the "no imports across element files" rule holds.
+- **The walk counts text an ancestor's overflow cuts away whole as unseen.**
+  - Why: a page scrolled in its window (`pointer.scroll`) has text below the window that nobody sees; flagging it as outside the stage was a false positive. Text cut in part is still a clipped-text look failure.
+- **`pointer` has no hover; an HTML glow still covers SVG lines next to its target.**
+  - Why: a hover state belongs to the product shown (a tint, a tooltip, a menu), so a generic one would mislead. The glow sits in the HTML layer above `ctx.svg`; a blend mode would only fix it on dark themes.
+- **A Markdown failed check is `- [!]`.**
+  - Why: GitHub task lists have no fail state; `[!]` reads as "problem" and leaves `[ ]`, `[x]` untouched.

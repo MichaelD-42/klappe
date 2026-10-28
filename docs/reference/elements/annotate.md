@@ -39,7 +39,7 @@ steps: [(tl, r) => r.ring.show(tl), (tl, r) => r.arrow.show(tl)],
 - An element target is measured when `show` is added: it must be in its final place by then. One with no size reports `annotate: <kind> target has no size to measure`.
 - A ring on a code line (`code`'s `line(n)` or a span in it) flattens to the line gap and widens instead, so it stays off the lines above and below. Elsewhere a ring is as tall as its pad makes it: on dense prose it can reach the lines around it, so use `box`, `underline` or `strike` with a small `pad` there.
 - A target that wraps: `underline`, `strike` and `highlight` follow each line; `circle`, `box`, `arrow`, `bracket` and `cross` take the whole. To bracket several elements, put them in one block and mark that (`#/draw/annotate/8`).
-- A highlight paints behind its target's top-level element in the scene. That element must be positioned (`position: absolute` or `relative`); scene text already is. On an element with its own background, such as a card, the band is hidden. On a rect target it goes behind everything in the scene.
+- A highlight paints behind its target's top-level element in the scene. That element must be positioned (`position: absolute` or `relative`); scene text already is. When the target or a box around it paints its own background, such as a card, the band goes inside that box instead, over its background and under its content (the box gets `isolation: isolate`). On a rect target it goes behind everything in the scene.
 - `--k-fg` on a highlight holds 6.3:1 or more in every built-in theme with the default `--k-accent`; with another `color`, or a custom theme with a very bright accent, check it yourself.
 
 ## `scribble`

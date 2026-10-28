@@ -7,6 +7,7 @@ export type StickyNotesOpts = {
   notes: { id: string; text: string }[];
   groups?: { id: string; label: string }[];
   seed?: number; // picks the scatter; default 1
+  compact?: boolean; // a note that leaves a group: the ones after it move up a slot; default: they keep their slots
 } & Rect;
 export interface StickyNotesHandle {
   show(ids?: string[]): StepAdder;
@@ -250,7 +251,9 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
           tl.fromTo(labelEls[g], { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, immediateRender: false }, t);
         }
         for (const id of ids) {
-          if (where.get(id)?.g === g) continue; // already in this group: it stays put
+          const from = where.get(id);
+          if (from?.g === g) continue; // already in this group: it stays put
+          if (opts.compact && from?.g !== undefined) for (const w of where.values()) if (w.g === from.g && w.k > from.k) w.k--;
           const taken = new Set([...where].filter(([o, w]) => o !== id && w.g === g).map(([, w]) => w.k));
           let k = 0;
           while (taken.has(k)) k++;

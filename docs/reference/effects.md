@@ -52,7 +52,7 @@ The first column labels the rows; every later column with a number in any row is
 - Text is 22 scene units (15.6 px at 1366). A `# source:` comment line in the CSV goes to the speaker notes.
 - Scatter and bubble names that would touch move apart up and down, in each period (`tagSpread`); a name can then sit a little off its dot's line. Without `group` every dot is `--k-series-1` (a bubble at 75 % opacity with a `--k-bg` edge): colour carries no meaning there.
 - A radar reads 3 to 12 dimensions and up to 2 series; a heatmap up to 24 rows and 24 columns; a treemap up to 40 tiles (DATA ERROR past these). A treemap tile too small for its name shows none: merge the small ones into Other.
-- A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason). A funnel reveals all stages in one `grow` step, not one stage per step.
+- A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason).
 
 ## `kpi`, `waffle`, `progress`
 
@@ -245,7 +245,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `rect` | `{ x, y, w, h }` | required | the whole globe, fitted into this rect |
-| `sites` | `{ id, label?, lon, lat }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out. Without `label` the map draws no text for it, for a deck that places its own labels |
+| `sites` | `{ id, label?, lon, lat, major? }[]` | required | places; a site without a finite `lon` and `lat` is a deck problem and left out. Without `label` the map draws no text for it, for a deck that places its own labels. `major: true` gives its label a second, larger form that reads at world zoom (24 units, 17 px at 1366, on a `--k-bg` halo): it shows with `site()`, hides while `zoomTo` is in and comes back with `world()`. Keep it to a few sites far apart: the labels are not moved apart. Catalog: `#/map/world/2` |
 | `arcs` | `{ from, to }[]` | none | arcs created at load; `arc` then only draws them |
 
 ### Step adders
@@ -263,7 +263,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 
 ### Limits
 
-- Labels are 8 map units, which reads only at the `zoomTo` zoom (22.8 px at 1366); at world zoom they are hidden.
+- Labels are 8 map units, which reads only at the `zoomTo` zoom (22.8 px at 1366); at world zoom they are hidden, except the larger label of a `major` site.
 - An unknown site id is a deck problem (`worldMap: unknown site '<id>'`).
 
 ## `fitProjection`
@@ -530,10 +530,12 @@ steps: [(tl, v) => v.show(tl)],
 | `title` | string | required | the caption under the box; the player's title in a full frame |
 | `rect` | `{ x, y, w, h }` | the full scene frame | the area; the box is the largest 16:9 (later the clip's own ratio) inside it. Without `rect` the video fills the scene frame, cropped to cover, with no border or caption, and fades in over the camera flight like a full-frame picture (catalog `#/media/full-frame/1`) |
 | `fallback` | string | none | an image href in `media/`, shown instead of an online video when there is no network; also the placeholder until the player loads; `?offline=1` forces it; offline without a usable fallback reports a deck problem |
-| `autoplay` | boolean | `false` | a YouTube or Vimeo player starts when its step arrives; when the viewer leaves the step it stops and shows its thumbnail again (catalog `#/media/youtube-autoplay/1`). Without it the viewer starts the player. A local file plays on its step either way. Both start under reduced motion too |
-| `muted` | boolean | `true` | with `autoplay` only: the player starts without sound. `false` asks for sound; a browser may block that, and the viewer then starts the player. Local files ignore `muted` |
+| `autoplay` | boolean | `true` | a YouTube or Vimeo player starts when its step arrives, as a local file does, so a clicker is enough; when the viewer leaves the step it stops and shows its thumbnail again. A Markdown video link plays this way. `false`: the viewer starts the player with the mouse. Both start under reduced motion too |
+| `muted` | boolean | `true` | an embedded player starts without sound. `false` asks for sound; a browser may block that, and the viewer then starts the player. Local files ignore `muted` |
 
-`show(tl)` fades the box in. A local file plays when its step arrives and pauses when the viewer leaves; an embedded player is started by the viewer (or by its step, with `autoplay`), and a click into it hands the keyboard back to klappe. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
+`show(tl)` fades the box in. The video plays when its step arrives and pauses (an embed: shows its thumbnail) when the viewer leaves; with `autoplay: false` the viewer starts an embedded player, and a click into it hands the keyboard back to klappe.
+
+`play(tl)` starts the video on its own step instead: the box shows on `show`'s step and waits on its poster, the play step starts it, the step after stops it (catalog `#/media/youtube-autoplay/2`). It starts an embed with `autoplay: false` too. On a video that cannot play (missing, offline) it holds a beat. A missing local file shows VIDEO MISSING and a deck problem. An online link needs the network, which the speaker notes say.
 
 ## `wipe`
 

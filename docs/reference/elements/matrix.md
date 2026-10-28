@@ -35,6 +35,7 @@ steps: [
 | `axes` | `{ x, y }` | required | the axis titles, 26 px: `x` under the plot, `y` up its left side. The axes point from low (bottom left) to high |
 | `quadrants` | `{ tl?, tr?, bl?, br? }` | none | quadrant names, one line, 24 px in `--k-muted`, at the quadrant's top, 32 px in from its side (left-aligned on the left, right-aligned on the right) |
 | `items` | `{ id, label }[]` | required | the items; all are built hidden and appear when first placed |
+| `compact` | boolean | `false` | when an item leaves a quadrant, the items after it there move up one slot each, so the quadrant has no gap |
 
 ### Step adders
 
@@ -47,7 +48,7 @@ steps: [
 ### Limits
 
 - Each quadrant has a fixed grid of slots, two columns filled row by row under the name band, 32 px in from the quadrant sides like the names: 6 per quadrant at the catalog's 1600×760. Placing one more shows `matrix: quadrant "<q>" is full` and puts the item on the last slot, over the item there.
-- Items that stay keep their slot: when one leaves, the others do not close the gap. The next item placed in that quadrant fills it.
+- Without `compact`, items that stay keep their slot: when one leaves, the others do not close the gap. The next item placed in that quadrant fills it.
 - Item labels wrap and shrink from 26 px to the 20 px floor. One that still needs more than 2 lines shows `matrix: label of "<id>" too long`; a quadrant name wider than its quadrant at 20 px shows `matrix: name of quadrant "<q>" too long`. The text is not cut. Fitting happens when the first step is added.
 - Axis titles keep one line and shrink from 26 px to the 20 px floor; one still too long shows `matrix: x axis title too long` (or `y`). Fitting happens when the first step is added.
 

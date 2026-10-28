@@ -66,8 +66,8 @@ export default scene;
 
 - **Markdown that animates:** bullets that step in, code walkthroughs, console sessions that type themselves, checklists, agendas, shout-outs (`### Question?`), pictures, video and charts from a CSV link.
 - **Charts and numbers:** bar, stacked, line, waterfall, timeline, donut, slope and bar race; KPI tiles with a sparkline, waffle, progress ring. Each reads a `data/` file and puts its source in the speaker notes.
-- **Diagrams:** flow with travelling packets, sequence, swimlanes, decision tree, world map with arcs, line art that draws itself, Lucide icons.
-- **Pointing:** callout, spotlight, hand-drawn marks (ring, underline, frame, strike, arrow).
+- **Diagrams:** flow with travelling packets, a dependency graph laid out for you, sequence, swimlanes, decision tree, git history, mind map, fishbone, layer stack, a month calendar, world map with arcs, line art that draws itself, Lucide icons.
+- **Pointing:** callout, numbered hotspots on a picture, spotlight, focus, a mouse pointer that clicks, types, drags and scrolls, hand-drawn marks (ring, underline, frame, strike, arrow).
 - **Effects:** shatter, CRT, zoom and blackout transitions; shout-out, swarm, morph, counters, a decoding line, before/after wipe, people figures, a QR code.
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
 - **Presenting:** speaker view, overview, section list, autoplay, exercise timers, deep links, and reduced motion respected (with a `?reducedmotion=0` override).
@@ -97,14 +97,23 @@ Open the deck full screen (F11) and press `N` for the speaker view in a second w
 
 | Key | Action |
 | --- | --- |
-| `→` `Space` `Enter`, click | next step |
-| `←` | previous step |
+| `→` `Space` `Enter` `Page Down`, click | next step (a presentation clicker sends these) |
+| `←` `Page Up` | previous step |
+| `Home` / `End` | first / last step |
 | `O` / `S` | overview / section list |
 | `N` | speaker view |
-| `A` | autoplay |
+| `R` | review window (dev server only) |
+| `A` | autoplay; any step key stops it |
 | `T` | start or pause the scene's timer |
+| `Esc` | close a panel |
+
+The deck window keeps the screen awake while it shows, and a video starts on its step, so a clicker is all you need.
 
 URL flags such as `?theme=bold`, `?autoplay=1` and `?selftest=walk` are in the [deck format](docs/reference/deck-format.md#url-flags).
+
+## Reviewing a deck
+
+Run the deck with `npm run dev` and press `R`: a review window opens beside it and follows the deck step by step. For each step it has a field for **Content** (text to correct), **Storytelling** (another effect, another storyline) and **Visuals**; what you type is saved as you type to `decks/<id>/review.md`. Then ask Claude Code to work through the review. It fixes each finding and marks it fixed with a line on what changed and the commit; in the window you **Approve** a fix, which removes the finding, or **Reopen** it with a note on what is still wrong. The status line counts the fixes waiting for you. See [review mode](docs/reference/deck-format.md#review-mode).
 
 ## Keeping klappe up to date
 
