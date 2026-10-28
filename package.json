@@ -22,6 +22,9 @@
   "author": "",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
   "bin": {
     "klappe": "bin/klappe.mjs"
   },

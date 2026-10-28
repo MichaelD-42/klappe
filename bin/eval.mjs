@@ -51,14 +51,17 @@ export function gradeSkill(dir, changed, expect) {
 }
 
 // pass@1 is the share of runs that passed, pass^k whether all k did. Recall and the false-block rate count reviewer
-// runs: expected FAIL cases that failed, and expected PASS cases that failed.
+// runs: expected FAIL cases that failed, and expected PASS cases that failed. Both count graded runs only; a run with
+// an error (Claude failed, or no verdict) counts in `errors` instead.
 export function summarize(suite, cases) {
+  const all = cases.flatMap((c) => c.runs)
   const rate = (runs) => ({ n: runs.length, k: runs.filter((r) => r.verdict === 'FAIL').length })
-  const reviewRuns = (v) => cases.filter((c) => c.expect.verdict === v).flatMap((c) => c.runs)
+  const reviewRuns = (v) => cases.filter((c) => c.expect.verdict === v).flatMap((c) => c.runs.filter((r) => !r.error))
   return {
     cases: cases.map((c) => ({ name: c.name, pass1: c.runs.filter((r) => r.pass).length / c.runs.length, passK: c.runs.every((r) => r.pass) })),
     ...(suite === 'reviewers' && { recall: rate(reviewRuns('FAIL')), falseBlock: rate(reviewRuns('PASS')) }),
-    cost: cases.flatMap((c) => c.runs).reduce((s, r) => s + (r.cost ?? 0), 0),
+    errors: all.filter((r) => r.error).length,
+    cost: all.reduce((s, r) => s + (r.cost ?? 0), 0),
   }
 }
 
@@ -82,6 +85,11 @@ async function runOnce(suite, c, rubrics) {
   const link = path.join(copy, 'node_modules')
   try {
     git(root, 'worktree', 'add', '--detach', copy, 'HEAD')
+  } catch (e) {
+    fs.rmSync(copy, { recursive: true, force: true })
+    return { pass: false, cost: 0, error: String(e.message ?? e) }
+  }
+  try {
     fs.symlinkSync(path.join(root, 'node_modules'), link, 'junction')
     const overlay = path.join(c.dir, 'overlay')
     if (fs.existsSync(overlay)) {
@@ -99,7 +107,10 @@ async function runOnce(suite, c, rubrics) {
     const args = ['-p', ...(c.agent ? ['--agent', c.agent] : []), '--output-format', 'json', '--max-turns', String(maxTurns), `--allowedTools=${tools}`, prompt]
     const out = claude(copy, args)
     if (out.isError) return { pass: false, cost: out.cost, error: `claude: ${out.text.slice(0, 500)}`, text: out.text }
-    if (suite === 'reviewers') return { ...gradeReview(out.text, c.expect, rubrics), cost: out.cost, text: out.text }
+    if (suite === 'reviewers') {
+      const g = gradeReview(out.text, c.expect, rubrics)
+      return { ...g, ...(!g.verdict && { error: `no verdict: ${g.problems.join('; ')}` }), cost: out.cost, text: out.text }
+    }
     git(copy, 'add', '-A')
     const changed = git(copy, 'diff', '--cached', '--name-only', '--no-renames', 'HEAD').split('\n').filter(Boolean)
     return { ...gradeSkill(copy, changed, c.expect), changed, cost: out.cost, text: out.text }
@@ -155,6 +166,7 @@ async function main(argv) {
   console.log('')
   for (const c of s.cases) console.log(`${c.name}: pass@1 ${c.pass1.toFixed(2)}, pass^${runs} ${c.passK ? 1 : 0}`)
   if (s.recall) console.log(`recall: ${pct(s.recall)}\nfalse-block rate: ${pct(s.falseBlock)}`)
+  console.log(`errors: ${s.errors}`)
   console.log(`cost: $${s.cost.toFixed(2)}`)
   const out = path.join(root, 'evals', 'results', `${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
   fs.mkdirSync(path.dirname(out), { recursive: true })

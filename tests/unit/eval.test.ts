@@ -17,7 +17,7 @@ const STUB = `import fs from 'node:fs'; import path from 'node:path'
 fs.writeFileSync(process.env.STUB_LOG, JSON.stringify({ argv: process.argv.slice(2), cwd: process.cwd() }))
 const w = process.env.STUB_WRITE
 if (w) { const p = w.slice(0, w.indexOf('=')), t = w.slice(w.indexOf('=') + 1); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, t) }
-console.log(JSON.stringify({ result: process.env.STUB_RESULT ?? '', total_cost_usd: 0.25, is_error: false, num_turns: 3 }))`;
+console.log(JSON.stringify({ result: process.env.STUB_RESULT ?? '', total_cost_usd: 0.25, is_error: !!process.env.STUB_IS_ERROR, num_turns: 3 }))`;
 
 let rubrics: any;
 let dir: string;
@@ -71,6 +71,17 @@ test('a skill case grades the files the run wrote', () => {
   expect(r.stdout).not.toContain('recall');
 }, 120_000);
 
+test('a failed Claude run and a report with no verdict count as errors, not in recall', () => {
+  for (const env of [{ STUB_IS_ERROR: '1', STUB_RESULT: 'max turns' }, { STUB_RESULT: 'I looked at it.' }]) {
+    const r = run(['reviewers', '--case', 'tech-step-dom'], env);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain('recall: 0/0 runs');
+    expect(r.stdout).toContain('errors: 1');
+    expect(r.result.summary.errors).toBe(1);
+    expect(r.result.cases[0].runs[0]).toMatchObject({ pass: false, error: expect.any(String) });
+  }
+}, 240_000);
+
 test('gradeReview: a wrong verdict and a wrong level fail, with the format problems kept', () => {
   const report = 'VERDICT: PASS\nRUBRIC intent_fidelity: full — AK-1 at a.md:1\nRUBRIC scene_purpose: clear — basics/x — the point';
   expect(gradeReview(report, { verdict: 'PASS', rubric: { scene_purpose: 'clear' } }, rubrics).pass).toBe(true);
@@ -92,15 +103,16 @@ test('gradeSkill: a missing match and a changed file under an absent glob fail; 
   rmSync(copy, { recursive: true });
 });
 
-test('summarize: pass@1, pass^k, recall, false-block rate and cost', () => {
+test('summarize: pass@1, pass^k, recall, false-block rate, errors and cost', () => {
   const s = summarize('reviewers', [
     { name: 'a', expect: { verdict: 'FAIL' }, runs: [{ pass: true, verdict: 'FAIL', cost: 1 }, { pass: false, verdict: 'PASS', cost: 1 }] },
-    { name: 'b', expect: { verdict: 'PASS' }, runs: [{ pass: false, verdict: 'FAIL', cost: 0.5 }, { pass: true, verdict: 'PASS' }] },
+    { name: 'b', expect: { verdict: 'PASS' }, runs: [{ pass: false, verdict: 'FAIL', cost: 0.5 }, { pass: true, verdict: 'PASS' }, { pass: false, verdict: null, error: 'no verdict' }] },
   ]);
   expect(s).toEqual({
-    cases: [{ name: 'a', pass1: 0.5, passK: false }, { name: 'b', pass1: 0.5, passK: false }],
+    cases: [{ name: 'a', pass1: 0.5, passK: false }, { name: 'b', pass1: 1 / 3, passK: false }],
     recall: { n: 2, k: 1 },
     falseBlock: { n: 2, k: 1 },
+    errors: 1,
     cost: 2.5,
   });
 });
