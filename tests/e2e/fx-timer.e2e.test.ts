@@ -139,6 +139,7 @@ test('the speaker view timer button starts the timer, and is disabled on a scene
   await main.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
   const speaker = await context.newPage()
   await speaker.goto(`${inject('BASE_URL')}/?fixture=fx-timer&speaker=1`)
+  await speaker.waitForFunction(() => window.klappe?.speakerView, undefined, { timeout: 30_000 }) // the deck loads after the load event
   const button = speaker.getByRole('button', { name: 'Timer', exact: true })
   await expect.poll(() => speaker.locator('.k-sp-scene').textContent()).toBe('Intro')
   expect(await button.isDisabled()).toBe(true)

@@ -394,8 +394,10 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     let load = loaded();
     frame.src = "?speaker=1";
     document.body.append(frame);
+    // The speaker page loads the deck after its load event: wait for its view before timing the sync.
+    const ready = async () => (await load, await until(() => !!(frame.contentWindow as Window | null)?.klappe?.speakerView, 6000));
     try {
-      await load;
+      await ready();
       const shows = (i: number) => frame.contentDocument?.querySelector(".k-sp-text")?.textContent === stepText(i);
       const bad = [!(await until(() => shows(0))) && "speaker on open: does not show step 0"];
       await stepper.next();
@@ -408,7 +410,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
       bad.push(await reach(2, "Next in the speaker", 1000));
       load = loaded();
       frame.contentWindow!.location.reload();
-      await load;
+      await ready();
       bad.push(!(await until(() => shows(stepper.index))) && "speaker after reload: does not show the current step");
       return bad;
     } finally {

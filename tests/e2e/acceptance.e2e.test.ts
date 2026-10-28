@@ -88,6 +88,7 @@ describe.skipIf(!inject('IS_DEMO_DECK'))('acceptance on klappe decks/demo (skipp
 
       const speaker = await context.newPage()
       await speaker.goto(`${inject('BASE_URL')}/?speaker=1`)
+      await speaker.waitForFunction(() => window.klappe?.speakerView, undefined, { timeout: 30_000 }) // the deck loads after the load event
       const text = speaker.locator('.k-sp-text')
       await expect.poll(() => text.textContent()).toBe(await textAt(0))
 
