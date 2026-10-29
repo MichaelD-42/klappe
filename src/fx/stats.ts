@@ -350,8 +350,8 @@ export interface LikertOpts {
   x: number;
   y: number;
   w: number;
-  rows: { statement: string; counts: number[] }[]; // counts: how many gave each of the 5 points, disagree first
-  scale?: string[]; // the 5 point names; default "Strongly disagree" … "Strongly agree" in the deck language
+  rows: { statement: string; counts: number[] }[]; // counts: how many gave each point, disagree first
+  scale?: string[]; // 4 to 7 point names; default the 5 "Strongly disagree" … "Strongly agree" in the deck language
   source?: string;
 }
 export interface LikertHandle {
@@ -360,14 +360,17 @@ export interface LikertHandle {
 }
 
 const LIKERT_SCALE = ["stronglyDisagree", "disagree", "neutral", "agree", "stronglyAgree"] as const;
-// Diverging: --k-bad for disagree, through --k-line for neutral, to --k-ok for agree.
-const LIKERT_FILL = [
-  "var(--k-bad)",
-  "color-mix(in srgb, var(--k-bad) 50%, var(--k-bg))",
-  "var(--k-line)",
-  "color-mix(in srgb, var(--k-ok) 50%, var(--k-bg))",
-  "var(--k-ok)",
-];
+// Diverging over n points: --k-bad at the disagree end, toning toward --k-bg to 50 % at the middle, --k-line for
+// the middle of an odd scale, and the same in --k-ok up to the agree end.
+const likertFill = (n: number) => {
+  const half = Math.floor(n / 2);
+  const side = (tone: string) =>
+    Array.from({ length: half }, (_, j) => {
+      const pct = half > 1 ? 100 - (j * 50) / (half - 1) : 100;
+      return pct === 100 ? `var(${tone})` : `color-mix(in srgb, var(${tone}) ${Math.round(pct)}%, var(--k-bg))`;
+    });
+  return [...side("--k-bad"), ...(n % 2 ? ["var(--k-line)"] : []), ...side("--k-ok").reverse()];
+};
 
 // Each point's share of the row's answers, 0 to 1; all 0 for a row nobody answered.
 export function likertShares(counts: number[]): number[] {
@@ -375,37 +378,42 @@ export function likertShares(counts: number[]): number[] {
   return counts.map((c) => (total > 0 ? c / total : 0));
 }
 
-// Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree
-// (left) to agree (right), and the agree share (the top two points) at its end. One person's answer is a row
-// with a single count of 1. A row whose counts are not 5 numbers of 0 or more is a deck problem and stays empty.
+// Survey answers on an agree scale of 5 points, or 4 to 7 with scale: one row per statement, its answers as a 100 %
+// bar from disagree (left) to agree (right), and the agree share (the top half of the points) at its end. One
+// person's answer is a row with a single count of 1. A row whose counts are not one number of 0 or more per point is
+// a deck problem and stays empty.
 export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
   const root = block(ctx, "likert", opts.x, opts.y, opts.w, opts.source);
   const legend = el(root, "div", { display: "flex", flexWrap: "wrap", gap: "8px 28px", marginBottom: "28px", fontSize: "24px", color: "var(--k-muted)" });
-  const ok5 = !opts.scale || opts.scale.length === 5;
-  if (!ok5) ctx.problem(`likert: scale needs 5 point names, got ${opts.scale!.length}`);
-  // A scale of another length falls back to the deck language names.
-  (ok5 && opts.scale ? opts.scale : LIKERT_SCALE.map((k) => t(k, ctx.deck.lang))).forEach((name, i) => {
+  const okScale = !opts.scale || (opts.scale.length >= 4 && opts.scale.length <= 7);
+  if (!okScale) ctx.problem(`likert: scale needs 4 to 7 point names, got ${opts.scale!.length}`);
+  // A scale of another length falls back to the deck language's five names.
+  const names = okScale && opts.scale ? opts.scale : LIKERT_SCALE.map((k) => t(k, ctx.deck.lang));
+  const n = names.length;
+  const fill = likertFill(n);
+  names.forEach((name, i) => {
     const item = el(legend, "span", { display: "flex", alignItems: "center", gap: "10px" });
-    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: LIKERT_FILL[i] });
+    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: fill[i] });
     el(item, "span", {}, name);
   });
   const rows = opts.rows.map((row, i) => {
-    const ok = row.counts.length === 5 && row.counts.every((c) => Number.isFinite(c) && c >= 0);
-    if (!ok) ctx.problem(`likert: row ${i + 1} needs 5 counts of 0 or more, got [${row.counts.join(", ")}]`);
-    const shares = ok ? likertShares(row.counts) : [0, 0, 0, 0, 0];
+    const ok = row.counts.length === n && row.counts.every((c) => Number.isFinite(c) && c >= 0);
+    if (!ok) ctx.problem(`likert: row ${i + 1} needs ${n} counts of 0 or more, got [${row.counts.join(", ")}]`);
+    const shares = ok ? likertShares(row.counts) : Array<number>(n).fill(0);
     const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "40px" });
     line.dataset.kLikertRow = String(i);
     el(line, "div", { flex: "0 0 30%" }, row.statement);
     const track = el(line, "div", { flex: "1", height: "64px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
     const bar = el(track, "div", { display: "flex", height: "100%" });
-    shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: LIKERT_FILL[k] }));
+    shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: fill[k] }));
     const num = el(line, "div", { flex: "0 0 96px", textAlign: "right", color: "var(--k-ok)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" });
     const show = (v: number) => `${Math.round(v)} %`;
     num.textContent = show(0);
     gsap.set(num, { autoAlpha: 0 });
     // With reduced motion the bar fades in instead of growing.
     gsap.set(bar, ctx.reducedMotion ? { autoAlpha: 0 } : { scaleX: 0, transformOrigin: "0% 50%" });
-    return { bar, num, agree: (shares[3] + shares[4]) * 100, show };
+    // The agree share: the top half of the points, past the middle.
+    return { bar, num, agree: shares.slice(n - Math.floor(n / 2)).reduce((a, b) => a + b, 0) * 100, show };
   });
   return {
     show(tl) {

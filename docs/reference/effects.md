@@ -99,7 +99,7 @@ Numbers use the deck language's format (`72,5` in a German deck). A value outsid
 
 ## `likert`
 
-Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`) to agree (`--k-ok`), and the agree share (the top two points) at its end. One person's answer is a row with a single count of 1.
+Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on an agree scale, 5 points by default or 4 to 7 with `scale`: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`, the middle of an odd scale) to agree (`--k-ok`), and the agree share (the top half of the points: two of 4 or 5, three of 6 or 7) at its end. A scale without a middle, 4 or 6 points, makes the room choose a side. One person's answer is a row with a single count of 1.
 
 Shortened from `decks/demo/sections/115-numbers/40-likert/scene.ts`:
 
@@ -111,8 +111,8 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `x`, `y`, `w` | number | required | the top-left corner and the width |
-| `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each of the 5 points, disagree first |
-| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the 5 point names in the legend; another number of names reports a deck problem and the default names show |
+| `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each point, disagree first: one count per point of the scale |
+| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the point names in the legend, 4 to 7 of them; they set how many points the scale has. Fewer or more names report a deck problem and the 5 default names show |
 | `source` | string | none | as for `kpi` |
 
 | Handle | Step |
@@ -120,7 +120,7 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
+A row whose counts are not one number of 0 or more per point reports a message starting `likert: row <n> needs <points> counts of 0 or more` and stays empty. A `scale` of fewer than 4 or more than 7 names reports a message starting `likert: scale needs 4 to 7 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
 
 ## `gaugeAngle`
 

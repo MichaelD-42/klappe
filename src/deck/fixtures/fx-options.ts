@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, counter, formula, gauge, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, counter, formula, gauge, likert, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -139,6 +139,15 @@ const twoHoles: SceneModule = {
     (tl, r: { a: HTMLElement; b: HTMLElement; s: SpotlightHandle }) => r.s.on(r.b)(tl),
   ],
 };
+const fourPoints: SceneModule = {
+  build: (ctx) =>
+    likert(ctx, {
+      x: 160, y: 200, w: 1600,
+      scale: ["No", "Rather no", "Rather yes", "Yes"],
+      rows: [{ statement: "Releases are predictable", counts: [1, 2, 3, 4] }, { statement: "Five counts", counts: [1, 1, 1, 1, 1] }],
+    }),
+  steps: [(tl, l: ReturnType<typeof likert>) => (l.show(tl), l.row(0)(tl))],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -163,6 +172,7 @@ export default () => {
       "sections/10-a/98-count-on/scene.md": "## Count on\n\n- 120.\n- Down to 80.\n- Down to 12.\n",
       "sections/10-a/99-term-light/scene.md": "## Term light\n\n- The formula.\n- The denominator, term 1 in the source, lit.\n- The numerator lit.\n- None lit.\n",
       "sections/10-a/89-two-holes/scene.md": "## Two holes\n\n- One.\n- Both.\n- The second.\n",
+      "sections/10-a/88-four-points/scene.md": "## Four points\n\n- No middle: agree is the top two.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -184,6 +194,7 @@ export default () => {
       "sections/10-a/98-count-on/scene.ts": countOn,
       "sections/10-a/99-term-light/scene.ts": termLight,
       "sections/10-a/89-two-holes/scene.ts": twoHoles,
+      "sections/10-a/88-four-points/scene.ts": fourPoints,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );

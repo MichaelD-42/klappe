@@ -19,6 +19,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `formula.light(i)`: a shown `\step` term turns `--k-accent`; `light(null)` lights none. Catalog: `#/code/formula/5`.
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 
+### Changed
+
+- `likert` takes a `scale` of 4 to 7 point names, and each row then one count per point; a scale of another length reports `likert: scale needs 4 to 7 point names` (was: needs 5).
+
 ### Fixed
 
 - `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.

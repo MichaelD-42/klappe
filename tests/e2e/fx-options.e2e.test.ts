@@ -17,6 +17,7 @@ for (const vp of [
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
       'sections/10-a/40-lines/scene.ts: shape: width 1 is under the 2 px floor',
+      'sections/10-a/88-four-points/scene.ts: likert: row 2 needs 4 counts of 0 or more, got [1, 1, 1, 1, 1]',
       'sections/10-a/92-clip-vimeo/scene.ts: video: a Vimeo player cannot stop at end; it plays on from start',
     ])
   }, 120_000)
@@ -286,3 +287,17 @@ test('spotlight on([a, b]): a hole round each target, both bright, the rest dimm
   expect(both.lit[1]).toBeGreaterThan(both.lit[2])
   expect((await at(3)).framed).toEqual([false, true])
 }, 90_000)
+
+test('likert with a 4-point scale: four colours from --k-bad to --k-ok, agree is the top two', async () => {
+  const page = await open('#/a/four-points/1')
+  const r = await page.evaluate(() => {
+    const row = document.querySelector<HTMLElement>('div[data-scene="four-points"] [data-k-likert-row="0"]')!
+    const parts = [...row.children[1].firstElementChild!.children].map((p) => (p as HTMLElement).style.background)
+    return { parts, share: row.lastElementChild!.textContent }
+  })
+  expect(r).toEqual({
+    parts: ['var(--k-bad)', 'color-mix(in srgb, var(--k-bad) 50%, var(--k-bg))', 'color-mix(in srgb, var(--k-ok) 50%, var(--k-bg))', 'var(--k-ok)'],
+    share: '70 %',
+  })
+  await page.close()
+}, 60_000)
