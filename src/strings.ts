@@ -57,6 +57,7 @@ export const strings = {
     min: "min", // "15 min" on an exercise card
     yes: "yes", // the spoken name of a tick in a comparison table
     no: "no",
+    partly: "partly",
   },
   // Every key of en; the unit test checks it.
   de: {
@@ -115,6 +116,7 @@ export const strings = {
     min: "Min.",
     yes: "ja",
     no: "nein",
+    partly: "teilweise",
   },
 };
 

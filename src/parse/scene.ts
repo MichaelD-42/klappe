@@ -11,6 +11,7 @@ const GROUPS = /^\{([\d,\- |]+)\}$/;
 const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
 const CHECK = /^\[([ xX!])\]\s+/;
 const AVATAR = /^!\[([^\]]+)\]\(\s*(\S+?)\s*\)$/;
+const MARKS: Record<string, boolean> = { "✓": true, "✔": true, "✗": false, "✘": false };
 
 // The first image, video or chart link in a step. Its link shows as its label; other links stay as written.
 // An image after a video link is the video's offline fallback and does not show in the text.
@@ -34,6 +35,7 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   const steps: StepDoc[] = [];
   const bs = blocks(md);
   let fence: SceneDoc["fence"];
+  let table: SceneDoc["table"];
   let parts: Part[] = []; // the fence's parts, matched in order to the items after it
   let fenceAt = 0; // where its unmatched parts go: after the last matched item
   // Only time-range items: one agenda step.
@@ -69,6 +71,14 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
         parts = Array.from({ length: n }, (_, message) => ({ kind: "chat", message }));
       } else parts = fence.groups.map((_, group) => ({ kind: "code", group }));
       fenceAt = steps.length;
+    } else if (b.type === "table") {
+      if (table) {
+        problems.push(`${folder}/scene.md: one table per scene`);
+        continue;
+      }
+      const [head, ...body] = b.cells!;
+      table = { columns: head.slice(1), rows: body.map(([label, ...cells]) => ({ label, cells: cells.map((c) => MARKS[c] ?? c) })) };
+      table.rows.forEach((r, row) => steps.push({ text: r.label, notes: "", kind: "step", part: { kind: "compare", row } }));
     } else if (b.type === "item" && agenda) {
       if (b !== items[0]) continue;
       const all = rows.map((r) => ({ from: r![1], to: r![2], title: r![3], current: !!r![4] }));
@@ -98,5 +108,5 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   steps.splice(fenceAt, 0, ...parts.map((part) => ({ text: "", notes: "", kind: "step" as const, part })));
   if (!title) problems.push(`${folder}/scene.md: missing ## title`);
   if (!steps.length) steps.push({ text: title, notes: "", kind: "step" });
-  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}) }, problems };
+  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}) }, problems };
 }

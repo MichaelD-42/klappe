@@ -18,12 +18,14 @@ export interface DeckMeta {
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-fade" | "shout-answer";
-// A step built from Markdown by an element: a code group, a console command, a chat message, a task-list item, an agenda.
+// A step built from Markdown by an element: a code group, a console command, a chat message, a task-list item, a table row,
+// an agenda.
 export type Part =
   | { kind: "code"; group: number } // index into SceneDoc.fence.groups
   | { kind: "console"; command: number } // index of the "$ " line among the commands
   | { kind: "chat"; message: number } // index of the message among the chat fence's non-empty lines
   | { kind: "check"; done: boolean; fail?: boolean } // fail: "- [!]", crossed on its step
+  | { kind: "compare"; row: number } // index into SceneDoc.table.rows
   | { kind: "agenda"; rows: { from: string; to: string; title: string; current: boolean; icon?: string }[] };
 export interface StepDoc {
   text: string;
@@ -41,6 +43,8 @@ export interface SceneDoc {
   steps: StepDoc[];
   // The scene's one code or console block. groups: the highlight groups, line lists, 1-based.
   fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
+  // The scene's one Markdown table, as compareTable reads it: ✓ ✔ true, ✗ ✘ false, ~ partly, other text as written.
+  table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
 }
 export interface SectionDoc {
   id: string;

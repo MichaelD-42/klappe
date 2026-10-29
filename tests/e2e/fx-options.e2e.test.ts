@@ -122,3 +122,12 @@ for (const [scene, sel, last] of [['compact-matrix', '[data-k-matrix-item="ID"]'
     expect(after.b).toEqual(before.a)
     expect(after.c).toEqual(before.b)
   }, 60_000)
+
+test('compareTable "~": a partly mark in --k-warn, spoken "partly"', async () => {
+  const page = await open('#/a/partial/1')
+  const r = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-scene="partial"] [role="img"]')].map((m) => [m.getAttribute('aria-label'), m.style.color]),
+  )
+  expect(r).toEqual([['partly', 'var(--k-warn)'], ['yes', 'var(--k-ok)'], ['no', 'var(--k-bad)']])
+  await page.close()
+}, 60_000)

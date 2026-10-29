@@ -13,6 +13,7 @@ type Parts = {
   chat: (ctx: Ctx, o: Omit<import("../fx/chat").ChatOpts, "messages"> & { lines: string[] }) => import("../fx/chat").ChatHandle;
   chart: typeof import("../fx/chart").chart;
   checklist: typeof import("../fx/checklist").checklist;
+  compareTable: typeof import("../fx/comparetable").compareTable;
   shout: typeof import("../fx/shout").shout;
   terminal: typeof import("../fx/terminal").terminal;
 };
@@ -21,6 +22,7 @@ const table = lazyTable<Parts>({
   chat: () => import("../fx/chat").then((m) => (ctx: Ctx, { lines, ...o }: Omit<import("../fx/chat").ChatOpts, "messages"> & { lines: string[] }) => m.chat(ctx, { ...o, messages: lines.map(m.chatMessage) })),
   chart: () => import("../fx/chart").then((m) => m.chart),
   checklist: () => import("../fx/checklist").then((m) => m.checklist),
+  compareTable: () => import("../fx/comparetable").then((m) => m.compareTable),
   shout: () => import("../fx/shout").then((m) => m.shout),
   terminal: () => import("../fx/terminal").then((m) => m.terminal),
 });
@@ -43,6 +45,7 @@ export function partsOf(deck: Deck, fx: string[], langs: string[]): { names: (ke
         if (s.kind === "shout-enter") names.add("shout");
         if (s.part?.kind === "check") names.add("checklist");
         if (s.part?.kind === "agenda") names.add("agenda");
+        if (s.part?.kind === "compare") names.add("compareTable");
         if (s.media?.kind === "chart") names.add("chart");
       }
     }

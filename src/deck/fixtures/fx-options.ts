@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -57,6 +57,10 @@ const compactNotes: SceneModule = {
   build: (ctx) => stickyNotes(ctx, { notes: ids.map((id) => ({ id, text: id.toUpperCase() })), groups: [{ id: "g1", label: "One" }, { id: "g2", label: "Two" }], compact: true, x: 160, y: 100, w: 1600, h: 800 }),
   steps: [(tl, s: StickyNotesHandle) => s.show()(tl), (tl, s: StickyNotesHandle) => s.group("g1", ids)(tl), (tl, s: StickyNotesHandle) => s.group("g2", ["a"])(tl)],
 };
+const partial: SceneModule = {
+  build: (ctx) => compareTable(ctx, { columns: ["A", "B", "C"], rows: [{ label: "Sign-on", cells: ["~", true, false] }], x: 160, y: 300, w: 1600 }),
+  steps: [(tl, t: CompareTableHandle) => (t.show(tl), t.row(0)(tl))],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -70,6 +74,7 @@ export default () => {
       "sections/10-a/50-warn/scene.md": "## Warn\n\n- A pulse in --k-warn.\n",
       "sections/10-a/60-compact-matrix/scene.md": "## Compact matrix\n\n- Axes.\n- A.\n- B.\n- C.\n- A leaves.\n",
       "sections/10-a/70-compact-notes/scene.md": "## Compact notes\n\n- Scattered.\n- Grouped.\n- A leaves.\n",
+      "sections/10-a/80-partial/scene.md": "## Partial\n\n- Partly, yes, no.\n",
     },
     {
       "sections/10-a/10-round/scene.ts": round,
@@ -79,6 +84,7 @@ export default () => {
       "sections/10-a/50-warn/scene.ts": warn,
       "sections/10-a/60-compact-matrix/scene.ts": compactMatrix,
       "sections/10-a/70-compact-notes/scene.ts": compactNotes,
+      "sections/10-a/80-partial/scene.ts": partial,
     },
   );
   r.deck.files = { data: {}, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f") } };
