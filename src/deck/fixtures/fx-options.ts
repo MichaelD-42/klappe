@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, gauge, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -65,6 +65,10 @@ const clip = (href: string, title: string, start: number, end?: number): SceneMo
   build: (ctx) => video(ctx, { href, title, start, ...(end === undefined ? {} : { end }), rect: { x: 160, y: 140, w: 1600, h: 800 } }),
   steps: [(tl, v: ReturnType<typeof video>) => v.show(tl)],
 });
+const bands: SceneModule = {
+  build: (ctx) => gauge(ctx, { x: 560, y: 200, size: 800, value: 91, max: 100, unit: "%", label: "Load", bands: [{ to: 70, tone: "ok" }, { to: 90, tone: "warn" }, { to: 100, tone: "bad" }] }),
+  steps: [(tl, g: ReturnType<typeof gauge>) => g.show(tl)],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -81,6 +85,7 @@ export default () => {
       "sections/10-a/80-partial/scene.md": "## Partial\n\n- Partly, yes, no.\n",
       "sections/10-a/90-clip-file/scene.md": "## Clip file\n\n- 1.5 s to 4 s of a local file.\n",
       "sections/10-a/91-clip-youtube/scene.md": "## Clip YouTube\n\n- 42 s to 70.2 s of a talk.\n",
+      "sections/10-a/93-bands/scene.md": "## Bands\n\n- Ok to 70, warn to 90, bad to 100.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -94,6 +99,7 @@ export default () => {
       "sections/10-a/80-partial/scene.ts": partial,
       "sections/10-a/90-clip-file/scene.ts": clip("media/clip.webm", "A local clip", 1.5, 4),
       "sections/10-a/91-clip-youtube/scene.ts": clip("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "A talk", 42, 70.2),
+      "sections/10-a/93-bands/scene.ts": bands,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );

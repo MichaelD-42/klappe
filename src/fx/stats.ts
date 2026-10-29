@@ -258,6 +258,7 @@ export interface GaugeOpts {
   label?: string;
   unit?: string; // after the number, smaller
   source?: string;
+  bands?: { to: number; tone: "ok" | "warn" | "bad" }[]; // zones from min, each up to its `to`, as a thin ring inside the dial
 }
 export interface GaugeHandle {
   show: StepAdder; // fades in; the needle swings from min to value
@@ -268,8 +269,8 @@ export interface GaugeHandle {
 export const gaugeAngle = (value: number, min: number, max: number): number =>
   -90 + 180 * Math.max(0, Math.min(1, (value - min) / (max - min)));
 
-// A half-circle dial: the track in --k-line, the arc up to the value and the needle in --k-accent, the number
-// (deck language format) under the dial, min and max at the ends. With reduced motion the needle jumps.
+// A half-circle dial: the track in --k-line, the arc up to the value and the needle in --k-accent, optional bands
+// (ok, warn, bad zones) inside the track, the number (deck language format) under the dial, min and max at the ends. With reduced motion the needle jumps.
 export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const min = opts.min ?? 0;
   if (!(opts.max > min)) ctx.problem(`gauge: max ${opts.max} must be above min ${min}`);
@@ -281,6 +282,22 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const svg = svgEl(root, "svg", { width: s, height: s / 2 + thick, viewBox: `0 0 ${s} ${s / 2 + thick}` });
   const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 };
   svgEl(svg, "path", dial).style.stroke = "var(--k-line)";
+  // Bands: a thin ring inside the track, each zone from where the one before ended, in its tone toned down
+  // toward --k-bg so the accent arc and needle stay the strongest marks.
+  let edge = 0; // where the band before ended, 0 to 1 of the dial
+  for (const b of opts.bands ?? []) {
+    const f = (Math.min(max, Math.max(min, b.to)) - min) / (max - min);
+    if (!(f > edge) || !["ok", "warn", "bad"].includes(b.tone)) {
+      ctx.problem(`gauge: band to ${b.to} (${b.tone}) must rise from the band before, within ${min} to ${max}, in ok, warn or bad`);
+      continue;
+    }
+    const ri = r - thick * 0.85;
+    const band = svgEl(svg, "path", { d: `M${cx - ri} ${cy}A${ri} ${ri} 0 0 1 ${cx + ri} ${cy}`, fill: "none", "stroke-width": thick * 0.35, pathLength: 1 });
+    band.dataset.kGaugeBand = b.tone;
+    const w = Math.round((f - edge) * 1e6) / 1e6;
+    Object.assign(band.style, { stroke: `color-mix(in srgb, var(--k-${b.tone}) 60%, var(--k-bg))`, strokeDasharray: `${w} 2`, strokeDashoffset: `${-edge}` });
+    edge = f;
+  }
   const arc = svgEl(svg, "path", dial);
   // Dash 1, gap 1: an offset of 1 - f shows the first f of the dial, so a swing is one offset tween.
   Object.assign(arc.style, { stroke: "var(--k-accent)", strokeDasharray: "1 1" });

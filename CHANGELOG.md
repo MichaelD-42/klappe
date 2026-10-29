@@ -10,6 +10,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - Markdown: a table in `scene.md` is a `compareTable`, one row per step; `✓` ticks, `✗` crosses, `~` is partly. Catalog: `#/table-card/compare-md/1`.
 - `compareTable` cell `"~"`: partly, a dash in `--k-warn`, spoken "partly". Catalog: `#/table-card/compare/2`.
 - `video` options `start` and `end`: play only part of a clip, from `start` each time its step arrives. YouTube and local files take both; Vimeo takes `start`. Catalog: `#/media/youtube-autoplay/2`.
+- `gauge` option `bands`: ok, warn and bad zones as a thin ring inside the dial. Catalog: `#/numbers/gauge/2`.
 
 ## 0.6.1 (2026-10-28)
 

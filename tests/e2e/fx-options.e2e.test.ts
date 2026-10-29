@@ -147,3 +147,16 @@ test('video start and end: a fragment on a local file, start and end on YouTube,
   expect(await src('clip-youtube')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ?start=42&end=71')
   expect(await src('clip-vimeo')).toBe('https://player.vimeo.com/video/76979871#t=42s')
 }, 60_000)
+
+test('gauge bands: one arc per zone under the dial, in its tone, from where the last one ended', async () => {
+  const page = await open('#/a/bands/1')
+  const r = await page.evaluate(() =>
+    [...document.querySelectorAll<SVGPathElement>('[data-scene="bands"] [data-k-gauge-band]')].map((b) => [b.dataset.kGaugeBand, b.style.stroke, b.style.strokeDasharray, b.style.strokeDashoffset]),
+  )
+  expect(r).toEqual([
+    ['ok', 'color-mix(in srgb, var(--k-ok) 60%, var(--k-bg))', '0.7, 2', '0'],
+    ['warn', 'color-mix(in srgb, var(--k-warn) 60%, var(--k-bg))', '0.2, 2', '-0.7'],
+    ['bad', 'color-mix(in srgb, var(--k-bad) 60%, var(--k-bg))', '0.1, 2', '-0.9'],
+  ])
+  await page.close()
+}, 60_000)
