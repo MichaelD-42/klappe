@@ -1133,7 +1133,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     }, t0);
   };
   // highlight() tweens opacity from 1: write that start at load, so a seek back over it leaves what play leaves.
-  gsap.set(partEls.flat().filter((el) => !values.some((e) => e.el === el)), { opacity: 1 });
+  const dimmable = partEls.flat().filter((el) => !values.some((e) => e.el === el));
+  if (dimmable.length) gsap.set(dimmable, { opacity: 1 }); // a sankey has no parts; GSAP warns on an empty target list
   const outOf = (what: string, i: number, n: number) =>
     !(i >= 0 && i < n) && ctx.problem(`chart: no ${what} ${i}; the ${what === "series" ? what : `${what}s`} are 0 to ${n - 1}`);
 

@@ -29,6 +29,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 - `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.
 - `chart`, `barRace` and `wordCloud` read a CSV's columns in the header's order: a header such as `team,2024,2025` took `2024` as the label column, because JS lists keys that look like numbers first.
+- A sankey chart no longer makes GSAP warn "GSAP target not found" on every deck load.
 
 ## 0.6.1 (2026-10-28)
 
