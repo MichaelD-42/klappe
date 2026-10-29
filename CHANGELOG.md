@@ -15,6 +15,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `mindMap.light(i)`: one grown branch stays, the others dim; `light(null)` brings all back. Catalog: `#/tree/mind-map/6`.
 - `sequence.highlight(i)`: a shown message takes the accent again; `highlight(null)` lights none. Catalog: `#/sequence/order/5`.
 - `swimlanes.tasks(ids)`: build the lanes up task by task; each link draws once both its ends show. Catalog: `#/swimlanes/build/3`.
+- `counter.to(value)`: counts on from where the steps before left it. Catalog: `#/motion/counts/3`.
 
 ## 0.6.1 (2026-10-28)
 

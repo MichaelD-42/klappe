@@ -863,7 +863,7 @@ down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions (s
 steps: [(tl, { down }) => down.run(tl)],
 ```
 
-`counter(ctx, { x, y, from, to, label, decimals?, prefix?, unit? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `prefix` (`"€"`, `"≈"`) and `unit` (`"%"`, `"days"`) sit before and after the number on its line, at 52 px; they do not count. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
+`counter(ctx, { x, y, from, to, label, decimals?, prefix?, unit? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `prefix` (`"€"`, `"≈"`) and `unit` (`"%"`, `"days"`) sit before and after the number on its line, at 52 px; they do not count. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that counts on from where the steps before left it (`to` after `run`) to `value`, over 1.8 s, for a before and after on one number; several in one step play one after another. Catalog: `#/motion/counts/3`. Numbers use the deck language's separators.
 
 ## `scramble`
 

@@ -224,3 +224,13 @@ test('swimlanes tasks(ids): the lanes and those tasks, then each link once both 
   expect(await at(2)).toEqual({ tasks: ['order', 'pack'], links: 1 })
   expect(await at(3)).toEqual({ tasks: ['order', 'pack', 'ship'], links: 2 })
 }, 90_000)
+
+test('counter to(value): counts on from where the steps before left it', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/count-on/${step}`)
+    const r = await page.evaluate(() => document.querySelector('div[data-scene="count-on"] [data-k-text]')!.textContent)
+    await page.close()
+    return r
+  }
+  expect([await at(1), await at(2), await at(3)]).toEqual(['120', '80', '12'])
+}, 90_000)

@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, gauge, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, counter, gauge, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -118,6 +118,10 @@ const laneTasks: SceneModule = {
     (tl, w: ReturnType<typeof swimlanes>) => w.show(tl),
   ],
 };
+const countOn: SceneModule = {
+  build: (ctx) => counter(ctx, { x: 960, y: 500, from: 0, to: 120, label: "Open tickets" }),
+  steps: [(tl, c: ReturnType<typeof counter>) => c.run(tl), (tl, c: ReturnType<typeof counter>) => c.to(80)(tl), (tl, c: ReturnType<typeof counter>) => c.to(12)(tl)],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -139,6 +143,7 @@ export default () => {
       "sections/10-a/95-mind-light/scene.md": "## Mind light\n\n- All branches.\n- One lit.\n- Three lit.\n- None lit.\n",
       "sections/10-a/96-seq-light/scene.md": "## Seq light\n\n- Three messages.\n- Back to the first.\n- None lit.\n",
       "sections/10-a/97-lane-tasks/scene.md": "## Lane tasks\n\n- The lanes and the order.\n- Packing, and its link.\n- The rest.\n",
+      "sections/10-a/98-count-on/scene.md": "## Count on\n\n- 120.\n- Down to 80.\n- Down to 12.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -157,6 +162,7 @@ export default () => {
       "sections/10-a/95-mind-light/scene.ts": mindLight,
       "sections/10-a/96-seq-light/scene.ts": seqLight,
       "sections/10-a/97-lane-tasks/scene.ts": laneTasks,
+      "sections/10-a/98-count-on/scene.ts": countOn,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );

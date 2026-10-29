@@ -4,3 +4,4 @@
 
 - Open questions count down to zero.
 - Documents read count up.
+- The last tests turn green.

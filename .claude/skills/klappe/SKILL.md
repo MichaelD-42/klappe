@@ -63,7 +63,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | One number for a board slide: a KPI with a sparkline, a share, progress | `kpi`, `waffle`, `progress` | [kpi](klappe/docs/reference/effects.md#kpi-waffle-progress) | `115-numbers/10-kpis`, `115-numbers/20-shares` |
 | One reading against a fixed range (load, a score), maybe changing on a later step | `gauge` | [gauge](klappe/docs/reference/effects.md#gauge) | `115-numbers/30-gauge` |
 | Answers on an agree scale | `likert` | [likert](klappe/docs/reference/effects.md#likert) | `115-numbers/40-likert` |
-| A number that counts up or down | `counter` | [counter](klappe/docs/reference/effects.md#counter) | `160-motion/40-counts` |
+| A number that counts up or down; on to a new value on a later step, `to(v)` | `counter` | [counter](klappe/docs/reference/effects.md#counter) | `160-motion/40-counts` |
 | Show where; fill the countries where we sell, `region` | `worldMap` | [worldMap](klappe/docs/reference/effects.md#worldmap) | `150-map/10-world` |
 | A person moving; seated at a table, `seated` or `sit` | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk`, `130-figure/30-table` |
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
