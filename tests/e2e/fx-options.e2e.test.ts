@@ -15,7 +15,10 @@ for (const vp of [
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=fx-options`, vp)
     expect(r.errors).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
-    expect(r.problems).toEqual(['sections/10-a/40-lines/scene.ts: shape: width 1 is under the 2 px floor'])
+    expect(r.problems).toEqual([
+      'sections/10-a/40-lines/scene.ts: shape: width 1 is under the 2 px floor',
+      'sections/10-a/92-clip-vimeo/scene.ts: video: a Vimeo player cannot stop at end; it plays on from start',
+    ])
   }, 120_000)
 
 async function open(hash: string): Promise<Page> {
@@ -130,4 +133,17 @@ test('compareTable "~": a partly mark in --k-warn, spoken "partly"', async () =>
   )
   expect(r).toEqual([['partly', 'var(--k-warn)'], ['yes', 'var(--k-ok)'], ['no', 'var(--k-bad)']])
   await page.close()
+}, 60_000)
+
+test('video start and end: a fragment on a local file, start and end on YouTube, #t on Vimeo', async () => {
+  const src = async (scene: string) => {
+    const page = await open(`#/a/${scene}/1`)
+    await page.route(/youtube|vimeo/, (r) => r.fulfill({ body: '<body>player</body>', contentType: 'text/html' }))
+    const s = await page.evaluate((n) => document.querySelector(`[data-scene="${n}"] [data-k-video]`)!.getAttribute('src'), scene)
+    await page.close()
+    return s
+  }
+  expect(await src('clip-file')).toBe('data:video/webm;base64,#t=1.5,4')
+  expect(await src('clip-youtube')).toBe('https://www.youtube.com/embed/dQw4w9WgXcQ?start=42&end=71')
+  expect(await src('clip-vimeo')).toBe('https://player.vimeo.com/video/76979871#t=42s')
 }, 60_000)

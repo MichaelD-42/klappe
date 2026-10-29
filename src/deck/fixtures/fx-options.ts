@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -61,6 +61,10 @@ const partial: SceneModule = {
   build: (ctx) => compareTable(ctx, { columns: ["A", "B", "C"], rows: [{ label: "Sign-on", cells: ["~", true, false] }], x: 160, y: 300, w: 1600 }),
   steps: [(tl, t: CompareTableHandle) => (t.show(tl), t.row(0)(tl))],
 };
+const clip = (href: string, title: string, start: number, end?: number): SceneModule => ({
+  build: (ctx) => video(ctx, { href, title, start, ...(end === undefined ? {} : { end }), rect: { x: 160, y: 140, w: 1600, h: 800 } }),
+  steps: [(tl, v: ReturnType<typeof video>) => v.show(tl)],
+});
 
 export default () => {
   const r = assembleDeck(
@@ -75,6 +79,9 @@ export default () => {
       "sections/10-a/60-compact-matrix/scene.md": "## Compact matrix\n\n- Axes.\n- A.\n- B.\n- C.\n- A leaves.\n",
       "sections/10-a/70-compact-notes/scene.md": "## Compact notes\n\n- Scattered.\n- Grouped.\n- A leaves.\n",
       "sections/10-a/80-partial/scene.md": "## Partial\n\n- Partly, yes, no.\n",
+      "sections/10-a/90-clip-file/scene.md": "## Clip file\n\n- 1.5 s to 4 s of a local file.\n",
+      "sections/10-a/91-clip-youtube/scene.md": "## Clip YouTube\n\n- 42 s to 70.2 s of a talk.\n",
+      "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
       "sections/10-a/10-round/scene.ts": round,
@@ -85,8 +92,11 @@ export default () => {
       "sections/10-a/60-compact-matrix/scene.ts": compactMatrix,
       "sections/10-a/70-compact-notes/scene.ts": compactNotes,
       "sections/10-a/80-partial/scene.ts": partial,
+      "sections/10-a/90-clip-file/scene.ts": clip("media/clip.webm", "A local clip", 1.5, 4),
+      "sections/10-a/91-clip-youtube/scene.ts": clip("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "A talk", 42, 70.2),
+      "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );
-  r.deck.files = { data: {}, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f") } };
+  r.deck.files = { data: {}, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f"), "media/clip.webm": "data:video/webm;base64," } };
   return r;
 };

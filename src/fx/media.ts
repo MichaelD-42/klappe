@@ -41,6 +41,8 @@ export interface VideoOpts {
   fallback?: string; // an image href in media/, shown instead of an online video when there is no network
   autoplay?: boolean; // a YouTube or Vimeo player starts when its step arrives (default true); false: the viewer starts it
   muted?: boolean; // true: a starting player has no sound; default false: it starts with sound, as the step key allows
+  start?: number; // seconds into the clip where it starts, each time its step arrives
+  end?: number; // seconds into the clip where it stops; not for Vimeo
 }
 
 // The largest box of aspect ratio ar (w/h) centred in rect.
@@ -288,14 +290,23 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
   if (offline) ctx.problem(`${t("videoOffline", ctx.deck.lang)}: ${title}` + (opts.fallback ? ` (${t("imageMissing", ctx.deck.lang)}: ${key(opts.fallback)})` : ""));
   // With sound by default: the step key that starts it counts as the viewer's gesture. A play step can start any embed.
   const autoplay = opts.autoplay !== false;
-  const auto = frame ? `${frame}?autoplay=1&${frame.includes("vimeo") ? "muted" : "mute"}=${opts.muted ? 1 : 0}` : undefined;
+  const { start: from, end: to } = opts;
+  if ((from !== undefined && !(from >= 0)) || (to !== undefined && !(to > (from ?? 0))))
+    ctx.problem(`video: start ${from ?? 0} and end ${to} must be seconds, end after start`);
+  const vimeo = !!frame?.includes("vimeo");
+  if (vimeo && to !== undefined) ctx.problem("video: a Vimeo player cannot stop at end; it plays on from start");
+  // YouTube takes whole seconds as parameters, Vimeo a start fragment; a file takes a media fragment.
+  const yt = vimeo ? "" : [from && `start=${Math.floor(from)}`, to && `end=${Math.ceil(to)}`].filter(Boolean).join("&");
+  const at = vimeo && from ? `#t=${Math.floor(from)}s` : "";
+  const plain = frame && `${frame}${yt ? `?${yt}` : ""}${at}`;
+  const auto = frame ? `${frame}?${yt ? `${yt}&` : ""}autoplay=1&${vimeo ? "muted" : "mute"}=${opts.muted ? 1 : 0}${at}` : undefined;
   const el = document.createElement(frame ? "iframe" : "video");
   Object.assign(el.style, { width: "100%", height: "100%", border: "0" });
   el.title = title;
   el.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
   el.setAttribute("data-k-ignore", ""); // playback is decoration outside the timeline
   if (el instanceof HTMLIFrameElement) {
-    el.src = frame!;
+    el.src = plain!;
     el.allow = autoplay ? "autoplay; fullscreen; picture-in-picture" : "fullscreen; picture-in-picture";
     el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
@@ -313,8 +324,11 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     if (ctx.scene) ctx.onStep(({ scene, next }) => void ((scene === ctx.scene || next === ctx.scene) && load()));
     else load();
   } else {
-    el.src = src;
+    el.src = from !== undefined || to !== undefined ? `${src}#t=${from ?? 0}${to === undefined ? "" : `,${to}`}` : src;
     el.preload = "auto";
+    // The fragment's end holds only on the first play. shortcut: timeupdate fires about 4 times a second, so the
+    // clip can run up to 0.25 s past end; use requestVideoFrameCallback if that ever shows.
+    if (to !== undefined) el.addEventListener("timeupdate", () => el.currentTime >= to && el.pause());
     el.playsInline = true;
     el.style.objectFit = full ? "cover" : "contain";
     el.setAttribute("data-k-video", "file");
@@ -337,7 +351,7 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     if (armed) return;
     armed = true;
     // An embed starts by loading its autoplay address and stops by loading its plain one: no player API needed.
-    const halt = () => (el instanceof HTMLIFrameElement ? el.getAttribute("src") === auto && (el.src = frame!) : el.pause());
+    const halt = () => (el instanceof HTMLIFrameElement ? el.getAttribute("src") === auto && (el.src = plain!) : el.pause());
     let wait: (() => void) | undefined;
     const stop = () => {
       if (wait) gsap.ticker.remove(wait);
@@ -353,7 +367,10 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
         if (tl.time() <= at) return;
         stop();
         if (el instanceof HTMLIFrameElement) el.src = auto!;
-        else el.play().catch(() => {}); // blocked or broken file: the box stays on the poster frame
+        else {
+          if (from !== undefined && el.readyState) el.currentTime = from;
+          el.play().catch(() => {}); // blocked or broken file: the box stays on the poster frame
+        }
       };
       gsap.ticker.add(wait);
     });
