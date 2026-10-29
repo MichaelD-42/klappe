@@ -207,3 +207,20 @@ test('sequence highlight(i): an earlier message takes the accent again; null lig
   expect(await at(2)).toEqual(['accent', 'line', 'line'])
   expect(await at(3)).toEqual(['line', 'line', 'line'])
 }, 90_000)
+
+test('swimlanes tasks(ids): the lanes and those tasks, then each link once both its ends show; show brings the rest', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/lane-tasks/${step}`)
+    const r = await page.evaluate(() => {
+      const vis = (e: Element) => getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.5
+      const tasks = ['order', 'pack', 'ship'].filter((id) => vis(document.querySelector(`[data-k-swimlane-task="${id}"]`)!))
+      const links = [...document.querySelectorAll('g[data-scene="lane-tasks"] path[style*="stroke-width: 4"]')].filter(vis).length
+      return { tasks, links }
+    })
+    await page.close()
+    return r
+  }
+  expect(await at(1)).toEqual({ tasks: ['order'], links: 0 })
+  expect(await at(2)).toEqual({ tasks: ['order', 'pack'], links: 1 })
+  expect(await at(3)).toEqual({ tasks: ['order', 'pack', 'ship'], links: 2 })
+}, 90_000)

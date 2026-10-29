@@ -33,7 +33,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A state machine: the current state lit, one transition firing per step | `flow` with `highlight` and `fire` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/50-state-machine` |
 | Show who talks to whom, in order; who is busy (activation bars), a note, alt and loop frames; back to one call, `highlight(i)` | `sequence` | [sequence](klappe/docs/reference/elements/sequence.md) | `280-sequence/10-order`, `280-sequence/30-frames` |
 | Zoom into a system level by level (systems, containers, components), with arrows per level | `semanticZoom` | [semanticZoom](klappe/docs/reference/elements/semanticZoom.md) | `172-semantic-zoom/10-system` |
-| Show who does what in a process | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process` |
+| Show who does what in a process; build it hand-off by hand-off, `tasks(ids)` | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process`, `290-swimlanes/20-build` |
 | Show how a decision was made | `decisionTree` | [decisionTree](klappe/docs/reference/elements/decisionTree.md) | `300-tree/10-route` |
 | Lay out a topic before going into it: a centre and branches round it, one per step; come back to one, `light(i)` | `mindMap` | [mindMap](klappe/docs/reference/elements/mindMap.md) | `300-tree/30-mind-map` |
 | Teach git: commits, branches, a merge, a rebase, a tag, a cherry-pick, one per step | `gitGraph` | [gitGraph](klappe/docs/reference/elements/gitGraph.md) | `304-git/10-rebase`, `304-git/20-backport` |
