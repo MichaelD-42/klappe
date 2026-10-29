@@ -160,3 +160,18 @@ test('gauge bands: one arc per zone under the dial, in its tone, from where the 
   ])
   await page.close()
 }, 60_000)
+
+test('roadmap status: a milestone settles to its tone, with an icon that names it', async () => {
+  const page = await open('#/a/status/2')
+  const r = await page.evaluate(() => {
+    const root = document
+    const probe = document.body.appendChild(document.createElement('i'))
+    const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
+    const names: Record<string, string> = { [token('--k-ok')]: 'ok', [token('--k-warn')]: 'warn', [token('--k-bad')]: 'bad', [token('--k-line')]: 'line' }
+    const dots = [...root.querySelectorAll<SVGCircleElement>('g[data-scene="status"] circle')].map((c) => names[getComputedStyle(c).fill] ?? getComputedStyle(c).fill)
+    const icons = ['a', 'b', 'c', 'd'].map((id) => root.querySelector(`div[data-scene="status"] [data-k-roadmap-milestone="${id}"] [role="img"]`)?.getAttribute('aria-label') ?? null)
+    return { dots, icons }
+  })
+  expect(r).toEqual({ dots: ['ok', 'warn', 'bad', 'line'], icons: ['done', 'at risk', 'late', null] })
+  await page.close()
+}, 60_000)

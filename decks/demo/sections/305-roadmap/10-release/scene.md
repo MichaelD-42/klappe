@@ -4,7 +4,7 @@
 
 - The time axis and today.
 - Kick-off.
-- Beta for first customers.
+- Beta for first customers, at risk.
 - Today moves on.
 - Launch.
 - Today reaches the launch.

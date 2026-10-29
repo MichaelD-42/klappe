@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, gauge, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, gauge, roadmap, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -69,6 +69,19 @@ const bands: SceneModule = {
   build: (ctx) => gauge(ctx, { x: 560, y: 200, size: 800, value: 91, max: 100, unit: "%", label: "Load", bands: [{ to: 70, tone: "ok" }, { to: 90, tone: "warn" }, { to: 100, tone: "bad" }] }),
   steps: [(tl, g: ReturnType<typeof gauge>) => g.show(tl)],
 };
+const status: SceneModule = {
+  build: (ctx) =>
+    roadmap(ctx, {
+      x: 160, y: 140, w: 1600, h: 760, today: "2026-04-15",
+      milestones: [
+        { id: "a", date: "2026-01-15", label: "Shipped", status: "done" },
+        { id: "b", date: "2026-03-15", label: "Wobbly", status: "risk" },
+        { id: "c", date: "2026-05-15", label: "Slipped", status: "late" },
+        { id: "d", date: "2026-07-15", label: "Planned" },
+      ],
+    }),
+  steps: [(tl, r: ReturnType<typeof roadmap>) => (r.show(tl), r.rush("a", "d")(tl)), (tl, r: ReturnType<typeof roadmap>) => r.move("2026-05-01")(tl)],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -86,6 +99,7 @@ export default () => {
       "sections/10-a/90-clip-file/scene.md": "## Clip file\n\n- 1.5 s to 4 s of a local file.\n",
       "sections/10-a/91-clip-youtube/scene.md": "## Clip YouTube\n\n- 42 s to 70.2 s of a talk.\n",
       "sections/10-a/93-bands/scene.md": "## Bands\n\n- Ok to 70, warn to 90, bad to 100.\n",
+      "sections/10-a/94-status/scene.md": "## Status\n\n- Done, at risk, late, planned.\n- They settle.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -100,6 +114,7 @@ export default () => {
       "sections/10-a/90-clip-file/scene.ts": clip("media/clip.webm", "A local clip", 1.5, 4),
       "sections/10-a/91-clip-youtube/scene.ts": clip("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "A talk", 42, 70.2),
       "sections/10-a/93-bands/scene.ts": bands,
+      "sections/10-a/94-status/scene.ts": status,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );
