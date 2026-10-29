@@ -13,6 +13,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `gauge` option `bands`: ok, warn and bad zones as a thin ring inside the dial. Catalog: `#/numbers/gauge/2`.
 - `roadmap` milestone `status`: `"done"`, `"risk"` or `"late"` settles the dot in `--k-ok`, `--k-warn` or `--k-bad` and puts an icon before the date. Catalog: `#/roadmap/release/3`.
 - `mindMap.light(i)`: one grown branch stays, the others dim; `light(null)` brings all back. Catalog: `#/tree/mind-map/6`.
+- `sequence.highlight(i)`: a shown message takes the accent again; `highlight(null)` lights none. Catalog: `#/sequence/order/5`.
 
 ## 0.6.1 (2026-10-28)
 

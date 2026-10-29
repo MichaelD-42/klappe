@@ -43,6 +43,7 @@ Each method returns a step adder (`actors` is one itself): call it with the time
 | --- | --- |
 | `actors` | the heads fade in, then the lifelines |
 | `message(i)` | shows row `i` and the bars and frames that start there. A note row fades in. A message: the arrow draws from the sender's lifeline to the receiver's, its head appears as the line arrives, then the label fades in above it. Several calls in one step play one after another. An index with no message throws `sequence: no message <i>` |
+| `highlight(i)` | message `i`, shown by an earlier step, takes the accent again (its arrow, head and label), as the newest message has it; the one lit before settles. `highlight(null)` lights none. For "back to this call" while you talk. A note row, or a message no step before has shown, reports `sequence: highlight(<i>) needs a message a step before has shown` and holds a beat. Catalog: `#/sequence/order/5` |
 
 ### Limits
 

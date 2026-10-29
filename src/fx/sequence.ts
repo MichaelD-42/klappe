@@ -13,6 +13,7 @@ export type SequenceOpts = {
 export interface SequenceHandle {
   actors: StepAdder;
   message(i: number): StepAdder;
+  highlight(i: number | null): StepAdder; // a shown message takes the accent again; null: none
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -240,6 +241,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     tl.set(r.tag, { color: on ? "var(--k-accent)" : "var(--k-fg)", immediateRender: false }, t);
   };
   let current: Row | undefined;
+  const shown = new Set<Row>(); // the rows the message steps added so far show
 
   return {
     actors(tl) {
@@ -260,11 +262,22 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
         if (current && current !== r) paint(tl, current, false, t);
         paint(tl, r, true, t);
         current = r;
+        shown.add(r);
         tl.set(r.line, { autoAlpha: 1 }, t);
         drawOn(r.drawn, { duration: DRAW, each: 0, at: t })(tl);
         tl.to(r.head, { autoAlpha: 1, duration: 0.12 }, t + DRAW);
         tl.to(r.tag, { autoAlpha: 1, duration: 0.25 }, t + DRAW);
       };
+    },
+    highlight: (i) => (tl) => {
+      const r = i === null ? undefined : rows[i];
+      const t = tl.duration();
+      tl.set({}, {}, t + 0.4); // a set only: the step still takes a beat
+      if (i !== null && (!r || r.note || !shown.has(r)))
+        return ctx.problem(`sequence: highlight(${i}) needs a message a step before has shown`);
+      if (current && current !== r) paint(tl, current, false, t);
+      if (r) paint(tl, r, true, t);
+      current = r;
     },
   };
 }

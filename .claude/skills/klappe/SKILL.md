@@ -31,7 +31,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Draw a small diagram of your own (boxes, a ring, a connector); change a colour to a theme token in a step | `shape`, `arrow`; `tint`, or `token` for your own tween | [shape](klappe/docs/reference/elements/shape.md) | `125-shapes/10-diagram` |
 | Move something along a route (a parcel to a customer) | `travel` | [travel](klappe/docs/reference/effects.md#travel) | `285-travel/10-parcel` |
 | A state machine: the current state lit, one transition firing per step | `flow` with `highlight` and `fire` | [flow](klappe/docs/reference/elements/flow.md) | `270-flow/50-state-machine` |
-| Show who talks to whom, in order; who is busy (activation bars), a note, alt and loop frames | `sequence` | [sequence](klappe/docs/reference/elements/sequence.md) | `280-sequence/10-order`, `280-sequence/30-frames` |
+| Show who talks to whom, in order; who is busy (activation bars), a note, alt and loop frames; back to one call, `highlight(i)` | `sequence` | [sequence](klappe/docs/reference/elements/sequence.md) | `280-sequence/10-order`, `280-sequence/30-frames` |
 | Zoom into a system level by level (systems, containers, components), with arrows per level | `semanticZoom` | [semanticZoom](klappe/docs/reference/elements/semanticZoom.md) | `172-semantic-zoom/10-system` |
 | Show who does what in a process | `swimlanes` | [swimlanes](klappe/docs/reference/elements/swimlanes.md) | `290-swimlanes/10-process` |
 | Show how a decision was made | `decisionTree` | [decisionTree](klappe/docs/reference/elements/decisionTree.md) | `300-tree/10-route` |

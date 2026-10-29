@@ -190,3 +190,20 @@ test('mindMap light(i): that branch stays, the others dim; light(null) brings al
   expect(await at(3)).toEqual([[0.35], [0.35], [1]])
   expect(await at(4)).toEqual([[1], [1], [1]])
 }, 90_000)
+
+test('sequence highlight(i): an earlier message takes the accent again; null lights none', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/seq-light/${step}`)
+    const r = await page.evaluate(() => {
+      const probe = document.body.appendChild(document.createElement('i'))
+      const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
+      const names: Record<string, string> = { [token('--k-accent')]: 'accent', [token('--k-line')]: 'line' }
+      return [...document.querySelectorAll<SVGPathElement>('g[data-scene="seq-light"] path[style*="stroke-width: 4"]')].map((p) => names[getComputedStyle(p).stroke])
+    })
+    await page.close()
+    return r
+  }
+  expect(await at(1)).toEqual(['line', 'line', 'accent'])
+  expect(await at(2)).toEqual(['accent', 'line', 'line'])
+  expect(await at(3)).toEqual(['line', 'line', 'line'])
+}, 90_000)
