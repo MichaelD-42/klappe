@@ -17,6 +17,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `swimlanes.tasks(ids)`: build the lanes up task by task; each link draws once both its ends show. Catalog: `#/swimlanes/build/3`.
 - `counter.to(value)`: counts on from where the steps before left it. Catalog: `#/motion/counts/3`.
 - `formula.light(i)`: a shown `\step` term turns `--k-accent`; `light(null)` lights none. Catalog: `#/code/formula/5`.
+- `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 
 ### Fixed
 

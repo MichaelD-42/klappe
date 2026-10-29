@@ -131,6 +131,14 @@ const termLight: SceneModule = {
     (tl, f: ReturnType<typeof formula>) => f.light(null)(tl),
   ],
 };
+const twoHoles: SceneModule = {
+  build: (ctx) => ({ a: box(ctx, 160, 300), b: box(ctx, 1360, 600), s: spotlight(ctx) }),
+  steps: [
+    (tl, r: { a: HTMLElement; b: HTMLElement; s: SpotlightHandle }) => r.s.on(r.a)(tl),
+    (tl, r: { a: HTMLElement; b: HTMLElement; s: SpotlightHandle }) => r.s.on([r.a, r.b])(tl),
+    (tl, r: { a: HTMLElement; b: HTMLElement; s: SpotlightHandle }) => r.s.on(r.b)(tl),
+  ],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -154,6 +162,7 @@ export default () => {
       "sections/10-a/97-lane-tasks/scene.md": "## Lane tasks\n\n- The lanes and the order.\n- Packing, and its link.\n- The rest.\n",
       "sections/10-a/98-count-on/scene.md": "## Count on\n\n- 120.\n- Down to 80.\n- Down to 12.\n",
       "sections/10-a/99-term-light/scene.md": "## Term light\n\n- The formula.\n- The denominator, term 1 in the source, lit.\n- The numerator lit.\n- None lit.\n",
+      "sections/10-a/89-two-holes/scene.md": "## Two holes\n\n- One.\n- Both.\n- The second.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -174,6 +183,7 @@ export default () => {
       "sections/10-a/97-lane-tasks/scene.ts": laneTasks,
       "sections/10-a/98-count-on/scene.ts": countOn,
       "sections/10-a/99-term-light/scene.ts": termLight,
+      "sections/10-a/89-two-holes/scene.ts": twoHoles,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );

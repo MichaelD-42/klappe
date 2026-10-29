@@ -6,7 +6,7 @@ interface Refs {
   s: SpotlightHandle;
 }
 
-export default captioned("spotlight(ctx) — on(target) dims all but the target, on() again moves, off() lifts", {
+export default captioned("spotlight(ctx) — on(target) dims all but the target; on([a, b]) frames both; off() lifts", {
   build: (ctx): Refs => ({
     f: flow(ctx, {
       grid: { x: 160, y: 140, w: 1600, h: 700, cols: 3, rows: 1 },
@@ -23,6 +23,7 @@ export default captioned("spotlight(ctx) — on(target) dims all but the target,
     (tl, r: Refs) => r.f.show()(tl),
     (tl, r: Refs) => r.s.on(r.f.node("web"))(tl),
     (tl, r: Refs) => r.s.on(r.f.node("api"))(tl),
+    (tl, r: Refs) => r.s.on([r.f.node("web"), r.f.node("db")])(tl),
     (tl, r: Refs) => r.s.off(tl),
   ],
 });

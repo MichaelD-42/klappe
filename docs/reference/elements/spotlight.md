@@ -32,7 +32,7 @@ steps: [
 
 | Handle | Step |
 | --- | --- |
-| `on(target)` | `target` is an element (its box is measured) or a rect `{ x, y, w, h }` in scene units. The first `on` fades the dim in with the hole in place; a later one moves the hole there |
+| `on(target)` | `target` is an element (its box is measured) or a rect `{ x, y, w, h }` in scene units, or a list of up to 4 of them: one hole each, for two things the room should compare. The first `on` fades the dim in with the holes in place; a later one moves them there, a hole that is no longer needed shrinking away. More than 4 targets report `spotlight: <n> targets; at most 4 holes` and the first 4 show. Catalog: `#/spotlight/on-a-flow/4` |
 | `off` | the dim fades out; a later `on` fades it in again |
 
 ### Limits

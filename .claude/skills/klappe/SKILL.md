@@ -22,7 +22,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
 | Numbered places on a picture, explained one per step | `callout` with `focus` on your own marks | [callout](klappe/docs/reference/elements/callout.md#hotspots) | `260-callout/30-hotspots` |
 | Walk through a screen: move, click, type, drag (a tool training) | `pointer` | [pointer](klappe/docs/reference/elements/pointer.md) | `239-pointer/10-sign-in`, `239-pointer/20-drag` |
-| Make the room look at one part, then the next | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
+| Make the room look at one part, then the next; at two parts at once, `on([a, b])` | `spotlight` | [spotlight](klappe/docs/reference/elements/spotlight.md) | `265-spotlight/10-on-a-flow` |
 | Light one item in place while the rest dim, with no dark layer | `focus` | [focus](klappe/docs/reference/elements/focus.md) | `266-focus/10-talk-through` |
 | Mark words as a pen would (ring, underline, frame, strike, arrow, highlight); group lines with a bracket; cross out what is wrong | `annotate` | [annotate](klappe/docs/reference/elements/annotate.md) | `120-draw/40-annotate` |
 | Nudge one element | `glow`, `pulse`, `shake` | [attention](klappe/docs/reference/elements/attention.md) | `268-attention/10-nudges` |

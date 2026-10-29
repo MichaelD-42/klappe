@@ -253,3 +253,36 @@ test('formula light(i): a shown term turns --k-accent, the one before goes back;
   expect(await at(3)).toEqual(['m'])
   expect(await at(4)).toEqual([])
 }, 90_000)
+
+test('spotlight on([a, b]): a hole round each target, both bright, the rest dimmed', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/two-holes/${step}`)
+    const r = await page.evaluate(() => {
+      const boxes = [...document.querySelectorAll<HTMLElement>('div[data-scene="two-holes"] [data-box]')].map((b) => b.getBoundingClientRect())
+      const holes = [...document.querySelectorAll<HTMLElement>('div[data-scene="two-holes"] [data-k-spotlight-hole]')]
+        .filter((h) => h.checkVisibility({ opacityProperty: true, visibilityProperty: true }))
+        .map((h) => h.getBoundingClientRect())
+      return boxes.map((b) => holes.some((h) => h.x < b.x && h.y < b.y && h.right > b.right && h.bottom > b.bottom))
+    })
+    // Bright inside each hole: a pixel in the box is lighter than one in the dim between them.
+    const px = async (x: number, y: number) => {
+      const png = await page.screenshot({ clip: { x, y, width: 2, height: 2 } })
+      return page.evaluate(async (b64) => {
+        const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob())
+        const c = new OffscreenCanvas(img.width, img.height).getContext('2d')!
+        c.drawImage(img, 0, 0)
+        const [r, g, b] = c.getImageData(0, 0, 1, 1).data
+        return r + g + b
+      }, png.toString('base64'))
+    }
+    const lit = step === 2 ? [await px(170, 310), await px(1370, 610), await px(900, 150)] : []
+    await page.close()
+    return { framed: r, lit }
+  }
+  expect((await at(1)).framed).toEqual([true, false])
+  const both = await at(2)
+  expect(both.framed).toEqual([true, true])
+  expect(both.lit[0]).toBeGreaterThan(both.lit[2])
+  expect(both.lit[1]).toBeGreaterThan(both.lit[2])
+  expect((await at(3)).framed).toEqual([false, true])
+}, 90_000)
