@@ -301,3 +301,17 @@ test('likert with a 4-point scale: four colours from --k-bad to --k-ok, agree is
   })
   await page.close()
 }, 60_000)
+
+test('worldMap region share: the fill runs from faint at 0 to strong at 1; a later call moves it', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/shares/${step}`)
+    const r = await page.evaluate(() =>
+      Object.fromEntries(['Germany', 'France', 'Spain'].map((c) => [c, document.querySelector<SVGPathElement>(`[data-scene="shares"] [data-k-region="${c}"]`)!.style.fill])),
+    )
+    await page.close()
+    return r
+  }
+  const mix = (p: number) => `color-mix(in srgb, var(--k-accent) ${p}%, transparent)`
+  expect(await at(1)).toEqual({ Germany: mix(85), France: mix(15), Spain: mix(35) })
+  expect((await at(2)).France).toBe(mix(50))
+}, 90_000)

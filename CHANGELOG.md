@@ -18,6 +18,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `counter.to(value)`: counts on from where the steps before left it. Catalog: `#/motion/counts/3`.
 - `formula.light(i)`: a shown `\step` term turns `--k-accent`; `light(null)` lights none. Catalog: `#/code/formula/5`.
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
+- `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
 
 ### Changed
 
