@@ -15,6 +15,22 @@ const GRAMMARS: Record<string, () => Promise<{ default: LanguageRegistration[] }
   sql: () => import("shiki/langs/sql.mjs"),
   html: () => import("shiki/langs/html.mjs"),
   css: () => import("shiki/langs/css.mjs"),
+  go: () => import("shiki/langs/go.mjs"),
+  rust: () => import("shiki/langs/rust.mjs"),
+  java: () => import("shiki/langs/java.mjs"),
+  kotlin: () => import("shiki/langs/kotlin.mjs"),
+  csharp: () => import("shiki/langs/csharp.mjs"),
+  c: () => import("shiki/langs/c.mjs"),
+  cpp: () => import("shiki/langs/cpp.mjs"),
+  ruby: () => import("shiki/langs/ruby.mjs"),
+  php: () => import("shiki/langs/php.mjs"),
+  swift: () => import("shiki/langs/swift.mjs"),
+  dockerfile: () => import("shiki/langs/dockerfile.mjs"),
+  toml: () => import("shiki/langs/toml.mjs"),
+  xml: () => import("shiki/langs/xml.mjs"),
+  markdown: () => import("shiki/langs/markdown.mjs"),
+  diff: () => import("shiki/langs/diff.mjs"),
+  hcl: () => import("shiki/langs/hcl.mjs"),
 };
 export const LANGS = Object.keys(GRAMMARS);
 

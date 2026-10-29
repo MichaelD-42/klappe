@@ -2,6 +2,12 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.7.0 (unreleased)
+
+### Added
+
+- `code` and code fences highlight Go, Rust, Java, Kotlin, C#, C, C++, Ruby, PHP, Swift, Dockerfile, TOML, XML, Markdown, diff and HCL (`go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`).
+
 ## 0.6.1 (2026-10-28)
 
 ### Added
