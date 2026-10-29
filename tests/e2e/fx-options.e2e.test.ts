@@ -19,6 +19,8 @@ for (const vp of [
       'sections/10-a/40-lines/scene.ts: shape: width 1 is under the 2 px floor',
       'sections/10-a/88-four-points/scene.ts: likert: row 2 needs 4 counts of 0 or more, got [1, 1, 1, 1, 1]',
       'sections/10-a/92-clip-vimeo/scene.ts: video: a Vimeo player cannot stop at end; it plays on from start',
+      'sections/10-a/85-bars-to/scene.ts step 3: chart: no column "1999" in columns; they are 2024, 2025',
+      'sections/10-a/86-donut-to/scene.ts step 3: chart: no column "1999" in columns; they are 2024, 2025',
     ])
   }, 120_000)
 
@@ -314,4 +316,40 @@ test('worldMap region share: the fill runs from faint at 0 to strong at 1; a lat
   const mix = (p: number) => `color-mix(in srgb, var(--k-accent) ${p}%, transparent)`
   expect(await at(1)).toEqual({ Germany: mix(85), France: mix(15), Spain: mix(35) })
   expect((await at(2)).France).toBe(mix(50))
+}, 90_000)
+
+test('chart to(column): bars grow or shrink to the next column on one axis, the values count, the column name changes', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/bars-to/${step}`)
+    const r = await page.evaluate(() => {
+      const g = document.querySelector('[data-scene="bars-to"] [data-k-chart="bar"]')!
+      const h = [...g.querySelectorAll('rect')].filter((b) => b.getBoundingClientRect().width > 50).map((b) => Math.round(b.getBoundingClientRect().height))
+      const texts = [...g.querySelectorAll('text[data-k-text]')].map((t) => t.textContent)
+      return { h, texts }
+    })
+    await page.close()
+    return r
+  }
+  const [a, b] = [await at(1), await at(2)]
+  expect(a.texts).toEqual(['2024', '40', '60'])
+  expect(b.texts).toEqual(['2025', '80', '20'])
+  expect(b.h[0] / a.h[0]).toBeCloseTo(2, 1)
+  expect(b.h[1] / a.h[1]).toBeCloseTo(1 / 3, 1)
+}, 90_000)
+
+test('chart to(column) on a donut: the slices turn to the new shares, the values and the total count', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/donut-to/${step}`)
+    const r = await page.evaluate(() => {
+      const g = document.querySelector('[data-scene="donut-to"] [data-k-chart="donut"]')!
+      return { texts: [...g.querySelectorAll('text[data-k-text]')].map((t) => t.textContent), dash: [...g.querySelectorAll('circle')].map((c) => parseFloat(getComputedStyle(c).strokeDasharray)) }
+    })
+    await page.close()
+    return r
+  }
+  const [a, b] = [await at(1), await at(2)]
+  expect(a.texts).toEqual(['2024', '100', '40', '40 %', '60', '60 %'])
+  expect(b.texts).toEqual(['2025', '100', '80', '80 %', '20', '20 %'])
+  expect(b.dash[0]).toBeGreaterThan(a.dash[0])
+  expect(b.dash[1]).toBeLessThan(a.dash[1])
 }, 90_000)

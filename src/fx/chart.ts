@@ -30,6 +30,9 @@ export interface ChartOpts {
   lines?: { value: number; label: string }[];
   // Scatter and bubble: the text column that colours each dot, one colour per value, with a legend.
   group?: string;
+  // Bar and donut: the number columns the chart moves through, the first shown by grow, the others by to(name).
+  // The value axis spans them all; the shown column's name stands in the legend row.
+  columns?: string[];
 }
 export interface ChartHandle {
   axes: StepAdder;
@@ -53,6 +56,8 @@ export interface ChartHandle {
   highlight(row: number | null): StepAdder;
   // A scatter or bubble with a period column only: the dots move to that period, by index or by its name.
   period(p: number | string): StepAdder;
+  // Bar and donut with columns: the bars, or the slices, move to that column; the values count there.
+  to(column: string): StepAdder;
 }
 
 // shortcut: no quoted commas, upgrade to d3-dsv if decks need it
@@ -80,11 +85,15 @@ export function parseCsv(text: string): Row[] & { source?: string } {
       }),
     );
   });
+  // The header's order rides along: JS puts keys that look like integers ("2024") first in every row object.
+  Object.defineProperty(rows, "columns", { value: head });
   return source ? Object.assign(rows, { source }) : rows;
 }
 
+// A table's column names in order: the header's for parsed CSV, else the first row's keys.
+export const keysOf = (rows: Row[]) => (rows as { columns?: string[] }).columns ?? Object.keys(rows[0] ?? {});
 function columns(rows: Row[]) {
-  const [label, ...rest] = Object.keys(rows[0] ?? {});
+  const [label, ...rest] = keysOf(rows);
   return { label, series: rest.filter((k) => rows.some((r) => typeof r[k] === "number")) };
 }
 const num = (r: Row, k: string) => r[k] as number;
@@ -102,7 +111,7 @@ const PERIOD = /^(period|year|date|month|quarter|week)$/i;
 // where it has no row. keys: the number columns other than the period, in order: x, y, size.
 export function scatterTracks(rows: Row[]): { period?: string; periods: string[]; names: string[]; at: number[][][]; keys: string[] } {
   const { label, series } = columns(rows);
-  const period = Object.keys(rows[0] ?? {}).slice(1).find((k) => PERIOD.test(k));
+  const period = keysOf(rows).slice(1).find((k) => PERIOD.test(k));
   const keys = series.filter((k) => k !== period);
   const vals = (r: Row) => keys.map((k) => num(r, k));
   if (!period) return { period, periods: [], names: rows.map((r) => String(r[label])), at: [rows.map(vals)], keys };
@@ -119,7 +128,7 @@ export function dataError(rows: unknown[], type: ChartType): string {
   const data = rows as Row[];
   // By position, not columns(): a target named "2024" is still a name.
   if (type === "sankey") {
-    const [s, tg, k] = Object.keys(data[0] ?? {});
+    const [s, tg, k] = keysOf(data);
     if (!k) return "needs source, target and value columns";
     for (const [i, r] of data.entries()) {
       if (r[s] === "" || r[s] === undefined || r[tg] === "" || r[tg] === undefined) return `row ${i + 1}, no source or target`;
@@ -236,7 +245,7 @@ export interface SankeyLink {
 }
 // A sankey's rows as links: the columns by position, source, target, value.
 function sankeyLinks(rows: Row[]): SankeyLink[] {
-  const [s, tg, k] = Object.keys(rows[0] ?? {});
+  const [s, tg, k] = keysOf(rows);
   return rows.map((r) => ({ source: String(r[s]), target: String(r[tg]), value: num(r, k) }));
 }
 export interface SankeyLayout {
@@ -446,7 +455,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
   gsap.set(box, { autoAlpha: 0 });
   // Every adder shows the box, so any step order shows it.
   const show: StepAdder = (tl) => void tl.to(box, { autoAlpha: 1, duration: motion.step });
-  return { axes: show, grow: show, values: show, bar: () => show, slice: () => show, series: () => show, cell: () => show, bars: [], highlight: () => show, period: () => show };
+  return { axes: show, grow: show, values: show, bar: () => show, slice: () => show, series: () => show, cell: () => show, bars: [], highlight: () => show, period: () => show, to: () => show };
 }
 
 // Rows from opts.data or the file: CSV, a JSON array of rows, or JSON { source, rows }.
@@ -479,7 +488,15 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (why) return placeholder(ctx, opts, t("dataError", ctx.deck.lang), why);
   const data = loaded.rows as Row[];
   const { label, series } = columns(data);
-  const keys =
+  // The columns to() moves through: only bar and donut, only number columns of the file.
+  const cols = opts.columns ?? [];
+  if (cols.length && type !== "bar" && type !== "donut") ctx.problem(`chart: columns are for bar and donut charts, not ${type}: ${opts.src}`);
+  const badCol = cols.find((c) => !series.includes(c));
+  if (badCol !== undefined) ctx.problem(`chart: columns: no number column "${badCol}" in ${opts.src}`);
+  const moving = (type === "bar" || type === "donut") && cols.length > 1 && badCol === undefined;
+  const keys = moving
+    ? [cols[0]]
+    :
     type === "scatter" || type === "bubble"
       ? []
       : type === "stacked" || type === "line" || type === "radar" || type === "heatmap"
@@ -487,10 +504,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         : type === "slope"
           ? series.slice(0, 2)
           : type === "sankey"
-            ? [Object.keys(data[0])[2]]
+            ? [keysOf(data)[2]]
             : [series[0]];
   // A treemap's second text column: the tile names, under the groups of the first.
-  const leaf = type === "treemap" ? Object.keys(data[0]).find((k) => k !== label && !series.includes(k)) : undefined;
+  const leaf = type === "treemap" ? keysOf(data).find((k) => k !== label && !series.includes(k)) : undefined;
   const tileGroups = leaf ? [...new Set(data.map((r) => String(r[label])))] : [];
   const names = data.map((r) => String(r[label]));
   if (type === "waterfall") names.push(t("total", ctx.deck.lang));
@@ -526,7 +543,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const valW = 13 * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
   const m = {
     // A slope's and a heatmap's column headers sit above the plot; a heatmap's ramp is in the legend row.
-    top: 56 + (legend.length || type === "heatmap" ? 40 : 0) + 40 + (type === "slope" || type === "heatmap" ? 36 : 0),
+    top: 56 + (legend.length || type === "heatmap" || moving ? 40 : 0) + 40 + (type === "slope" || type === "heatmap" ? 36 : 0),
     left:
       type === "timeline" || type === "funnel" || type === "heatmap"
         ? Math.min(R.w * 0.3, 24 + longest * 13)
@@ -554,6 +571,12 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     s.style.fill = "var(--k-warn)";
     head.push(s);
   }
+  // The shown column's name, in the legend row; to() switches it halfway.
+  const colName = moving ? text(root, cols[0], { x: R.x, y: R.y + 79, "font-weight": 700 }) : undefined;
+  if (colName) {
+    colName.setAttribute("data-k-text", "");
+    head.push(colName);
+  }
   if (legend.length) {
     const g = svg(root, "g", {});
     let lx = R.x;
@@ -568,7 +591,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const REF_TYPES: ChartType[] = ["bar", "stacked", "line", "waterfall", "slope", "timeline"];
   const refs = REF_TYPES.includes(type) ? (opts.lines ?? []) : [];
   if (opts.lines?.length && !refs.length) ctx.problem(`chart: lines are for ${REF_TYPES.join(", ")} charts, not ${type}: ${opts.src}`);
-  const v = d3.scaleLinear().domain(d3.extent([...chartDomain(data, type), ...refs.map((l) => l.value)]) as [number, number]).nice();
+  const later = moving ? data.flatMap((r) => cols.map((c) => num(r, c))) : []; // the axis reaches every column to() shows
+  const v = d3.scaleLinear().domain(d3.extent([...chartDomain(data, type), ...refs.map((l) => l.value), ...later]) as [number, number]).nice();
   let refAt: ((n: number) => { x1: number; y1: number; x2: number; y2: number }) | undefined; // where a reference line runs
   const marks = svg(root, "g", {});
   // label: a name that fades in with its mark during grow (a sankey node's)
@@ -605,6 +629,9 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   let outline: SVGElement | undefined; // the heatmap's lit-cell outline
   let scatterAxes = false; // a scatter's axes keep their ticks; the frame draws their lines
   let xAxis: d3.Axis<any> | undefined;
+  // What to() moves: a plain bar chart's bars and value labels (place: a label's y for a value), a donut's ring.
+  const plain: { rect: SVGElement; val: SVGTextElement; place: (n: number) => number }[] = [];
+  let ring: { cx: number; cy: number; gap: number; arcs: SVGElement[]; total?: SVGTextElement; vals: SVGTextElement[][] } | undefined;
   let yAxis: d3.Axis<any> | undefined;
   if (type === "donut") {
     // The ring on the left with the total in its centre; a legend on the right: name, value and share.
@@ -614,6 +641,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const [cx, cy, thick] = [P.x + d / 2, P.y + P.h / 2, d * 0.18];
     const GAP = data.length > 1 ? 0.004 : 0; // a hairline of background between slices, in turns
     const shares = donutSlices(data.map((r) => num(r, k)));
+    ring = { cx, cy, gap: GAP, arcs: [], vals: [] };
     shares.forEach((s, i) => {
       const len = Math.max(0.001, s.share - GAP);
       const arc = svg(marks, "circle", {
@@ -622,9 +650,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       });
       Object.assign(arc.style, { stroke: SLICES[i], strokeDasharray: `${len} 1` });
       sweeps.push({ el: arc, len, part: i });
+      ring!.arcs.push(arc);
     });
     donutTotal = values.length;
-    valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 64, "font-weight": 700 }, 0, total, fmt);
+    ring.total = valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 64, "font-weight": 700 }, 0, total, fmt);
     labels.push(text(root, t("total", ctx.deck.lang), { x: cx, y: cy + 60, "text-anchor": "middle" }));
     const x0 = P.x + d + 80;
     const rowH = Math.min(72, P.h / data.length);
@@ -636,8 +665,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       // Two columns: the value, then its share of the total.
       const n = num(r, k);
       cur = i;
-      valueAt({ x: R.x + R.w - 120, y: y + 4, "text-anchor": "end" }, 0, n, fmt);
-      valueAt({ x: R.x + R.w, y: y + 4, "text-anchor": "end" }, 0, n, (v) => `${Math.round((v / total) * 100)} %`);
+      ring!.vals.push([
+        valueAt({ x: R.x + R.w - 120, y: y + 4, "text-anchor": "end" }, 0, n, fmt),
+        valueAt({ x: R.x + R.w, y: y + 4, "text-anchor": "end" }, 0, n, (v) => `${Math.round((v / total) * 100)} %`),
+      ]);
       cur = -1;
     });
   } else if (type === "slope") {
@@ -1026,6 +1057,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
           const n = num(r, keys[0]);
           bar(left(i), x.bandwidth(), 0, n, color(0), n >= 0);
           barValue(0, n, i, n, fmt);
+          plain.push({ rect: bars[bars.length - 1], val: values[values.length - 1].el, place: (m: number) => (m < 0 ? v(m) + FONT + 8 : v(m) - 10) });
         });
       cur = -1;
       xAxis = categories(x, names);
@@ -1064,6 +1096,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   gsap.set([...head, ...axesEls, ...values.map((e) => e.el), ...accents, ...grown.flatMap((g) => g.label ?? [])], { autoAlpha: 0 });
   for (const { el, origin, svgOrigin, scale } of grown) gsap.set(el, { [scale]: 0, ...(svgOrigin ? { svgOrigin } : { transformOrigin: origin }) });
   for (const { el, len } of sweeps) gsap.set(el, { strokeDashoffset: len, autoRound: false });
+  let shownCol = cols[0]; // the column the to() steps added so far leave shown
   let lit = -1; // the sankey flow the steps added so far end on
   let litPart: number | null = null; // the part highlight() left lit, in step order
   let sliced = 0; // the donut total the slice() steps added so far count to
@@ -1163,6 +1196,50 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     period: (p) => (tl) => {
       if (!moveTo) return ctx.problem(`chart: period() is for a scatter or bubble chart with a period column: ${opts.src}`);
       moveTo(p, tl);
+    },
+    // The step order, not the call order, decides the column it moves from.
+    to: (column) => (tl) => {
+      if (!moving) return ctx.problem(`chart: to() needs a bar or donut chart with columns: ${opts.src}`);
+      if (!cols.includes(column)) {
+        ctx.problem(`chart: no column "${column}" in columns; they are ${cols.join(", ")}`);
+        return void tl.set({}, {}, tl.duration() + 0.4); // the step still takes a beat
+      }
+      const [a, b] = [shownCol, column];
+      shownCol = column;
+      const was = data.map((r) => num(r, a));
+      const now = data.map((r) => num(r, b));
+      const t0 = tl.duration();
+      const d = { duration: motion.step * 2, ease: "power2.inOut", immediateRender: false };
+      tl.set(colName!, { textContent: b, immediateRender: false }, t0 + d.duration / 2);
+      if (ring) {
+        const [s0, s1] = [donutSlices(was), donutSlices(now)];
+        const [t0s, t1s] = [d3.sum(was), d3.sum(now)];
+        const deg = (sl: { start: number }) => -90 + (sl.start + ring!.gap / 2) * 360;
+        ring.arcs.forEach((arc, i) => {
+          const len = (sl: { share: number }) => Math.max(0.001, sl.share - ring!.gap);
+          tl.fromTo(arc, { attr: { transform: `rotate(${deg(s0[i])} ${ring!.cx} ${ring!.cy})` }, strokeDasharray: `${len(s0[i])} 1` },
+            { attr: { transform: `rotate(${deg(s1[i])} ${ring!.cx} ${ring!.cy})` }, strokeDasharray: `${len(s1[i])} 1`, ...d }, t0);
+        });
+        tl.to({}, { ...d, onUpdate(this: gsap.core.Tween) {
+          const p = this.ratio;
+          const total = t0s + (t1s - t0s) * p;
+          ring!.total!.textContent = fmt(total);
+          ring!.vals.forEach(([val, share], i) => {
+            const n = was[i] + (now[i] - was[i]) * p;
+            val.textContent = fmt(n);
+            share.textContent = `${Math.round((total ? n / total : 0) * 100)} %`;
+          });
+        } }, t0);
+        return;
+      }
+      plain.forEach(({ rect, val, place }, i) => {
+        const box = (n: number) => ({ y: Math.min(v(0), v(n)), height: Math.abs(v(0) - v(n)) });
+        tl.fromTo(rect, { attr: box(was[i]) }, { attr: box(now[i]), ...d }, t0);
+        tl.fromTo(val, { attr: { y: place(was[i]) } }, { attr: { y: place(now[i]) }, ...d }, t0);
+      });
+      tl.to({}, { ...d, onUpdate(this: gsap.core.Tween) {
+        plain.forEach(({ val }, i) => (val.textContent = fmt(was[i] + (now[i] - was[i]) * this.ratio)));
+      } }, t0);
     },
     bar: (i) => (tl) => {
       if (!["bar", "waterfall", "stacked", "timeline", "funnel", "treemap"].includes(type))

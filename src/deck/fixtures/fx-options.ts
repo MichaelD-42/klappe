@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, counter, formula, gauge, likert, worldMap, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, chart, compareTable, counter, formula, gauge, likert, worldMap, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -155,6 +155,14 @@ const shares: SceneModule = {
     (tl, m: ReturnType<typeof worldMap>) => m.region(tl, "France", { share: 0.5 }),
   ],
 };
+const chartTo = (type: "bar" | "donut"): SceneModule => ({
+  build: (ctx) => chart(ctx, { src: "data/years.csv", type, columns: ["2024", "2025"], rect: { x: 160, y: 100, w: 1600, h: 820 } }),
+  steps: [
+    (tl, c: ReturnType<typeof chart>) => (c.axes(tl), c.grow(tl), c.values(tl)),
+    (tl, c: ReturnType<typeof chart>) => c.to("2025")(tl),
+    (tl, c: ReturnType<typeof chart>) => c.to("1999")(tl),
+  ],
+});
 
 export default () => {
   const r = assembleDeck(
@@ -181,6 +189,8 @@ export default () => {
       "sections/10-a/89-two-holes/scene.md": "## Two holes\n\n- One.\n- Both.\n- The second.\n",
       "sections/10-a/88-four-points/scene.md": "## Four points\n\n- No middle: agree is the top two.\n",
       "sections/10-a/87-shares/scene.md": "## Shares\n\n- Germany full, France faint, Spain plain.\n- France halfway.\n",
+      "sections/10-a/85-bars-to/scene.md": "## Bars to\n\n- 2024.\n- 2025.\n- A column that is not there.\n",
+      "sections/10-a/86-donut-to/scene.md": "## Donut to\n\n- 2024.\n- 2025.\n- A column that is not there.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -204,9 +214,11 @@ export default () => {
       "sections/10-a/89-two-holes/scene.ts": twoHoles,
       "sections/10-a/88-four-points/scene.ts": fourPoints,
       "sections/10-a/87-shares/scene.ts": shares,
+      "sections/10-a/85-bars-to/scene.ts": chartTo("bar"),
+      "sections/10-a/86-donut-to/scene.ts": chartTo("donut"),
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );
-  r.deck.files = { data: {}, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f"), "media/clip.webm": "data:video/webm;base64," } };
+  r.deck.files = { data: { "data/years.csv": "team,2024,2025\nA,40,80\nB,60,20\n" }, media: { "media/before.svg": picture("#555555", "#999999"), "media/after.svg": picture("#1d3557", "#2a9d8f"), "media/clip.webm": "data:video/webm;base64," } };
   return r;
 };

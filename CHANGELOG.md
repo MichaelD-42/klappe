@@ -19,6 +19,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `formula.light(i)`: a shown `\step` term turns `--k-accent`; `light(null)` lights none. Catalog: `#/code/formula/5`.
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 - `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
+- `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
 
 ### Changed
 
@@ -27,6 +28,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 ### Fixed
 
 - `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.
+- `chart`, `barRace` and `wordCloud` read a CSV's columns in the header's order: a header such as `team,2024,2025` took `2024` as the label column, because JS lists keys that look like numbers first.
 
 ## 0.6.1 (2026-10-28)
 

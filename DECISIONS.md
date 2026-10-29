@@ -336,3 +336,18 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: Vite hoists an eager glob into a static import, so every fixture page loaded the whole demo deck and all fixtures: 782 requests where 148 do. A built deck gets one more chunk. The page's load event now fires before the deck is in, so a test waits for `klappe.stepper` or `klappe.speakerView`, never for load.
 - **`noUnusedLocals` is on; no ESLint.**
   - Why: the stricter tsc flags found 17 unused imports (fixed) and nothing else worth a rule; `noUncheckedIndexedAccess` gave 1645 findings. typescript-eslint's promise rules (`no-floating-promises`, `no-misused-promises`, `await-thenable`), tried with TypeScript 6 on 2026-10-28, gave 41 findings and no bug: GSAP timelines are thenables, so every `forEach((x) => tl.to(…))` is flagged, and a step started without `await` already fails the walk through `unhandledrejection` (`src/errors.ts`). typescript-eslint also cannot run on TypeScript 7, which has no JavaScript API.
+
+## 2026-10-29 (effect additions)
+
+- **`chart.to(column)` moves between number columns of one file, named up front in `columns`; it does not take a second dataset.**
+  - Why: the same rows, labels and checks hold for both states, so `to` only tweens values. Naming the columns up front lets the value axis span them all at load (a bar compares across the step, as in `barRace`); widening the axis to every number column by default would have shrunk existing bar charts whose files carry unused columns. Only `bar` and `donut`: a `line` already draws every column as a series.
+- **`parseCsv` keeps the header's column order on its result (`keysOf`).**
+  - Why: JS lists object keys that look like integers first, so `team,2024,2025` made `2024` the label column. Rows passed as `data` still have their object's order; a file is the fix there.
+- **`spotlight` dims with one layer cut by an even-odd `clip-path` with four holes, not a box-shadow round one hole.**
+  - Why: a second shadow covers the first hole. A path of a fixed shape (unused holes shrunk to a point) tweens as one string, so a step from one hole to two is one tween that seeks.
+- **`formula` numbers each `\step` by its place in the source and builds in that order.**
+  - Why: KaTeX puts a fraction's denominator before its numerator in the DOM, so the terms built out of the order they were written. `trust` allows exactly the class pattern `k-ft k-ft-<n>`, still nothing else.
+- **`mindMap.light(i)` dims the other branches; it does not put the branch in the accent.**
+  - Why: each branch's series colour is its identity across the map. Each branch is one group dimmed as a whole, so a dimmed box never shows its own lines through it.
+- **A Markdown table is always a `compareTable`, one row per step.**
+  - Why: the table is how people write a comparison; ✓ ✗ ~ map to the marks. A table for other data still has `scene.ts`.

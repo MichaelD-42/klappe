@@ -2,7 +2,7 @@ import { gsap } from "gsap";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
-import { dataError, parseCsv, showsSample, type Row } from "./chart";
+import { dataError, keysOf, parseCsv, showsSample, type Row } from "./chart";
 
 export interface CloudWord {
   text: string;
@@ -96,8 +96,8 @@ export function wordCloud(ctx: Ctx, opts: WordCloudOpts): WordCloudHandle {
   if (!rows.length) return fail(t("dataMissing", ctx.deck.lang), "no rows");
   const why = dataError(rows, "bar");
   if (why) return fail(t("dataError", ctx.deck.lang), why);
-  const [label] = Object.keys(rows[0]);
-  const weight = Object.keys(rows[0]).find((k) => k !== label && typeof rows[0][k] === "number")!;
+  const [label] = keysOf(rows);
+  const weight = keysOf(rows).find((k) => k !== label && typeof rows[0][k] === "number")!;
   const bad = rows.findIndex((r) => !((r[weight] as number) > 0) || !String(r[label]).trim());
   if (bad >= 0) return fail(t("dataError", ctx.deck.lang), `row ${bad + 1}, no word or ${weight} not above zero`);
 

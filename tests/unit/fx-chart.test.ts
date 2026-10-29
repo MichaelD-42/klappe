@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { barInk, chartDomain, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, scatterTracks, showsSample, spread, tagSpread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
+import { barInk, chartDomain, keysOf, sankeyPalette, dataError, donutSlices, funnelLayout, parseCsv, raceRanks, sankeyLayout, scatterTracks, showsSample, spread, tagSpread, waterfallSteps, type SankeyLayout } from "../../src/fx/chart";
 import { contrast, parseTokens } from "../../src/theme";
 
 describe("parseCsv", () => {
@@ -41,6 +41,14 @@ const rows = [
   { q: "Q2", a: -1, b: 3 },
   { q: "Q3", a: 6, b: 1 },
 ];
+
+// Object keys that look like integers come first in JS, whatever the header said: the label must stay the first column.
+test("parseCsv keeps the header's column order for year columns", () => {
+  const rows = parseCsv("q,2025,2024\nA,1,5\nB,2,6\n");
+  expect(chartDomain(rows, "bar")).toEqual([0, 2]);
+  expect(scatterTracks(parseCsv("team,2024,2025\nA,1,2\n")).names).toEqual(["A"]);
+  expect(keysOf(parseCsv("word,2024\nship,3\n"))).toEqual(["word", "2024"]);
+});
 
 describe("chartDomain", () => {
   test("bar: the first series, always including zero", () => {

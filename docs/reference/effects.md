@@ -29,8 +29,9 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | `sample` | boolean | false | show the "Sample data" label. It also shows when the file has the line `# source: klappe demo sample` |
 | `group` | string | none | `scatter` and `bubble`: a text column whose values colour the dots, one `--k-series-N` colour each (repeating past six), with a legend. A name with rows in several periods takes the group of its first row. Catalog: `#/chart/scatter/1`. A column that is not there reports `chart: no group column "<name>" in <src>`; another chart type `chart: group is for scatter and bubble charts` |
 | `lines` | `{ value, label }[]` | none | `bar`, `stacked`, `line`, `waterfall`, `slope` and `timeline`: a dashed `--k-fg` line across the plot at each value (a goal, last year, a limit; on a timeline a "today" down the plot), its label in bold at the line's right end (a timeline's: at its top). They show with `axes`, and the value axis reaches them. Catalog: `#/chart/bars/1`. Another type reports `chart: lines are for bar, stacked, line, waterfall, slope, timeline charts, not <type>` |
+| `columns` | string[] | none | `bar` and `donut`: the number columns the chart moves through, by header name (`["2024", "2025"]`). The first shows at `grow`; `to(name)` moves to another. The value axis spans all of them, so a bar compares across the step, and the shown column's name stands in bold in the legend row. A name that is not a number column reports `chart: columns: no number column "<name>" in <src>`; another type `chart: columns are for bar and donut charts, not <type>`. Catalog: `#/chart/years/2` |
 
-The first column labels the rows; every later column with a number in any row is a series and must be a number in every row.
+The first column labels the rows; every later column with a number in any row is a series and must be a number in every row. Columns keep the header's order, also when a name looks like a number (`team,2024,2025`); rows you pass as `data` keep their object's key order, which puts such names first, so give them a `data/` file instead.
 
 ### Step adders
 
@@ -45,6 +46,7 @@ The first column labels the rows; every later column with a number in any row is
 | `slice(i)` | `donut` only: slice `i` draws round, its value and share in the legend count up, and the total in the centre counts on from the slices the steps before drew. Call it once per step instead of `grow` and `values`, after `axes`, which shows the legend names. Catalog: `#/chart/slices/2` |
 | `series(i)` | `line` and `radar`: series `i` (0 is the first number column) draws with its markers and values (a line left to right, a radar shape from the centre). Call it once per step instead of `grow` and `values`. Catalog: `#/chart/series/2` |
 | `cell(row, col)` | `heatmap` only: an outline in `--k-fg` moves to the cell in row `row` (0 is the first row after the header), column `col` (0 is the first number column), from where the steps before left it; `cell(null)` hides it. Catalog: `#/chart/heatmap/4`. Another type reports `chart: cell() is for a heatmap`; a cell that does not exist `chart: no cell <row>, <col>` |
+| `to(column)` | `bar` and `donut` with `columns`: the bars grow or shrink to that column's values (a donut's slices turn to its shares) over 1.2 s, from the column the steps before left, and the values, shares and total count there; the column name in the legend row switches halfway. For a before and after on one chart. Catalog: `#/chart/years/2`. A column not in `columns` reports `chart: no column "<name>" in columns; they are …` and holds a beat; a chart without `columns` reports `chart: to() needs a bar or donut chart with columns` |
 
 ### Limits
 
@@ -166,11 +168,15 @@ The value axis is fixed over all periods, so a bar's length compares across time
 
 ## `parseCsv`
 
-`parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. Use it to read a `data/` file for an effect that is not a chart:
+`parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. The header's column order rides on the result too, for `keysOf`. Use it to read a `data/` file for an effect that is not a chart:
 
 ```ts
 build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ```
+
+## `keysOf`
+
+`keysOf(rows)` gives a table's column names in order: the header's for rows from `parseCsv`, else the first row's keys. JS lists object keys that look like numbers (`"2024"`) first, so a header such as `team,2024,2025` needs the header's order to keep `team` as the label. `chart` and `wordCloud` use it.
 
 ## `dataError`
 
