@@ -6,3 +6,4 @@
 - How likely B is when A holds.
 - Times how likely A was before.
 - Over how likely B is at all.
+- The prior is where most mistakes start.

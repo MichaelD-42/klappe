@@ -234,3 +234,22 @@ test('counter to(value): counts on from where the steps before left it', async (
   }
   expect([await at(1), await at(2), await at(3)]).toEqual(['120', '80', '12'])
 }, 90_000)
+
+// Terms count in source order: a fraction's numerator is term 0, though KaTeX puts the denominator first in the DOM.
+test('formula light(i): a shown term turns --k-accent, the one before goes back; null lights none', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/term-light/${step}`)
+    const r = await page.evaluate(() => {
+      const probe = document.body.appendChild(document.createElement('i'))
+      const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
+      const names: Record<string, string> = { [token('--k-accent')]: 'accent', [token('--k-fg')]: 'fg' }
+      return [...document.querySelectorAll('[data-scene="term-light"] .katex-html .k-ft')].filter((t) => names[getComputedStyle(t).color] === 'accent').map((t) => t.textContent)
+    })
+    await page.close()
+    return r
+  }
+  expect(await at(1)).toEqual([])
+  expect(await at(2)).toEqual(['c2'])
+  expect(await at(3)).toEqual(['m'])
+  expect(await at(4)).toEqual([])
+}, 90_000)

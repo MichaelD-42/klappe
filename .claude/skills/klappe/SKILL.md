@@ -16,7 +16,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Intent | Use | Reference | Catalog scene |
 |---|---|---|---|
 | A title or a text box in a `scene.ts` scene; fade any element in or out | `title`, `text`; `show`, `hide` | [basics](klappe/docs/reference/elements/basics.md) | `106-basics/10-text-and-fades` |
-| An equation that builds term by term, for a technical training: `\step{…}` around each term | `formula` | [formula](klappe/docs/reference/elements/formula.md) | `240-code/40-formula` |
+| An equation that builds term by term, for a technical training: `\step{…}` around each term; light one term again, `light(i)` | `formula` | [formula](klappe/docs/reference/elements/formula.md) | `240-code/40-formula` |
 | Show code, one part at a time; code changing | a fence with `{1-2\|4}` groups in `scene.md`; `code` with `diff` | [code](klappe/docs/reference/elements/code.md) | `240-code/10-walkthrough`, `240-code/20-diff` |
 | Show a command and its output | a ```` ```console ```` fence; `terminal` in `scene.ts` | [terminal](klappe/docs/reference/elements/terminal.md) | `250-terminal/10-replay` |
 | Point at one thing | `callout` | [callout](klappe/docs/reference/elements/callout.md) | `260-callout/20-point` |
