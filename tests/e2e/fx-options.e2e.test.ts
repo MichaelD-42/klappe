@@ -175,3 +175,18 @@ test('roadmap status: a milestone settles to its tone, with an icon that names i
   expect(r).toEqual({ dots: ['ok', 'warn', 'bad', 'line'], icons: ['done', 'at risk', 'late', null] })
   await page.close()
 }, 60_000)
+
+test('mindMap light(i): that branch stays, the others dim; light(null) brings all back', async () => {
+  const at = async (step: number) => {
+    const page = await open(`#/a/mind-light/${step}`)
+    const r = await page.evaluate(() =>
+      [0, 1, 2].map((i) => [...document.querySelectorAll<SVGGElement>(`[data-k-mind-light="${i}"]`)].map((g) => Number(getComputedStyle(g).opacity))),
+    )
+    await page.close()
+    return r
+  }
+  expect(await at(1)).toEqual([[1], [1], [1]])
+  expect(await at(2)).toEqual([[1], [0.35], [0.35]])
+  expect(await at(3)).toEqual([[0.35], [0.35], [1]])
+  expect(await at(4)).toEqual([[1], [1], [1]])
+}, 90_000)

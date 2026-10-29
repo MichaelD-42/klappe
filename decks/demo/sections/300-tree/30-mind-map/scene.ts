@@ -1,7 +1,7 @@
 import { mindMap, type MindMapHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
-export default captioned("mindMap(ctx, { root: { label, children }, x, y, w, h }) — next() grows one branch", {
+export default captioned("mindMap(ctx, { root, x, y, w, h }) — next() grows one branch; light(i) comes back to one", {
   build: (ctx) =>
     mindMap(ctx, {
       x: 160, y: 60, w: 1600, h: 860,
@@ -21,5 +21,6 @@ export default captioned("mindMap(ctx, { root: { label, children }, x, y, w, h }
     (tl, m) => m.next()(tl),
     (tl, m) => m.next()(tl),
     (tl, m) => m.next()(tl),
+    (tl, m) => m.light(1)(tl),
   ],
 });

@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, compareTable, gauge, roadmap, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, compareTable, gauge, mindMap, roadmap, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -82,6 +82,15 @@ const status: SceneModule = {
     }),
   steps: [(tl, r: ReturnType<typeof roadmap>) => (r.show(tl), r.rush("a", "d")(tl)), (tl, r: ReturnType<typeof roadmap>) => r.move("2026-05-01")(tl)],
 };
+const mindLight: SceneModule = {
+  build: (ctx) => mindMap(ctx, { root: { label: "Topic", children: [{ label: "One", children: [{ label: "a" }] }, { label: "Two" }, { label: "Three" }] }, x: 160, y: 120, w: 1600, h: 800 }),
+  steps: [
+    (tl, m: ReturnType<typeof mindMap>) => (m.show(tl), m.next()(tl), m.next()(tl), m.next()(tl)),
+    (tl, m: ReturnType<typeof mindMap>) => m.light(0)(tl),
+    (tl, m: ReturnType<typeof mindMap>) => m.light(2)(tl),
+    (tl, m: ReturnType<typeof mindMap>) => m.light(null)(tl),
+  ],
+};
 
 export default () => {
   const r = assembleDeck(
@@ -100,6 +109,7 @@ export default () => {
       "sections/10-a/91-clip-youtube/scene.md": "## Clip YouTube\n\n- 42 s to 70.2 s of a talk.\n",
       "sections/10-a/93-bands/scene.md": "## Bands\n\n- Ok to 70, warn to 90, bad to 100.\n",
       "sections/10-a/94-status/scene.md": "## Status\n\n- Done, at risk, late, planned.\n- They settle.\n",
+      "sections/10-a/95-mind-light/scene.md": "## Mind light\n\n- All branches.\n- One lit.\n- Three lit.\n- None lit.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
     },
     {
@@ -115,6 +125,7 @@ export default () => {
       "sections/10-a/91-clip-youtube/scene.ts": clip("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "A talk", 42, 70.2),
       "sections/10-a/93-bands/scene.ts": bands,
       "sections/10-a/94-status/scene.ts": status,
+      "sections/10-a/95-mind-light/scene.ts": mindLight,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );
