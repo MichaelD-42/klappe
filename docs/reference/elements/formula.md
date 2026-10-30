@@ -30,7 +30,8 @@ Write the TeX in `String.raw` so its backslashes stay as written.
 | Handle | Step |
 | --- | --- |
 | `show` | the formula fades in without its `\step` terms |
-| `next()` | the next `\step` term fades in, in reading order (as KaTeX lays the terms out). Terms show in order, in step order, whichever adder was made first. A `\step` inside another shows with the outer one |
+| `next()` | the next `\step` term fades in, in the order the terms are written in `tex` (a fraction's numerator before its denominator). Terms show in order, in step order, whichever adder was made first. A `\step` inside another shows with the outer one |
+| `light(i)` | `\step` term `i` (0-based, in source order, as `next()` shows them), shown by an earlier `next()`, turns `--k-accent`; the term lit before goes back to `--k-fg`. `light(null)` lights none. A term not shown yet reports `formula: light(<i>) before \step term <i> shows (<n> shown)` and holds a beat. Catalog: `#/code/formula/5` lights P(A), term 1 |
 
 ### Limits
 

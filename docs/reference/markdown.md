@@ -12,6 +12,7 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 | console fence | ```` ```console ```` with `$ npm test` and output lines | each `$ ` line types and its output appears; one step per command | [terminal](elements/terminal.md) |
 | chat fence | ```` ```chat ```` with `user: Where do I start?` and `Start with the tests.` | a messenger thread in the right-hand slot; one step per message line; list items after the block are the steps' text; a line `![Ana](media/ana.jpeg)` gives that sender an avatar | [chat](elements/chat.md) |
 | task list | `- [ ] Restore tested`, `- [x] Backup verified` and `- [!] Owners told` | a checklist; each item is a step that ticks its box; `[x]` starts ticked; `[!]` fails on its step | [checklist](elements/checklist.md) |
+| table | `\| \| Basic \| Team \|`, a `\| --- \|` line, then rows such as `\| SSO \| ✗ \| ✓ \|` | a comparison table; each row is a step that lands its marks. `✓` (or `✔`) ticks, `✗` (or `✘`) crosses, `~` is partly, other cells show as written; the first header cell is ignored. One table per scene; a `> note` after it goes on the last row | [compareTable](elements/compareTable.md) |
 | agenda rows | `- 09:45–10:30 Practice ←` | all list items start with a time range: one step shows an agenda; `←` marks the current row | [agenda](elements/agenda.md) |
 
 Notes:
@@ -22,4 +23,4 @@ Notes:
 - A missing image, video or data file shows a placeholder and a deck problem; `klappe test` and `klappe build` list it in `media/TODO.md` or `data/TODO.md`.
 - A full-frame picture, a background, a flow, a sequence, swimlanes, a decision tree, a callout and a timer have no Markdown form: use `scene.ts`.
 
-Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `217-chat/30-chat-md`, `310-checklist-agenda`.
+Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `217-chat/30-chat-md`, `298-table-card/15-compare-md`, `310-checklist-agenda`.

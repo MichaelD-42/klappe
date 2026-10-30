@@ -115,6 +115,23 @@ describe("parseScene parts", () => {
     });
   });
 
+  it("turns a table into a comparison: one step per row, marks from ✓ ✗ ~", () => {
+    const { scene, problems } = parse("| | Basic | Team |\n| --- | --- | --- |\n| SSO | ✗ | ✓ |\n| Audit log | ~ | 30 days |\n\n> The note.\n");
+    expect(problems).toEqual([]);
+    expect(scene.table).toEqual({ columns: ["Basic", "Team"], rows: [{ label: "SSO", cells: [false, true] }, { label: "Audit log", cells: ["~", "30 days"] }] });
+    expect(scene.steps.map((s) => [s.text, s.part, s.notes])).toEqual([
+      ["SSO", { kind: "compare", row: 0 }, ""],
+      ["Audit log", { kind: "compare", row: 1 }, "The note."],
+    ]);
+  });
+
+  it("reads ✔ and ✘ as marks too, and reports a second table", () => {
+    const t = "| | A |\n| - | - |\n| x | ✔ |\n| y | ✘ |\n\n";
+    const { scene, problems } = parse(t + t);
+    expect(scene.table?.rows.map((r) => r.cells[0])).toEqual([true, false]);
+    expect(problems).toEqual([`${F}/scene.md: one table per scene`]);
+  });
+
   it("keeps a mix of time and plain items as plain steps", () => {
     const { scene } = parse("- 09:00–09:45 Basics\n- Lunch\n");
     expect(scene.steps.map((s) => s.part)).toEqual([undefined, undefined]);

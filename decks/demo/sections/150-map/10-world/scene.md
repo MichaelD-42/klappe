@@ -10,3 +10,7 @@
 - Where we sell: three countries fill in.
 
 > region(tl, country) takes the name as world-atlas spells it ("Germany", "United States of America") or the ISO 3166-1 numeric code ("276").
+
+- Shaded by revenue: Germany the most, Brazil the least.
+
+> region(tl, country, { share }) shades by a value you scale to 0 to 1 yourself; say what full means, as the map draws no legend.

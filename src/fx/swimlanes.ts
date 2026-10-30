@@ -13,7 +13,8 @@ export type SwimlanesOpts = {
   links: { from: string; to: string }[];
 } & Rect;
 export interface SwimlanesHandle {
-  show: StepAdder;
+  show: StepAdder; // everything not shown yet: the lanes, the tasks, then the links
+  tasks(ids: string[]): StepAdder; // those tasks (the lanes with the first call), then each link both of whose ends now show
   walk(taskId: string): StepAdder;
 }
 
@@ -214,22 +215,38 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
   let lastDot: HTMLElement | undefined;
   let lastLink: Link | undefined;
 
-  return {
-    show(tl) {
-      fit();
-      const t = tl.duration();
+  // What the show and tasks steps added so far show; picked when a step is added, so the steps build in step order.
+  let lanesShown = false;
+  const shown = new Set<string>();
+  const drawn = new Set<Link>();
+  const reveal = (ids: string[]) => (tl: gsap.core.Timeline) => {
+    fit();
+    const t = tl.duration();
+    const lanes = !lanesShown;
+    lanesShown = true;
+    if (lanes) {
       tl.to([...bandEls.values()], { autoAlpha: IDLE, duration: 0.4 }, t);
       tl.to([...laneLabels.values()].map((l) => l.el), { autoAlpha: 1, duration: 0.4 }, t);
-      tl.to([...taskEls.values()], { autoAlpha: 1, duration: 0.4 }, t + 0.3);
-      // Each arrow draws on after the tasks; its head arrives when the line does.
-      const [draw, each, start] = [0.5, 0.15, t + 0.6];
-      links.forEach((e, i) => {
-        const s = start + i * each;
-        tl.set(e.path, { autoAlpha: 1 }, s);
-        drawOn(e.path, { duration: draw, each: 0, at: s })(tl);
-        tl.to(e.head, { autoAlpha: 1, duration: 0.15 }, s + draw - 0.1);
-      });
-    },
+    }
+    const want = ids.map(need).filter((id) => !shown.has(id));
+    want.forEach((id) => shown.add(id));
+    if (want.length) tl.to(want.map((id) => taskEls.get(id)!), { autoAlpha: 1, duration: 0.4 }, t + (lanes ? 0.3 : 0));
+    // Each arrow draws on after the tasks; its head arrives when the line does.
+    const ready = links.filter((e) => !drawn.has(e) && shown.has(e.from) && shown.has(e.to));
+    ready.forEach((e) => drawn.add(e));
+    const [draw, each, start] = [0.5, 0.15, t + (lanes ? 0.6 : 0.3)];
+    ready.forEach((e, i) => {
+      const s = start + i * each;
+      tl.set(e.path, { autoAlpha: 1 }, s);
+      drawOn(e.path, { duration: draw, each: 0, at: s })(tl);
+      tl.to(e.head, { autoAlpha: 1, duration: 0.15 }, s + draw - 0.1);
+    });
+    if (!lanes && !want.length && !ready.length) tl.set({}, {}, t + 0.4); // nothing new: the step still takes a beat
+  };
+
+  return {
+    show: (tl) => reveal(opts.tasks.map((t) => t.id))(tl),
+    tasks: reveal,
     walk(id) {
       need(id);
       const from = at;

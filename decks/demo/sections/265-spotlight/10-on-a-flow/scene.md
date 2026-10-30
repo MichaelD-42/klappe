@@ -5,4 +5,5 @@
 - The whole flow.
 - The spotlight lands on the web app.
 - It moves to the API.
+- Both ends at once: the web app and the database.
 - It lifts: the whole flow again.

@@ -145,7 +145,8 @@ export function bubble(
 }
 
 // A big number with a label under it, centred on (x, y), scene-local. run counts from -> to.
-export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTMLElement; caption: HTMLElement } {
+// run counts from `from` to `to`; to(value) counts on from where the steps before left it, as kpi's does.
+export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; to(value: number): StepAdder; el: HTMLElement; caption: HTMLElement } {
   const { x, y, from, to, label, decimals = 0 } = opts;
   const box = document.createElement("div");
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
@@ -169,18 +170,26 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; el: HTML
   box.append(line, cap);
   ctx.html.append(box);
   gsap.set(box, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
+  const count = (tl: gsap.core.Timeline, a: number, b: number) =>
+    tl.to({}, {
+      duration: motion.step * 3,
+      ease: "none",
+      onUpdate(this: gsap.core.Tween) {
+        num.textContent = counterText(a, b, this.progress(), ctx.deck.lang, decimals);
+      },
+    });
+  let at = from; // the value the steps added so far leave on show
   return {
     el: box,
     caption: cap,
     run(tl) {
       tl.to(box, { autoAlpha: 1, duration: motion.step });
-      tl.to({}, {
-        duration: motion.step * 3,
-        ease: "none",
-        onUpdate(this: gsap.core.Tween) {
-          num.textContent = counterText(from, to, this.progress(), ctx.deck.lang, decimals);
-        },
-      });
+      count(tl, from, to);
+      at = to;
+    },
+    to: (value) => (tl) => {
+      count(tl, at, value);
+      at = value;
     },
   };
 }

@@ -2,6 +2,35 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes with the deck template (M4).
 
+## 0.7.0 (unreleased)
+
+### Added
+
+- `code` and code fences highlight Go, Rust, Java, Kotlin, C#, C, C++, Ruby, PHP, Swift, Dockerfile, TOML, XML, Markdown, diff and HCL (`go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`).
+- Markdown: a table in `scene.md` is a `compareTable`, one row per step; `✓` ticks, `✗` crosses, `~` is partly. Catalog: `#/table-card/compare-md/1`.
+- `compareTable` cell `"~"`: partly, a dash in `--k-warn`, spoken "partly". Catalog: `#/table-card/compare/2`.
+- `video` options `start` and `end`: play only part of a clip, from `start` each time its step arrives. YouTube and local files take both; Vimeo takes `start`. Catalog: `#/media/youtube-autoplay/2`.
+- `gauge` option `bands`: ok, warn and bad zones as a thin ring inside the dial. Catalog: `#/numbers/gauge/2`.
+- `roadmap` milestone `status`: `"done"`, `"risk"` or `"late"` settles the dot in `--k-ok`, `--k-warn` or `--k-bad` and puts an icon before the date. Catalog: `#/roadmap/release/3`.
+- `mindMap.light(i)`: one grown branch stays, the others dim; `light(null)` brings all back. Catalog: `#/tree/mind-map/6`.
+- `sequence.highlight(i)`: a shown message takes the accent again; `highlight(null)` lights none. Catalog: `#/sequence/order/5`.
+- `swimlanes.tasks(ids)`: build the lanes up task by task; each link draws once both its ends show. Catalog: `#/swimlanes/build/3`.
+- `counter.to(value)`: counts on from where the steps before left it. Catalog: `#/motion/counts/3`.
+- `formula.light(i)`: a shown `\step` term turns `--k-accent`; `light(null)` lights none. Catalog: `#/code/formula/5`.
+- `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
+- `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
+- `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
+
+### Changed
+
+- `likert` takes a `scale` of 4 to 7 point names, and each row then one count per point; a scale of another length reports `likert: scale needs 4 to 7 point names` (was: needs 5).
+
+### Fixed
+
+- `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.
+- `chart`, `barRace` and `wordCloud` read a CSV's columns in the header's order: a header such as `team,2024,2025` took `2024` as the label column, because JS lists keys that look like numbers first.
+- A sankey chart no longer makes GSAP warn "GSAP target not found" on every deck load.
+
 ## 0.6.1 (2026-10-28)
 
 ### Added

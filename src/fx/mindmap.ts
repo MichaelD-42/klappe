@@ -11,11 +11,13 @@ export type MindMapOpts = { root: MindNode } & Rect;
 export interface MindMapHandle {
   show: StepAdder; // the centre topic
   next(): StepAdder; // the next branch grows out, with its sub-branches
+  light(i: number | null): StepAdder; // grown branch i stays at full strength, the others dim; null: all back
 }
 
 const SVG = "http://www.w3.org/2000/svg";
 const FONT = 26; // fixed in scene units: 18.5 px at 1366
 const CHAR_W = 14; // about one character at FONT
+const DIM = 0.35; // the branches light() leaves out
 const MAIN_R = 0.5; // a branch's distance from the centre, as a share of the leaves' ellipse
 
 export interface MindSpot { label: string; x: number; y: number; anchor: "start" | "middle" | "end"; branch: number; parent?: number }
@@ -55,7 +57,7 @@ export function mindMapLayout(root: MindNode, rect: Rect): MindMapLayout {
 }
 
 // A centre topic, then one branch per next(): its line draws out, its label shows, then its sub-branches. Each branch
-// in its own series colour.
+// in its own series colour. light(i) keeps one branch at full strength and dims the rest, as chart's highlight does.
 export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
   const lay = mindMapLayout(opts.root, opts);
   if (lay.problem) ctx.problem(lay.problem);
@@ -66,16 +68,15 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
     return e;
   };
   const root = el(ctx.svg, "g", { "data-k-mindmap": "" });
-  const links = el(root, "g", {});
   // A curve from a to b that leaves a along the line from the centre.
-  const curve = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+  const curve = (parent: Element, a: { x: number; y: number }, b: { x: number; y: number }) => {
     const [mx, my] = [(a.x + b.x) / 2, (a.y + b.y) / 2];
-    const path = el(links, "path", { d: `M${a.x} ${a.y}Q${mx} ${a.y + (my - a.y) * 0.2} ${b.x} ${b.y}`, fill: "none", "stroke-linecap": "round", pathLength: 1 });
+    const path = el(parent, "path", { d: `M${a.x} ${a.y}Q${mx} ${a.y + (my - a.y) * 0.2} ${b.x} ${b.y}`, fill: "none", "stroke-linecap": "round", pathLength: 1 });
     gsap.set(path, { strokeDasharray: "1 1", strokeDashoffset: 1, autoRound: false });
     return path;
   };
-  const label = (s: { label: string; x: number; y: number }, attrs: Record<string, string | number>, size = FONT) => {
-    const t = el(root, "text", { x: s.x, y: s.y, "font-size": size, ...attrs });
+  const label = (s: { label: string; x: number; y: number }, attrs: Record<string, string | number>, size = FONT, parent: Element = root) => {
+    const t = el(parent, "text", { x: s.x, y: s.y, "font-size": size, ...attrs });
     t.textContent = s.label;
     t.style.fill = "var(--k-fg)";
     return t;
@@ -90,30 +91,36 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
   gsap.set(centre, { autoAlpha: 0 });
 
   const branches = lay.branches.map((b, i) => {
-    const line = curve(c, b);
+    // The branch in one group, its lines under its boxes, so light() dims it as one picture: a dimmed box
+    // never shows its own lines through it.
+    const bg = el(root, "g", { "data-k-mind-light": i });
+    const lit = [el(bg, "g", {}), el(bg, "g", {})];
+    gsap.set(bg, { opacity: 1 }); // inline from load, as a seek back over light() leaves it
+    const line = curve(lit[0], c, b);
     Object.assign(line.style, { stroke: colour(i), strokeWidth: "8" });
     const w = b.label.length * CHAR_W + 32;
-    const g = el(root, "g", { "data-k-mind-branch": String(i) });
+    const g = el(lit[1], "g", { "data-k-mind-branch": String(i) });
     const tag = el(g, "rect", { x: b.x - w / 2, y: b.y - 26, width: w, height: 52, rx: 10, "stroke-width": 3 });
     Object.assign(tag.style, { fill: "var(--k-bg)", stroke: colour(i) });
     g.append(label({ ...b, y: b.y + 9 }, { "text-anchor": "middle", "font-weight": 700 }));
     const kids = lay.leaves.filter((l) => l.parent === i).map((l) => {
-      const twig = curve(b, l);
+      const twig = curve(lit[0], b, l);
       Object.assign(twig.style, { stroke: colour(i), strokeWidth: "4" });
-      const dot = el(root, "circle", { cx: l.x, cy: l.y, r: 6 });
+      const dot = el(lit[1], "circle", { cx: l.x, cy: l.y, r: 6 });
       dot.style.fill = colour(i);
       const dx = l.anchor === "start" ? 12 : l.anchor === "end" ? -12 : 0;
       const dy = l.anchor === "middle" ? (l.y < c.y ? -FONT * 0.8 : FONT * 1.2) : FONT * 0.35;
-      const text = label({ ...l, x: l.x + dx, y: l.y + dy }, { "text-anchor": l.anchor });
+      const text = label({ ...l, x: l.x + dx, y: l.y + dy }, { "text-anchor": l.anchor }, FONT, lit[1]);
       gsap.set([dot, text], { autoAlpha: 0 });
       return { twig, shown: [dot, text] };
     });
     gsap.set(g, { autoAlpha: 0 });
-    return { line, g, kids };
+    return { line, g, kids, lit: bg };
   });
-  root.insertBefore(links, root.firstChild); // lines under the boxes
+  root.append(centre); // over the lines that leave it
 
   let grown = 0; // the branches the next() steps added so far grew
+  let lit: number | null = null; // the branch the light() steps added so far leave lit
   return {
     show(tl) {
       tl.to(centre, { autoAlpha: 1, duration: motion.step });
@@ -134,6 +141,21 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
         tl.fromTo(k.twig, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: motion.step, ease: "power2.out", ...d }, at);
         tl.fromTo(k.shown, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step / 2, ...d }, at + motion.step * 0.6);
       });
+    },
+    light: (i) => (tl) => {
+      if (i !== null && !(i >= 0 && i < grown)) {
+        ctx.problem(`mindMap: light(${i}) before branch ${i} has grown (${grown} grown)`);
+        return void tl.set({}, {}, tl.duration() + 0.4);
+      }
+      const level = (k: number, on: number | null) => (on === null || on === k ? 1 : DIM);
+      const t = tl.duration();
+      const moves = branches.filter((_, k) => level(k, lit) !== level(k, i));
+      for (const b of moves) {
+        const k = branches.indexOf(b);
+        tl.fromTo(b.lit, { opacity: level(k, lit) }, { opacity: level(k, i), duration: motion.step, immediateRender: false }, t);
+      }
+      if (!moves.length) tl.set({}, {}, t + 0.4); // nothing changes: the step still takes a beat
+      lit = i;
     },
   };
 }

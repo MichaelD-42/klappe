@@ -29,8 +29,9 @@ steps: [(tl, c) => c.axes(tl), (tl, c) => c.grow(tl), (tl, c) => c.values(tl)],
 | `sample` | boolean | false | show the "Sample data" label. It also shows when the file has the line `# source: klappe demo sample` |
 | `group` | string | none | `scatter` and `bubble`: a text column whose values colour the dots, one `--k-series-N` colour each (repeating past six), with a legend. A name with rows in several periods takes the group of its first row. Catalog: `#/chart/scatter/1`. A column that is not there reports `chart: no group column "<name>" in <src>`; another chart type `chart: group is for scatter and bubble charts` |
 | `lines` | `{ value, label }[]` | none | `bar`, `stacked`, `line`, `waterfall`, `slope` and `timeline`: a dashed `--k-fg` line across the plot at each value (a goal, last year, a limit; on a timeline a "today" down the plot), its label in bold at the line's right end (a timeline's: at its top). They show with `axes`, and the value axis reaches them. Catalog: `#/chart/bars/1`. Another type reports `chart: lines are for bar, stacked, line, waterfall, slope, timeline charts, not <type>` |
+| `columns` | string[] | none | `bar` and `donut`: the number columns the chart moves through, by header name (`["2024", "2025"]`). The first shows at `grow`; `to(name)` moves to another. The value axis spans all of them, so a bar compares across the step, and the shown column's name stands in bold in the legend row. A name that is not a number column reports `chart: columns: no number column "<name>" in <src>`; another type `chart: columns are for bar and donut charts, not <type>`. Catalog: `#/chart/years/2` |
 
-The first column labels the rows; every later column with a number in any row is a series and must be a number in every row.
+The first column labels the rows; every later column with a number in any row is a series and must be a number in every row. Columns keep the header's order, also when a name looks like a number (`team,2024,2025`); rows you pass as `data` keep their object's key order, which puts such names first, so give them a `data/` file instead.
 
 ### Step adders
 
@@ -45,6 +46,7 @@ The first column labels the rows; every later column with a number in any row is
 | `slice(i)` | `donut` only: slice `i` draws round, its value and share in the legend count up, and the total in the centre counts on from the slices the steps before drew. Call it once per step instead of `grow` and `values`, after `axes`, which shows the legend names. Catalog: `#/chart/slices/2` |
 | `series(i)` | `line` and `radar`: series `i` (0 is the first number column) draws with its markers and values (a line left to right, a radar shape from the centre). Call it once per step instead of `grow` and `values`. Catalog: `#/chart/series/2` |
 | `cell(row, col)` | `heatmap` only: an outline in `--k-fg` moves to the cell in row `row` (0 is the first row after the header), column `col` (0 is the first number column), from where the steps before left it; `cell(null)` hides it. Catalog: `#/chart/heatmap/4`. Another type reports `chart: cell() is for a heatmap`; a cell that does not exist `chart: no cell <row>, <col>` |
+| `to(column)` | `bar` and `donut` with `columns`: the bars grow or shrink to that column's values (a donut's slices turn to its shares) over 1.2 s, from the column the steps before left, and the values, shares and total count there; the column name in the legend row switches halfway. For a before and after on one chart. Catalog: `#/chart/years/2`. A column not in `columns` reports `chart: no column "<name>" in columns; they are …` and holds a beat; a chart without `columns` reports `chart: to() needs a bar or donut chart with columns` |
 
 ### Limits
 
@@ -88,17 +90,18 @@ steps: [(tl, g) => g.show(tl), (tl, g) => g.to(91)(tl)],
 | `value` | number | required | where `show` swings the needle to |
 | `min`, `max` | number | `min` 0, `max` required | the dial's range, written at its ends |
 | `label`, `unit`, `source` | string | none | as for `kpi` |
+| `bands` | `{ to, tone }[]` | none | zones from `min`, each up to its `to`, in `tone` `"ok"`, `"warn"` or `"bad"`: a thin ring inside the track, toned toward `--k-bg` so the arc and needle stay strongest. A band whose `to` does not rise from the one before (or leaves the range), or another tone, reports `gauge: band to <to> (<tone>) must rise from the band before, within <min> to <max>, in ok, warn or bad` and is left out. Catalog: `#/numbers/gauge/2` |
 
 | Handle | Step |
 | --- | --- |
 | `show` | the gauge fades in; the needle and the `--k-accent` arc swing from `min` to `value` over the `--k-line` track, and the number counts up |
 | `to(value)` | the needle swings on, from where the steps before left it, to `value`; the number counts there. Call it once per step for each new reading |
 
-Numbers use the deck language's format (`72,5` in a German deck). A value outside the range parks the needle at the end, and the number still shows the real value. A `max` at or below `min` reports `gauge: max <max> must be above min <min>`. With reduced motion the needle jumps. No coloured bands.
+Numbers use the deck language's format (`72,5` in a German deck). A value outside the range parks the needle at the end, and the number still shows the real value. A `max` at or below `min` reports `gauge: max <max> must be above min <min>`. With reduced motion the needle jumps.
 
 ## `likert`
 
-Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on a 5-point agree scale: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`) to agree (`--k-ok`), and the agree share (the top two points) at its end. One person's answer is a row with a single count of 1.
+Catalog: section `115-numbers` (`#/numbers/likert/1`). Survey answers on an agree scale, 5 points by default or 4 to 7 with `scale`: one row per statement, its answers as a 100 % bar from disagree (`--k-bad`) through neutral (`--k-line`, the middle of an odd scale) to agree (`--k-ok`), and the agree share (the top half of the points: two of 4 or 5, three of 6 or 7) at its end. A scale without a middle, 4 or 6 points, makes the room choose a side. One person's answer is a row with a single count of 1.
 
 Shortened from `decks/demo/sections/115-numbers/40-likert/scene.ts`:
 
@@ -110,8 +113,8 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `x`, `y`, `w` | number | required | the top-left corner and the width |
-| `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each of the 5 points, disagree first |
-| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the 5 point names in the legend; another number of names reports a deck problem and the default names show |
+| `rows` | `{ statement, counts }[]` | required | `counts`: how many gave each point, disagree first: one count per point of the scale |
+| `scale` | string[] | `Strongly disagree` … `Strongly agree` | the point names in the legend, 4 to 7 of them; they set how many points the scale has. Fewer or more names report a deck problem and the 5 default names show |
 | `source` | string | none | as for `kpi` |
 
 | Handle | Step |
@@ -119,7 +122,7 @@ steps: [(tl, r) => (r.h.show(tl), r.l.show(tl)), (tl, r) => r.l.row(0)(tl), (tl,
 | `show` | the legend, the statements and their empty tracks fade in |
 | `row(i)` | row `i`'s bar grows from the left (fades in with reduced motion) and its agree share counts up |
 
-A row whose counts are not 5 numbers of 0 or more reports a message starting `likert: row <n> needs 5 counts of 0 or more` and stays empty. A `scale` that is not 5 names reports a message starting `likert: scale needs 5 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
+A row whose counts are not one number of 0 or more per point reports a message starting `likert: row <n> needs <points> counts of 0 or more` and stays empty. A `scale` of fewer than 4 or more than 7 names reports a message starting `likert: scale needs 4 to 7 point names`. A row index with no row reports `likert: no row <n> (row(<i>)); there are <count> rows`. Both messages count rows from 1, as a reader does: `row(0)` is row 1. The default point names come from the deck language: klappe has English and German (`de`); any other language shows the English names.
 
 ## `gaugeAngle`
 
@@ -165,11 +168,15 @@ The value axis is fixed over all periods, so a bar's length compares across time
 
 ## `parseCsv`
 
-`parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. Use it to read a `data/` file for an effect that is not a chart:
+`parseCsv(text)` reads a CSV string into rows (`Record<string, string | number>[]`): the first non-comment line is the header, a cell that is a finite number becomes a number. Lines starting with `#` are comments; `# source: <origin>` before the header rides on the result as `.source`. Quoted commas are not supported. The header's column order rides on the result too, for `keysOf`. Use it to read a `data/` file for an effect that is not a chart:
 
 ```ts
 build: (ctx) => ({ rows: parseCsv(ctx.files.data["data/units.csv"] ?? "") }),
 ```
+
+## `keysOf`
+
+`keysOf(rows)` gives a table's column names in order: the header's for rows from `parseCsv`, else the first row's keys. JS lists object keys that look like numbers (`"2024"`) first, so a header such as `team,2024,2025` needs the header's order to keep `team` as the label. `chart` and `wordCloud` use it.
 
 ## `dataError`
 
@@ -258,7 +265,7 @@ where `sites` is `[{ id: "s1", label: "[Site 1]", lon: 10, lat: 50 }, …]` and 
 | `point(id)` | the site's `[x, y]`, scene-local, where its dot sits: place your own figures, labels and routes with it. Unknown id: `undefined` and a deck problem |
 | `arcPath(from, to)` | the path data of the map's arc between two sites, for a figure's `walk` or your own drawing |
 | `zoomTo(tl, id)` | the camera flies to the site; only that site's label shows; strokes thin to keep their weight |
-| `region(tl, country)` | fills a country in `--k-accent` at `MARKER_MIX` (35 %), under the coastline, fading in over 0.6 s; "where we sell". `country` is the name as `world-atlas` spells it (`"Germany"`, `"United States of America"`, `"Dem. Rep. Congo"`) or the ISO 3166-1 numeric code (`"276"`); ISO letter codes are not known. A country the atlas lacks shows `worldMap: no country '<name>'; use the ISO 3166-1 numeric code or the name in world-atlas`. The 1:110m atlas leaves out the smallest states. Catalog: `#/map/world/6` |
+| `region(tl, country, { share? })` | fills a country in `--k-accent` at `MARKER_MIX` (35 %), under the coastline, fading in over 0.6 s. `share`, 0 to 1, shades it by value instead: from a 15 % mix at 0 to 85 % at 1, for a map of revenue or headcount by country; scale the values to 0 to 1 yourself and say what full means, as the map draws no legend. A later `region` on a filled country moves its fill to the new share over 0.6 s (catalog `#/map/world/7`); a share outside 0 to 1 reports `worldMap: region '<country>' share <share> is not 0 to 1` and fills at 35 %; "where we sell". `country` is the name as `world-atlas` spells it (`"Germany"`, `"United States of America"`, `"Dem. Rep. Congo"`) or the ISO 3166-1 numeric code (`"276"`); ISO letter codes are not known. A country the atlas lacks shows `worldMap: no country '<name>'; use the ISO 3166-1 numeric code or the name in world-atlas`. The 1:110m atlas leaves out the smallest states. Catalog: `#/map/world/6` |
 | `world` | labels fade out, the camera frames the whole scene again |
 
 ### Limits
@@ -532,6 +539,7 @@ steps: [(tl, v) => v.show(tl)],
 | `fallback` | string | none | an image href in `media/`, shown instead of an online video when there is no network; also the placeholder until the player loads; `?offline=1` forces it; offline without a usable fallback reports a deck problem |
 | `autoplay` | boolean | `true` | a YouTube or Vimeo player starts when its step arrives, as a local file does, so a clicker is enough; when the viewer leaves the step it stops and shows its thumbnail again. A Markdown video link plays this way. `false`: the viewer starts the player with the mouse. Both start under reduced motion too |
 | `muted` | boolean | `false` | `true`: an embedded player starts without sound. By default it starts with sound: the step key or click that starts it counts as the viewer's gesture. A browser can still block sound in a deck window that has had no key or click yet, such as one stepped only from the speaker view; then click into the deck window once. Local files ignore `muted` and play with sound |
+| `start`, `end` | number | none | seconds into the clip: it starts at `start` each time its step arrives, and stops at `end`. A local file takes them as a media fragment (`#t=43,60`) and may run up to a quarter second past `end`; YouTube takes whole seconds (start rounded down, end up); Vimeo takes `start` only, and an `end` reports `video: a Vimeo player cannot stop at end; it plays on from start`. An `end` not after `start`, or a negative `start`, reports `video: start <s> and end <e> must be seconds, end after start`. Catalog: `#/media/youtube-autoplay/2` |
 
 `show(tl)` fades the box in. The video plays when its step arrives and pauses (an embed: shows its thumbnail) when the viewer leaves; with `autoplay: false` the viewer starts an embedded player, and a click into it hands the keyboard back to klappe.
 
@@ -861,7 +869,7 @@ down: counter(ctx, { x: 620, y: 600, from: 128, to: 0, label: "Open questions (s
 steps: [(tl, { down }) => down.run(tl)],
 ```
 
-`counter(ctx, { x, y, from, to, label, decimals?, prefix?, unit? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `prefix` (`"€"`, `"≈"`) and `unit` (`"%"`, `"days"`) sit before and after the number on its line, at 52 px; they do not count. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. Numbers use the deck language's separators.
+`counter(ctx, { x, y, from, to, label, decimals?, prefix?, unit? })` is centred on `(x, y)`; the number is 144 px in `--k-accent`, the label 36 px. `prefix` (`"€"`, `"≈"`) and `unit` (`"%"`, `"days"`) sit before and after the number on its line, at 52 px; they do not count. `decimals` (default 0) is how many places it shows, always that many, so `4.2` counts up as `0.0`, `0.1` and so on. `run(tl)` fades it in and counts over 1.8 s, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that counts on from where the steps before left it (`to` after `run`) to `value`, over 1.8 s, for a before and after on one number; several in one step play one after another. Catalog: `#/motion/counts/3`. Numbers use the deck language's separators.
 
 ## `scramble`
 

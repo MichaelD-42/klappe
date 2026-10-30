@@ -7,7 +7,7 @@ import { iconGlyph } from "./icons";
 
 export interface CompareTableOpts {
   columns: string[]; // the header of each value column, e.g. the products compared
-  rows: { label: string; cells: (boolean | string)[] }[]; // true: a tick, false: a cross, a string: that text
+  rows: { label: string; cells: (boolean | string)[] }[]; // true: a tick, false: a cross, "~": partly, another string: that text
   x: number;
   y: number;
   w: number;
@@ -23,6 +23,8 @@ export interface CompareTableHandle {
 // Lucide "check" and "x" (ISC), inline: src/fx is not scanned for icon names, and importing "lucide" would pull every icon in dev.
 const CHECK: IconNode = [["path", { d: "M20 6 9 17l-5-5" }]];
 const CROSS: IconNode = [["path", { d: "M18 6 6 18" }], ["path", { d: "m6 6 12 12" }]];
+const PARTLY: IconNode = [["path", { d: "M5 12h14" }]]; // Lucide "minus"
+const MARK = { yes: [CHECK, "var(--k-ok)"], no: [CROSS, "var(--k-bad)"], partly: [PARTLY, "var(--k-warn)"] } as const;
 const FLOOR = 20; // legibility floor, scene px (14.2 px at 1366)
 const MAX_FONT = 36;
 
@@ -33,8 +35,8 @@ const div = (parent: HTMLElement, style: Partial<CSSStyleDeclaration>, text?: st
   return e;
 };
 
-// A feature matrix: a header in --k-muted, then one row per step. row(i) fades the row in, lands its ticks (--k-ok) and
-// crosses (--k-bad) cell by cell, and lights its label in --k-accent until the next row step settles it to --k-fg.
+// A feature matrix: a header in --k-muted, then one row per step. row(i) fades the row in, lands its ticks (--k-ok),
+// partly marks (--k-warn) and crosses (--k-bad) cell by cell, and lights its label in --k-accent until the next row step settles it to --k-fg.
 // Reduced motion: the marks fade in without the pop.
 export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHandle {
   const cols = opts.columns.length;
@@ -55,11 +57,12 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
     const marks: HTMLElement[] = [];
     r.cells.slice(0, cols).forEach((c) => {
       const cell = div(row, { textAlign: "center", minWidth: "0", overflowWrap: "anywhere", fontWeight: "400" });
-      if (typeof c === "string") return void (cell.textContent = c);
-      const mark = div(cell, { display: "inline-block", width: "1.2em", height: "1.2em", verticalAlign: "middle", color: c ? "var(--k-ok)" : "var(--k-bad)" });
+      if (typeof c === "string" && c !== "~") return void (cell.textContent = c);
+      const kind = c === "~" ? "partly" : c ? "yes" : "no";
+      const mark = div(cell, { display: "inline-block", width: "1.2em", height: "1.2em", verticalAlign: "middle", color: MARK[kind][1] });
       mark.setAttribute("role", "img");
-      mark.setAttribute("aria-label", t(c ? "yes" : "no", ctx.deck.lang));
-      mark.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${iconGlyph(c ? CHECK : CROSS, ctx.problem)}</svg>`;
+      mark.setAttribute("aria-label", t(kind, ctx.deck.lang));
+      mark.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${iconGlyph(MARK[kind][0], ctx.problem)}</svg>`;
       marks.push(mark);
     });
     gsap.set(row, { autoAlpha: 0 });

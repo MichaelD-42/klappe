@@ -13,7 +13,7 @@ export default captioned("compareTable() — row(i) lands marks cell by cell; co
       x: 160, y: 300, w: 1600, h: 620,
       columns: ["Starter", "Team", "Business"],
       rows: [
-        { label: "Single sign-on", cells: [false, true, true] },
+        { label: "Single sign-on", cells: [false, "~", true] },
         { label: "Audit log", cells: [false, "30 days", "1 year"] },
         { label: "Support", cells: ["Forum", "Email", "Phone"] },
         { label: "Export to CSV", cells: [true, true, true] },

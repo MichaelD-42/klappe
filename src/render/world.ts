@@ -71,7 +71,7 @@ const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
 // Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
-// media, code or terminal the right. Task-list items build one checklist, a time-range list an agenda.
+// media, code or terminal the right. Task-list items build one checklist, a table a comparison, a time-range list an agenda.
 // Returns the title and the steps an effect plays, by step number.
 function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
   const { html, rect } = ctx;
@@ -139,6 +139,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
         fxPart("checklist")(c, { items: checks.map((s) => ({ text: s.text, done: s.part?.kind === "check" && s.part.done })), ...lists }),
       )
     : undefined;
+  // One comparison table from the scene's Markdown table, a row per step.
+  const tableN = firstOf("compare");
+  const table = tableN && scene.table ? part(tableN, "compareTable", lists, (c) => fxPart("compareTable")(c, { ...scene.table!, ...lists })) : undefined;
   const title = add(col, el("h2", "", scene.title));
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
@@ -163,6 +166,11 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
         list.h?.[pt.fail ? "fail" : "tick"](k)(tl);
       });
     }
+    if (pt?.kind === "compare" && table)
+      return fx.set(n, (tl) => {
+        if (n === tableN) (table.h?.show ?? table.miss!)(tl);
+        table.h?.row(pt.row)(tl);
+      });
     if (pt?.kind === "agenda") {
       const current = pt.rows.find((r) => r.current)?.title;
       const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));

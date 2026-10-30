@@ -4,10 +4,11 @@ const md = new MarkdownIt();
 type Token = ReturnType<typeof md.parse>[number];
 
 export interface Block {
-  type: "h1" | "h2" | "h3" | "paragraph" | "item" | "quote" | "fence";
+  type: "h1" | "h2" | "h3" | "paragraph" | "item" | "quote" | "fence" | "table";
   text: string;
   info?: string; // a fence's info string: "ts {1-2|4}"
   note?: string; // an item's nested quote: the note of its step
+  cells?: string[][]; // a table's rows of cell text, the header first
 }
 
 const clean = (s: string) => s.replace(/\r/g, "").trim();
@@ -39,6 +40,13 @@ export function blocks(src: string): Block[] {
     if (t.type === "heading_open") out.push({ type: t.tag as "h1", text: text(inner) });
     else if (t.type === "paragraph_open") out.push({ type: "paragraph", text: text(inner) });
     else if (t.type === "blockquote_open") out.push({ type: "quote", text: paras(inner) });
+    else if (t.type === "table_open") {
+      const cells: string[][] = [];
+      for (const x of inner)
+        if (x.type === "tr_open") cells.push([]);
+        else if (x.type === "inline") cells[cells.length - 1].push(clean(x.content));
+      out.push({ type: "table", text: "", cells });
+    }
     else if (t.type === "bullet_list_open" || t.type === "ordered_list_open") {
       let k = 0;
       while (k < inner.length) {

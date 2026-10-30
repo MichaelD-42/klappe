@@ -34,6 +34,7 @@ The layout gives every sub-branch (and every branch without one) an even share o
 | --- | --- |
 | `show` | the centre topic fades in |
 | `next()` | the next branch grows: its line draws out from the centre, its label shows, then its sub-branches draw out one after another. Branches grow in order, in step order, whichever adder was made first |
+| `light(i)` | grown branch `i` (0-based) stays at full strength and the other branches dim to 0.35, over 0.6 s; the branch lit before comes back. `light(null)` brings all back. Each branch keeps its colour, so the accent is not used. A branch not grown yet reports `mindMap: light(<i>) before branch <i> has grown (<n> grown)` and holds a beat. Catalog: `#/tree/mind-map/6` |
 
 ### Limits
 

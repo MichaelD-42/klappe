@@ -1,10 +1,15 @@
 import { gsap } from "gsap";
+import type { IconNode } from "lucide";
 import { MARKER_MIX } from "./annotate";
+import { iconGlyph } from "./icons";
+import { t as tr } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 export type RoadmapOpts = {
-  milestones: { id: string; date: string; label: string }[]; // dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing
+  // Dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing. A status settles the dot
+  // in its tone and puts its icon before the date.
+  milestones: { id: string; date: string; label: string; status?: "done" | "risk" | "late" }[];
   // Spans as bars in lanes under the axis; with phases, every labelled milestone sits above it.
   phases?: { id: string; from: string; to: string; label: string }[];
   today: string; // "YYYY-MM-DD", given by the deck: never the wall clock, so seek equals play and CI sees the same picture
@@ -18,6 +23,12 @@ export interface RoadmapHandle {
 }
 
 const SVG = "http://www.w3.org/2000/svg";
+// Lucide "check", "triangle-alert" and "clock" (ISC), inline as in comparetable.ts.
+const STATUS = {
+  done: { tone: "var(--k-ok)", word: "done", icon: [["path", { d: "M20 6 9 17l-5-5" }]] },
+  risk: { tone: "var(--k-warn)", word: "atRisk", icon: [["path", { d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" }], ["path", { d: "M12 9v4" }], ["path", { d: "M12 17h.01" }]] },
+  late: { tone: "var(--k-bad)", word: "late", icon: [["circle", { cx: "12", cy: "12", r: "10" }], ["path", { d: "M12 6v6l4 2" }]] },
+} as const satisfies Record<string, { tone: string; word: "done" | "atRisk" | "late"; icon: IconNode }>;
 const DAY = 86400000;
 const LABEL_W = 300; // widest milestone label, scene px
 const MIN_W = 160; // narrower than this, two labels on one side are too close
@@ -135,12 +146,17 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   }
 
   // A milestone: a dot on the axis, a stem to its label, the label (date over title) above or below.
-  const items = new Map<string, { dot: SVGElement; stem?: SVGElement; box?: HTMLElement; inner?: HTMLElement; text?: HTMLElement }>(L.milestones.map((m) => {
+  const statusOf = new Map(opts.milestones.map((m) => [m.id, m.status]));
+  const items = new Map<string, { dot: SVGElement; stem?: SVGElement; box?: HTMLElement; inner?: HTMLElement; text?: HTMLElement; tone: string }>(L.milestones.map((m) => {
+    const st = statusOf.get(m.id);
+    if (st && !(st in STATUS)) ctx.problem(`roadmap: status "${st}" of "${m.id}" is not done, risk or late`);
+    const status = st && st in STATUS ? STATUS[st] : undefined;
+    const tone = status?.tone ?? "var(--k-line)"; // the dot's settled colour
     const [y0, y1] = m.above ? [ay - DOT, ay - STEM] : [ay + DOT, ay + STEM];
     const stem = m.dot ? undefined : svgEl("line", { x1: m.x, y1: y0, x2: m.x, y2: y1 }, { stroke: "var(--k-line)", strokeWidth: "3" });
-    const dot = svgEl("circle", { cx: m.x, cy: ay, r: DOT }, { fill: "var(--k-line)", stroke: "var(--k-bg)", strokeWidth: "3" });
+    const dot = svgEl("circle", { cx: m.x, cy: ay, r: DOT }, { fill: tone, stroke: "var(--k-bg)", strokeWidth: "3" });
     gsap.set(dot, { scale: 0, svgOrigin: `${m.x} ${ay}` }); // the transform from load, as a seek back over reveal leaves it
-    if (m.dot) return [m.id, { dot }];
+    if (m.dot) return [m.id, { dot, tone }];
     const boxH = m.above ? ay - STEM - (opts.y + TODAY_H + 8) : opts.y + opts.h - (ay + STEM);
     const box = div({
       position: "absolute", left: `${m.left}px`, top: `${m.above ? ay - STEM - boxH : ay + STEM}px`, width: `${m.width}px`, height: `${boxH}px`,
@@ -148,11 +164,20 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     });
     box.setAttribute("data-k-roadmap-milestone", m.id);
     const inner = div({ background: "var(--k-bg)", padding: "4px 8px", maxWidth: "100%", boxSizing: "border-box", color: "var(--k-fg)" }, box);
-    div({ color: "var(--k-muted)", font: `500 ${FLOOR + 2}px/1.2 var(--k-font)` }, inner).textContent = m.date;
+    const date = div({ color: "var(--k-muted)", font: `500 ${FLOOR + 2}px/1.2 var(--k-font)` }, inner);
+    date.textContent = m.date;
+    if (status) {
+      const mark = document.createElement("span");
+      Object.assign(mark.style, { display: "inline-block", width: "1em", height: "1em", marginRight: "6px", verticalAlign: "-0.15em", color: status.tone });
+      mark.setAttribute("role", "img");
+      mark.setAttribute("aria-label", tr(status.word, lang));
+      mark.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${iconGlyph(status.icon as IconNode, ctx.problem)}</svg>`;
+      date.prepend(mark);
+    }
     const text = div({ font: `700 ${MAX_FONT}px/${LINE_H} var(--k-font)`, overflowWrap: "anywhere" }, inner);
     text.textContent = m.label;
     gsap.set(box, { autoAlpha: 0, scale: 1, transformOrigin: m.above ? "50% 100%" : "50% 0%" }); // the transform from load, as a rush's pop leaves it
-    return [m.id, { stem, dot, box, inner, text }];
+    return [m.id, { stem, dot, box, inner, text, tone }];
   }));
 
   // A phase: a bar in its lane under the axis, its label inside; it grows from its start.
@@ -229,13 +254,14 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   // gap RUSH times the one before, and each landing pops harder (punch 0 to 1). With reduced motion the cadence stays: dots show at once, labels never pop.
   const land = (ids: string[]) => (tl: gsap.core.Timeline) => {
     const its = ids.map((id) => items.get(id)!);
-    const paint = (tl: gsap.core.Timeline, dot: string, fg: string, t: number) =>
+    // dot: null settles each dot to its own tone (its status, else --k-line).
+    const paint = (tl: gsap.core.Timeline, dot: string | null, fg: string, t: number) =>
       its.forEach((it) => {
-        set(tl, it.dot, { fill: dot }, t);
-        if (it.stem) set(tl, it.stem, { stroke: dot }, t);
+        set(tl, it.dot, { fill: dot ?? it.tone }, t);
+        if (it.stem) set(tl, it.stem, { stroke: dot ?? "var(--k-line)" }, t);
         if (it.inner) set(tl, it.inner, { color: fg }, t);
       });
-    const t = begin(tl, (tl, t) => paint(tl, "var(--k-line)", "var(--k-fg)", t));
+    const t = begin(tl, (tl, t) => paint(tl, null, "var(--k-fg)", t));
     paint(tl, "var(--k-accent)", "var(--k-accent)", t);
     its.forEach((it, k) => {
       const at = t + (motion.step * (1 - RUSH ** k)) / (1 - RUSH);

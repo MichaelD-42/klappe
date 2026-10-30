@@ -9,6 +9,7 @@ export const ALLOW = [
   'loadTransitions', 'playTransition', 'registry', 'transitionCrt', 'transitionShatter', 'transitionZoom',
   'funnelLayout', 'sankeyLayout', // funnel-sankey: chart layout helpers
   'gaugeAngle', 'likertShares', // gauge task
+  'keysOf', // chart and wordCloud: a CSV's columns in header order
   'cycleLayout', 'vModelLayout', // cycle task: the cycle and vModel layouts, for their unit test
   'pyramidLayout', 'vennLayout', // venn-pyramid task
   'NOTE_MIX', 'fanPose', 'stickyLayout', // notes-cards: the note colour mix and the two layouts, for their unit tests

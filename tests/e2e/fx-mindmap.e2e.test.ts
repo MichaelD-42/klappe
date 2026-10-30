@@ -32,7 +32,7 @@ test('branches grow one per step in order, with their sub-branches, whichever ad
     [...document.querySelectorAll('[data-k-mind-branch]')].map((g) => +getComputedStyle(g).opacity > 0.9),
   )
   const texts = () => page.evaluate(() =>
-    [...document.querySelectorAll('[data-k-mindmap] > text')].filter((t) => +getComputedStyle(t).opacity > 0.9).map((t) => t.textContent),
+    [...document.querySelectorAll('[data-k-mindmap] [data-k-mind-light] > g > text')].filter((t) => +getComputedStyle(t).opacity > 0.9).map((t) => t.textContent),
   )
   expect(await shown()).toEqual([true, false, false, false])
   expect(await texts()).toEqual(['Buddy', 'Team lunch'])

@@ -13,6 +13,7 @@ export interface FormulaOpts {
 export interface FormulaHandle {
   show: StepAdder; // the formula without its \step terms
   next(): StepAdder; // the next \step term, in reading order
+  light(i: number | null): StepAdder; // a shown \step term turns --k-accent, the one lit before goes back; null: none
 }
 
 const FLOOR = 30; // scene px: sub- and superscripts, at 70 %, stay at the 20 px legibility floor
@@ -34,7 +35,7 @@ export async function loadKatex(): Promise<void> {
 }
 
 // A typeset equation that builds term by term: show sets the rest, each next() fades the next \step{…} term in.
-// Terms are in document order; a \step inside another shows with the outer one.
+// Terms are in source order; a \step inside another shows with the outer one.
 export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
   const box = ctx.html.appendChild(document.createElement("div"));
   Object.assign(box.style, {
@@ -48,15 +49,20 @@ export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
     box.textContent = opts.tex;
   } else
     try {
-      katex.render(opts.tex, box, {
+      // Each \step carries its place in the source, so terms build in the order they are written: KaTeX puts a
+      // fraction's denominator before its numerator in the DOM.
+      let n = 0;
+      const tex = opts.tex.replace(/\\step(?![a-zA-Z])/g, () => `\\kft{${n++}}`);
+      katex.render(tex, box, {
         displayMode: true,
         throwOnError: true,
-        macros: { "\\step": `\\htmlClass{${TERM}}{#1}` },
-        // Only the class \step sets: a deck's TeX cannot add links, ids or styles.
-        trust: (t) => t.command === "\\htmlClass" && t.class === TERM,
+        macros: { "\\kft": `\\htmlClass{${TERM} ${TERM}-#1}{#2}` },
+        // Only the classes \step sets: a deck's TeX cannot add links, ids or styles.
+        trust: (t) => t.command === "\\htmlClass" && new RegExp(`^${TERM} ${TERM}-\\d+$`).test(t.class),
         strict: "ignore", // LaTeX compatibility warnings, not errors: KaTeX renders those as written
       });
-      terms = [...box.querySelectorAll<HTMLElement>(`.katex-html .${TERM}`)].filter((e) => !e.parentElement!.closest(`.${TERM}`));
+      const place = (e: Element) => Number([...e.classList].find((c) => c.startsWith(`${TERM}-`))!.slice(TERM.length + 1));
+      terms = [...box.querySelectorAll<HTMLElement>(`.katex-html .${TERM}`)].filter((e) => !e.parentElement!.closest(`.${TERM}`)).sort((a, b) => place(a) - place(b));
     } catch (e) {
       ctx.problem(`formula: ${e instanceof Error ? e.message : String(e)}`);
       box.textContent = opts.tex;
@@ -76,6 +82,7 @@ export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
   };
 
   let shown = 0; // terms the next() steps added so far showed
+  let lit: HTMLElement | undefined; // the term the light() steps added so far leave lit
   return {
     show(tl) {
       fit();
@@ -89,6 +96,15 @@ export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
         return void tl.set({}, {}, tl.duration() + 0.4); // the step still takes a beat
       }
       tl.fromTo(term, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false });
+    },
+    light: (i) => (tl) => {
+      const t = tl.duration();
+      tl.set({}, {}, t + motion.step); // sets only: the step still takes a beat
+      if (i !== null && !(i >= 0 && i < shown)) return ctx.problem(`formula: light(${i}) before \step term ${i} shows (${shown} shown)`);
+      const term = i === null ? undefined : terms[i];
+      if (lit && lit !== term) tl.set(lit, { color: "var(--k-fg)", immediateRender: false }, t);
+      if (term) tl.set(term, { color: "var(--k-accent)", immediateRender: false }, t);
+      lit = term;
     },
   };
 }

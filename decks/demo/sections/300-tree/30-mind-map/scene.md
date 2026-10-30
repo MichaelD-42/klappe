@@ -7,3 +7,4 @@
 - Tools: laptop, accounts, VPN.
 - Product: a demo and the roadmap.
 - Process: sprints and reviews.
+- Back to tools: the other branches dim.

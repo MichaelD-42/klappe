@@ -76,7 +76,7 @@ Colours come from the theme: the panel is `--k-surface`, text `--k-code-foregrou
 
 ## `LANGS`
 
-The bundled languages: `ts`, `js`, `python`, `bash`, `json`, `yaml`, `sql`, `html`, `css`. A Markdown fence in any other language shows plain and reports `language "<lang>" not bundled; shown plain`.
+The bundled languages: `ts`, `js`, `python`, `bash`, `json`, `yaml`, `sql`, `html`, `css`, `go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`. Each grammar is its own chunk and loads only for a deck that uses it. Write the name as listed (`csharp`, not `cs`). A Markdown fence in any other language shows plain and reports `language "<lang>" not bundled; shown plain`.
 
 ## `loadHighlighter`
 

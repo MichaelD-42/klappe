@@ -29,7 +29,7 @@ const survey: SceneModule = {
         { statement: "Ich weiß, wer entscheidet", counts: [9, 12, 8, 7, 4] },
         { statement: "Ein Eintrag mit drei Zahlen", counts: [1, 2, 3] },
       ],
-      scale: ["Nein", "Eher nein", "Eher ja", "Ja"], // four names: a problem, the default five show
+      scale: ["Nein", "Egal", "Ja"], // three names: a problem, the default five show
     }),
   steps: [(tl, l: LikertHandle) => l.show(tl), (tl, l: LikertHandle) => l.row(0)(tl), (tl, l: LikertHandle) => l.row(1)(tl)],
 };

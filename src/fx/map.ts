@@ -32,8 +32,9 @@ export interface WorldMapHandle {
   // The path of the map's arc from one site to another, for your own drawing or a figure's walk.
   arcPath(fromId: string, toId: string): string | undefined;
   zoomTo(tl: gsap.core.Timeline, id: string): void;
-  // Fills a country, named as in world-atlas ("Germany") or by its ISO 3166-1 numeric code ("276").
-  region(tl: gsap.core.Timeline, country: string): void;
+  // Fills a country, named as in world-atlas ("Germany") or by its ISO 3166-1 numeric code ("276"). share, 0 to 1,
+  // sets how strong the fill is, for a map shaded by value; a later call on the country moves it there.
+  region(tl: gsap.core.Timeline, country: string, o?: { share?: number }): void;
   // Back to the whole map: labels fade out, the camera frames the scene again.
   world: StepAdder;
 }
@@ -133,23 +134,32 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
     if (arcs.size) tl.to([...arcs.values()], { strokeWidth: w.arc, duration: motion.camera }, "<");
   };
 
-  const regions = new Map<string, SVGPathElement>();
+  const regions = new Map<string, { p: SVGPathElement; mix: number }>(); // mix: the fill the steps added so far leave
   return {
-    region(tl, country) {
+    region(tl, country, o = {}) {
       const f = COUNTRIES.find((c) => c.id === country || (c.properties as { name?: string } | null)?.name === country);
       if (!f) return ctx.problem(`worldMap: no country '${country}'; use the ISO 3166-1 numeric code or the name in world-atlas`);
+      const { share } = o;
+      if (share !== undefined && !(share >= 0 && share <= 1)) ctx.problem(`worldMap: region '${country}' share ${share} is not 0 to 1`);
+      // The accent mix in %: MARKER_MIX without a share, else from 15 at 0 to 85 at 1.
+      const mix = share !== undefined && share >= 0 && share <= 1 ? Math.round(15 + 70 * share) : MARKER_MIX * 100;
+      const fill = (m: number) => `color-mix(in srgb, var(--k-accent) ${Math.round(m)}%, transparent)`;
       // Made while the timeline is built at load, hidden, under the coastline (the group's first child).
-      let p = regions.get(country);
-      if (!p) {
-        p = document.createElementNS(SVG, "path");
+      const was = regions.get(country);
+      if (!was) {
+        const p = document.createElementNS(SVG, "path");
         p.setAttribute("d", path(f) ?? "");
         p.dataset.kRegion = country;
-        p.style.fill = `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`;
+        p.style.fill = fill(mix);
         g.prepend(p);
         gsap.set(p, { autoAlpha: 0 });
-        regions.set(country, p);
+        regions.set(country, { p, mix });
+        return void tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false });
       }
-      tl.fromTo(p, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step, immediateRender: false });
+      // Filled before: the fill moves from the mix the steps before left to this one, written as a function of progress.
+      const from = was.mix;
+      was.mix = mix;
+      tl.to({}, { duration: motion.step, onUpdate(this: gsap.core.Tween) { was.p.style.fill = fill(from + (mix - from) * this.ratio); } });
     },
     draw: (tl) => tl.fromTo(land, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 2.4, ease: "power1.inOut" }),
     site(tl, id) {

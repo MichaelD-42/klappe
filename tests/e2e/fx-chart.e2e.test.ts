@@ -379,3 +379,15 @@ test('a scatter keeps close names apart and colours its dots by group, with a le
   expect(r.texts).toEqual(expect.arrayContaining(['North', 'South']))
   await page.close()
 })
+
+// Every chart in the fixture builds at load; none may hand GSAP an empty target list (a sankey's marks belong to no row).
+test('the charts build without a GSAP target warning', async () => {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  const warned: string[] = []
+  page.on('console', (m) => m.text().includes('GSAP target') && warned.push(m.text()))
+  await page.goto(`${inject('BASE_URL')}/?fixture=fx-chart#/a/sankey/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })
+  await settle(page)
+  expect(warned).toEqual([])
+  await page.close()
+}, 60_000)

@@ -13,7 +13,7 @@ const toHost = sites.slice(1).map((s) => ({ from: s.id, to: "s1" }));
 
 // The caption leaves with the camera on the zoom and comes back with the whole world.
 export default captioned(
-  "worldMap(ctx, { rect, sites: [{ …, major }], arcs }) — m.draw, m.site, m.arc, m.zoomTo, m.world, m.region",
+  "worldMap(ctx, { rect, sites, arcs }) — draw, site, arc, zoomTo, world, region(…, { share })",
   {
     build: (ctx) => worldMap(ctx, { rect: { x: 60, y: 40, w: 1800, h: 880 }, sites, arcs: toHost }),
     steps: [
@@ -23,6 +23,7 @@ export default captioned(
       (tl, m: WorldMapHandle, ctx) => (tl.to(captionOf(ctx), { autoAlpha: 0, duration: 0.3 }), m.zoomTo(tl, "s2")),
       (tl, m: WorldMapHandle, ctx) => (m.world(tl), tl.to(captionOf(ctx), { autoAlpha: 1, duration: 0.6 })),
       (tl, m: WorldMapHandle) => ["Germany", "Brazil", "Japan"].forEach((c) => m.region(tl, c)),
+      (tl, m: WorldMapHandle) => ([["Germany", 1], ["Brazil", 0.3], ["Japan", 0.6]] as const).forEach(([c, share]) => m.region(tl, c, { share })),
     ],
   },
   "shatter",

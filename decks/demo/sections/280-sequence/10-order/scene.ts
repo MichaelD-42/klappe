@@ -2,7 +2,7 @@ import { sequence, type SequenceHandle } from "klappe/fx";
 import { captioned } from "../../../caption";
 
 type R = { s: SequenceHandle };
-export default captioned("sequence(ctx, { actors, messages, x, y, w, h }) — message(i) draws one arrow; replies are dashed", {
+export default captioned("sequence(ctx, { actors, messages, x, y, w, h }) — message(i) draws one arrow; highlight(i) goes back to one", {
   build: (ctx) => ({
     s: sequence(ctx, {
       x: 160, y: 130, w: 1600, h: 780,
@@ -21,5 +21,6 @@ export default captioned("sequence(ctx, { actors, messages, x, y, w, h }) — me
     (tl, r: R) => r.s.message(0)(tl),
     (tl, r: R) => { r.s.message(1)(tl); r.s.message(2)(tl); },
     (tl, r: R) => { r.s.message(3)(tl); r.s.message(4)(tl); },
+    (tl, r: R) => r.s.highlight(1)(tl),
   ],
 });
