@@ -433,7 +433,7 @@ build: (ctx) => [
 steps: [(tl, icons) => icons.forEach((i, n) => i.draw(tl, n ? "<" : undefined)), (tl, icons) => icons.forEach((i, n) => i.light(tl, n ? "<" : undefined))],
 ```
 
-`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`. The deck's own icons in `icons/` are used by name the same way (see [`ownIcons`](#ownicons)).
 
 Only the icons a deck uses are bundled. The build finds a name when it stands in the deck's code as a string literal (`"rocket"`, also inside an array or a flow node). A name built at run time (`"ro" + "cket"`, or read from a file) is not found and reports the unknown-name problem: pass the icon itself instead. The same holds for `iconTile` and the `icon` of a `flow` node.
 
@@ -458,6 +458,16 @@ steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 ```
 
 `iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, short (`"accent"`, `"ok"`, `"warn"`) or full (`"--k-accent"`). Prefer the colour tokens: the CRT ones (`"phosphor"`, `"phosphor-amber"`) stay bright in every theme and wash out on a light stage; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
+
+## `ownIcons`
+
+A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
+
+- Draw it on Lucide's grid: `viewBox="0 0 24 24"`, strokes only, about 2 px wide. Another viewBox reports `icons/<name>.svg: viewBox must be 0 0 24 24, as a Lucide icon` and the icon is not loaded.
+- klappe strips each shape's own paint (`fill`, `stroke`, `stroke-width`, `style`, `class`, opacities), scripts, links, `<title>` and `<desc>`: the icon draws in the klappe stroke, in the colour or tone the call gives, and a closed shape gets the 0.2 tint.
+- A deck icon wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
+
+`ownIcons(files)` is the engine's loader for these files; a deck does not call it.
 
 ## `iconGlyph`
 

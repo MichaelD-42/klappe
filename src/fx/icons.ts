@@ -1,7 +1,7 @@
 import type { IconNode } from "lucide";
 import named from "virtual:klappe-icons";
 import type { Ctx } from "../types";
-import { drawOn, token } from "./draw";
+import { cleanSvg, drawOn, token } from "./draw";
 
 export interface IconOpts {
   x: number; // centre of the icon, scene-local
@@ -32,10 +32,40 @@ const [DRAW, EACH] = [0.9, 0.06]; // a glyph's stroke draw: duration per stroke,
 // An icon: a Lucide name ("shield-check") or the icon itself (import { ShieldCheck } from "klappe/fx/lucide").
 export type IconName = string | IconNode;
 
-// A Lucide glyph as SVG markup on its 24 grid. An unknown name records a problem and gives a crossed box.
-// A name is found only when it stands in the deck's code as a string literal; a computed one needs the icon itself.
+// The deck's own icons, icons/<name>.svg, as markup by name; a name here wins over a Lucide one.
+const own = new Map<string, string>();
+const PAINT = ["fill", "stroke", "stroke-width", "style", "class", "opacity", "fill-opacity", "stroke-opacity"];
+
+// Takes the deck's icons/*.svg (keyed "icons/<name>.svg"): each must sit on Lucide's 0 0 24 24 grid. Scripts, links and
+// styles go, and so does every shape's own paint, so it draws in the klappe stroke like a Lucide icon. Returns the problems.
+export function ownIcons(files: Record<string, string>): string[] {
+  own.clear();
+  const problems: string[] = [];
+  for (const [file, text] of Object.entries(files)) {
+    const doc = new DOMParser().parseFromString(text, "image/svg+xml");
+    const svg = doc.documentElement;
+    if (svg.localName !== "svg" || doc.querySelector("parsererror")) {
+      problems.push(`${file}: not an SVG`);
+      continue;
+    }
+    if ((svg.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/).map(Number).join(" ") !== "0 0 24 24") {
+      problems.push(`${file}: viewBox must be 0 0 24 24, as a Lucide icon`);
+      continue;
+    }
+    cleanSvg(svg, false);
+    for (const e of svg.querySelectorAll("title, desc, metadata")) e.remove();
+    for (const e of svg.querySelectorAll("*")) for (const a of PAINT) e.removeAttribute(a);
+    own.set(file.replace(/^icons\//, "").replace(/\.svg$/, ""), svg.innerHTML);
+  }
+  return problems;
+}
+
+// A Lucide glyph, or the deck's own icon, as SVG markup on its 24 grid. An unknown name records a problem and gives a
+// crossed box. A Lucide name is found only when it stands in the deck's code as a string literal; a computed one needs
+// the icon itself.
 export function iconGlyph(name: IconName, problem: (msg: string) => void): string {
   if (Array.isArray(name)) return markup(name);
+  if (own.has(name)) return own.get(name)!;
   const key = name.replace(/(^|-)(\w)/g, (_, _dash, c: string) => c.toUpperCase()); // grid-2x2 -> Grid2x2
   if (!name || !Object.hasOwn(lucide, key)) {
     problem(`icon: unknown Lucide name '${name}'`);

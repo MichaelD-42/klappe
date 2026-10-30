@@ -170,6 +170,7 @@ export interface Deck {
   meta: DeckMeta;
   sections: Section[];
   overlay?: OverlayModule; // the deck's overlay.ts
+  icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
   themes?: Record<string, string>;

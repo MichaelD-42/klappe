@@ -67,7 +67,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Show where; fill the countries where we sell, `region`; shade them by a value, `region(tl, c, { share })` | `worldMap` | [worldMap](klappe/docs/reference/effects.md#worldmap) | `150-map/10-world` |
 | A person moving; seated at a table, `seated` or `sit` | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk`, `130-figure/30-table` |
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
-| An icon, or an icon on a tile | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles` |
+| An icon, or an icon on a tile; a company or product glyph Lucide lacks goes in the deck's `icons/<name>.svg` on the 24 grid and is used by name | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles`, `140-icons/30-own-icons` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
 | A clip; full screen with no `rect`; it plays on its step (with sound unless `muted: true`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
