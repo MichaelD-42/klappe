@@ -29,6 +29,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `klappe test` fails within seconds when the deck cannot load (a syntax error in a `scene.ts`), and prints the error with its file and line; each walk waited about 230 s before.
+- `klappe dev` no longer exits with ENOENT when a scene folder is renamed or moved while it runs.
+- A running `klappe dev` picks up a new scene folder in a deck outside klappe's folder (a deck repo); it needed a restart.
+- `--help` or `-h` on any command prints the usage; `shot --help` rendered every scene of the deck.
 - `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.
 - `chart`, `barRace` and `wordCloud` read a CSV's columns in the header's order: a header such as `team,2024,2025` took `2024` as the label column, because JS lists keys that look like numbers first.
 - A sankey chart no longer makes GSAP warn "GSAP target not found" on every deck load.

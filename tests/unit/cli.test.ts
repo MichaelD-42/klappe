@@ -86,3 +86,12 @@ test('test stops before the browser on a deck problem, such as a duplicate scene
   expect(r.stderr).toContain("deck problem: duplicate scene id 'same'");
   expect(r.stdout).not.toContain('RUN'); // vitest never started
 }, 30_000);
+
+// shot --help rendered every scene of the deck (about 9 min): --help or -h on any command prints the usage and stops.
+test('--help after a command prints the usage, before it picks a deck or starts anything', () => {
+  for (const args of [['shot', '--help'], ['test', '-h'], ['--help']]) {
+    const r = cli(mkdtempSync(join(tmpdir(), 'cli-')), ...args); // no decks/ here: a run past the usage would fail
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('usage: klappe');
+  }
+});

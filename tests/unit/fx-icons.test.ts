@@ -70,3 +70,18 @@ describe("the scan plugin", () => {
     }
   });
 });
+
+// A scene folder renamed while `klappe dev` runs: the scan can list a file that is gone by the time it reads it.
+describe("the scan plugin, with a file gone between listing and reading", () => {
+  it("skips the missing file instead of throwing ENOENT", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-gone-"));
+    try {
+      fs.writeFileSync(path.join(dir, "a.ts"), `code(ctx, { lang: "ts" });`);
+      fs.symlinkSync(path.join(dir, "moved", "scene.ts"), path.join(dir, "scene.ts")); // listed, cannot be read
+      expect(usedLangs([dir])).toEqual(["ts"]);
+      expect(importedFx([dir])).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+});
