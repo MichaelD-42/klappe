@@ -22,6 +22,9 @@ export interface FlowHandle {
   fire(from: string, to: string): StepAdder;
   dim(ids: string[]): StepAdder; // those nodes and the arrows touching them fade to DIM; the others come back
   node(id: string): Element;
+  // The point at share t (0 to 1, default the middle) of the drawn edge, in scene units: for a gate or a tag on it.
+  // undefined, and a problem, for an edge the flow does not have.
+  edgeAt(from: string, to: string, t?: number): Pt | undefined;
 }
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -315,6 +318,17 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
 
   return {
     node: (id) => els.get(need(id))!,
+    edgeAt(from, to, t = 0.5) {
+      const e = edges.find((x) => x.from === from && x.to === to);
+      if (!e) return void ctx.problem(`flow: no edge from "${from}" to "${to}"`);
+      const segs = e.pts.slice(1).map((q, i) => [e.pts[i], q, Math.hypot(q.x - e.pts[i].x, q.y - e.pts[i].y)] as const);
+      let left = Math.min(1, Math.max(0, t)) * segs.reduce((n, s) => n + s[2], 0);
+      for (const [p, q, len] of segs) {
+        if (left <= len) return { x: p.x + ((q.x - p.x) * left) / (len || 1), y: p.y + ((q.y - p.y) * left) / (len || 1) };
+        left -= len;
+      }
+      return e.pts[e.pts.length - 1];
+    },
     show(ids) {
       const want = (ids ?? [...boxes.keys()]).map(need).filter((id) => !shown.has(id));
       want.forEach((id) => shown.add(id));
