@@ -25,11 +25,11 @@ describe("parseScene", () => {
     expect(scene.title).toBe("Clarification");
     expect(scene.steps.map((s) => s.kind)).toEqual([
       "step", "step", "step", "step", "step",
-      "shout-enter", "shout-fade", "shout-answer",
+      "shout-enter", "shout-answer",
     ]);
     expect(scene.steps[0].text).toBe("The camera follows the stream to Clarification.");
     expect(scene.steps[5].text).toBe("What is still left for humans to do?");
-    expect(scene.steps[7].text).toBe("The conversations that build trust.");
+    expect(scene.steps[6].text).toBe("The conversations that build trust.");
   });
   it("puts notes on the step above, or on the scene", () => {
     expect(parseScene("## A\n\n- one\n\n> say this\n", "10-a").scene.steps[0].notes).toBe("say this");

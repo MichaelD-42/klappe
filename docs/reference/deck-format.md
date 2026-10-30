@@ -49,7 +49,7 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 - `## Title` names the scene. It is required.
 - Each list item is one step.
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
-- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 3 steps: enter, fade, answer. A `> note` after it attaches to the answer step.
+- A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 2 steps: the question, then the answer. A `> note` after it attaches to the answer step. For a pause between them, build it in `scene.ts` and call `fade` on a step of its own.
 - A scene with no list items gets one step with the title.
 - A list item with `![alt](media/x.png "prompt")` shows an image. A link to YouTube, Vimeo, or a `.mp4` or `.webm` file shows a video. A link to `data/x.csv` or `data/x.json` shows a chart. The link shows as its label in the text. Without `scene.ts` `build()`, the text goes in a left column and the media on the right.
 - An image on the next line of a video link, in the same list item, is the video's offline fallback: `- [A talk](https://youtu.be/x)` then `  ![A still](media/still.jpeg)`. With no network (`navigator.onLine` is false, or `?offline=1`), an online video shows that image with the caption "Video needs a network connection". Without a fallback, it shows the empty video box and a deck problem. klappe cannot tell when a YouTube or Vimeo embed fails to load, so on a network without internet use `?offline=1`. An image in its own list item is a separate step, not a fallback.
@@ -260,9 +260,9 @@ steps: [(tl, r) => drawOn(r.path, { duration: 0.6 })(tl)] // r.path: an SVG path
 { background: { href: "media/waves.mp4", scrim: 0.6 } }
 { background: { animate: "aurora" } }
 
-// shout with its own intensity: the scene.md has the 3 steps of a shout-out (### Question? and an answer).
+// shout with its own intensity: the scene.md has the 2 steps of a shout-out (### Question? and an answer).
 { build: (ctx) => shout(ctx, { question: "Why now?", answer: "Because the data says so.", intensity: "bold" }),
-  steps: [(tl, s) => s.enter(tl), (tl, s) => s.fade(tl), (tl, s) => s.answer(tl)] }
+  steps: [(tl, s) => s.enter(tl), (tl, s) => s.answer(tl)] }
 
 // A transition, in a section.ts default export: the camera dives into a ref of the old canvas, the new one grows in.
 { transition: "zoom", zoomTarget: "countsAim" }

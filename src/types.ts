@@ -17,7 +17,7 @@ export interface DeckMeta {
   safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
 }
 export type StepKind =
-  "step" | "shout-enter" | "shout-fade" | "shout-answer";
+  "step" | "shout-enter" | "shout-answer";
 // A step built from Markdown by an element: a code group, a console command, a chat message, a task-list item, a table row,
 // an agenda.
 export type Part =

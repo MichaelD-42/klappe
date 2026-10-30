@@ -375,3 +375,8 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **The overlay layer is `overlay.ts` with `build` and `update(at)`, not deck.md keys and not timeline steps.**
   - Why: the work deck's frame helper (logo, brand frame, title) needs code, so keys alone would not replace it, and keys beside a module are more API to freeze. `update` gets the step it lands on and sets the overlay from that alone, so it needs no timeline of its own and a jump shows what a play does; the walk compares it with the canvas.
   - It is under the UI and outside the look checks: its ink sits in the margin that `safe-area` keeps scenes out of.
+
+## 2026-10-30 (next picks)
+
+- **A Markdown shout-out is two steps (question, answer), not three (was: enter, fade, answer).**
+  - Why: the work deck wanted two in all five of its shout-outs and padded the third with an empty step and an `auto` of 0. The fade beat was a click on a dimmed, almost blank frame; a presenter pauses on the question anyway. `fade` stays on the handle for a `scene.ts` that wants the beat.
