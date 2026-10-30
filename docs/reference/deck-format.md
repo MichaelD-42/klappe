@@ -7,6 +7,8 @@ It covers spec examples A (old way), B (value stream), C (global team). Boot, Co
 
 Use numeric prefixes. They set the order. The prefix is not part of the id.
 
+A section or scene folder whose name starts with `_` (`_30-backup`) is parked: its files stay in `sections/`, but the deck, `outline` and `klappe test` leave it out and its `scene.ts` is not loaded. Rename it back to bring it in.
+
 ```
 decks/<id>/
   deck.md

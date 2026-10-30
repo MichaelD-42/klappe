@@ -20,6 +20,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 - `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
 - `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
+- A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
 ### Changed
 

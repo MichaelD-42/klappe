@@ -27,7 +27,7 @@ export function assembleDeck(
   const tree = new Map<string, Set<string>>();
   for (const key of [...Object.keys(files), ...Object.keys(modules)]) {
     const m = /^sections\/([^/]+)\/(?:([^/]+)\/)?[^/]+$/.exec(key);
-    if (!m) continue;
+    if (!m || m[1].startsWith("_") || m[2]?.startsWith("_")) continue; // a "_" folder is parked: kept on disk, out of the deck
     if (!tree.has(m[1])) tree.set(m[1], new Set());
     if (m[2]) tree.get(m[1])!.add(m[2]);
   }

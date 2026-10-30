@@ -6,6 +6,7 @@ export const deckCss = import.meta.glob<string>("@deck/deck.css", { query: "?inl
 // Not review.md (the review window writes it while the deck is open) nor the TODO.md lists klappe test
 // writes: none is part of the deck, and a change to one must not reload it.
 export const files = import.meta.glob(["@deck/**/*.md", "!@deck/review.md", "!@deck/data/TODO.md", "!@deck/media/TODO.md"], { query: "?raw", import: "default", eager: true });
-export const modules = import.meta.glob("@deck/sections/**/*.ts", { import: "default", eager: true });
+// Not a parked "_" folder's code: a half-written scene.ts there must not break the deck.
+export const modules = import.meta.glob(["@deck/sections/**/*.ts", "!@deck/sections/**/_*/**"], { import: "default", eager: true });
 export const data = import.meta.glob<string>(["@deck/data/*", "!@deck/data/TODO.md"], { query: "?raw", import: "default", eager: true });
 export const media = import.meta.glob<string>(["@deck/media/*", "!@deck/media/TODO.md"], { query: "?url", import: "default", eager: true });
