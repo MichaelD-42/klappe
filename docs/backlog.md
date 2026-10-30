@@ -41,4 +41,11 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Deck components in Markdown: a deck registers a fence or trigger for its own helpers (the demo's `speakerProfile`, `planChip`), so `scene.md` can use them without `scene.ts`.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
 - klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
+- `klappe dev` crashes when a scene folder is renamed or moved. The `virtual:klappe-langs` watcher reads the old `scene.ts` path, throws ENOENT, and the server exits. Skip files that no longer exist. Seen in the training deck review on 2026-10-28, with several builders sharing one `klappe dev` server, as were the six defects below.
+- `klappe dev` ignored `--port`: started with `--port 5174 --strictPort`, it served on 5173.
+- A running `klappe dev` does not pick up a new scene folder. `shot --url` then fails with "no step matches", while `outline` and `test` see the scene. A restart fixes it.
+- `shot --last` with a step target (`<section>/<scene>/<step> --last`) reused an old PNG without a warning. A builder reported it; not reproduced yet. Shoot the given step, or reject the mix.
+- `test --only` with several targets prints one test file and three tests, so the output does not show which scenes were walked. List them.
+- `klappe test` does not fail fast when the deck cannot load. With a syntax error in one `scene.ts`, each `--only` walk waited about 230 s for `script#klappe-selftest`, then failed with a TimeoutError (four walks, 15 min of agent time). Fail within seconds on a compile or load error, and print the error.
+- `shot --help` prints no help: it renders every scene of the deck (3 calls, about 9 min).
 - Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable. The API audit (first) may still drop entries before they are built.
