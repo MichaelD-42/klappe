@@ -32,6 +32,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `klappe dev` takes `--port <n>` and `--strictPort`; it served on 5173 whatever it was given.
+- `shot --last` shoots a step target as named; it picked nothing for a step that was not its scene's last, and the old PNG stayed on disk.
+- `test --only` prints the scenes it walks, and stops before a browser starts when a target names no scene.
 - `klappe test` fails within seconds when the deck cannot load (a syntax error in a `scene.ts`), and prints the error with its file and line; each walk waited about 230 s before.
 - `klappe dev` no longer exits with ENOENT when a scene folder is renamed or moved while it runs.
 - A running `klappe dev` picks up a new scene folder in a deck outside klappe's folder (a deck repo); it needed a restart.

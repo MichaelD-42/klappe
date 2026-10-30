@@ -15,7 +15,8 @@ if (cmd === '--version' || cmd === '-v') {
 }
 
 const usage =
-  'usage: klappe dev|build|pdf|outline|init [--deck <id>]\n' +
+  'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
+  '       klappe build|pdf|outline|init [--deck <id>]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
   '       klappe --version'
@@ -150,10 +151,16 @@ if (cmd === 'test') {
   if (bail) process.env.KLAPPE_BAIL = '1'
   if (strict) process.env.KLAPPE_STRICT = '1'
   // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
-  const { outline, overWords } = await import('./outline.mjs')
-  const { problems } = await outline(klappeDir, deckDir)
+  const { outline, overWords, walkedScenes } = await import('./outline.mjs')
+  const { problems, deck } = await outline(klappeDir, deckDir)
   for (const p of problems) console.error(`deck problem: ${p}`)
   if (problems.length) process.exit(1)
+  if (only.length) {
+    const { scenes, unknown } = walkedScenes(deck, only)
+    for (const u of unknown) console.error(`--only ${u}: no scene matches; a target is <section> or <section>/<scene>`)
+    if (unknown.length) process.exit(1)
+    console.log(`walking ${scenes.length} ${scenes.length === 1 ? 'scene' : 'scenes'}: ${scenes.join(', ')}`)
+  }
   // deck.md max-words: reported before the tests, fails the run after them.
   const long = await overWords(klappeDir, deckDir)
   for (const l of long) console.error(`max-words: ${l}`)
@@ -236,7 +243,13 @@ if (cmd === 'build') {
     await server?.close()
   }
 } else {
-  const server = await createServer({ configFile })
+  // --port and --strictPort, as Vite's own CLI takes them: several builders run one server each.
+  const port = rest.includes('--port') ? Number(rest[rest.lastIndexOf('--port') + 1]) : undefined
+  if (port !== undefined && !(port > 0)) {
+    console.error('--port needs a number, for example --port 5174')
+    process.exit(1)
+  }
+  const server = await createServer({ configFile, server: { ...(port && { port }), ...(rest.includes('--strictPort') && { strictPort: true }) } })
   await server.listen()
   server.printUrls()
 }

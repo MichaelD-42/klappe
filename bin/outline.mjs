@@ -44,6 +44,17 @@ export async function overWords(klappeDir, deckDir) {
   )
 }
 
+// The scenes `test --only` walks, as <section>/<scene> in deck order, and the targets that name none.
+export function walkedScenes(deck, targets) {
+  const parts = targets.map((t) => t.replace(/^#?\/?/, '').split('/'))
+  const all = deck.sections.flatMap((s) => s.scenes.map((c) => [s.id, c.id]))
+  const hit = ([s, c], [section, scene]) => s === section && (!scene || c === scene)
+  return {
+    scenes: all.filter((sc) => parts.some((p) => hit(sc, p))).map((sc) => sc.join('/')),
+    unknown: targets.filter((_, i) => !all.some((sc) => hit(sc, parts[i]))),
+  }
+}
+
 // Returns the outline as Markdown and the deck problems the parser found.
 export async function outline(klappeDir, deckDir) {
   const { deck, problems, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
@@ -73,5 +84,5 @@ export async function outline(klappeDir, deckDir) {
   }
   const over = typeof target === 'number' && target > 0 ? Math.round(total / 60 - target) : undefined
   const vs = over === undefined ? '' : `; target ${target} min, ${over > 0 ? `${over} min over` : over < 0 ? `${-over} min under` : 'on target'}`
-  return { text: [`# ${deck.meta.title} (${count} steps, ${minutes(total)}${vs})`, ...body, ''].join('\n'), problems }
+  return { deck, text: [`# ${deck.meta.title} (${count} steps, ${minutes(total)}${vs})`, ...body, ''].join('\n'), problems }
 }

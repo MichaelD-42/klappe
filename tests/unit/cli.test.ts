@@ -95,3 +95,25 @@ test('--help after a command prints the usage, before it picks a deck or starts 
     expect(r.stdout).toContain('usage: klappe');
   }
 });
+
+// klappe dev --port 5174 --strictPort served on 5173.
+test('dev serves on the --port it is given', async () => {
+  const { spawn } = await import('node:child_process')
+  const port = String(20000 + Math.floor(Math.random() * 20000))
+  const p = spawn(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'dev', '--deck', 'demo', '--port', port, '--strictPort'], { cwd: join(__dirname, '../..') })
+  try {
+    const out = await new Promise<string>((ok, fail) => {
+      let text = ''
+      const timer = setTimeout(() => fail(new Error(`no URL in 30 s:\n${text}`)), 30_000)
+      const read = (b: Buffer) => {
+        text += b
+        if (/localhost:\d+/.test(text)) clearTimeout(timer), ok(text)
+      }
+      p.stdout.on('data', read)
+      p.stderr.on('data', read)
+    })
+    expect(out).toContain(`localhost:${port}`)
+  } finally {
+    p.kill()
+  }
+}, 40_000)

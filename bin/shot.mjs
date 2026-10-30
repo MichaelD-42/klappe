@@ -8,12 +8,15 @@ export const SIZES = [{ width: 1920, height: 1080 }, { width: 1366, height: 768 
 const THUMB = { w: 480, h: 270, cols: 4 }
 
 // The steps a target names: "<section>", "<section>/<scene>" or "<section>/<scene>/<step>", as in a deep link
-// ("#/" in front is fine). No targets: every step. last: only the last step of each scene.
-// Returns the steps, and the targets that name none.
+// ("#/" in front is fine). No targets: every step. last: only the last step of each scene a section or scene target
+// names; a step target is shot as named. Returns the steps, and the targets that name none.
 export function pickSteps(steps, targets, last) {
   const parts = targets.map((t) => t.replace(/^#?\/?/, '').split('/'))
   const hit = (s, [section, scene, step]) => s.section === section && (!scene || s.scene === scene) && (!step || s.step === Number(step))
-  const picked = steps.filter((s) => (!parts.length || parts.some((p) => hit(s, p))) && (!last || steps[s.index + 1]?.scene !== s.scene))
+  const isLast = (s) => steps[s.index + 1]?.scene !== s.scene
+  const picked = parts.length
+    ? steps.filter((s) => parts.some((p) => hit(s, p) && (!last || p[2] || isLast(s))))
+    : steps.filter((s) => !last || isLast(s))
   return { picked, unknown: targets.filter((_, i) => !steps.some((s) => hit(s, parts[i]))) }
 }
 
