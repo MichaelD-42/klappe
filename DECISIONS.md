@@ -351,3 +351,10 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: each branch's series colour is its identity across the map. Each branch is one group dimmed as a whole, so a dimmed box never shows its own lines through it.
 - **A Markdown table is always a `compareTable`, one row per step.**
   - Why: the table is how people write a comparison; ✓ ✗ ~ map to the marks. A table for other data still has `scene.ts`.
+
+## 2026-10-30 (1.0.0 scope)
+
+- **1.0.0 ships with every entry in `docs/backlog.md` built, not with the deck template alone (was: "1.0.0 with the deck template (M4)", 2026-10-24 versions).**
+  - Why: 1.0.0 freezes the deck format, the `scene.ts` API and the CLI. The backlog holds changes to all three (type scale, text steps, frame size, overlay layer, own transitions); freezing before them would put each behind a 2.0. The API audit against the three work decks comes first and may drop entries before they are built.
+- **Sound is in scope; the design spec's v1 non-goal "Audio and narration" is lifted.**
+  - Why: sound is the largest cinematic gap. It plays on forward steps only, like video, so seek still equals play; it is opt-in per deck and muted by a key, for rooms with bad audio.
