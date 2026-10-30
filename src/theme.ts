@@ -1,8 +1,11 @@
 import calm from "./themes/calm.css?raw";
 import type { Deck } from "./types";
 
-// Motion tokens in seconds, except autoHoldMs.
-export const motion = { camera: 1.6, step: 0.6, autoHoldMs: 2500 };
+// Motion tokens in seconds, except autoHoldMs. Read them when a step is built, not at import: setTempo scales them.
+const BASE = { camera: 1.6, step: 0.6, autoHoldMs: 2500 };
+export const motion = { ...BASE };
+// deck.md tempo, set once at load before anything builds: a factor on all three.
+export const setTempo = (k: number) => void Object.assign(motion, { camera: BASE.camera * k, step: BASE.step * k, autoHoldMs: BASE.autoHoldMs * k });
 
 // CSS variables defined in themes/calm.css.
 export const cssVars = { bg: "--k-bg", fg: "--k-fg", accent: "--k-accent", font: "--k-font" };

@@ -17,10 +17,11 @@ export interface ShoutHandle {
 // Calm is board level: gentle. Bold is training: hard entry, heavy dim, vignette. The question grows to its
 // full push-in on the enter step, so one click shows it at full size.
 // trace: how much of the question stays after the fade (bold keeps a trace so the beat is not a blank slide).
-const LOOK = {
+// A function, so calm's times follow the deck's tempo.
+const LOOK = () => ({
   calm: { dim: 0.3, vignette: 0, from: 0.92, push: 1.04, enter: motion.step * 1.5, ease: "power2.out", font: 120, trace: 0, fade: motion.step },
   bold: { dim: 0.7, vignette: 1, from: 1.35, push: 1.12, enter: 0.22, ease: "power4.out", font: 156, trace: 0.12, fade: 0.3 },
-};
+});
 
 function box(parent: HTMLElement, css: Partial<CSSStyleDeclaration>, role: string, text?: string): HTMLElement {
   const e = parent.appendChild(document.createElement("div"));
@@ -38,7 +39,7 @@ const answers = new WeakMap<HTMLElement, HTMLElement[]>();
 
 export function shout(ctx: Ctx, opts: ShoutOpts): ShoutHandle {
   const intensity = opts.intensity ?? ctx.deck.intensity;
-  const k = LOOK[intensity];
+  const k = LOOK()[intensity];
   const bold = intensity === "bold";
   const root = box(ctx.html, { zIndex: "5", pointerEvents: "none" }, "root");
   const dim = box(root, { background: "var(--k-blackout)" }, "dim");

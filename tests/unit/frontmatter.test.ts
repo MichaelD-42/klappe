@@ -60,6 +60,14 @@ describe("frontmatter lists, edge cases", () => {
       expect(problems).toContain("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
     }
   });
+  it("reads tempo as a factor on the motion times and reports an unknown one", () => {
+    expect(toDeckMeta({ title: "x" }).meta.tempo).toBe(1);
+    expect(toDeckMeta({ title: "x", tempo: "slow" }).meta.tempo).toBe(1.4);
+    expect(toDeckMeta({ title: "x", tempo: "fast" }).meta.tempo).toBe(0.75);
+    const { meta, problems } = toDeckMeta({ title: "x", tempo: "brisk" });
+    expect(meta.tempo).toBe(1);
+    expect(problems).toContain("deck.md: tempo is slow, normal or fast");
+  });
   it("reports a shared-canvas list that mixes ids and groups instead of flattening it", () => {
     const { meta, problems } = toDeckMeta({ title: "x", "shared-canvas": ["a", ["b", "c"]] });
     expect(meta.sharedCanvas).toEqual([]);
