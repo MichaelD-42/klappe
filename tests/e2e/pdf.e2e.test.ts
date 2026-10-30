@@ -19,3 +19,16 @@ test('the PDF has one page per step of the deck', async () => {
     fs.rmSync(path.dirname(out), { recursive: true })
   }
 })
+
+// A handout: one page per scene, at its last step, with the speaker notes under the picture.
+test('a handout has one page per scene', async () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-pdf-')), 'handout.pdf')
+  try {
+    const r = await exportPdf(`${inject('BASE_URL')}/?fixture=fx-code`, out, { handout: true })
+    expect(r.pages).toBe(7)
+    expect(r.errors).toEqual([])
+    expect(fs.readFileSync(out, 'latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(7)
+  } finally {
+    fs.rmSync(path.dirname(out), { recursive: true })
+  }
+})

@@ -16,7 +16,8 @@ if (cmd === '--version' || cmd === '-v') {
 
 const usage =
   'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
-  '       klappe build|pdf|outline|init [--deck <id>]\n' +
+  '       klappe build|outline|init [--deck <id>]\n' +
+  '       klappe pdf [--deck <id>] [--handout]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
   '       klappe --version'
@@ -197,9 +198,11 @@ if (cmd === 'build') {
   const { exportPdf } = await import('./pdf.mjs')
   const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server.listen()
-  const out = path.join(process.cwd(), 'dist', `${id}.pdf`)
+  // --handout: one A4 page per scene with its speaker notes, to send after the talk.
+  const handout = rest.includes('--handout')
+  const out = path.join(process.cwd(), 'dist', `${id}${handout ? '-handout' : ''}.pdf`)
   try {
-    const r = await exportPdf(server.resolvedUrls.local[0], out)
+    const r = await exportPdf(server.resolvedUrls.local[0], out, { handout })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.pages} pages.`)

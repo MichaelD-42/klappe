@@ -41,28 +41,50 @@ export async function showStep(page, i, at) {
   }, { i, at })
 }
 
-// Prints the deck at url to the PDF out, one page per step: the step's end state, with no UI on top.
+const escape = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+
+// One handout page: the scene's last step, its title, and the notes as paragraphs.
+export function handoutPage({ shot, title, notes }) {
+  const paras = notes.flatMap((n) => n.split(/\n\s*\n/)).map((p) => p.trim()).filter(Boolean)
+  return `<section><img src="data:image/jpeg;base64,${shot}"><h2>${escape(title)}</h2>${paras.map((p) => `<p>${escape(p)}</p>`).join('')}</section>`
+}
+
+// A4 portrait: the picture across the top, the notes under it in a plain system face for print.
+const HANDOUT_CSS = `@page { size: A4; margin: 14mm; } body { margin: 0; font: 11pt/1.45 system-ui, sans-serif; color: #111; }
+section + section { break-before: page; } img { display: block; width: 100%; } h2 { font-size: 15pt; margin: 6mm 0 3mm; } p { margin: 0 0 2.5mm; }`
+
+// Prints the deck at url to the PDF out, one page per step: the step's end state, with no UI on top. With handout,
+// one A4 page per scene instead: its last step, its title and its speaker notes (the scene's, then each step's).
 // Returns the page count and the deck problems and page errors, for the terminal.
-export async function exportPdf(url, out) {
+export async function exportPdf(url, out, { handout = false } = {}) {
   const browser = await chromium.launch()
   try {
     const page = await openDeck(browser, url)
-    const n = await page.evaluate(() => window.klappe.steps.length)
+    const steps = await page.evaluate(() => window.klappe.steps)
+    const picked = handout ? steps.filter((s, i) => steps[i + 1]?.scene !== s.scene) : steps
     const shots = []
-    for (let i = 0; i < n; i++) {
-      await showStep(page, i)
+    for (const s of picked) {
+      await showStep(page, s.index)
       shots.push((await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64'))
     }
-    const { problems, errors } = await page.evaluate(() => ({ problems: [...window.klappe.problems], errors: [...window.klappe.errors] }))
+    const { problems, errors, scenes } = await page.evaluate(() => ({
+      problems: [...window.klappe.problems],
+      errors: [...window.klappe.errors],
+      scenes: Object.fromEntries(
+        window.klappe.deck.sections.flatMap((s) => s.scenes.map((c) => [c.id, { title: c.title, notes: [c.notes, ...c.steps.map((t) => t.notes)] }])),
+      ),
+    }))
 
     const sheet = await browser.newPage()
     await sheet.setContent(
-      `<style>@page { size: ${W}px ${H}px; margin: 0; } body { margin: 0; } img { display: block; width: ${W}px; height: ${H}px; } img + img { break-before: page; }</style>` +
-        shots.map((s) => `<img src="data:image/jpeg;base64,${s}">`).join(''),
+      handout
+        ? `<style>${HANDOUT_CSS}</style>` + picked.map((s, k) => handoutPage({ shot: shots[k], ...scenes[s.scene] })).join('')
+        : `<style>@page { size: ${W}px ${H}px; margin: 0; } body { margin: 0; } img { display: block; width: ${W}px; height: ${H}px; } img + img { break-before: page; }</style>` +
+            shots.map((s) => `<img src="data:image/jpeg;base64,${s}">`).join(''),
     )
     fs.mkdirSync(path.dirname(out), { recursive: true })
     await sheet.pdf({ path: out, preferCSSPageSize: true, printBackground: true })
-    return { pages: n, problems, errors }
+    return { pages: picked.length, problems, errors }
   } finally {
     await browser.close()
   }
