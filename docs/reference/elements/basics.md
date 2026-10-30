@@ -30,6 +30,7 @@ steps: [
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `duration` | number | 0.6 | seconds of the fade |
+| `at` | GSAP position | the step's end | where the fade starts on the step: `"<"` with the tween before, `"<0.2"` 0.2 s after its start |
 
 `show` does not hide anything first: build the element hidden. `title` and `text` do this for you; for your own element, call `gsap.set(el, { autoAlpha: 0 })` in `build`. A `show` that hid the element when the adder is made would act outside the timeline, so a seek and a play could differ.
 

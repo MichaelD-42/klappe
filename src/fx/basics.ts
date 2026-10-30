@@ -5,6 +5,7 @@ import { token } from "./draw";
 
 export interface FadeOpts {
   duration?: number; // seconds; default motion.step (0.6)
+  at?: gsap.Position; // where on the step it starts, as GSAP's position: "<" with the tween before; default the end
 }
 export interface TextOpts {
   text: string;
@@ -24,12 +25,12 @@ export interface BasicHandle {
 // (gsap.set(el, { autoAlpha: 0 }) in build; title and text do it). Hiding when the adder is made would
 // run outside the timeline, so a seek and a play could differ.
 export function show(el: Element | Element[], opts: FadeOpts = {}): StepAdder {
-  return (tl) => void tl.to(el, { autoAlpha: 1, duration: opts.duration ?? motion.step });
+  return (tl) => void tl.to(el, { autoAlpha: 1, duration: opts.duration ?? motion.step }, opts.at);
 }
 
 // Fades the element (or list) out; autoAlpha 0 also sets visibility hidden, so it takes no clicks.
 export function hide(el: Element | Element[], opts: FadeOpts = {}): StepAdder {
-  return (tl) => void tl.to(el, { autoAlpha: 0, duration: opts.duration ?? motion.step });
+  return (tl) => void tl.to(el, { autoAlpha: 0, duration: opts.duration ?? motion.step }, opts.at);
 }
 
 // The scene title, styled and placed as a Markdown scene's (.k-scene h2), built hidden. A scene with
