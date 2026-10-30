@@ -38,7 +38,7 @@ Each entry: the decision and its reason. Full design: `docs/superpowers/specs/20
   - After `sync-claude.mjs` copied the files to `deck-probe/.claude/`, the same prompt listed `klappe`, `klappe-builder`, `klappe-review-content`, `klappe-review-look` and `klappe-review-tech`.
   - The script copies only `klappe*` names and overwrites them. It leaves the deck's own agents and skills alone.
   - Not tested: `claude` run interactively (only `-p` was tested).
-- **Open TODO (see also the skill decision below):** add `klappe:sync` to the deck template docs when the template exists (M4).
+- **Done 2026-10-30 (was an open TODO):** the deck template's `README.md` names `npm run klappe:sync`.
 
 ## 2026-10-16 (skills deferred)
 
@@ -380,3 +380,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **A Markdown shout-out is two steps (question, answer), not three (was: enter, fade, answer).**
   - Why: the work deck wanted two in all five of its shout-outs and padded the third with an empty step and an `auto` of 0. The fade beat was a click on a dimmed, almost blank frame; a presenter pauses on the question anyway. `fade` stays on the handle for a `scene.ts` that wants the beat.
+- **The starter deck is a `template/` folder, shaped by the work decks, and sets `max-words: 12`.**
+  - Both audited decks grew `data/` and `media/`, the bigger one also `shared/` and `deck.css`; both set the same five `deck.md` keys. The template has those, one scene, and a README with the commands. It has no example `scene.ts` or `overlay.ts`: an agent copies catalog scenes instead.
+  - The word cap is on from the first scene, so a long step fails `klappe test` before a deck grows around it; the README says how to raise it.

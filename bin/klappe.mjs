@@ -81,15 +81,12 @@ if (cmd === 'init') {
     if (pkg.scripts[k] === undefined || pkg.scripts[k] === v) pkg.scripts[k] = v
     else console.log(`Kept your script "${k}": ${pkg.scripts[k]}\n  klappe expects: ${v}`)
   }
-  // A starter scene, so a fresh deck shows a step and its tests pass.
-  const intro = path.join(dir, 'sections', '10-intro')
-  fs.mkdirSync(path.join(intro, '10-hello'), { recursive: true })
-  fs.writeFileSync(
-    path.join(dir, 'deck.md'),
-    `---\ntitle: ${id}\nlang: en\ntheme: calm\nintensity: calm\nconfidential: false\n---\n`,
-  )
-  fs.writeFileSync(path.join(intro, 'section.md'), '# Intro\n')
-  fs.writeFileSync(path.join(intro, '10-hello', 'scene.md'), '## Hello\n\n- Welcome.\n')
+  // The starter deck from template/: one scene, so a fresh deck shows a step and its tests pass. {{id}} is the deck id.
+  fs.cpSync(path.join(klappeDir, 'template'), dir, { recursive: true })
+  for (const f of ['deck.md', 'README.md']) {
+    const file = path.join(dir, f)
+    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replaceAll('{{id}}', id))
+  }
   fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n')
   const tsconfig = path.join(process.cwd(), 'tsconfig.json')
   if (!fs.existsSync(tsconfig)) {

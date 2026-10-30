@@ -117,3 +117,18 @@ test('dev serves on the --port it is given', async () => {
     p.kill()
   }
 }, 40_000)
+
+// The starter deck comes from template/: the folders and deck.md keys the work decks each ended up with.
+test('init copies the template: deck.md with the common keys and a word cap, the slots and a README', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
+  const deck = join(cwd, 'decks/talk');
+  const md = readFileSync(join(deck, 'deck.md'), 'utf8');
+  for (const key of ['title: talk', 'lang: en', 'theme: calm', 'intensity: calm', 'confidential: false', 'max-words: 12']) expect(md).toContain(key);
+  for (const f of ['deck.css', 'data', 'media', 'shared', 'README.md', 'sections/10-intro/10-hello/scene.md']) expect(existsSync(join(deck, f)), f).toBe(true);
+  expect(readFileSync(join(deck, 'README.md'), 'utf8')).toContain('npm run klappe:sync');
+  // The word cap is on from the first scene: a long step is reported.
+  writeFileSync(join(deck, 'sections/10-intro/10-hello/scene.md'), '## Hello\n\n- one two three four five six seven eight nine ten eleven twelve thirteen\n');
+  const { overWords } = await import('../../bin/outline.mjs');
+  expect(await overWords(join(__dirname, '../..'), deck)).toEqual(['#/intro/hello/1: 13 words > 12']);
+}, 60_000);

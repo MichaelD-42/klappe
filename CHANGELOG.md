@@ -22,6 +22,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
 - Type scale tokens `--k-size-title`, `--k-size-body` and `--k-size-label` (defaults 88, 44 and 28 px): a theme sets the text hierarchy, and the Markdown scene, `text()` and every effect's text follow it in proportion. `crt`, `timer` and `map` keep their own sizes. Defaults leave every look as it was.
 - `text` option `class`: a `deck.css` class styles the box; only the size, colour and weight given are set inline over it.
+- `klappe init` copies `template/`: one scene, `data/`, `media/`, `shared/`, a `deck.css` slot, a README with the commands (`npm run klappe:sync` among them) and `max-words: 12` in `deck.md`, so a long step fails `klappe test` from the start.
 - `klappe pdf --handout`: one A4 page per scene, its last step with its title and speaker notes under it, to send after the talk.
 - `deck.md` key `tempo`: `slow`, `normal` or `fast` scales the step fades, camera flights and autoplay holds (1.4, 1, 0.75).
 - `overlay.ts` at the deck root: a layer over every scene that the camera does not move, for a logo, a brand frame or a chapter label. `build` makes it once, `update(at)` sets it on every move from where the deck lands; the walk checks it. Catalog: `#/overlay/pinned/1`.

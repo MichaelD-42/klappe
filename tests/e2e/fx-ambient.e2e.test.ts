@@ -211,6 +211,7 @@ test('an animated SVG file keeps its animations and drops scripts, handlers, out
 
 // The demo's rings.svg uses var(--k-line) in its own <style>: the theme token reaches into the shadow root.
 test('an inlined SVG takes the theme tokens', async () => {
+  if (!inject('IS_DEMO_DECK')) return // the scene is the demo's
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } })
   await page.goto(`${inject('BASE_URL')}/#/fullscreen/svg-loop/1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 30_000 })

@@ -83,7 +83,7 @@ You need Node with npm and Git (Git Bash on Windows). A deck repo holds your dec
 ```sh
 git init && git commit --allow-empty -m init
 git subtree add --prefix klappe https://github.com/MichaelD-42/klappe.git main --squash
-node klappe/bin/klappe.mjs init --deck my-talk     # decks/my-talk/, package.json, Claude agents
+node klappe/bin/klappe.mjs init --deck my-talk     # decks/my-talk/ from klappe/template/, package.json, Claude agents
 npm i
 npx playwright install chromium                    # once per machine, for the tests and the PDF
 npm run dev                                        # http://localhost:5173
