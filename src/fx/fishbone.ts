@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type FishboneOpts = {
   effect: string; // the problem, in the head
@@ -15,6 +16,7 @@ export interface FishboneHandle {
 const SVG = "http://www.w3.org/2000/svg";
 const FONT = 24; // fixed in scene units: 17 px at 1366
 const CHAR_W = 13; // about one character at FONT
+const charW = () => (CHAR_W * typeSize("label", FONT)) / FONT; // follows the type scale
 const LABEL_H = 56; // a category's box
 const TICK = 36; // a cause's line off its bone
 
@@ -26,7 +28,7 @@ export interface FishboneLayout { head: Rect; spine: [P, P]; bones: FishboneBone
 // above and below, the first nearest the head. A bone's causes branch off it to the left, evenly along it.
 export function fishboneLayout(opts: FishboneOpts): FishboneLayout {
   const { x, y, w, h, causes } = opts;
-  const headW = Math.min(360, Math.max(200, opts.effect.length * CHAR_W * 0.8 + 48), w * 0.25);
+  const headW = Math.min(360, Math.max(200, opts.effect.length * charW() * 0.8 + 48), w * 0.25);
   const cy = y + h / 2;
   const head = { x: x + w - headW, y: cy - 70, w: headW, h: 140 };
   const spine: [P, P] = [{ x, y: cy }, { x: head.x, y: cy }];
@@ -44,11 +46,11 @@ export function fishboneLayout(opts: FishboneOpts): FishboneLayout {
     const items = (c.items ?? []).map((text, j) => {
       const f = (j + 1) / (n + 1);
       const at = { x: end.x + (base.x - end.x) * f, y: end.y + (base.y - end.y) * f };
-      if (!problem && text.length * CHAR_W + TICK + 12 > slot - 24)
+      if (!problem && text.length * charW() + TICK + 12 > slot - 24)
         problem = `fishbone: "${text}" is too long for its bone; shorten it or use fewer causes`;
       return { text, at };
     });
-    if (!problem && n && (boneH / (n + 1)) < FONT * 1.3) problem = `fishbone: ${n} causes on "${c.label}" do not fit its bone; use a taller rect`;
+    if (!problem && n && (boneH / (n + 1)) < typeSize("label", FONT) * 1.3) problem = `fishbone: ${n} causes on "${c.label}" do not fit its bone; use a taller rect`;
     return { label: c.label, top, base, end, items };
   });
   return { head, spine, bones, problem };
@@ -64,7 +66,7 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
     return e;
   };
   const text = (parent: Element, s: string, attrs: Record<string, string | number>) => {
-    const t = el(parent, "text", { "font-size": FONT, ...attrs });
+    const t = el(parent, "text", { "font-size": typeSize("label", FONT), ...attrs });
     t.textContent = s;
     t.style.fill = "var(--k-fg)";
     return t;
@@ -84,7 +86,7 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
   Object.assign(say.style, {
     position: "absolute", left: `${lay.head.x}px`, top: `${lay.head.y}px`, width: `${lay.head.w}px`, height: `${lay.head.h}px`,
     display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 16px", boxSizing: "border-box",
-    color: "var(--k-fg)", font: `700 28px/1.2 var(--k-font)`, overflowWrap: "anywhere",
+    color: "var(--k-fg)", font: `700 ${typeSize("label", 28)}px/1.2 var(--k-font)`, overflowWrap: "anywhere",
   });
   gsap.set([head, say], { autoAlpha: 0 });
 
@@ -93,12 +95,12 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
     const line = el(g, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, "stroke-width": 4, "stroke-linecap": "round", pathLength: 1 });
     line.style.stroke = "var(--k-muted)";
     draw(line);
-    const w = bn.label.length * CHAR_W + 32;
+    const w = bn.label.length * charW() + 32;
     const ly = bn.top ? bn.end.y - LABEL_H : bn.end.y;
     const tag = el(g, "g", {});
     const frame = el(tag, "rect", { x: bn.end.x - w / 2, y: ly, width: w, height: LABEL_H - 8, rx: 8, "stroke-width": 3 });
     Object.assign(frame.style, { fill: "var(--k-bg)", stroke: "var(--k-line)" });
-    text(tag, bn.label, { x: bn.end.x, y: ly + (LABEL_H - 8) / 2 + FONT * 0.35, "text-anchor": "middle", "font-weight": 700 });
+    text(tag, bn.label, { x: bn.end.x, y: ly + (LABEL_H - 8) / 2 + typeSize("label", FONT) * 0.35, "text-anchor": "middle", "font-weight": 700 });
     // The accent look over the plain one, shown while the bone is lit.
     const hot = el(g, "g", {});
     const hl = el(hot, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, "stroke-width": 6, "stroke-linecap": "round" });
@@ -108,7 +110,7 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
     const items = bn.items.map((it) => {
       const tick = el(g, "line", { x1: it.at.x - TICK, y1: it.at.y, x2: it.at.x, y2: it.at.y, "stroke-width": 3 });
       tick.style.stroke = "var(--k-muted)";
-      const t = text(g, it.text, { x: it.at.x - TICK - 8, y: it.at.y + FONT * 0.35, "text-anchor": "end" });
+      const t = text(g, it.text, { x: it.at.x - TICK - 8, y: it.at.y + typeSize("label", FONT) * 0.35, "text-anchor": "end" });
       return [tick, t];
     });
     gsap.set([tag, hot, ...items.flat()], { autoAlpha: 0 });

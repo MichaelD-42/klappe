@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { iconGlyph, type IconName } from "./icons";
 import { detour, spread } from "./route";
 import { motion } from "../theme";
@@ -200,7 +200,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       position: "absolute", left: `${box.x}px`, top: `${box.y}px`, width: `${w}px`, height: `${h}px`, boxSizing: "border-box",
       padding: pad, border: n.kind ? "none" : `${STROKE}px solid var(--k-line)`, borderRadius: "14px", background: n.kind ? "none" : "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px",
-      textAlign: "center", font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, overflow: "visible", zIndex: "2",
+      textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, overflow: "visible", zIndex: "2",
     });
     const outline = (inset: number, paint: string) => {
       const [W, H] = [w + 2 * inset, h + 2 * inset];
@@ -294,7 +294,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     if (fitted) return;
     fitted = true;
     for (const [id, text] of labels) {
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       const el = els.get(id)!;
       const css = getComputedStyle(el);
       const room = el.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom);

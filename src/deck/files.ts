@@ -10,3 +10,5 @@ export const files = import.meta.glob(["@deck/**/*.md", "!@deck/review.md", "!@d
 export const modules = import.meta.glob(["@deck/sections/**/*.ts", "!@deck/sections/**/_*/**"], { import: "default", eager: true });
 export const data = import.meta.glob<string>(["@deck/data/*", "!@deck/data/TODO.md"], { query: "?raw", import: "default", eager: true });
 export const media = import.meta.glob<string>(["@deck/media/*", "!@deck/media/TODO.md"], { query: "?url", import: "default", eager: true });
+// overlay.ts at the deck root: the layer over every scene.
+export const overlay = import.meta.glob("@deck/overlay.ts", { import: "default", eager: true });

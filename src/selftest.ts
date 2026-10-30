@@ -41,18 +41,23 @@ function path(e: Element, root: Element, memo?: Map<Element, string>): string {
 // Decoration outside the timeline (CSS loops, video) sits under data-k-ignore and is left out.
 export function snapshot(c: CanvasRuntime): string {
   const pose = ["x", "y", "scaleX", "scaleY"].map((p) => `${p}=${gsap.getProperty(c.world, p)}`).join(" ");
-  const lines = [`world|${round(pose)}`];
+  return [`world|${round(pose)}`, ...marks(c.el)].join("\n");
+}
+
+// The recorded state of each element under root, as snapshot describes it.
+export function marks(root: Element): string[] {
+  const lines: string[] = [];
   const memo = new Map<Element, string>();
-  for (const e of c.el.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
+  for (const e of root.querySelectorAll<HTMLElement | SVGElement>("[style], [transform], [data-k-text], [data-k-progress]")) {
     if (e.closest("[data-k-ignore]")) continue;
     const s = e.style;
     const k = getComputedStyle(e);
     const attr = e.getAttribute("transform") ?? "";
     const progress = e.getAttribute("data-k-progress") ?? "";
     const text = e.hasAttribute("data-k-text") ? `|text=${e.textContent}` : "";
-    lines.push(`${path(e, c.el, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}|${k.stroke}|${k.outlineColor}|${k.borderColor}|${k.zIndex}`)}${text}`);
+    lines.push(`${path(e, root, memo)}|${round(`${s.opacity}|${s.visibility}|${s.transform}|${attr}|${progress}|${k.strokeDasharray}|${k.strokeDashoffset}|${k.filter}|${k.fillOpacity}|${k.color}|${k.stroke}|${k.outlineColor}|${k.borderColor}|${k.zIndex}`)}${text}`);
   }
-  return lines.join("\n");
+  return lines;
 }
 
 // Which canvas shows. A play awaits its crossfade, so this must match the cut.
@@ -208,7 +213,9 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
     stepper.reset();
   };
   const active = (i: number) => canvases[steps[i].canvas];
-  const state = (i: number) => `${shown(canvases)}\n${snapshot(active(i))}`;
+  // The overlay is a function of the step too: compared with the canvas.
+  const overlay = stage.querySelector(":scope > .k-deck-overlay");
+  const state = (i: number) => `${shown(canvases)}\n${snapshot(active(i))}${overlay ? `\n${marks(overlay).join("\n")}` : ""}`;
   // only=<section>[/<scene>],...: walk these scenes alone. bail: stop at the first failing step.
   const query = new URLSearchParams(location.search);
   const only = query.get("only")?.split(",").filter(Boolean).map((t) => t.replace(/^#?\/?/, "").split("/"));

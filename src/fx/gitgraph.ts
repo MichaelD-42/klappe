@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 
 // One change to the history: a commit on a branch, a new branch from another's tip, a merge, a rebase, a tag on
 // a branch's tip, a cherry-pick of one commit (by its label) onto a branch, a squash merge, a checkout (HEAD).
@@ -152,7 +152,7 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     el.dataset.kGitBranch = l.name;
     Object.assign(el.style, {
       position: "absolute", left: `${opts.x}px`, top: `${l.y}px`, translate: "0 -50%", maxWidth: `${NAME_W - 32}px`, padding: "4px 14px",
-      border: `3px solid ${colour(i)}`, borderRadius: "10px", color: "var(--k-fg)", font: `600 ${FONT + 4}px/1.2 var(--k-font)`,
+      border: `3px solid ${colour(i)}`, borderRadius: "10px", color: "var(--k-fg)", font: `600 ${typeSize("label", FONT) + 4}px/1.2 var(--k-font)`,
       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", boxSizing: "border-box",
     });
     gsap.set(el, { autoAlpha: 0 });
@@ -187,7 +187,7 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     Object.assign(label.style, {
       // On a --k-bg patch, so a line into a commit passes behind the label instead of through it.
       position: "absolute", left: "50%", top: `${DOT + 6}px`, translate: "-50% 0", width: "max-content", maxWidth: `${lay.colW - 12}px`, padding: "0 6px",
-      boxSizing: "border-box", background: "var(--k-bg)", borderRadius: "6px", color: "var(--k-fg)", font: `500 ${FONT}px/1.2 var(--k-font)`,
+      boxSizing: "border-box", background: "var(--k-bg)", borderRadius: "6px", color: "var(--k-fg)", font: `500 ${typeSize("label", FONT)}px/1.2 var(--k-font)`,
       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     });
     // A rebase copy waits where its original is, so it can fly from there.
@@ -207,7 +207,7 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     Object.assign(el.style, {
       position: "absolute", left: `${c.x}px`, top: `${c.y - DOT / 2 - 14 - below * PILL}px`, translate: "-50% -100%", padding: "2px 10px", zIndex: "2",
       border: "2px solid var(--k-line)", borderRadius: "6px", background: "var(--k-surface)", color: "var(--k-fg)",
-      font: `600 ${FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
+      font: `600 ${typeSize("label", FONT)}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
     });
     gsap.set(el, { autoAlpha: 0 });
     return { el, op: g.op };
@@ -229,7 +229,7 @@ export function gitGraph(ctx: Ctx, opts: GitGraphOpts): GitGraphHandle {
     Object.assign(headEl.style, {
       position: "absolute", left: "0", top: "0", padding: "2px 10px", zIndex: "2",
       border: "2px solid var(--k-accent)", borderRadius: "6px", background: "var(--k-bg)", color: "var(--k-fg)",
-      font: `700 ${FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
+      font: `700 ${typeSize("label", FONT)}px/1.2 var(--k-font)`, whiteSpace: "nowrap",
     });
     gsap.set(headEl, { autoAlpha: 0, xPercent: -50, yPercent: -100, ...headAt(first) }); // not CSS translate: GSAP folds it into x, y
   }

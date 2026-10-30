@@ -5,6 +5,7 @@ import { iconGlyph } from "./icons";
 import { t as tr } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type RoadmapOpts = {
   // Dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing. A status settles the dot
@@ -174,7 +175,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       mark.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${iconGlyph(status.icon as IconNode, ctx.problem)}</svg>`;
       date.prepend(mark);
     }
-    const text = div({ font: `700 ${MAX_FONT}px/${LINE_H} var(--k-font)`, overflowWrap: "anywhere" }, inner);
+    const text = div({ font: `700 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, overflowWrap: "anywhere" }, inner);
     text.textContent = m.label;
     gsap.set(box, { autoAlpha: 0, scale: 1, transformOrigin: m.above ? "50% 100%" : "50% 0%" }); // the transform from load, as a rush's pop leaves it
     return [m.id, { stem, dot, box, inner, text, tone }];
@@ -191,7 +192,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       display: "flex", alignItems: "center", padding: "0 12px", overflow: "hidden", zIndex: "1",
     });
     bar.setAttribute("data-k-roadmap-phase", p.id);
-    const text = div({ font: `700 ${BAR_FONT}px/1 var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, bar);
+    const text = div({ font: `700 ${typeSize("label", BAR_FONT)}px/1 var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, bar);
     text.textContent = p.label;
     gsap.set(bar, { autoAlpha: 0, scaleX: ctx.reducedMotion ? 1 : 0, transformOrigin: "0% 50%" }); // as a seek back over reveal leaves it
     return [p.id, { bar, text }];
@@ -202,7 +203,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   const marker = div({ position: "absolute", left: "0", top: `${opts.y}px`, width: "0", height: `${opts.h}px`, zIndex: "2", pointerEvents: "none" });
   marker.setAttribute("data-k-roadmap-today", "");
   const word = new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(0, "day");
-  const head = div({ position: "absolute", left: "0", top: "0", transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap", color: "var(--k-fg)", font: `700 24px/1.2 var(--k-font)` }, marker);
+  const head = div({ position: "absolute", left: "0", top: "0", transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap", color: "var(--k-fg)", font: `700 ${typeSize("label", 24)}px/1.2 var(--k-font)` }, marker);
   div({}, head).textContent = word.charAt(0).toLocaleUpperCase(lang) + word.slice(1);
   const when = div({ fontVariantNumeric: "tabular-nums", fontWeight: "500" }, head);
   const long = dateFmt(lang, { day: "numeric", month: "short", year: "numeric" });
@@ -217,7 +218,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     fitted = true;
     for (const [id, { box, inner, text }] of items) {
       if (!box || !inner || !text) continue;
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       const over = () => text.offsetHeight > LINE_H * size * MAX_LINES + 1 || inner.offsetHeight > box.clientHeight || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         text.style.fontSize = `${size}px`;
@@ -227,7 +228,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
       if (over()) ctx.problem(`roadmap: label of "${id}" too long`);
     }
     for (const [id, { text }] of bars) {
-      let size = BAR_FONT;
+      let size = typeSize("label", BAR_FONT);
       const over = () => text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         text.style.fontSize = `${size}px`;

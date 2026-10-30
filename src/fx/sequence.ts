@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 type Message = { from: string; to: string; text: string; reply?: boolean };
@@ -72,7 +72,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       position: "absolute", left: `${x - headW / 2}px`, top: `${opts.y}px`, width: `${headW}px`, height: `${HEAD_H}px`, boxSizing: "border-box",
       border: `4px solid var(--k-series-${(k % 6) + 1})`, borderRadius: "12px", background: "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: "0 10px", textAlign: "center",
-      font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", zIndex: "2",
+      font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", zIndex: "2",
     });
     el.textContent = a.label;
     ctx.html.append(el);
@@ -114,7 +114,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       border: "2px solid var(--k-line)", borderRadius: "6px", zIndex: "1", pointerEvents: "none",
     });
     const tag = el.appendChild(document.createElement("div"));
-    Object.assign(tag.style, { display: "inline-flex", gap: "8px", padding: "2px 10px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${SMALL}px/${LINE_H} var(--k-font)`, borderBottomRightRadius: "6px" });
+    Object.assign(tag.style, { display: "inline-flex", gap: "8px", padding: "2px 10px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${typeSize("label", SMALL)}px/${LINE_H} var(--k-font)`, borderBottomRightRadius: "6px" });
     tag.append(Object.assign(document.createElement("b"), { textContent: f.kind }), Object.assign(document.createElement("span"), { textContent: ` [${f.label}]` }));
     ctx.html.append(el);
     hide(el);
@@ -125,7 +125,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       line.textContent = `[${f.else.label}]`;
       Object.assign(line.style, {
         position: "absolute", left: `${opts.x}px`, top: `${r2(ys[row(f.else.at, "an else")] - pitch / 2)}px`, width: `${opts.w}px`, boxSizing: "border-box",
-        borderTop: "2px dashed var(--k-line)", padding: "2px 10px", color: "var(--k-fg)", font: `600 ${SMALL}px/${LINE_H} var(--k-font)`, zIndex: "1",
+        borderTop: "2px dashed var(--k-line)", padding: "2px 10px", color: "var(--k-fg)", font: `600 ${typeSize("label", SMALL)}px/${LINE_H} var(--k-font)`, zIndex: "1",
       });
       ctx.html.append(line);
       hide(line);
@@ -147,7 +147,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       Object.assign(tag.style, {
         position: "absolute", left: `${r2(l)}px`, top: `${r2(y - h / 2)}px`, width: `${r2(r - l)}px`, height: `${r2(h)}px`, boxSizing: "border-box",
         border: "2px solid var(--k-line)", borderRadius: "4px", background: "var(--k-surface)", color: "var(--k-fg)", padding: "0 10px",
-        display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, zIndex: "3",
+        display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "3",
       });
       ctx.html.append(tag);
       hide(tag);
@@ -202,7 +202,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     // Above a normal arrow, centred between the lifelines; right of a loop, centred on it.
     Object.assign(tag.style, {
       position: "absolute", padding: "2px 10px", borderRadius: "8px", background: "var(--k-bg)", color: "var(--k-fg)",
-      font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", zIndex: "3",
+      font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", zIndex: "3",
       ...(self
         ? { left: `${x0 + LOOP + 10}px`, top: `${y + drop / 2}px`, translate: "0 -50%" }
         : { left: `${(x0 + x1) / 2}px`, top: `${y - 6}px`, translate: "-50% -100%" }),
@@ -219,14 +219,14 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     if (fitted) return;
     fitted = true;
     heads.forEach((el, k) => {
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       for (; size > FLOOR && el.scrollWidth > el.clientWidth; size -= 2) el.style.fontSize = `${size - 2}px`;
       if (el.scrollWidth > el.clientWidth) ctx.problem(`sequence: label of actor "${actors[k].id}" too long`);
     });
     rows.forEach((r, i) => {
       // A note box has a fixed width: its text is what must fit.
       const w = () => (r.note ?? r.tag).offsetWidth;
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       for (; size > FLOOR && w() > r.room; size -= 2) r.tag.style.fontSize = `${size - 2}px`;
       if (w() > r.room) ctx.problem(`sequence: label of message ${i} too long`);
     });

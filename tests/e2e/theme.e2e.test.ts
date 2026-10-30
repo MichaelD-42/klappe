@@ -105,3 +105,27 @@ test('the theme fonts are loaded before the deck renders', async () => {
     await page.close()
   }
 })
+
+// The type scale at 1.5x the defaults (88, 44, 28): every role's text grows with its token.
+test('a theme that sets the type scale sizes the Markdown scene, text, a fitted list and a big number', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=type-scale`)
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.problems).toEqual([])
+  const page = await open('fixture=type-scale#/a/coded/1')
+  const px = await page.evaluate(() => {
+    const size = (e: Element | null | undefined) => parseFloat(getComputedStyle(e!).fontSize)
+    const md = document.querySelector('div[data-scene="md"]')!
+    const coded = document.querySelector('div[data-scene="coded"]')!
+    const all = [...coded.querySelectorAll<HTMLElement>('div, span')]
+    return {
+      title: size(md.querySelector('h2')),
+      body: size(md.querySelector('p, li')),
+      text: size(all.find((e) => e.textContent === 'Body text')),
+      list: size(all.find((e) => e.style.top === '320px' && e.style.left === '160px')),
+      number: size(all.find((e) => e.tagName === 'SPAN' && e.textContent === '42')),
+    }
+  })
+  expect(px).toEqual({ title: 132, body: 66, text: 66, list: 60, number: 168 })
+  await page.close()
+})

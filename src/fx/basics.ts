@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
-import { token } from "./draw";
+import { token, typeSize } from "./draw";
 
 export interface FadeOpts {
   duration?: number; // seconds; default motion.step (0.6)
@@ -12,9 +12,10 @@ export interface TextOpts {
   x: number; // top-left corner, scene-local
   y: number;
   w: number; // the width the text wraps at
-  size?: number; // font size in scene px; default 44, as a Markdown scene's text
+  size?: number; // font size in scene px; default --k-size-body (44), as a Markdown scene's text
   color?: string; // a theme token name; default "--k-fg"
   weight?: number; // default 400
+  class?: string; // a deck.css class for the box's look; then only the size, color and weight given are set inline
 }
 export interface BasicHandle {
   el: HTMLElement;
@@ -43,23 +44,27 @@ export function title(ctx: Ctx, text?: string): BasicHandle {
   return { el, show: show(el) };
 }
 
-// A text box at a scene-local position, in a theme colour, built hidden.
+// A --k-* token name the theme defines, else --k-fg and a problem.
+function checkedToken(ctx: Ctx, el: Element, color: string): string {
+  if (!/^--k-[\w-]+$/.test(color)) ctx.problem(`text: color "${color}" is not a --k-* token name`);
+  else if (!token(el, color)) ctx.problem(`text: unknown token "${color}"`);
+  else return color;
+  return "--k-fg";
+}
+
+// A text box at a scene-local position, in a theme colour, built hidden. With a class, the deck's CSS styles it.
 export function text(ctx: Ctx, opts: TextOpts): BasicHandle {
-  const { x, y, w, size = 44, weight = 400 } = opts;
-  let color = opts.color ?? "--k-fg";
+  const { x, y, w } = opts;
   const el = ctx.html.appendChild(document.createElement("div"));
   el.textContent = opts.text;
-  if (!/^--k-[\w-]+$/.test(color)) {
-    ctx.problem(`text: color "${color}" is not a --k-* token name`);
-    color = "--k-fg";
-  } else if (!token(el, color)) {
-    ctx.problem(`text: unknown token "${color}"`);
-    color = "--k-fg";
-  }
-  Object.assign(el.style, {
-    position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`,
-    font: `${weight} ${size}px/1.35 var(--k-font)`, color: `var(${color})`,
-  });
+  Object.assign(el.style, { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px` });
+  const color = opts.color ?? (opts.class ? undefined : "--k-fg");
+  if (color) el.style.color = `var(${checkedToken(ctx, el, color)})`;
+  if (opts.class) {
+    el.className = opts.class;
+    if (opts.size !== undefined) el.style.fontSize = `${opts.size}px`;
+    if (opts.weight !== undefined) el.style.fontWeight = String(opts.weight);
+  } else el.style.font = `${opts.weight ?? 400} ${opts.size ?? typeSize("body", 44)}px/1.35 var(--k-font)`;
   gsap.set(el, { autoAlpha: 0 });
   return { el, show: show(el) };
 }

@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
 import { contrast, motion } from "../theme";
-import { token } from "./draw";
+import { token, typeSize } from "./draw";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
@@ -397,6 +397,7 @@ const UP = "var(--k-ok)";
 const DOWN = "color-mix(in srgb, var(--k-fg) 55%, var(--k-bg))";
 // Fixed in scene units, so it is ≥ 14 px on screen at 1366 (scale 0.71) whatever the rect's size.
 const FONT = 22;
+const charW = () => (13 * typeSize("label", FONT)) / FONT; // about one character at FONT, following the type scale
 const DIM = 0.35; // the opacity of the parts highlight() does not light, as focus() dims
 const SVG = "http://www.w3.org/2000/svg";
 const ease = gsap.parseEase("power2.out");
@@ -408,7 +409,7 @@ function svg<K extends keyof SVGElementTagNameMap>(parent: Element, tag: K, attr
   parent.append(e);
   return e;
 }
-function text(parent: Element, s: string, attrs: Record<string, string | number>, size = FONT) {
+function text(parent: Element, s: string, attrs: Record<string, string | number>, size = typeSize("label", FONT)) {
   const t = svg(parent, "text", { "font-size": size, ...attrs });
   t.style.fill = "var(--k-fg)";
   t.textContent = s;
@@ -448,7 +449,7 @@ function placeholder(ctx: Ctx, opts: ChartOpts, label: string, why: string): Cha
     border: "4px dashed var(--k-warn)",
     background: "var(--k-bg)",
     color: "var(--k-warn)",
-    fontSize: "48px",
+    fontSize: `${typeSize("body", 48)}px`,
     fontWeight: "700",
   });
   ctx.html.append(box);
@@ -540,15 +541,15 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const dec = decimals(data.flatMap((r) => keys.map((k) => num(r, k))));
   const fmt = d3.format(`,.${dec}f`);
   // A slope's value column: about 13 units per character at FONT.
-  const valW = 13 * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
+  const valW = charW() * (d3.max(data.flatMap((r) => keys.map((k) => fmt(num(r, k)).length))) ?? 1);
   const m = {
     // A slope's and a heatmap's column headers sit above the plot; a heatmap's ramp is in the legend row.
     top: 56 + (legend.length || type === "heatmap" || moving ? 40 : 0) + 40 + (type === "slope" || type === "heatmap" ? 36 : 0),
     left:
       type === "timeline" || type === "funnel" || type === "heatmap"
-        ? Math.min(R.w * 0.3, 24 + longest * 13)
+        ? Math.min(R.w * 0.3, 24 + longest * charW())
         : type === "slope"
-          ? Math.min(R.w * 0.4, 48 + valW + longest * 13)
+          ? Math.min(R.w * 0.4, 48 + valW + longest * charW())
           : type === "sankey" || type === "radar" || type === "treemap"
             ? 0
             : 90,
@@ -583,7 +584,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     for (const { name, fill } of legend) {
       svg(g, "rect", { x: lx, y: R.y + 62, width: 18, height: 18 }).style.fill = fill;
       text(g, name, { x: lx + 26, y: R.y + 79 });
-      lx += 26 + name.length * 12 + 32; // about 12 px per character at 22 px
+      lx += 26 + (name.length * 12 * typeSize("label", FONT)) / FONT + 32; // about 12 px per character at 22 px
     }
     head.push(g);
   }
@@ -653,7 +654,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       ring!.arcs.push(arc);
     });
     donutTotal = values.length;
-    ring.total = valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": 64, "font-weight": 700 }, 0, total, fmt);
+    ring.total = valueAt({ x: cx, y: cy + 20, "text-anchor": "middle", "font-size": typeSize("title", 64), "font-weight": 700 }, 0, total, fmt);
     labels.push(text(root, t("total", ctx.deck.lang), { x: cx, y: cy + 60, "text-anchor": "middle" }));
     const x0 = P.x + d + 80;
     const rowH = Math.min(72, P.h / data.length);
@@ -683,8 +684,8 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const clip = svg(svg(root, "clipPath", { id }), "rect", { x: R.x, y: R.y, width: R.w, height: R.h });
     grow({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the lines draw left to right
     marks.setAttribute("clip-path", `url(#${id})`);
-    const gap = FONT + 8;
-    const ys = (k: string) => spread(data.map((r) => v(num(r, k)) + FONT * 0.35), gap);
+    const gap = typeSize("label", FONT) + 8;
+    const ys = (k: string) => spread(data.map((r) => v(num(r, k)) + typeSize("label", FONT) * 0.35), gap);
     const [left, right] = [ys(a), ys(b)];
     data.forEach((r, i) => {
       const [va, vb] = [num(r, a), num(r, b)];
@@ -722,21 +723,21 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       rect.style.fill = color(0);
       bars.push(rect);
       grow({ el: rect, origin: "50% 50%", scale: "scaleX" });
-      const yc = top + bh / 2 + FONT * 0.35;
+      const yc = top + bh / 2 + typeSize("label", FONT) * 0.35;
       labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
-      const inside = w >= 13 * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
+      const inside = w >= charW() * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
       const val = valueAt({ x: inside ? cx + w / 2 - 16 : cx + w / 2 + 16, y: yc, "text-anchor": inside ? "end" : "start" }, 0, num(r, k), fmt);
       if (inside) Object.assign(val.style, on ? { fill: on, stroke: "none" } : { strokeWidth: "4px" }); // a thinner halo reads cleaner on a bar
       const c = stages[i].conversion;
       if (i)
-        valueAt({ x: cx, y: P.y + i * rowH + FONT * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
+        valueAt({ x: cx, y: P.y + i * rowH + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
           c === null ? "–" : `${Math.round(n)} %`,
         ).style.fill = "var(--k-muted)";
       cur = -1;
     });
   } else if (type === "sankey") {
     // Nodes in columns, bands between them; names and values beside each node, outside the last column inwards.
-    const gap = Math.min(FONT * 2 + 16, P.h / (2 * SANKEY_MAX_PER_COLUMN));
+    const gap = Math.min(typeSize("label", FONT) * 2 + 16, P.h / (2 * SANKEY_MAX_PER_COLUMN));
     const lay = sankeyLayout(sankeyLinks(data), gap / P.h) as SankeyLayout; // dataError has laid it out already
     const NW = 20;
     const palette = sankeyPalette(token(ctx.html, "--k-accent"), SLICES.slice(1).map((v) => token(ctx.html, v.slice(4, -1))));
@@ -766,7 +767,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
       Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "3px", strokeLinejoin: "round", paintOrder: "stroke" });
       grow({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
-      valueAt({ ...at, y: yc + FONT }, 0, n.value, fmt);
+      valueAt({ ...at, y: yc + typeSize("label", FONT) }, 0, n.value, fmt);
     });
     grow({ el: clip, origin: "0% 50%", scale: "scaleX", dur: motion.step * 2 }); // the bands draw left to right
   } else if (type === "scatter" || type === "bubble") {
@@ -801,11 +802,11 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     // A name sits right of its dot, or left of it where the dot comes near the right edge in any period. Names
     // that would touch move apart, in each period.
     const poses = tr.at.map((_, p) => pose(p));
-    const tagAt = (q: { cx: number; cy: number; r: number }, left: boolean) => ({ x: left ? q.cx - q.r - 8 : q.cx + q.r + 8, y: q.cy + FONT * 0.35 });
+    const tagAt = (q: { cx: number; cy: number; r: number }, left: boolean) => ({ x: left ? q.cx - q.r - 8 : q.cx + q.r + 8, y: q.cy + typeSize("label", FONT) * 0.35 });
     const lefts = tr.names.map((name, i) => Math.max(...poses.map((ps) => ps[i].cx + ps[i].r)) + 16 + name.length * 12 > R.x + R.w);
     const tagPoses = poses.map((ps) => {
       const at = ps.map((q, i) => tagAt(q, lefts[i]));
-      const ys = tagSpread(at.map((a, i) => ({ ...a, w: tr.names[i].length * 12, left: lefts[i] })), FONT + 4); // about 12 px per character
+      const ys = tagSpread(at.map((a, i) => ({ ...a, w: (tr.names[i].length * 12 * typeSize("label", FONT)) / FONT, left: lefts[i] })), typeSize("label", FONT) + 4); // about 12 px per character
       return at.map((a, i) => ({ x: a.x, y: ys[i] }));
     });
     const dots = tr.names.map((name, i) => {
@@ -850,7 +851,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     // which grows from the centre. Values sit just inside each corner, for one series only: two would collide.
     const n = data.length;
     const [cx, cy] = [P.x + P.w / 2, P.y + P.h / 2];
-    const r0 = Math.max(60, Math.min(P.h / 2 - FONT * 2.5, P.w / 2 - 13 * longest - 32));
+    const r0 = Math.max(60, Math.min(P.h / 2 - typeSize("label", FONT) * 2.5, P.w / 2 - charW() * longest - 32));
     const rv = d3.scaleLinear().domain([0, d3.max(data.flatMap((r) => keys.map((k) => num(r, k)))) || 1]).nice().range([0, r0]);
     const at = (i: number, value: number, out = 0): [number, number] => {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -874,7 +875,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const [nx, ny] = at(i, top, 20);
       const c = (nx - cx) / (r0 + 20);
       const anchor = c > 0.3 ? "start" : c < -0.3 ? "end" : "middle";
-      labels.push(spoke, text(root, names[i], { x: nx, y: ny + FONT * 0.35 + ((ny - cy) / (r0 + 20)) * FONT * 0.6, "text-anchor": anchor, "font-weight": 700 }));
+      labels.push(spoke, text(root, names[i], { x: nx, y: ny + typeSize("label", FONT) * 0.35 + ((ny - cy) / (r0 + 20)) * typeSize("label", FONT) * 0.6, "text-anchor": anchor, "font-weight": 700 }));
     });
     keys.forEach((k, si) => {
       cur = si;
@@ -888,7 +889,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         grow({ el: dot, origin: "50% 50%", scale: "scale" });
         if (keys.length > 1) return;
         const [vx, vy] = at(i, num(r, k), -30);
-        valueAt({ x: vx, y: vy + FONT * 0.35, "text-anchor": "middle" }, 0, num(r, k), fmt);
+        valueAt({ x: vx, y: vy + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, num(r, k), fmt);
       });
     });
     cur = -1;
@@ -904,22 +905,22 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     keys.forEach((k, j) => labels.push(text(root, k, { x: P.x + (j + 0.5) * cw, y: P.y - 14, "text-anchor": "middle", "font-weight": 700 })));
     data.forEach((r, i) => {
       cur = i;
-      labels.push(text(root, names[i], { x: P.x - 16, y: P.y + (i + 0.5) * ch + FONT * 0.35, "text-anchor": "end" }));
+      labels.push(text(root, names[i], { x: P.x - 16, y: P.y + (i + 0.5) * ch + typeSize("label", FONT) * 0.35, "text-anchor": "end" }));
       keys.forEach((k, j) => {
         const n = num(r, k);
         const c = svg(marks, "rect", { x: P.x + j * cw + GAP / 2, y: P.y + i * ch + GAP / 2, width: cw - GAP, height: ch - GAP, rx: 4 });
         c.style.fill = shade(n);
         bars.push(c);
         grow({ el: c, origin: "50% 50%", scale: "scale" });
-        if (13 * fmt(n).length + 16 > cw || ch < FONT + 8) return;
-        valueAt({ x: P.x + (j + 0.5) * cw, y: P.y + (i + 0.5) * ch + FONT * 0.35, "text-anchor": "middle" }, 0, n, fmt).style.strokeWidth = "4px";
+        if (charW() * fmt(n).length + 16 > cw || ch < typeSize("label", FONT) + 8) return;
+        valueAt({ x: P.x + (j + 0.5) * cw, y: P.y + (i + 0.5) * ch + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, n, fmt).style.strokeWidth = "4px";
       });
     });
     cur = -1;
     // The ramp in the legend row: the lowest value, five shades, the highest.
     const ramp = svg(root, "g", {});
     text(ramp, fmt(lo), { x: R.x, y: R.y + 79 });
-    const x0 = R.x + 13 * fmt(lo).length + 16;
+    const x0 = R.x + charW() * fmt(lo).length + 16;
     for (let q = 0; q < 5; q++) svg(ramp, "rect", { x: x0 + q * 30, y: R.y + 62, width: 26, height: 18, rx: 3 }).style.fill = shade(lo + ((hi - lo) * q) / 4);
     text(ramp, fmt(hi), { x: x0 + 5 * 30 + 8, y: R.y + 79 });
     head.push(ramp);
@@ -935,10 +936,10 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const leaves: Node[] = data.map((_, i) => ({ i }));
     const tree: Node = { children: leaf ? tileGroups.map((g) => ({ children: leaves.filter((n) => String(data[n.i!][label]) === g) })) : leaves };
     const h = d3.hierarchy(tree).sum((n) => (n.i === undefined ? 0 : num(data[n.i], k))).sort((a, b) => b.value! - a.value!);
-    d3.treemap<Node>().size([P.w, P.h]).paddingInner(4).paddingTop((n) => (n.depth === 1 ? FONT + 16 : 0))(h);
+    d3.treemap<Node>().size([P.w, P.h]).paddingInner(4).paddingTop((n) => (n.depth === 1 ? typeSize("label", FONT) + 16 : 0))(h);
     if (leaf)
       for (const g of (h.children ?? []) as d3.HierarchyRectangularNode<Node>[])
-        labels.push(text(root, String(data[g.leaves()[0].data.i!][label]), { x: P.x + g.x0 + 4, y: P.y + g.y0 + FONT, "font-weight": 700 }));
+        labels.push(text(root, String(data[g.leaves()[0].data.i!][label]), { x: P.x + g.x0 + 4, y: P.y + g.y0 + typeSize("label", FONT), "font-weight": 700 }));
     // In data order, as bars and bar(i) are; the layout placed them largest first.
     for (const n of (h.leaves() as d3.HierarchyRectangularNode<Node>[]).sort((a, b) => a.data.i! - b.data.i!)) {
       const i = n.data.i!;
@@ -949,13 +950,13 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       tile.style.fill = fill;
       bars.push(tile);
       const nm = leaf ? String(data[i][leaf]) : names[i];
-      const fits = w >= 13 * Math.max(nm.length, fmt(num(data[i], k)).length + 6) + 24 && hh >= FONT * 2 + 28;
+      const fits = w >= charW() * Math.max(nm.length, fmt(num(data[i], k)).length + 6) + 24 && hh >= typeSize("label", FONT) * 2 + 28;
       const on = barInk(token(ctx.html, fill.slice(4, -1)), token(ctx.html, "--k-bg"), token(ctx.html, "--k-fg"));
       const ink = (el: SVGElement) => Object.assign(el.style, on ? { fill: on, stroke: "none" } : { stroke: "var(--k-bg)", strokeWidth: "4px", strokeLinejoin: "round", paintOrder: "stroke" });
-      const name = fits ? text(root, nm, { x: x + 12, y: y + FONT + 8, "font-weight": 700 }) : undefined;
+      const name = fits ? text(root, nm, { x: x + 12, y: y + typeSize("label", FONT) + 8, "font-weight": 700 }) : undefined;
       if (name) ink(name);
       grow({ el: tile, origin: "50% 50%", scale: "scale", label: name });
-      if (fits) ink(valueAt({ x: x + 12, y: y + 2 * FONT + 16 }, 0, num(data[i], k), (v) => `${fmt(v)} · ${Math.round((v / total) * 100)} %`));
+      if (fits) ink(valueAt({ x: x + 12, y: y + 2 * typeSize("label", FONT) + 16 }, 0, num(data[i], k), (v) => `${fmt(v)} · ${Math.round((v / total) * 100)} %`));
     }
     cur = -1;
   } else if (type === "timeline") {
@@ -971,7 +972,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       rect.style.fill = color(i);
       bars.push(rect);
       grow({ el: rect, origin: "0% 50%", scale: "scaleX" });
-      const yc = top + y.bandwidth() / 2 + FONT * 0.35;
+      const yc = top + y.bandwidth() / 2 + typeSize("label", FONT) * 0.35;
       valueAt({ x: x(e) + 10, y: yc }, s, e, (n) => `${s.toFixed(tdec)}–${n.toFixed(tdec)}`);
       cur = -1;
     });
@@ -980,7 +981,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     yAxis = d3.axisLeft(y).tickSize(0).tickPadding(12).tickFormat((k) => names[+k]);
   } else {
     // Below zero, value labels sit under their bars: keep them clear of the category labels.
-    v.range([P.y + P.h - (v.domain()[0] < 0 ? FONT + 16 : 0), P.y]);
+    v.range([P.y + P.h - (v.domain()[0] < 0 ? typeSize("label", FONT) + 16 : 0), P.y]);
     refAt = (n) => ({ x1: P.x, y1: v(n), x2: P.x + P.w, y2: v(n) });
     if (type === "line") {
       const x = d3.scalePoint().domain(band).range([P.x, P.x + P.w]).padding(0.5);
@@ -1009,7 +1010,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
           c.style.fill = color(i);
           grow({ el: c, origin: "50% 50%", scale: "scale" });
           // Below the marker for a negative value, above it otherwise.
-          const y = n < 0 ? v(n) + FONT + 14 : v(n) - 16;
+          const y = n < 0 ? v(n) + typeSize("label", FONT) + 14 : v(n) - 16;
           valueAt({ x: cx, y, "text-anchor": "middle" }, 0, n, fmt);
         });
       });
@@ -1020,7 +1021,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const left = (i: number) => x(band[i])!;
       // A value label above the bar's end, or below it when the bar runs down.
       const barValue = (lo: number, hi: number, i: number, to: number, show: (n: number) => string) => {
-        const y = hi < lo ? v(hi) + FONT + 8 : v(hi) - 10;
+        const y = hi < lo ? v(hi) + typeSize("label", FONT) + 8 : v(hi) - 10;
         valueAt({ x: left(i) + x.bandwidth() / 2, y, "text-anchor": "middle" }, 0, to, show);
       };
       if (type === "stacked") {
@@ -1057,7 +1058,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
           const n = num(r, keys[0]);
           bar(left(i), x.bandwidth(), 0, n, color(0), n >= 0);
           barValue(0, n, i, n, fmt);
-          plain.push({ rect: bars[bars.length - 1], val: values[values.length - 1].el, place: (m: number) => (m < 0 ? v(m) + FONT + 8 : v(m) - 10) });
+          plain.push({ rect: bars[bars.length - 1], val: values[values.length - 1].el, place: (m: number) => (m < 0 ? v(m) + typeSize("label", FONT) + 8 : v(m) - 10) });
         });
       cur = -1;
       xAxis = categories(x, names);
@@ -1067,7 +1068,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
 
   const axisAt = (axis: d3.Axis<any>, dx: number, dy: number) => {
     const g = svg(root, "g", { transform: `translate(${dx} ${dy})` });
-    d3.select(g).call(axis).attr("font-size", FONT).attr("font-family", null);
+    d3.select(g).call(axis).attr("font-size", typeSize("label", FONT)).attr("font-family", null);
     g.style.color = "var(--k-fg)";
     root.insertBefore(g, marks);
     return g;
@@ -1087,7 +1088,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const ref = svg(root, "line", { ...at, "stroke-width": 2, "stroke-dasharray": "10 8", "data-k-ref": label });
     ref.style.stroke = "var(--k-fg)";
     const across = at.y1 === at.y2;
-    const tag = text(root, label, across ? { x: at.x2, y: at.y1 - 10, "text-anchor": "end", "font-weight": 700 } : { x: at.x1 + 10, y: at.y1 + FONT, "font-weight": 700 });
+    const tag = text(root, label, across ? { x: at.x2, y: at.y1 - 10, "text-anchor": "end", "font-weight": 700 } : { x: at.x1 + 10, y: at.y1 + typeSize("label", FONT), "font-weight": 700 });
     Object.assign(tag.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
     axesEls.push(ref, tag);
   }
@@ -1314,7 +1315,7 @@ export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
   const top = Math.min(opts.top ?? 8, series.length);
   const R = opts.rect;
   const longest = d3.max(series, (s) => s.length) ?? 0;
-  const P = { x: R.x + Math.min(R.w * 0.3, 24 + longest * 13), y: R.y + 120, w: 0, h: R.h - 120 - 24 };
+  const P = { x: R.x + Math.min(R.w * 0.3, 24 + longest * charW()), y: R.y + 120, w: 0, h: R.h - 120 - 24 };
   P.w = R.x + R.w - 140 - P.x; // room for the value after the longest bar
   const slot = P.h / top;
   const x = d3.scaleLinear().domain([0, d3.max(data, (r) => d3.max(series, (k) => num(r, k)))!]).nice().range([0, P.w]);
@@ -1335,7 +1336,7 @@ export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
     head.push(s);
   }
   const axis = svg(root, "g", { transform: `translate(${P.x} ${P.y - 12})` });
-  d3.select(axis).call(d3.axisTop(x).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"))).attr("font-size", FONT).attr("font-family", null);
+  d3.select(axis).call(d3.axisTop(x).ticks(5).tickSizeOuter(0).tickFormat(d3.format(",~f"))).attr("font-size", typeSize("label", FONT)).attr("font-family", null);
   axis.style.color = "var(--k-fg)";
   head.push(axis);
   const period = text(root, "", { x: R.x + R.w, y: R.y + R.h - 24, "text-anchor": "end", "font-weight": 700 }, 96);
@@ -1350,8 +1351,8 @@ export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
     const g = svg(root, "g", { "data-k-contender": k });
     const rect = svg(g, "rect", { x: P.x, y: (slot - h) / 2, width: 0, height: h, rx: 4 });
     rect.style.fill = SLICES[i % SLICES.length];
-    text(g, k, { x: P.x - 14, y: slot / 2 + FONT * 0.35, "text-anchor": "end" });
-    const value = text(g, "", { x: P.x + 10, y: slot / 2 + FONT * 0.35 });
+    text(g, k, { x: P.x - 14, y: slot / 2 + typeSize("label", FONT) * 0.35, "text-anchor": "end" });
+    const value = text(g, "", { x: P.x + 10, y: slot / 2 + typeSize("label", FONT) * 0.35 });
     value.setAttribute("data-k-text", "");
     return { g, rect, value };
   });

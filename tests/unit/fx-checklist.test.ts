@@ -41,7 +41,7 @@ const rec = () => {
   return { tl, log }
 }
 const drawn: any[] = []
-vi.mock('../../src/fx/draw', () => ({ drawOn: (els: any) => () => drawn.push(els) }))
+vi.mock('../../src/fx/draw', () => ({ drawOn: (els: any) => () => drawn.push(els), typeSize: (_role: string, px: number) => px }))
 function build(extra: { items?: typeof items } = {}) {
   const made: any[] = []
   const svgs: any[] = []

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { encode } from "uqr";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface QrOpts {
   text: string; // usually a link
@@ -43,7 +44,7 @@ export function qr(ctx: Ctx, opts: QrOpts): QrHandle {
   if (opts.label) {
     const l = root.appendChild(document.createElement("div"));
     l.textContent = opts.label;
-    Object.assign(l.style, { marginTop: "16px", textAlign: "center", font: "600 28px/1.3 var(--k-font)", color: "var(--k-fg)" });
+    Object.assign(l.style, { marginTop: "16px", textAlign: "center", font: `600 ${typeSize("label", 28)}px/1.3 var(--k-font)`, color: "var(--k-fg)" });
   }
   return { show: (tl) => void tl.fromTo(root, { autoAlpha: 0 }, { autoAlpha: 1, duration: motion.step }) };
 }

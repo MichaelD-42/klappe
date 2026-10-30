@@ -4,6 +4,7 @@ import { t } from "../strings";
 import type { Ctx, StepAdder } from "../types";
 import { MARKER_MIX } from "./annotate";
 import { iconGlyph } from "./icons";
+import { typeSize } from "./draw";
 
 export interface CompareTableOpts {
   columns: string[]; // the header of each value column, e.g. the products compared
@@ -45,7 +46,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
   root.setAttribute("data-k-compare", "");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, display: "flex", flexDirection: "column",
-    font: `600 ${MAX_FONT}px/1.25 var(--k-font)`, color: "var(--k-fg)", zIndex: "2",
+    font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, color: "var(--k-fg)", zIndex: "2",
   });
   const head = div(root, { ...grid, color: "var(--k-muted)", padding: "0 0 0.5em", borderBottom: "2px solid var(--k-line)" });
   div(head, {});
@@ -75,7 +76,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
   let fits: boolean | undefined;
   const fit = () => {
     if (fits !== undefined) return fits;
-    let size = MAX_FONT;
+    let size = typeSize("body", MAX_FONT);
     const over = () => opts.h !== undefined && root.offsetHeight > opts.h;
     for (; size > FLOOR; size -= 2) {
       root.style.fontSize = `${size}px`;

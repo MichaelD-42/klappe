@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { atEnd, measure } from "./measure";
 import { STEP_LABEL } from "./media";
 import { motion } from "../theme";
@@ -63,7 +63,7 @@ export function callout(ctx: Ctx, opts: CalloutOpts): CalloutHandle {
       Object.assign(label.style, {
         position: "absolute", left: "0", top: "0", width: "max-content", maxWidth: "520px", boxSizing: "border-box",
         padding: "14px 22px", borderRadius: "12px", background: "var(--k-surface)", border: "2px solid var(--k-accent)", color: "var(--k-fg)",
-        font: "600 32px/1.25 var(--k-font)", zIndex: "4",
+        font: `600 ${typeSize("label", 32)}px/1.25 var(--k-font)`, zIndex: "4",
       });
       const span = label.appendChild(document.createElement("span"));
       span.textContent = text;

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface SplitFlapOpts {
   x: number; // top-left corner, scene-local
@@ -41,7 +42,7 @@ export function flapGlyphs(from: string, to: string, p: number, cells: number): 
 // cell's character is written from onUpdate as a pure function of progress (flapGlyphs). A line across each
 // cell's middle gives the split look. Reduced motion: the board cuts to the new text.
 export function splitFlap(ctx: Ctx, opts: SplitFlapOpts): SplitFlapHandle {
-  const { x, y, cells, size = 96 } = opts;
+  const { x, y, cells, size = typeSize("title", 96) } = opts;
   const check = (s: string) => {
     if ([...s].length > cells) ctx.problem(`splitFlap: '${s}' has ${[...s].length} characters for ${cells} cells; the rest is cut`);
   };

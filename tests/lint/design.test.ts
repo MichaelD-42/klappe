@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 
 // Design rules from the org brief: no italics in headings, no monospace outside .k-retro, no pill
 // buttons, no "01/02" labels, no cream or off-white backgrounds, no runtime URLs in src.
-type Rule = 'italic' | 'monospace' | 'pill-button' | 'numbered-label' | 'cream-background' | 'runtime-url' | 'colour-literal'
+type Rule = 'italic' | 'monospace' | 'pill-button' | 'numbered-label' | 'cream-background' | 'runtime-url' | 'colour-literal' | 'size-literal'
 
 const CREAM = String.raw`(?:#fff8e7|#faf3e0|#fdf6e3|#f5f5dc|\bivory\b|\bbeige\b|\blinen\b|\boldlace\b)`
 const CREAM_BG = new RegExp(String.raw`(?:background(?:-color)?|backgroundColor|--[\w-]*bg[\w-]*)["']?\s*[:=]\s*[^;\n]*?` + CREAM, 'i')
@@ -72,6 +72,10 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   // Effects take every colour from a --k-* token; crt.ts (light layers), media.ts (letterbox) and mesh3d.ts (mood colours) are the exceptions.
   if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|media|mesh3d)\.ts$/.test(file))
     for (const m of text.matchAll(/#[\da-f]{3,8}\b|\b(?:rgba?|hsla?)\(/gi)) hit('colour-literal', m[0])
+  // Effects size text through typeSize or typeCss, so a theme's type scale reaches them; crt, map and timer size it
+  // from their own geometry.
+  if (/^src\/fx\/.*\.ts$/.test(file) && !/^src\/fx\/(?:crt|map|timer)\.ts$/.test(file))
+    for (const m of text.matchAll(/\bfont(?:Size|-size)?["']?\s*[:=]\s*["'`]?(?:\d{3} )?\d+(?:\.\d+)?px|"font-size":\s*\d/g)) hit('size-literal', m[0])
   return hits
 }
 
@@ -112,6 +116,10 @@ describe('design lint catches each rule', () => {
     ['pill-button', 'src/styles.css', '.k-btn { border-radius: 2em; }'],
     ['runtime-url', 'src/main.ts', 'import("//cdn.example.com/lib.js")'],
     ['runtime-url', 'src/fx/chart.ts', 'const u = "https://www.youtube.com/embed/x"'], // the embed allowlist is media.ts and the fixtures only
+    ['size-literal', 'src/fx/x.ts', 'Object.assign(e.style, { font: "600 28px/1.2 var(--k-font)" })'],
+    ['size-literal', 'src/fx/x.ts', 'e.style.fontSize = "36px"'],
+    ['size-literal', 'src/fx/x.ts', 'const CSS = `.k-x { font: 600 24px/1 var(--k-font); }`'],
+    ['size-literal', 'src/fx/x.ts', 'el(g, "text", { "font-size": 64 })'],
   ])('%s in %s', (rule, file, text) => {
     expect(rulesOf(file, text)).toContain(rule)
   })
@@ -132,6 +140,8 @@ describe('design lint catches each rule', () => {
       ['src/styles.css', '.k-x { font: 600 24px var(--k-font); }\n.k-avatar { border-radius: 50%; }\n.k-btn { border-radius: 0.4em; }'],
       ['src/parse/x.ts', 'const VIDEO = /^(?:https?:)?\\/\\/youtube/ // a regex, not a URL'],
       ['src/main.ts', 'import "@fontsource-variable/jetbrains-mono";'],
+      ['src/fx/x.ts', 'Object.assign(e.style, { font: `600 ${typeSize("label", 28)}px/1.2 var(--k-font)`, fontSize: `${size}px` })'],
+      ['src/fx/crt.ts', 'const CSS = `.k-retro .k-crt { font: 500 46px/1.5 monospace; }`'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
   })

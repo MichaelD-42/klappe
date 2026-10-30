@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -88,7 +88,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
     path(`M ${plot.x} ${plot.y} L ${plot.x - 11} ${plot.y + ARROW} L ${plot.x + 11} ${plot.y + ARROW} Z`, { fill: "var(--k-line)" }),
     path(`M ${right} ${bottom} L ${right - ARROW} ${bottom - 11} L ${right - ARROW} ${bottom + 11} Z`, { fill: "var(--k-line)" }),
   ];
-  const axisFont = `700 ${AXIS_FONT}px/${LINE_H} var(--k-font)`;
+  const axisFont = `700 ${typeSize("label", AXIS_FONT)}px/${LINE_H} var(--k-font)`;
   const titles = [
     div({ left: `${plot.x}px`, top: `${bottom + 8}px`, width: `${plot.w}px`, textAlign: "center", color: "var(--k-fg)", font: axisFont }, opts.axes.x),
     // Vertical, reading bottom to top.
@@ -101,7 +101,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
     const b = quads[q];
     return [q, div({
       left: `${b.x + NAME_X}px`, top: `${b.y + 8}px`, width: `${b.w - 2 * NAME_X}px`, height: `${NAME_H - 8}px`, whiteSpace: "nowrap",
-      textAlign: q[1] === "r" ? "right" : "left", color: "var(--k-muted)", font: `600 ${NAME_FONT}px/${LINE_H} var(--k-font)`,
+      textAlign: q[1] === "r" ? "right" : "left", color: "var(--k-muted)", font: `600 ${typeSize("label", NAME_FONT)}px/${LINE_H} var(--k-font)`,
     }, opts.quadrants![q]!)] as const;
   });
 
@@ -111,7 +111,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       left: "0", top: "0", width: `${chip.w}px`, height: `${chip.h}px`, padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: "12px",
       outline: "2px solid transparent", // in the accent during its step: 4 px of accent in all, with no change to the layout
       background: "var(--k-surface)", color: "var(--k-fg)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
-      font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, zIndex: "2",
+      font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
     }, it.label);
     c.el.setAttribute("data-k-matrix-item", it.id);
     gsap.set(c.el, { x: 0, y: 0 }); // so play and a seek back past its first place() leave the same transform
@@ -138,9 +138,9 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
       el.style.fontSize = `${size}px`;
       if (over()) ctx.problem(msg);
     };
-    titles.forEach(({ el, text }, i) => shrink(el, text, AXIS_FONT, 1, `matrix: ${i ? "y" : "x"} axis title too long`, i === 1));
-    for (const [q, { el, text }] of names) shrink(el, text, NAME_FONT, 1, `matrix: name of quadrant "${q}" too long`);
-    for (const [id, { el, text }] of items) shrink(el, text, MAX_FONT, 2, `matrix: label of "${id}" too long`);
+    titles.forEach(({ el, text }, i) => shrink(el, text, typeSize("label", AXIS_FONT), 1, `matrix: ${i ? "y" : "x"} axis title too long`, i === 1));
+    for (const [q, { el, text }] of names) shrink(el, text, typeSize("label", NAME_FONT), 1, `matrix: name of quadrant "${q}" too long`);
+    for (const [id, { el, text }] of items) shrink(el, text, typeSize("label", MAX_FONT), 2, `matrix: label of "${id}" too long`);
   };
 
   // A slot in a quadrant, or a point (p) that takes no slot.

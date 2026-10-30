@@ -20,6 +20,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 - `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
 - `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
+- Type scale tokens `--k-size-title`, `--k-size-body` and `--k-size-label` (defaults 88, 44 and 28 px): a theme sets the text hierarchy, and the Markdown scene, `text()` and every effect's text follow it in proportion. `crt`, `timer` and `map` keep their own sizes. Defaults leave every look as it was.
+- `text` option `class`: a `deck.css` class styles the box; only the size, colour and weight given are set inline over it.
+- `overlay.ts` at the deck root: a layer over every scene that the camera does not move, for a logo, a brand frame or a chapter label. `build` makes it once, `update(at)` sets it on every move from where the deck lands; the walk checks it. Catalog: `#/overlay/pinned/1`.
 - `show` and `hide` option `at`: a GSAP position, so a fade can start with the tween before it (`"<"`) instead of after it.
 - A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 

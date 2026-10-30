@@ -1,3 +1,10 @@
+:root {
+  /* The type scale: a theme overrides these on :root, effects read them through typeSize (src/fx/draw.ts). */
+  --k-size-title: 88px;
+  --k-size-body: 44px;
+  --k-size-label: 28px;
+}
+
 html,
 body {
   margin: 0;
@@ -36,6 +43,18 @@ body {
   height: 100%;
 }
 
+/* overlay.ts: pinned over the canvases in scene px, under the UI; clicks go through to the stage. */
+.k-deck-overlay,
+.k-deck-overlay > svg,
+.k-deck-overlay > div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  pointer-events: none;
+}
+
 .k-ui {
   pointer-events: none;
 }
@@ -60,20 +79,20 @@ body {
 .k-scene h2 {
   font-family: var(--k-font-heading);
   margin: 0 0 64px;
-  font-size: 88px;
+  font-size: var(--k-size-title);
   font-weight: 700;
   line-height: 1.1;
 }
 
 .k-scene p {
   margin: 0 0 32px;
-  font-size: 44px;
+  font-size: var(--k-size-body);
   line-height: 1.35;
   max-width: 1500px;
 }
 
 .k-scene p.k-shout {
-  font-size: 64px;
+  font-size: calc(var(--k-size-title) * 64 / 88);
   font-weight: 700;
   color: var(--k-accent);
 }

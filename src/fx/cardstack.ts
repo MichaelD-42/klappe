@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface CardStackOpts {
   x: number; // top-left corner of the middle card before it leans, scene-local
@@ -44,7 +45,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
     Object.assign(el.style, {
       position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 28px", borderRadius: "16px", background: "var(--k-surface)",
       border: "2px solid var(--k-line)", outline: "2px solid transparent", // border and outline turn accent when pulled: 4 px of accent, no layout change
-      color: "var(--k-fg)", font: `600 ${FONT}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
+      color: "var(--k-fg)", font: `600 ${typeSize("label", FONT)}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       transformOrigin: ORIGIN, zIndex: String(i + 1),
     });
     const scrim = el.appendChild(document.createElement("div"));
@@ -68,7 +69,7 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
     cards.forEach(({ el }, i) => {
       const text = el.firstElementChild as HTMLElement;
       const over = () => text.offsetHeight > el.clientHeight - 64 || text.scrollWidth > el.clientWidth - 56;
-      let size = FONT;
+      let size = typeSize("label", FONT);
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;
         if (!over()) break;

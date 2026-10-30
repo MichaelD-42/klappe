@@ -43,3 +43,18 @@ test('text reports a color that is not a token name or does not resolve, and fal
   expect(color('red')).toBe('var(--k-fg)')
   expect(problem.mock.calls).toEqual([['text: unknown token "--k-nope"'], ['text: color "red" is not a --k-* token name']])
 })
+
+// A deck's own class (deck.css) styles the box; only the options given are set inline, over it.
+test('text with a class leaves font and colour to the class, except the options given', () => {
+  vi.stubGlobal('document', { createElement: () => ({ style: {} }) })
+  vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue: () => 'x' }))
+  const ctx = { html: { appendChild: (e: unknown) => e }, problem: vi.fn() } as never
+  const plain = text(ctx, { text: 'Hi', x: 10, y: 20, w: 100, class: 'lead' }).el
+  expect(plain.className).toBe('lead')
+  expect(plain.style).toMatchObject({ position: 'absolute', left: '10px', top: '20px', width: '100px' })
+  expect(plain.style.font).toBeUndefined()
+  expect(plain.style.color).toBeUndefined()
+  const sized = text(ctx, { text: 'Hi', x: 0, y: 0, w: 100, class: 'lead', size: 30, color: '--k-accent' }).el
+  expect(sized.style).toMatchObject({ fontSize: '30px', color: 'var(--k-accent)' })
+  expect(sized.style.fontWeight).toBeUndefined()
+})

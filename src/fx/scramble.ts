@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface ScrambleOpts {
   text: string;
@@ -60,7 +61,7 @@ function addStyle() {
 // Reduced motion: the text fades in, already settled.
 export function scramble(ctx: Ctx, opts: ScrambleOpts): ScrambleHandle {
   addStyle();
-  const { x, y, size = 72, seed = 1 } = opts;
+  const { x, y, size = typeSize("title", 72), seed = 1 } = opts;
   const root = ctx.html.appendChild(document.createElement("div"));
   root.setAttribute("data-k-scramble", "");
   root.setAttribute("aria-label", opts.text);

@@ -1,7 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
-import { token } from "./draw";
+import { token, typeSize } from "./draw";
 
 export interface RevealOpts {
   text: string | string[]; // a string's lines are its "\n" breaks (a list item's source lines); a list gives one line each
@@ -40,7 +40,7 @@ export function keyParts(unit: string): { text: string; key: boolean }[] {
 // as their unit rises they grow and turn --k-accent. Reduced motion: the whole text fades in, key words
 // already grown and in the accent.
 export function reveal(ctx: Ctx, opts: RevealOpts): RevealHandle {
-  const { x, y, size = 56, by = "line", delay = 0 } = opts;
+  const { x, y, size = typeSize("body", 56), by = "line", delay = 0 } = opts;
   const root = ctx.html.appendChild(document.createElement("div"));
   root.setAttribute("data-k-reveal", "");
   Object.assign(root.style, {

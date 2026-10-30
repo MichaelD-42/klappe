@@ -3,6 +3,7 @@ import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { dataError, keysOf, parseCsv, showsSample, type Row } from "./chart";
+import { typeSize } from "./draw";
 
 export interface CloudWord {
   text: string;
@@ -85,7 +86,7 @@ export function wordCloud(ctx: Ctx, opts: WordCloudOpts): WordCloudHandle {
     Object.assign(root.style, {
       left: `${R.x}px`, top: `${R.y}px`, width: `${R.w}px`, height: `${R.h}px`, boxSizing: "border-box",
       display: "flex", alignItems: "center", justifyContent: "center", border: "4px dashed var(--k-warn)",
-      background: "var(--k-bg)", color: "var(--k-warn)", fontSize: "48px", fontWeight: "700",
+      background: "var(--k-bg)", color: "var(--k-warn)", fontSize: `${typeSize("body", 48)}px`, fontWeight: "700",
     });
     gsap.set(root, { autoAlpha: 0 });
     return { el: root, words: [], show: () => (tl) => void tl.to(root, { autoAlpha: 1, duration: motion.step }) };
@@ -124,7 +125,7 @@ export function wordCloud(ctx: Ctx, opts: WordCloudOpts): WordCloudHandle {
   if (sample) {
     const s = root.appendChild(document.createElement("div"));
     s.textContent = t("sampleData", ctx.deck.lang);
-    Object.assign(s.style, { position: "absolute", left: `${R.x}px`, top: `${R.y}px`, width: `${R.w}px`, textAlign: "right", font: "22px var(--k-font)", color: "var(--k-warn)" });
+    Object.assign(s.style, { position: "absolute", left: `${R.x}px`, top: `${R.y}px`, width: `${R.w}px`, textAlign: "right", font: `${typeSize("label", 22)}px var(--k-font)`, color: "var(--k-warn)" });
     extra.push(s);
   }
   gsap.set([...els, ...extra], { autoAlpha: 0, scale: 1 });

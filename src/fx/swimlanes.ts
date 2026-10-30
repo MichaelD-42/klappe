@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { detour, spread } from "./route";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
@@ -138,7 +138,7 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
     const el = document.createElement("div");
     Object.assign(el.style, {
       position: "absolute", left: `${b.x}px`, top: `${b.y}px`, width: `${labelW}px`, height: `${laneH}px`, boxSizing: "border-box",
-      padding: "8px 16px", display: "flex", alignItems: "center", color: "var(--k-fg)", font: `700 ${LANE_FONT}px/${LINE_H} var(--k-font)`, zIndex: "1",
+      padding: "8px 16px", display: "flex", alignItems: "center", color: "var(--k-fg)", font: `700 ${typeSize("label", LANE_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "1",
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = l.label;
@@ -157,7 +157,7 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
     Object.assign(el.style, {
       position: "absolute", left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, boxSizing: "border-box",
       padding: "8px 12px", border: "3px solid var(--k-line)", borderRadius: "14px", background: "var(--k-bg)", color: "var(--k-fg)",
-      display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, zIndex: "2",
+      display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = t.label;
@@ -201,8 +201,8 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
       el.style.fontSize = `${size}px`;
       if (over()) ctx.problem(msg);
     };
-    for (const [id, { el, text }] of laneLabels) shrink(el, text, LANE_FONT, `swimlanes: label of lane "${id}" too long`);
-    for (const [id, el] of taskEls) shrink(el, taskText.get(id)!, MAX_FONT, `swimlanes: label of "${id}" too long`);
+    for (const [id, { el, text }] of laneLabels) shrink(el, text, typeSize("label", LANE_FONT), `swimlanes: label of lane "${id}" too long`);
+    for (const [id, el] of taskEls) shrink(el, taskText.get(id)!, typeSize("label", MAX_FONT), `swimlanes: label of "${id}" too long`);
   };
 
   const rest = (id: string): Pt => {

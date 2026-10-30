@@ -3,6 +3,7 @@ import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typed } from "./crt";
+import { typeSize } from "./draw";
 
 export interface TerminalOpts {
   lines: string[]; // "$ " lines are commands, the rest their output
@@ -83,7 +84,7 @@ export function terminal(ctx: Ctx, opts: TerminalOpts): TerminalHandle {
   const rowsAt = (size: number) => breaksAt(size).reduce((n, b) => n + 1 + b.length, 0);
   let size = Math.max(
     MIN_FONT,
-    Math.floor(Math.min(MAX_FONT, (opts.h - 2 * PAD_Y) / (texts.length * LINE_H), opts.wrap ? MAX_FONT : (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
+    Math.floor(Math.min(typeSize("label", MAX_FONT), (opts.h - 2 * PAD_Y) / (texts.length * LINE_H), opts.wrap ? typeSize("label", MAX_FONT) : (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
   );
   while (opts.wrap && size > MIN_FONT && rowsAt(size) * size * LINE_H > opts.h - 2 * PAD_Y) size--;
   const lh = size * LINE_H;

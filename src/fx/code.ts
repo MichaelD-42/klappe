@@ -3,6 +3,7 @@ import type { HighlighterCore, LanguageRegistration } from "shiki/core";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 // The fence languages loadHighlighter bundles, each its own chunk; any other language shows plain.
 const GRAMMARS: Record<string, () => Promise<{ default: LanguageRegistration[] }>> = {
@@ -181,7 +182,7 @@ export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {
   const cols = Math.max(1, ...texts.map((t) => t.length)) + gutter;
   const size = Math.max(
     MIN_FONT,
-    Math.floor(Math.min(MAX_FONT, (h - 2 * PAD_Y) / (texts.length * LINE_H), (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
+    Math.floor(Math.min(typeSize("label", MAX_FONT), (h - 2 * PAD_Y) / (texts.length * LINE_H), (opts.w - PAD_X - PAD_Y) / (cols * CHAR_W))),
   );
   const lh = size * LINE_H;
   const rows = Math.floor((h - 2 * PAD_Y) / lh); // the most lines that show; the rest clip

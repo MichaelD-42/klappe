@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import type { Ctx, StepAdder } from "../types";
 
 export interface ChecklistOpts {
@@ -29,7 +29,7 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
   const root = document.createElement("div");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, display: "flex", flexDirection: "column",
-    gap: `${GAP}px`, font: `600 ${MAX_FONT}px/1.25 var(--k-font)`, zIndex: "2",
+    gap: `${GAP}px`, font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
   });
   const rows = opts.items.map((it) => {
     const row = root.appendChild(document.createElement("div"));
@@ -58,7 +58,7 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
   let fits: boolean | undefined;
   const fit = () => {
     if (fits !== undefined) return fits;
-    let size = MAX_FONT;
+    let size = typeSize("body", MAX_FONT);
     const over = () => opts.h !== undefined && root.offsetHeight > opts.h;
     for (; size > FLOOR; size -= 2) {
       root.style.fontSize = `${size}px`;

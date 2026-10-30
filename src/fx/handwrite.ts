@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface HandwriteOpts {
   text: string | string[]; // a string's lines are its "\n" breaks (a list item's source lines); a list gives one line each
@@ -51,7 +52,7 @@ const duration = (lines: string[]) => lines.reduce((t, l) => t + Math.min(MAX, M
 export function handwrite(ctx: Ctx, opts: HandwriteOpts): HandwriteHandle {
   // Caveat (SIL OFL 1.1) loads only when a deck calls handwrite; its file is fetched on first use.
   void import("@fontsource/caveat/700.css").then(() => document.fonts.load("700 16px Caveat")).catch(() => {});
-  const { x, y, size = 96, color = "--k-fg", seed = 1 } = opts;
+  const { x, y, size = typeSize("title", 96), color = "--k-fg", seed = 1 } = opts;
   // The lines as reveal reads them: trimmed, empty ones dropped; a line break is a glyph that writes as a pause.
   const lines = (Array.isArray(opts.text) ? opts.text : opts.text.split("\n")).map((l) => l.trim()).filter(Boolean);
   const text = lines.join("\n");
