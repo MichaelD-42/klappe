@@ -56,6 +56,16 @@ The first column labels the rows; every later column with a number in any row is
 - A radar reads 3 to 12 dimensions and up to 2 series; a heatmap up to 24 rows and 24 columns; a treemap up to 40 tiles (DATA ERROR past these). A treemap tile too small for its name shows none: merge the small ones into Other.
 - A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason).
 
+### Your own chart
+
+For a chart `chart` lacks, draw it yourself in `scene.ts` with d3. Catalog: `#/chart/dumbbell/1`, a dumbbell (before and after per team) in `decks/demo/sections/110-chart/90-dumbbell/scene.ts`. The recipe:
+
+- `import * as d3 from "d3"` and use its scales, shapes and axes; draw into `d3.select(ctx.svg)`. klappe's own d3 is used, so a deck repo installs nothing.
+- Read the rows with `parseCsv(ctx.files.data["data/<file>.csv"])`, with a `# source:` line in the file, and report empty data with `ctx.problem`.
+- Colour with tokens only, as styles (`style("fill", "var(--k-ok)")`), and size text with `typeSize("label", 28)` so it follows the theme's type scale.
+- Build every mark in `build()`, hidden (`gsap.set(…, { autoAlpha: 0 })`) or at its start (a line of zero length); a step only tweens them (`tl.to(el, { attr: { x2 } })`). Then a jump shows what a play does, and `?selftest=walk` checks it.
+- One reveal per step: the frame and the starting values, then the change.
+
 ## `kpi`, `waffle`, `progress`
 
 Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
