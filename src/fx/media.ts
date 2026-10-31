@@ -78,7 +78,7 @@ function box(ctx: Ctx, rect: Rect, background = "var(--k-bg)"): HTMLElement {
 // shortcut: ctx has no deck language, so effect UI words are English; pass meta.lang once ctx has it.
 
 // The visible stand-in, at rect, for a file that is not in the deck's media/ folder.
-function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: string): HTMLElement {
+export function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: string): HTMLElement {
   const b = box(ctx, rect);
   Object.assign(b.style, {
     flexDirection: "column",

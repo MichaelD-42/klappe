@@ -4,6 +4,7 @@ export * from "./agenda";
 export { annotate, MARKER_MIX, scribble, type AnnotateHandle, type AnnotateOpts, type AnnotationKind } from "./annotate";
 export * from "./attention";
 export * from "./basics";
+export * from "./bigtype";
 // Not burstPoint: math for its unit test.
 export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./calendar";

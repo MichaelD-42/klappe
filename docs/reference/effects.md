@@ -742,6 +742,32 @@ The shards copy the target as it is at that point; build and show it before the 
 
 `shatterGeometry(w, h, impact, shards = 30, seed)` gives the crack and shard shapes for a `w` x `h` box: `cells` (the shard polygons, which tile the box), `cracks` (`{ pts, r }`, `r` the distance from the impact) and `reach` (impact to the farthest corner). It is pure; `shatter` uses it, and tests check that the shards tile the box.
 
+## `bigType`
+
+Catalog: section `190-media` (`#/media/type-as-image/1`). One word or number set on one line to fill its rect edge to edge, in `--k-font-heading` and `--k-accent`. With `media`, a picture or a video shows through the letters instead. `shout`, `kpi` and `counter` stay at text sizes.
+
+```ts
+import { bigType } from "klappe/fx";
+
+build: (ctx) => bigType(ctx, { text: "Shipping", media: "media/city.png", alt: "A city at dusk: a river, bridges and lit towers" }),
+steps: [(tl, b) => b.show(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `text` | string | required | one word or number; it never wraps |
+| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area (48 px top and bottom, 64 px left and right) | the box the text fills |
+| `media` | string | none | `"media/x.jpg"`, or a `.mp4` or `.webm`, that shows through the letters, cropped to cover the rect |
+| `alt` | string | `""` | describes the picture; required with `media` (a deck problem without it) |
+
+`show(tl)` fades it in. The handle is `{ el, show }`.
+
+### Limits
+
+- The font size is the rect's width over the text's measured width, capped at the rect's height, so a short number is limited by the height and leaves side room. The text is centred; the clip is the glyph outlines, so letters with a descender hang below the middle.
+- A video plays muted and in a loop on the wall clock (under `data-k-ignore`) while its scene is in view; with reduced motion and in the self-test it holds its first frame.
+- A missing file shows IMAGE MISSING or VIDEO MISSING over the rect and a deck problem, as `image` and `video` do; `klappe test` writes it to `media/TODO.md`.
+
 ## `shout`
 
 Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make two steps, the question and the answer, with the deck's `intensity`.

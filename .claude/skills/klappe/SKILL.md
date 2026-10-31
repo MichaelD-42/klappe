@@ -76,6 +76,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
 | Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
+| A single word or number set to fill the frame, with a picture or clip showing through the letters | `bigType` | [bigType](klappe/docs/reference/effects.md#bigtype) | `190-media/50-type-as-image` |
 | A hard question for the room | `### Question?` in `scene.md`; `shout` in `scene.ts` | [shout](klappe/docs/reference/effects.md#shout) | `210-shout/10-calm` |
 | Break with the old way | `shatter` | [shatter](klappe/docs/reference/effects.md#shatter) | `200-shatter/10-card` |
 | Volume | `swarm` | [swarm](klappe/docs/reference/effects.md#swarm) | `220-swarm/10-stream` |
