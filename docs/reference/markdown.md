@@ -45,9 +45,11 @@ export default {
 } satisfies Components;
 ```
 
-- A builder is `(ctx, body, info) => StepAdder[]`: `ctx` is the scene's, as in a `scene.ts` `build`; `body` is the fence's text; `info` is the info string after the name (```` ```quote wide ```` gives `"wide"`). Read the title and the step words from `ctx.doc`. Build hidden, then return the step functions, one per scene step from the first; a step past the end of the array plays nothing.
-- The component draws the whole scene: klappe sets no title and no step text of its own. A `scene.ts` with `build` in the same folder wins.
-- The steps are counted from `scene.md` as for a code fence, so `outline` counts them without loading `components.ts`: each list item is a step, and a fence with no list item after it is one step.
+- A builder is `(ctx, body, info) => StepAdder[]`: `ctx` is the scene's, as in a `scene.ts` `build`; `body` is the fence's text; `info` is the info string after the name (```` ```quote wide ```` gives `"wide"`). Read the step words from `ctx.doc.steps`. Build hidden, then return the step functions, one per scene step from the first; a mismatch is a deck problem, as for a `scene.ts`.
+- `body` is plain text: klappe does not parse it, the component does. The demo's components read `key: value` lines, with a picture written as `![alt](media/x.png)`.
+- The component draws the whole scene: klappe sets no title and no step text of its own. Show the title with `title(ctx)` (it reads `ctx.doc.title`) or your own element. A `scene.ts` with `build` in the same folder wins.
+- The steps are counted from `scene.md` as for a code fence, so `outline` counts them without loading `components.ts`. Every list item is a step, in file order. The fence adds a step only when no list item follows it: one step without text, after the last item. A `{…|…}` in the info string still counts as highlight groups, one step per group, so keep it out of a component's options. `outline` labels a step without text with the fence name, for example `(planChip)`.
+- A scene has one fence, a component's included: a second fence of any kind is a deck problem.
 - A builder that throws shows EFFECT MISSING and a deck problem. A name klappe draws itself (`console`, `chat`, a code language) is a deck problem, and the built-in fence wins. A fence name nobody registered is a code block in a language Shiki does not bundle, as before.
 - A component is deck code: the effects it imports load as a `scene.ts`'s do. A scene factory from `shared/` (see [deck format](deck-format.md#reuse-a-scene-with-options)) runs in a component by calling its `build`, then its steps with the refs; the demo's `decks/demo/components.ts` does this for `speakerProfile`.
 

@@ -137,6 +137,8 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Comp
       if (!Array.isArray(steps)) throw new Error("components.ts: a component returns an array of step functions");
       return steps;
     });
+    if (made.h && made.h.length !== scene.steps.length)
+      ctx.problem(`${scene.source}: components.ts '${fence!.lang}' gave ${made.h.length} step functions, scene.md has ${scene.steps.length} steps`);
     // Deck code: a step that throws is logged like a scene.ts step, and the rest of the deck still builds.
     (made.h ?? [made.miss!]).forEach((f, i) => fx.set(i + 1, (tl) => void safe(`${scene.source} step ${i + 1}`, () => f(tl))));
     if (made.miss) gsap.set(shown, { autoAlpha: 0 }); // the EFFECT MISSING box

@@ -17,7 +17,7 @@ async function open(hash: string): Promise<Page> {
 const shown = (page: Page, sel: string) =>
   page.evaluate((s) => [...document.querySelectorAll<HTMLElement>(s)].map((e) => getComputedStyle(e).visibility), sel)
 
-test('walk: a component scene is the same after a play and a jump; the problems are the shadowed, the unknown and the throwing fence', async () => {
+test('walk: a component scene is the same after a play and a jump; the problems are the shadowed, the unknown, the throwing fence and a wrong step count', async () => {
   const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=components`)
   expect(r.errors).toEqual(['sections/10-a/40-broken/scene.md step 1: broken: no photo'])
   expect(r.checks.filter((c) => !c.ok)).toEqual([])
@@ -25,6 +25,7 @@ test('walk: a component scene is the same after a play and a jump; the problems 
     "components.ts: 'ts' is a built-in fence; the built-in wins",
     'sections/10-a/20-plain/scene.md: language "nope" not bundled; shown plain',
     'sections/10-a/40-broken/scene.md step 1: EFFECT MISSING: broken (no photo)',
+    "sections/10-a/50-short/scene.md: components.ts 'stamp' gave 2 step functions, scene.md has 3 steps",
   ])
 }, 120_000)
 

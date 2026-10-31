@@ -451,7 +451,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **A deck component draws the whole scene, and its steps are counted from `scene.md` as a code fence's.**
   - Why the whole scene: the shapes a deck repeats (the demo's `speakerProfile`) are scene factories that read the title and every step from `ctx.doc`; a component in the default renderer's right-hand slot could not hold them, and one that drew next to klappe's title and text would double them. So a component is a `scene.ts` `build` called from a fence.
-  - Why the code-fence count: `outline` parses `scene.md` in Node and loads no deck `.ts`, so it cannot ask the builder how many steps it has. The parser does not know which names are components and counts their fence as any non-built-in fence, so `outline`, `klappe test` and the browser agree. The builder returns step functions for those steps; past the end of its array a step plays nothing.
+  - Why the code-fence count: `outline` parses `scene.md` in Node and loads no deck `.ts`, so it cannot ask the builder how many steps it has. The parser does not know which names are components and counts their fence as any non-built-in fence, so `outline`, `klappe test` and the browser agree. The builder returns step functions for those steps; a mismatch is a deck problem, as for a `scene.ts`.
   - A name klappe's own fences use (`console`, `chat`, a Shiki language) is a deck problem and the built-in wins, so a deck cannot quietly change what a code block does.
 
 ## 2026-10-31

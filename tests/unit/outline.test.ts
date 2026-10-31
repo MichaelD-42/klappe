@@ -19,3 +19,9 @@ test('--story prints one deep link and story point per scene; outline shows the 
   const { text } = await outline('.', 'decks/demo')
   expect(text).toMatch(/### opening\/old-way: .*\nStory: \S/)
 })
+
+// A deck component's fence step with no list item names the component, not "code".
+test('a textless step of a fence klappe does not draw names the fence', async () => {
+  const { text } = await outline('.', 'decks/demo')
+  expect(text).toMatch(/### speaker\/plan-chip: .*\n(?:> .*\n)*1\. \(planChip\)\n/)
+})

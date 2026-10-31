@@ -22,9 +22,9 @@ const quote = (notes, pad) => notes.split('\n').filter((l) => l.trim()).map((l) 
 // The deck from its Markdown alone: the steps come from scene.md, and the step count check is the self-test's.
 async function readDeck(klappeDir, deckDir) {
   const load = async (p) => (await runnerImport(path.join(klappeDir, p), { configFile: false, logLevel: 'error' })).module
-  const [{ assembleDeck }, { parseFrontmatter }, plan] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts'), load('src/plan.ts')])
+  const [{ assembleDeck }, { parseFrontmatter }, plan, { LANGS }] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts'), load('src/plan.ts'), load('src/fx/code.ts')])
   const files = markdown(deckDir)
-  return { ...assembleDeck(files, {}), files, parseFrontmatter, plan }
+  return { ...assembleDeck(files, {}), files, parseFrontmatter, plan, LANGS }
 }
 
 // deck.md max-words: one line per step whose on-screen text has more words, or the problem with the key. No key, no lines.
@@ -52,7 +52,7 @@ export function walkedScenes(deck, targets) {
 // Returns the outline as Markdown and the deck problems the parser found.
 // story: only the story view, one line per scene.
 export async function outline(klappeDir, deckDir, { story = false } = {}) {
-  const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, sceneSeconds } } = await readDeck(klappeDir, deckDir)
+  const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, sceneSeconds }, LANGS } = await readDeck(klappeDir, deckDir)
   const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
   if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
 
@@ -71,9 +71,12 @@ export async function outline(klappeDir, deckDir, { story = false } = {}) {
     for (const c of s.scenes) {
       lines.push('', `### ${s.id}/${c.id}: ${c.title} (${c.steps.length} ${c.steps.length === 1 ? 'step' : 'steps'})`, ...(c.story ? [`Story: ${c.story}`] : []), ...quote(c.notes, ''))
       secs += sceneSeconds(c)
+      // A code step of a fence klappe does not highlight is likely a deck component's: name the fence.
+      const own = c.fence && c.fence.lang && !LANGS.includes(c.fence.lang) ? c.fence.lang : undefined
       c.steps.forEach((st, i) => {
         const kind = st.kind === 'step' ? '' : `[${st.kind}] `
-        lines.push(`${i + 1}. ${kind}${st.text || `(${st.part?.kind ?? 'no text'})`}`, ...quote(st.notes, '   '))
+        const part = st.part?.kind === 'code' && own ? own : st.part?.kind
+        lines.push(`${i + 1}. ${kind}${st.text || `(${part ?? 'no text'})`}`, ...quote(st.notes, '   '))
       })
       n += c.steps.length
     }

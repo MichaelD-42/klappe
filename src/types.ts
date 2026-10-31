@@ -162,7 +162,7 @@ export interface OverlayModule {
 }
 // A deck's own Markdown fence: draws the scene whose scene.md has a ```<name> fence, as a scene.ts build would.
 // body: the fence's text; info: its info string after the name. ctx.doc has the scene's title and steps. Returns the
-// step functions, one per scene.md step from the first; a step past the end plays nothing.
+// step functions, one per scene.md step from the first; a mismatch is a deck problem.
 export type Component = (ctx: Ctx, body: string, info: string) => StepAdder[];
 // decks/<id>/components.ts: its default export, by fence name.
 export type Components = Record<string, Component>;
