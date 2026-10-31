@@ -316,3 +316,37 @@ body {
   font-size: 24px;
   color: var(--k-fg);
 }
+
+/* Review edit mode (dev server): the selected element's box, its live scene rect and the resize handle. */
+.k-editing .k-world * {
+  cursor: move;
+}
+
+.k-edit-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed var(--k-accent);
+  pointer-events: none;
+}
+
+.k-edit-handle {
+  position: absolute;
+  right: -12px;
+  bottom: -12px;
+  width: 24px;
+  height: 24px;
+  background: var(--k-accent);
+  cursor: nwse-resize;
+  pointer-events: auto;
+}
+
+.k-edit-label {
+  position: absolute;
+  left: 0;
+  top: -40px;
+  padding: 2px 8px;
+  font: 20px var(--k-font);
+  color: var(--k-bg);
+  background: var(--k-accent);
+  white-space: nowrap;
+}

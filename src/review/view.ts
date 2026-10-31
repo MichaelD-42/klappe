@@ -195,6 +195,18 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     show();
   };
 
+  // A Move line from the deck window's edit mode: over the line for the same element and start, else added.
+  channel.on((m) => {
+    if (m.t !== "edit" || m.index !== index) return;
+    const f = fields.visuals;
+    if (f.readOnly) return; // a fixed finding waits for approval
+    const lines = f.value ? f.value.split("\n") : [];
+    const at = lines.findIndex((l) => l.startsWith(m.key));
+    if (at >= 0) lines[at] = m.line;
+    else lines.push(m.line);
+    f.value = lines.join("\n");
+    f.dispatchEvent(new Event("input"));
+  });
   channel.on((m) => {
     if (m.t !== "state" || m.index >= steps.length || m.index === index) return;
     take(); // the findings typed so far belong to the step being left

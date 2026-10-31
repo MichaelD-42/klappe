@@ -341,6 +341,10 @@ Caption reads "value stream" (a1b2c3d).
 
 In the window a fixed finding is read-only, with Claude's line under it. **Approve** removes it from the file. **Reopen** takes a note on what is still wrong and adds it as `#### Reopened`, and the finding is open again. The status line counts the fixed findings waiting for your approval. When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
 
+`R` also turns on edit mode in the deck window, for findings that are easier to show than to say. A click selects what an effect built in the scene on screen (a dashed box and its scene rect show over it); a drag moves it, the square at its corner resizes it from its top-left corner, and the arrow keys nudge it by 1 px (10 with Shift) instead of stepping. Escape lets it go. It is a preview: the timeline never changes, and the next step puts the element back. Each move writes one line into the step's **Visuals** finding, `Move chart "Units by quarter" from [160, 100, 1600, 820] to [200, 140, 1600, 820]` (the drawn box in scene px, x, y, w, h; it can sit a little inside the code's `rect`); moving the same element again on that step updates its line. Claude finds the position in the code and changes it, as for any finding. In edit mode a click on the stage selects instead of stepping; the keys still step.
+
+A double click on a step's text or the scene title that `scene.md` gave (a scene without its own `build`) edits it in place. Enter writes it straight back to `scene.md`, and the dev server reloads the deck; Escape keeps the old text. A step whose line holds a link, or text that is on several lines of the file, is not written and goes back to the old text.
+
 Review mode exists only on the dev server, which saves the file: a built deck has no `R`, and `?review=1` says so. The deck does not load `review.md`, so a save never reloads it.
 
 ## Look checks

@@ -394,3 +394,9 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: a free size would be an API to freeze for shapes nobody asked for; these four cover a projector, an old room, a social square and a vertical video. Landscape frames keep 1080 scene px of height and a vertical one 1080 of width, so `--k-size-*` and the 20 px legibility floor mean the same in every frame.
   - The stage size is one module-level object in `theme.ts`, set once at load like `tempo`. Effects read it when they build, not at import, so nothing else had to pass it around.
   - Effects and scene code keep their scene-px coordinates: a 16:9 scene is not rescaled into another frame. A deck picks its frame before it is written.
+- **Review edits name an element by its effect and text, not its call site.**
+  - The spike: Vite reprints `scene.ts` before the browser runs it (a `chart()` call on source line 7 runs on line 4), so a stack trace's line does not point at the source. Mapping it back needs the inline source map and a VLQ decoder in the page, for a hint Claude can get from the effect and text in a moment.
+- **A review edit is a line in `review.md` that Claude applies, not a write into `scene.ts`; only `scene.md` text is written straight back.**
+  - A position in `scene.ts` is code (a loop, a helper, `place()`, an earlier tween); only a reader can tell which number to change. A `scene.md` line is the text itself, so it is written when it is on exactly one line, and refused otherwise.
+  - The deck window sends the line over the speaker channel and the review window writes it into its Visuals field, so `review.md` keeps one writer and its save queue.
+  - The preview uses CSS `translate` and `scale`, which compose with GSAP's `transform` and leave the timeline alone; the next step puts back only those properties.

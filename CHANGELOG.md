@@ -30,6 +30,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
 - `deck.md` key `frame`: `16:9` (default), `4:3`, `1:1` or `9:16`. The stage, scene frames, camera, backgrounds, overlay, transitions, overview cards, `shot`, `pdf` and the safe-area check follow it; full-frame picture prompts in `media/TODO.md` name it.
+- Review edit mode: with the review window open (`R`, dev server), select an element on the stage and drag, resize or nudge it; on release a `Move <element> from [x, y, w, h] to [x, y, w, h]` line lands in the step's Visuals finding. A preview only, gone on the next step. A double click on `scene.md` text edits it in place and writes it back.
 
 ### Changed
 

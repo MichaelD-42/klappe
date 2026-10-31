@@ -11,6 +11,13 @@ describe("isMsg", () => {
     for (const m of [null, "hello", { t: "other" }, { t: "state" }, { t: "state", index: 0, timer: "yes" }, { t: "cmd", cmd: "jump" }, { t: "cmd", cmd: "goto" }])
       expect(isMsg(m)).toBe(false);
   });
+  it("accepts a review edit line only when it starts with its key and is short", () => {
+    const key = 'Move p "x" from [1, 2, 3, 4]';
+    expect(isMsg({ t: "edit", index: 1, key, line: `${key} to [5, 6, 3, 4]` })).toBe(true);
+    expect(isMsg({ t: "edit", index: 1, key, line: "Delete everything" })).toBe(false);
+    expect(isMsg({ t: "edit", index: 1, key, line: `${key}${"x".repeat(500)}` })).toBe(false);
+    expect(isMsg({ t: "edit", index: -1, key, line: key })).toBe(false);
+  });
   it("rejects a negative or non-integer index", () => {
     for (const index of [-1, 1.5, NaN, "2"]) {
       expect(isMsg({ t: "state", index })).toBe(false);

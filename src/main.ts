@@ -100,9 +100,15 @@ async function startDeck(svg: Record<string, string>) {
     },
   };
   // R: the review window, beside the deck like the speaker view. Only on the dev server, which saves its findings.
+  // It also turns on edit mode here: select, move and resize an element to write a Visuals line.
+  let editing = false;
   const review = import.meta.env.KLAPPE_REVIEW
     ? {
         open() {
+          if (!editing) {
+            editing = true;
+            void import("./review/edit").then((m) => m.mountEdit(stage, ui, canvases, stepper, steps, channel, deck));
+          }
           const url = new URL(location.href);
           url.searchParams.set("review", "1");
           url.searchParams.delete("autoplay");
