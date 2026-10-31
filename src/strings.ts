@@ -79,7 +79,7 @@ export const strings = {
     elapsed: "Vergangen",
     problems: "Probleme im Deck",
     timer: "Timer",
-    rehearse: "Proben",
+    rehearse: "Probelauf",
     resetTimes: "Zeiten löschen",
     plan: "Plan",
     content: "Inhalt",

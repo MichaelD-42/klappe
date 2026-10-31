@@ -431,3 +431,4 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **Rehearsal times live in `localStorage`, not in the deck.**
   - Why: they are one presenter's runs on one machine; a file in the deck would show up in diffs and be shared. Key: the channel name (path and title) plus `:rehearsal`. A new run replaces the last; the plan is the `outline` estimate (`src/plan.ts`), so the two never disagree.
+  - A scene over its estimate is `--k-warn`; over by half again (1.5x) is `--k-bad`. The estimate is a flat pace (130 words a minute, 15 s a step), so a small overrun is noise and a large one is a real slow spot; 1.5x is a judgement, not a measured value. It is not configurable: one more knob for a hint on a side panel.
