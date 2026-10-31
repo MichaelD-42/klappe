@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
-import type { TransitionKind } from "../types";
+import type { OwnTransition, TransitionKind } from "../types";
 import { lazyTable } from "../lazy";
 import { stage as STAGE } from "../theme";
 
@@ -137,16 +137,18 @@ export async function loadTransitions(kinds: Iterable<TransitionKind>): Promise<
 }
 
 // A transition that throws (an effect not built yet, or a bug) falls back to fade, so the move still lands.
+// A deck's own function (OwnTransition) reports as "custom"; one that throws falls back to fade, as the built-ins do.
 export function playTransition(
-  kind: TransitionKind,
+  kind: TransitionKind | OwnTransition,
   from: CanvasRuntime,
   to: CanvasRuntime,
   opts: TransitionOpts,
-): { kind: TransitionKind; tl: gsap.core.Timeline } {
+): { kind: TransitionKind | "custom"; tl: gsap.core.Timeline } {
   try {
-    return { kind, tl: registry[kind](from, to, opts) };
+    if (typeof kind !== "function") return { kind, tl: registry[kind](from, to, opts) };
+    return { kind: "custom", tl: kind(from, to, opts) };
   } catch (e) {
-    console.error(`transition '${kind}': ${e instanceof Error ? e.message : e}; playing fade`);
+    console.error(`transition '${typeof kind === "function" ? "own" : kind}': ${e instanceof Error ? e.message : e}; playing fade`);
     return { kind: "fade", tl: fade(from, to, opts) };
   }
 }

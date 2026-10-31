@@ -7,7 +7,6 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Icons in Markdown: `:icon-name:` on a list item in `scene.md` sets an icon with the step. Pairs with Text steps replace, not stack. Check first whether `image` already shows a `.svg` as a plain picture.
 - Establishing shot: a step that pulls the camera out to the whole canvas, then pushes into the next scene. An authored move on the timeline, not the `O` overview.
 - Monotony check: a look warning when several scenes in a row are text only or share one layout. The walk knows each scene's parts.
-- Own transitions: `section.ts` `transition` takes a function as a background's `animate` does, with the same `reveal` label contract, so a deck has its own transition without forking klappe. Today `TransitionKind` is a closed union of twelve.
 - Deck conversion: turn a PPTX or PDF into a draft deck folder (sections, `scene.md` steps, notes, `data/` for chart numbers with their source, `media/TODO.md` for the pictures). Probably a skill workflow over the `klappe` skill, not engine code; the storyteller prompt's "Convert deck" step is the spec.
 - Pictogram chart: units drawn as icons ("1 in 4 engineers") that fill step by step, from `waffle` and `icon`.
 - Layout grid: a column grid that scenes place on, or a look check that flags near-misses across scenes (a title a few px off where the other scenes put it). The `shot --sheet` contact sheet shows drift; nothing checks it.

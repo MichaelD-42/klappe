@@ -161,13 +161,16 @@ export interface OverlayModule {
 }
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
+// A deck's own transition: a standalone GSAP timeline that ends with `from` hidden and `to` shown, and has a "reveal" label
+// where the first step of the new canvas starts. opts is the section's transitionOptions.
+export type OwnTransition = (from: { el: HTMLElement; world: HTMLElement }, to: { el: HTMLElement; world: HTMLElement }, opts: Record<string, unknown>) => gsap.core.Timeline;
 export interface SectionModule {
   // --k-* tokens for this section's scenes and its stage background only, for example an inverted section: { "--k-bg": "#fff", "--k-fg": "#0f1b2d" }.
   tokens?: Record<string, string>;
   // Behind every scene of this section, pinned to the screen: the camera moves the content over it.
   background?: Background;
-  // How the deck enters this section's canvas on a forward step. Default: fade.
-  transition?: TransitionKind;
+  // How the deck enters this section's canvas on a forward step: a built-in name or your own function. Default: fade.
+  transition?: TransitionKind | OwnTransition;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
   zoomTarget?: string;
   // Extra options for the transition, for example { shards: 20 } for shatter.

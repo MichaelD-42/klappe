@@ -11,7 +11,7 @@ import { measure } from "../fx/measure";
 import { part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
 import { motion, safeRect, stage, withTokenRoot } from "../theme";
-import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
+import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, OwnTransition, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
@@ -22,7 +22,7 @@ export interface CanvasRuntime {
   tl: gsap.core.Timeline;
   refs: Record<string, any>;
   // How the deck enters each section on this canvas, by section id (from section.ts).
-  entries: Record<string, { kind: TransitionKind; opts: TransitionOpts }>;
+  entries: Record<string, { kind: TransitionKind | OwnTransition; opts: TransitionOpts }>;
   // ctx.onStep listeners; the stepper calls them on every move.
   stepListeners: Parameters<Ctx["onStep"]>[0][];
   // ctx.problem messages; the self-test adds them to the deck's problems.
@@ -561,9 +561,23 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        // Reduced motion: the dive, the CRT flash, the shatter, the push, the glitch, the cube, the page turn and the magic move fade instead.
-        const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
-        return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
+        // Reduced motion: the dive, the CRT flash, the shatter, the push, the glitch, the cube, the page turn, the magic move and
+        // a deck's own transition fade instead.
+        const t = m?.transition ?? "fade";
+        const kind = opts.reducedMotion && (typeof t === "function" || INTENSE.includes(t)) ? "fade" : t;
+        // No "reveal" label is a deck problem naming the section; the throw makes playTransition play a fade.
+        const own: OwnTransition | undefined = typeof kind === "function" ? kind : undefined;
+        let reported = false;
+        const checked: typeof kind = own
+          ? (from, to, o) => {
+              const tl = own(from, to, o);
+              if ("reveal" in tl.labels) return tl;
+              if (!reported) opts.onProblem?.(`section ${s.id}: its own transition has no "reveal" label; playing fade`);
+              reported = true;
+              throw new Error(`section ${s.id}: no "reveal" label`);
+            }
+          : kind;
+        return [s.id, { kind: checked, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
     const backgrounds = Object.fromEntries(sections.flatMap((s) => s.scenes).flatMap((sc) => {

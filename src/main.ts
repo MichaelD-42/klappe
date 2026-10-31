@@ -56,7 +56,7 @@ if (query.get("review") === "1") {
   // transitions), and the text of animated background SVG files.
   const [, , svg] = await Promise.all([
     loadParts(deck, query.has("fixture")),
-    loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
+    loadTransitions(deck.sections.flatMap((s) => (typeof s.module?.transition === "string" ? [s.module.transition] : []))),
     svgBackgrounds(deck),
   ]);
   await startDeck(svg);
