@@ -29,11 +29,11 @@ function markdownLinks(text) {
   );
 }
 
-// href: "media/x.png" in an object literal, with alt: "..." from the same literal. One level of nested
+// href: or media: "media/x.png" in an object literal, with alt: "..." from the same literal. One level of nested
 // literals (rect: { ... }) may sit beside them.
 // shortcut: a regex, not a parser; an href built at run time or nested deeper is not found.
 function codeLinks(text, suffix) {
-  const obj = /\{(?:[^{}]|\{[^{}]*\})*?\bhref:\s*["'`](?:\.\/)?((media|data)\/[^"'`]+)["'`](?:[^{}]|\{[^{}]*\})*\}/g;
+  const obj = /\{(?:[^{}]|\{[^{}]*\})*?\b(?:href|media):\s*["'`](?:\.\/)?((media|data)\/[^"'`]+)["'`](?:[^{}]|\{[^{}]*\})*\}/g;
   return [...text.matchAll(obj)].map(([obj, href, kind]) => {
     const alt = /\balt:\s*["'`]([^"'`]*)["'`]/.exec(obj)?.[1];
     return { href, kind, prompt: alt, suffix };

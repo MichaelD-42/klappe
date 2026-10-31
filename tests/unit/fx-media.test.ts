@@ -121,6 +121,13 @@ test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 promp
   ]);
 });
 
+test('writeTodos lists a media: file named in scene.ts, as bigType takes it', () => {
+  const d = deck();
+  writeFileSync(join(d, 'sections/10-a/10-one/scene.ts'), 'export default { build: (ctx) => bigType(ctx, { text: "x", media: "media/clip.mp4" }) };\n');
+  writeTodos(d);
+  expect(readFileSync(join(d, 'media/TODO.md'), 'utf8')).toContain('- [ ] media/clip.mp4 — needed by sections/10-a/10-one/scene.ts');
+});
+
 describe('embed', () => {
   test.each([
     ['https://youtu.be/abc_1', 'https://www.youtube.com/embed/abc_1'],

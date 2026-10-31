@@ -69,7 +69,7 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A person moving; seated at a table, `seated` or `sit` | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk`, `130-figure/30-table` |
 | Full-colour art exported from Figma, Illustrator or Inkscape, its colours mapped to theme tokens, shown layer by layer by id | `svg` | [svg](klappe/docs/reference/effects.md#svg) | `120-draw/15-svg` |
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
-| An icon, or an icon on a tile; a company or product glyph Lucide lacks goes in the deck's `icons/<name>.svg` on the 24 grid and is used by name | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles`, `140-icons/30-own-icons` |
+| An icon, or an icon on a tile; a company or product glyph Lucide lacks goes in the deck's (or the repo's) `icons/<name>.svg` on the 24 grid and is used by name | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles`, `140-icons/30-own-icons` |
 | A picture beside its text, a picture over the whole frame with a caption, one huge figure with a footnote; pick the layout before placing pixels | `layout: thirds`, `full-bleed` or `big-number` in `scene.md` frontmatter | [scene.md](klappe/docs/reference/deck-format.md#scenemd) | `191-layouts/10-thirds`, `191-layouts/20-full-bleed`, `191-layouts/30-big-number` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
 | A clip; full screen with no `rect`; it plays on its step (with sound unless `muted: true`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
@@ -123,7 +123,7 @@ One master GSAP timeline per canvas; seek must equal play.
 ## Design rules
 
 - Colours only as `var(--k-*)` tokens ([themes](klappe/docs/reference/themes.md)). No colour literals and no deck-own colour tokens: a colour klappe lacks is a request for a new `--k-*` token.
-- GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(document.documentElement).getPropertyValue("--k-accent").trim()` and tween that value.
+- GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(ctx.html).getPropertyValue("--k-accent").trim()` (from the scene, so a section's `tokens` apply) and tween that value.
 - Text at least 20 scene px (14 px at 1366). Lines, arrows and borders use `--k-line`, at least 2 px; what the room must follow uses `--k-accent`.
 - One idea per step. Name the new thing by drawing it in `--k-accent`; it settles when the next step starts.
 - No dead clicks: every press changes the picture and gives the speaker something to say. Chain motion that needs no words with `auto` (seconds per step), so one press runs it.
