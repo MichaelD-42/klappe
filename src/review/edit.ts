@@ -14,9 +14,15 @@ type Prop = (typeof PROPS)[number];
 
 // What the line names an element by: the effect (its root's first data-k-* attribute) or its tag, and its text.
 // The call site would be better, but Vite reprints scene.ts, so a stack trace's line does not hold (DECISIONS.md).
+// Markers many effects set, which name no effect.
+const MARKERS = ["text", "progress", "ignore", "bleed", "src", "match", "media"];
 export function describe(el: Element): string {
-  const fx = [...el.attributes].find((a) => a.name.startsWith("data-k-"))?.name.slice(7);
-  const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  const fx = [...el.attributes].map((a) => a.name.slice(7)).find((n, i) => el.attributes[i].name.startsWith("data-k-") && !MARKERS.includes(n));
+  // Text nodes joined with spaces: SVG labels have none between them.
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const words: string[] = [];
+  while (walk.nextNode()) words.push(walk.currentNode.textContent ?? "");
+  const text = words.join(" ").replace(/\s+/g, " ").trim();
   const short = text.length > 40 ? `${text.slice(0, 39)}…` : text;
   return `${fx ?? el.localName}${short ? ` "${short}"` : ""}`;
 }
