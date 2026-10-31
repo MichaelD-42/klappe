@@ -27,4 +27,4 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Deck components in Markdown: a deck registers a fence or trigger for its own helpers (the demo's `speakerProfile`, `planChip`), so `scene.md` can use them without `scene.ts`.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
 - klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
-- Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable. The API audit (first) may still drop entries before they are built.
+- Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable.
