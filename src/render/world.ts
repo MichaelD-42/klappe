@@ -7,6 +7,7 @@ import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
+import { measure } from "../fx/measure";
 import { part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
 import { motion, stage, withTokenRoot } from "../theme";
@@ -193,10 +194,12 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
     if (big && n === 1) {
-      // The number fills the width inside the side padding; 0.75 em is a wide digit, so the estimate errs small.
+      // The number is set at 100 px, measured, and scaled to the width inside the side padding; the height caps it.
       const num = BIG_NUMBER.exec(s.text)![0];
       const b = p.appendChild(el("span", "k-big", num));
-      b.style.fontSize = `${Math.min(rect.h * 0.5, (rect.w - 320) / (num.length * 0.75))}px`;
+      b.style.fontSize = "100px";
+      const w = measure(ctx, b, true)?.w;
+      b.style.fontSize = `${Math.min(rect.h * 0.6, w ? ((rect.w - 320) / w) * 100 : 100)}px`;
       b.style.marginBottom = `${gapPx(32)}px`;
       if (s.text.length > num.length) p.append(el("span", "k-note", s.text.slice(num.length).trim()));
     }

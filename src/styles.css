@@ -106,7 +106,7 @@ body {
   display: block;
   font-family: var(--k-font-heading);
   font-weight: 700;
-  line-height: 1;
+  line-height: 0.8; /* digits have no descenders; the box hugs them so the number can be larger */
   white-space: nowrap;
   color: var(--k-accent);
 }

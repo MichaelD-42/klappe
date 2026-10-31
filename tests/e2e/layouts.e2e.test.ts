@@ -8,8 +8,9 @@ beforeAll(async () => {
 })
 afterAll(() => browser?.close())
 
-async function open(): Promise<Page> {
+async function open(css = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
+  if (css) await page.addInitScript((c) => document.addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: c }))), css)
   await page.goto(`${inject('BASE_URL')}/?fixture=layouts&instant=1`)
   await page.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
   return page
@@ -72,6 +73,34 @@ test('big-number: the number is set larger than a title, the rest is a footnote 
   expect(num.r).toBeLessThanOrEqual(1 - 160 / 1920)
   await page.close()
 })
+
+// The number's text, as a fraction of the scene's width: it fills most of the width inside the side padding and stays in it.
+const fill = (page: Page, scene: string) =>
+  page.evaluate((scene) => {
+    const sc = document.querySelector(`div[data-scene="${scene}"]`)!.getBoundingClientRect()
+    const range = document.createRange()
+    range.selectNodeContents(document.querySelector(`div[data-scene="${scene}"] .k-big`)!)
+    const r = range.getBoundingClientRect()
+    return { w: r.width / sc.width, l: (r.left - sc.left) / sc.width, r: (r.right - sc.left) / sc.width }
+  }, scene)
+
+for (const [name, css, step, scene] of [
+  ['the default font', '', 3, 'big'],
+  ['a wide heading font', ':root { --k-font-heading: "DejaVu Sans", Verdana, sans-serif; }', 3, 'big'],
+  ['a longer number', '', 4, 'long'],
+] as const) {
+  test(`big-number fills 0.75 to 1 of the safe width in ${name}`, async () => {
+    const page = await open(css)
+    await page.evaluate((n) => window.klappe.stepper.goto(n, 'cut'), step)
+    const f = await fill(page, scene)
+    const safe = 1 - 320 / 1920
+    expect(f.w).toBeGreaterThanOrEqual(0.75 * safe)
+    expect(f.w).toBeLessThanOrEqual(safe + 0.002)
+    expect(f.l).toBeGreaterThanOrEqual(160 / 1920 - 0.002)
+    expect(f.r).toBeLessThanOrEqual(1 - 160 / 1920 + 0.002)
+    await page.close()
+  })
+}
 
 for (const vp of [{ w: 1920, h: 1080 }, { w: 1366, h: 768 }]) {
   test(`the layouts walk clean at ${vp.w}x${vp.h}`, async () => {

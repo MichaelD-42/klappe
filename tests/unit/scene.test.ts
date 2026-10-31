@@ -147,6 +147,10 @@ describe("parseScene layout", () => {
     expect(scene.layout).toBeUndefined();
     expect(problems).toEqual(["10-t/scene.md: layout 'wide' is not one of thirds, full-bleed, big-number"]);
   });
+  it("thirds needs media or a fence", () => {
+    expect(parseScene("---\nlayout: thirds\n---\n## T\n\n- Words.\n", "10-t").problems).toEqual(["10-t/scene.md: layout thirds needs an image, video or chart step, or a code, console or chat block"]);
+    expect(parseScene("---\nlayout: thirds\n---\n## T\n\n```ts\nlet a\n```\n- A.\n", "10-t").problems).toEqual([]);
+  });
   it("full-bleed needs a picture; big-number needs a number first", () => {
     expect(parseScene("---\nlayout: full-bleed\n---\n## T\n\n- Words.\n", "10-t").problems).toEqual(["10-t/scene.md: layout full-bleed needs an image step"]);
     expect(parseScene(`---\nlayout: full-bleed\n---\n## T\n\n${pic}\n`, "10-t").problems).toEqual([]);
