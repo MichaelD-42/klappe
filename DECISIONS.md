@@ -428,3 +428,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **Sources are collected in `ctx.deck.sources` as charts and stats build; `endRoll` fills its rows in its step.**
   - One array per `build` call, shared by every scene's `ctx.deck`, filled by `chart` (the CSV's `# source:` or the JSON's `source`) and the stats' `source` option as each builds, in deck order and deduplicated by exact text. "Origin not stated" is a placeholder, not a source, so it is never added. A scene built after the roll is not yet in the list at build time, so the roll's container is built in `build` (the timeline rule) and its text rows are added when `show(tl)` is called in pass 2, after every scene has built; no tween exists before then that depends on them.
   - The roll's scroll length is measured once in that step (`offsetHeight`) and fixed into a `fromTo` tween, so seek equals play. Speed is 90 px a second, capped at 40 s.
+
+- **Rehearsal times live in `localStorage`, not in the deck.**
+  - Why: they are one presenter's runs on one machine; a file in the deck would show up in diffs and be shared. Key: the channel name (path and title) plus `:rehearsal`. A new run replaces the last; the plan is the `outline` estimate (`src/plan.ts`), so the two never disagree.

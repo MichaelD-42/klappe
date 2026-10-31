@@ -37,7 +37,7 @@ Frontmatter keys:
 - `max-words`: the most words a step's on-screen text may have, for example `12`. Only the list item counts, not its notes. `klappe test` fails for each step over it and names it: `#/<section>/<scene>/<step>: 14 words > 12`. Without the key, nothing is checked.
 - `frame`: the stage's shape: `16:9` (default, 1920x1080 scene px), `4:3` (1440x1080), `1:1` (1080x1080) or `9:16` (1080x1920, vertical). Scene frames, the camera, backgrounds, the overlay, transitions, the overview cards, `shot`, `pdf` and the safe-area check follow it, and full-frame picture prompts in `media/TODO.md` name it. Landscape frames stay 1080 high, so text sizes read the same. Effects and `scene.ts` coordinates are in scene px: a scene written for 16:9 needs its positions redone for another frame; use `ctx.rect.w` and `ctx.rect.h` rather than 1920 and 1080. Another value is a deck problem and gives 16:9.
 - `tempo`: `slow`, `normal` (default) or `fast`. Scales the step fade (0.6 s), the camera flight (1.6 s) and the `autoplay` hold (2.5 s) by 1.4, 1 or 0.75: a slower board talk, a quicker demo day. Effects with their own fixed times, and your own tweens in `scene.ts`, keep their durations.
-- `duration`: the talk's planned length in minutes, for example `45`. Only `klappe outline` reads it, to compare its timing estimate.
+- `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
 
 ## deck.css
 
@@ -300,6 +300,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step.
 - `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it. Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
 
 While the deck window shows, it keeps the screen awake: no screensaver or sleep mid-talk. The browser allows this on `localhost` and `https`, not on a built deck served over plain `http` from another machine.
 

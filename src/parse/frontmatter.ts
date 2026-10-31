@@ -87,6 +87,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       sharedCanvas,
       ...(safeArea && { safeArea }),
       frame: frame ?? FRAMES["16:9"],
+      ...(typeof data.duration === "number" && data.duration > 0 && { duration: data.duration }),
       tempo: tempo ?? 1,
     },
     problems,

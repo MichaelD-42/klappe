@@ -84,3 +84,45 @@
   flex: 1;
   text-align: center;
 }
+
+.k-sp-plan {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+  font-size: clamp(16px, 1.3vw, 24px);
+}
+
+.k-sp-plan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+}
+
+.k-sp-plan-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.k-sp-plan-total {
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+.k-sp-plan-row[data-over="warn"] {
+  color: var(--k-warn);
+}
+
+.k-sp-plan-row[data-over="bad"] {
+  color: var(--k-bad);
+}
+
+.k-sp-buttons + .k-sp-buttons {
+  margin-top: 16px;
+}
+
+.k-sp-buttons .k-on {
+  outline: 2px solid var(--k-accent);
+}

@@ -4,13 +4,7 @@ import { runnerImport } from 'vite'
 
 // The deck as text: sections, scenes, every step and its note, with ids for the deep links and a timing
 // estimate. For reading the story without a browser, and for the content review.
-const WPM = 130 // speaking pace for the notes
-const MIN_STEP_S = 15 // a step without a note still takes a moment to show and say
-
-const words = (s) => (s.match(/\S+/g) ?? []).length
-// shortcut: notes at a fixed pace, every step at least MIN_STEP_S; exercises and timers are not counted. Upgrade
-// when a deck needs per-scene durations.
-export const stepSeconds = (notes) => Math.max(MIN_STEP_S, (words(notes) / WPM) * 60)
+// The pace and the per-step estimate are src/plan.ts, which the speaker view's rehearsal shares.
 const minutes = (s) => `about ${Math.max(1, Math.round(s / 60))} min`
 
 // The deck's Markdown files, keyed as the browser keys them: "deck.md", "sections/<section>/<scene>/scene.md".
@@ -28,14 +22,14 @@ const quote = (notes, pad) => notes.split('\n').filter((l) => l.trim()).map((l) 
 // The deck from its Markdown alone: the steps come from scene.md, and the step count check is the self-test's.
 async function readDeck(klappeDir, deckDir) {
   const load = async (p) => (await runnerImport(path.join(klappeDir, p), { configFile: false, logLevel: 'error' })).module
-  const [{ assembleDeck }, { parseFrontmatter }] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts')])
+  const [{ assembleDeck }, { parseFrontmatter }, plan] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts'), load('src/plan.ts')])
   const files = markdown(deckDir)
-  return { ...assembleDeck(files, {}), files, parseFrontmatter }
+  return { ...assembleDeck(files, {}), files, parseFrontmatter, plan }
 }
 
 // deck.md max-words: one line per step whose on-screen text has more words, or the problem with the key. No key, no lines.
 export async function overWords(klappeDir, deckDir) {
-  const { deck, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
+  const { deck, files, parseFrontmatter, plan: { words } } = await readDeck(klappeDir, deckDir)
   const n = parseFrontmatter(files['deck.md'] ?? '').data['max-words']
   if (n === undefined) return []
   if (!(Number.isInteger(n) && n > 0)) return ['deck.md: max-words needs a whole number of words, for example 12']
@@ -58,7 +52,7 @@ export function walkedScenes(deck, targets) {
 // Returns the outline as Markdown and the deck problems the parser found.
 // story: only the story view, one line per scene.
 export async function outline(klappeDir, deckDir, { story = false } = {}) {
-  const { deck, problems, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
+  const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, stepSeconds } } = await readDeck(klappeDir, deckDir)
   const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
   if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
 
@@ -72,11 +66,11 @@ export async function outline(klappeDir, deckDir, { story = false } = {}) {
   let count = 0
   for (const s of deck.sections) {
     const lines = []
-    let secs = (words(s.notes) / WPM) * 60
+    let secs = noteSeconds(s.notes)
     let n = 0
     for (const c of s.scenes) {
       lines.push('', `### ${s.id}/${c.id}: ${c.title} (${c.steps.length} ${c.steps.length === 1 ? 'step' : 'steps'})`, ...(c.story ? [`Story: ${c.story}`] : []), ...quote(c.notes, ''))
-      secs += (words(c.notes) / WPM) * 60
+      secs += noteSeconds(c.notes)
       c.steps.forEach((st, i) => {
         const kind = st.kind === 'step' ? '' : `[${st.kind}] `
         lines.push(`${i + 1}. ${kind}${st.text || `(${st.part?.kind ?? 'no text'})`}`, ...quote(st.notes, '   '))

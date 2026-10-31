@@ -78,3 +78,27 @@ test('the speaker notes show an effect\'s note, and not the ids of sticky notes'
   expect(await p.notes()).toBe('')
   await p.context.close()
 })
+
+// Rehearsal: P starts a run, the time per scene is stored under the deck's key, stopping keeps it, Reset clears it.
+test('rehearsal records the seconds per scene in localStorage and shows them against the plan', async () => {
+  const { context, main, speaker } = await pair('two-scenes', '#/a/first/1')
+  const stored = () => speaker.evaluate(() => {
+    const k = Object.keys(localStorage).find((x) => x.endsWith(':rehearsal'))
+    return k ? JSON.parse(localStorage.getItem(k)!) : null
+  })
+  await speaker.keyboard.press('p')
+  await speaker.waitForTimeout(1200)
+  await speaker.keyboard.press('End')
+  await expect.poll(() => main.evaluate(() => window.klappe.stepper.index as number), { timeout: 10_000 }).toBe(6)
+  await speaker.waitForTimeout(1200)
+  await speaker.keyboard.press('p')
+  const run = await stored()
+  expect(run['a/first']).toBeGreaterThanOrEqual(1)
+  expect(run['a/second']).toBeGreaterThanOrEqual(1)
+  expect(await speaker.locator('.k-sp-plan-row').count()).toBe(2)
+  expect(await speaker.locator('.k-sp-plan-row').first().textContent()).toMatch(/\d\d:\d\d \/ 01:15/) // 5 steps at 15 s
+  await speaker.getByRole('button', { name: 'Reset times' }).click()
+  expect(await stored()).toBeNull()
+  expect(await speaker.locator('.k-sp-plan-row').count()).toBe(0)
+  await context.close()
+})
