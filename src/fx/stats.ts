@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
 import { typeSize } from "./draw";
+import { addSource } from "./sources";
 import { radius } from "./layout";
 import { counterText } from "./motion";
 import { motion } from "../theme";
@@ -77,6 +78,7 @@ const svgEl = (parent: Element, tag: string, attrs: Record<string, string | numb
 function block(ctx: Ctx, kind: string, x: number, y: number, w: number, source?: string): HTMLElement {
   const root = el(ctx.html, "div", { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, color: "var(--k-fg)", font: `600 ${typeSize("label", 28)}px/1.25 var(--k-font)` });
   root.setAttribute(`data-k-${kind}`, "");
+  addSource(ctx, source);
   root.dataset.kNote = `${t("source", ctx.deck.lang)}: ${source || t("originNotStated", ctx.deck.lang)}`;
   gsap.set(root, { autoAlpha: 0 });
   return root;

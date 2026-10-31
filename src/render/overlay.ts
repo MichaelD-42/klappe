@@ -32,7 +32,7 @@ export function mountOverlay(
     onStep: () => problem("onStep is for scenes; set the overlay in update"),
     problem,
     reducedMotion: opts.reducedMotion,
-    deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
+    deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources: [] },
   };
   const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
   let refs: unknown;

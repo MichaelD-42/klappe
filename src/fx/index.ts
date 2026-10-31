@@ -67,6 +67,7 @@ export { swarm, swarmPoint, type SwarmHandle, type SwarmOpts } from "./swarm";
 export * from "./swimlanes";
 export * from "./terminal";
 export * from "./timer";
+export * from "./titling";
 export * from "./transitions";
 export * from "./travel";
 export * from "./turn";

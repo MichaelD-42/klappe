@@ -404,6 +404,7 @@ export function renderWorld(
   const perScene = new Map<Scene, { ctx: Ctx; at: (n: number) => void; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
   const onScreen = new Map<CanvasLayout, Pinned | undefined>(); // the background each canvas shows, while pass 2 builds
   const files = deck.files ?? { data: {}, media: {} };
+  const sources: string[] = []; // shared by every scene's ctx.deck
   const runtimes = canvases.map((layout) => {
     const { w, h } = layout.size;
     const world = el("div", "k-world");
@@ -480,7 +481,7 @@ export function renderWorld(
         onStep: (fn) => stepListeners.push(fn),
         problem: (msg) => (problems.push(msg), opts.onProblem?.(msg)),
         reducedMotion: opts.reducedMotion,
-        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
+        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources },
       };
     };
 

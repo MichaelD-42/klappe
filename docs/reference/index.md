@@ -4,7 +4,7 @@
 - [Themes](themes.md): the `--k-*` tokens, how a deck picks a theme, and the contrast rules.
 - [Markdown triggers](markdown.md): one table of what `scene.md` turns into an effect.
 - [Motion and tweens](motion.md): the timeline rule, step functions, move, rotate, resize and scale with `tl.to`, the ease names.
-- [Effects](effects.md): `chart`, `worldMap`, `figure`, `travel`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `loupe`, `qr`, `kpi`, `waffle`, `progress`, `gauge`, `likert`, `barRace`, `shatter`, `shout`, `bigType`, `swarm`, `burst`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, `scramble`, `handwrite`, `reveal`, `redline`, `splitFlap`, `wordCloud`, the transitions and their helpers.
+- [Effects](effects.md): `chart`, `worldMap`, `figure`, `travel`, `lineArt`, `drawOn`, `icon`, `iconTile`, `image`, `video`, `wipe`, `loupe`, `qr`, `kpi`, `waffle`, `progress`, `gauge`, `likert`, `barRace`, `shatter`, `shout`, `bigType`, `lowerThird`, `endRoll`, `swarm`, `burst`, `mesh3d`, `crt`, `morph`, `bubble`, `counter`, `scramble`, `handwrite`, `reveal`, `redline`, `splitFlap`, `wordCloud`, the transitions and their helpers.
 - Elements, one page each in `elements/`:
   - [basics](elements/basics.md): `title`, `text` boxes, and `show` and `hide` fades for any element.
   - [code](elements/code.md): code walkthrough and diff.

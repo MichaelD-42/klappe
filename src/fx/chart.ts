@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { t } from "../strings";
 import { contrast, motion } from "../theme";
 import { token, typeSize } from "./draw";
+import { addSource } from "./sources";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 // The first column labels the rows; every later column with a number in any row is a series, and then
@@ -558,6 +559,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   };
   const P = { x: R.x + m.left, y: R.y + m.top, w: R.w - m.left - m.right, h: R.h - m.top - m.bottom };
 
+  addSource(ctx, loaded.source);
   // The source goes to the DOM and, through data-k-note, to the speaker view's notes.
   const root = svg(ctx.svg, "g", {
     "data-k-src": opts.src,

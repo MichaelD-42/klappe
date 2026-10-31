@@ -96,7 +96,8 @@ export interface Ctx {
   // read text from here instead of copying it into scene.ts.
   doc?: SceneDoc;
   // From deck.md: the language for effect words and number formats, and the shout-out intensity.
-  deck: { lang: string; intensity: "calm" | "bold" };
+  // sources: the origins charts and stats record, deduplicated, in deck order (endRoll lists them); complete once every scene has built.
+  deck: { lang: string; intensity: "calm" | "bold"; sources: string[] };
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;

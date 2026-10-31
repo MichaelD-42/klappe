@@ -768,6 +768,48 @@ steps: [(tl, b) => b.show(tl)],
 - A video plays muted and in a loop on the wall clock (under `data-k-ignore`) while its scene is in view; with reduced motion and in the self-test it holds its first frame.
 - A missing file shows IMAGE MISSING or VIDEO MISSING over the rect and a deck problem, as `image` and `video` do; `klappe test` writes it to `media/TODO.md`.
 
+## `lowerThird`
+
+Catalog: section `364-titling` (`#/titling/lower-third/1`). A bar at the lower left with a name and, under it, a role (or a quote's source), on `--k-surface` with an `--k-accent` edge.
+
+```ts
+import { lowerThird } from "klappe/fx";
+
+build: (ctx) => lowerThird(ctx, { name: "Ada Lovelace", role: "Analyst" }),
+steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | required | the first line |
+| `role` | string | none | the second line |
+| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area (48 px top and bottom, 64 px left and right) | the bar sits at this box's lower left |
+
+`show(tl)` slides it in from the left, `hide(tl)` out again. The handle is `{ el, show, hide }`.
+
+## `endRoll`
+
+Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON) and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
+
+```ts
+import { endRoll } from "klappe/fx";
+
+build: (ctx) => endRoll(ctx, { title: "Sources", thanks: ["Thank you for listening"] }),
+steps: [(tl, e) => e.show(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `title` | string | none | the heading above the sources |
+| `thanks` | string[] | none | lines under the sources |
+| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area | the window the credits scroll through |
+
+`show(tl)` fades it in and scrolls it; the scroll is a tween on the canvas timeline, so a deep link mid-roll shows the frame playing would. It runs at about 90 px a second, at most 40 s. The handle is `{ el, show }`. The list is read when the step is added, after every scene has built, so a source in a later scene is on it; `ctx.deck.sources` is the same list.
+
+### Limits
+
+- With reduced motion the list stands still at the top of the rect; a list taller than the rect is cut off.
+
 ## `shout`
 
 Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make two steps, the question and the answer, with the deck's `intensity`.
