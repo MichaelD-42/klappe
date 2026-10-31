@@ -400,3 +400,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - A position in `scene.ts` is code (a loop, a helper, `place()`, an earlier tween); only a reader can tell which number to change. A `scene.md` line is the text itself, so it is written when it is on exactly one line, and refused otherwise.
   - The deck window sends the line over the speaker channel and the review window writes it into its Visuals field, so `review.md` keeps one writer and its save queue.
   - The preview uses CSS `translate` and `scale`, which compose with GSAP's `transform` and leave the timeline alone; the next step puts back only those properties.
+- **`svg` is a new effect beside `lineArt`, not a mode of it.**
+  - `lineArt` is a line drawing that forces every stroke to `--k-fg`; full-colour art keeps its fills and maps them. Their options and steps differ (layers by id vs one draw), so one function with a mode would carry both sets.
+  - An unmapped colour stays in its own colour and is a deck problem, not a silent `--k-fg`: the author sees which hex value needs a token.
+  - Layers are the top-level ids only, hidden at load, so the hidden state is known in `build` as the timeline rule asks. Exporters give an id to every group; making all of them layers would hide the whole picture.

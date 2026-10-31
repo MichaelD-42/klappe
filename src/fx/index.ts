@@ -19,6 +19,7 @@ export * from "./crt";
 export * from "./cycle";
 export * from "./depgraph";
 export * from "./draw";
+export * from "./svg";
 export * from "./exercisecard";
 export * from "./figure";
 export * from "./flipcard";

@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- `svg`: authored full-colour SVG (Figma, Illustrator, Inkscape export) with its fills kept, layer ids addressed per step (`show`, `draw`, `light`, `dim`). Colours map to `--k-*` tokens, by class (`k-accent`) or a map from the file's hex values, so the art follows the theme and the contrast check; a colour with no mapping and a step id the file lacks are deck problems. Ship an export guide with it. Today `lineArt` forces every shape to an `--k-fg` outline (`src/fx/draw.ts`).
 - Camera pacing: an ease and a duration per flight (today `addCameraMove` in `src/camera.ts` always eases `power2.inOut`), and a whip mode, a fast flight with motion blur between far scenes. A slow push-in, a whip and a hard stop give a deck a tempo; deck.md `tempo` already scales every flight.
 - Rehearsal timing: a rehearsal mode in the speaker view that records the time spent per scene and shows it against the plan (`duration` in `deck.md`, the `outline` estimate), so the talk's slow parts show from real runs.
 - Own icons at the repo level: a deck repo's `icons/` shared by its decks, as `themes/` is. A deck's own `icons/` works today.
