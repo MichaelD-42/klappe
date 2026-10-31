@@ -13,6 +13,15 @@ const PAIRS: [string, string][] = [
 ];
 const TOKENS = ["bg", "fg", "muted", "surface", "line", "accent", "accent-2", "ok", "warn", "bad", "scrim", ...[1, 2, 3, 4, 5, 6].map((i) => `series-${i}`)];
 
+describe("built-in themes", () => {
+  const builtins = import.meta.glob<string>("../../src/themes/*.css", { query: "?raw", import: "default", eager: true });
+  for (const [f, css] of Object.entries(builtins))
+    it(`${f.replace(/^.*\/|\.css$/g, "")} keeps its series apart for colour-blind readers`, () => {
+      const t = parseTokens(css);
+      expect(seriesApart([1, 2, 3, 4, 5, 6].map((i) => t[`--k-series-${i}`]))).toBeGreaterThanOrEqual(10);
+    });
+});
+
 describe("brandTheme", () => {
   for (const light of [false, true])
     for (const pair of PAIRS) {

@@ -6,7 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
-- `klappe theme --name <name> --colors <hex>,<hex> [--light] [--logo <file>]`: derives a full theme file from two brand colours that passes the contrast rules and keeps the chart series apart for colour-blind readers; a logo is copied to `media/` and set bottom right in a new `overlay.ts`.
+- `klappe theme --name <name> --colors <hex>,<hex> [--light] [--logo <file>]`: derives a full theme file from two brand colours that passes the contrast rules and keeps the chart series apart for colour-blind readers (the built-in themes are now tested against the same check); a logo is copied to `media/` and set bottom right in a new `overlay.ts`.
 - `section.ts` `tokens`: override `--k-*` tokens for one section, for example an inverted run between diagram sections. Its scenes and stage background follow, effects that read sizes in code too; the contrast rules measure the result and name the section. Catalog: `#/rhythm/inverted/1`.
 - Theme tokens `--k-radius`, `--k-stroke` and `--k-gap`: the corner radius of boxes, the weight of diagram lines and the gap between boxes in a laid-out element. Defaults are today's values, so no theme changes; `?theme=sharp` shows square corners, thin lines and wide gaps.
 - `code` and code fences highlight Go, Rust, Java, Kotlin, C#, C, C++, Ruby, PHP, Swift, Dockerfile, TOML, XML, Markdown, diff and HCL (`go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`).
