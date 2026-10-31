@@ -530,11 +530,11 @@ steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 
 ## `ownIcons`
 
-A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
+A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder (or in the deck repo's root `icons/`, shared by all its decks) and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
 
 - Draw it on Lucide's grid: `viewBox="0 0 24 24"`, strokes only, about 2 px wide. Another viewBox reports `icons/<name>.svg: viewBox must be 0 0 24 24, as a Lucide icon` and the icon is not loaded.
 - klappe strips each shape's own paint (`fill`, `stroke`, `stroke-width`, `style`, `class`, opacities), scripts, links, `<title>` and `<desc>`: the icon draws in the klappe stroke, in the colour or tone the call gives, and a closed shape gets the 0.2 tint.
-- A deck icon wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
+- The lookup order is the deck's `icons/`, then the repo's `icons/`, then Lucide: a deck icon wins over a repo icon, and either wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
 
 `ownIcons(files)` is the engine's loader for these files; a deck does not call it.
 

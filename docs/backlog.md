@@ -3,7 +3,6 @@
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
 - Rehearsal timing: a rehearsal mode in the speaker view that records the time spent per scene and shows it against the plan (`duration` in `deck.md`, the `outline` estimate), so the talk's slow parts show from real runs.
-- Own icons at the repo level: a deck repo's `icons/` shared by its decks, as `themes/` is. A deck's own `icons/` works today.
 - Deck arc: a deck-level rubric in `.rubrics/` for the content reviewer (an opening hook, a through-line, set-ups paid off, one ask at the end), and a story view in `klappe outline` that prints each scene's story point in order. Needs the story point in `scene.md` frontmatter, not only in the storyboard outside the deck.
 - Video export: `klappe video` renders a deck to MP4 by stepping each canvas timeline frame by frame in Playwright, holding each step for its `auto` time or a default. Seek equals play, so a frame is exact; wall-clock loops (backgrounds, `mesh3d`, video) need their own clock in this mode. Check first whether the frames can feed ffmpeg without a new npm dependency.
 - Titling: a lower third (a name and role, or a quote's source) and an end roll of sources and thanks, built from the sources the deck's charts already record.

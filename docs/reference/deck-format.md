@@ -20,7 +20,7 @@ decks/<id>/
         scene.md
         scene.ts          # optional
   shared/                 # optional: helpers and scene factories, not loaded as scenes
-  icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon()
+  icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon(); <repo>/icons/ is shared by all decks
 ```
 
 ## deck.md

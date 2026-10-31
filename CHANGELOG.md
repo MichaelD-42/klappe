@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- A deck repo's root `icons/` folder is shared by all its decks, as `themes/` is. `icon()` looks a name up in the deck's `icons/`, then the repo's, then Lucide.
 - `layout:` in `scene.md` frontmatter picks a named composition for the default renderer: `thirds` (text in the left third, media in the right two thirds), `full-bleed` (the scene's image fills the frame, the text a caption on a scrim at the bottom) and `big-number` (the first step's number set very large, the rest as a footnote under it). An unknown name, a `full-bleed` scene without an image or a `big-number` scene whose first step has no number is a deck problem. Catalog: `#/layouts/thirds/1`, `#/layouts/full-bleed/1`, `#/layouts/big-number/1`.
 - `klappe theme --name <name> --colors <hex>,<hex> [--light] [--logo <file>]`: derives a full theme file from two brand colours that passes the contrast rules and keeps the chart series apart for colour-blind readers (the built-in themes are now tested against the same check); a logo is copied to `media/` and set bottom right in a new `overlay.ts`.
 - `section.ts` `tokens`: override `--k-*` tokens for one section, for example an inverted run between diagram sections. Its scenes and stage background follow, effects that read sizes in code too; the contrast rules measure the result and name the section. Catalog: `#/rhythm/inverted/1`.

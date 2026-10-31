@@ -27,7 +27,7 @@ export default defineConfig({
   root: klappeDir,
   plugins: [klappeScan({ klappeDir, deckDir, extraDirs: [path.join(klappeDir, 'src', 'deck', 'fixtures')] }), klappeReview({ file: reviewFile, deckDir: textDir })],
   base: './', // relative asset URLs, so a build works from any folder (GitHub Pages serves under /klappe/)
-  resolve: { alias: { '@deck': deckDir, '@themes': path.join(cwd, 'themes'), 'klappe/fx': path.join(klappeDir, 'src', 'fx') } },
+  resolve: { alias: { '@deck': deckDir, '@themes': path.join(cwd, 'themes'), '@icons': path.join(cwd, 'icons'), 'klappe/fx': path.join(klappeDir, 'src', 'fx') } },
   // Builder worktrees under .claude/worktrees would reload the page mid e2e run.
   server: { fs: { allow: [klappeDir, cwd, deckDir, ...linkedModules] }, watch: { ignored: [inWorktrees(cwd), inWorktrees(klappeDir)] } },
   build: { outDir: path.join(cwd, 'dist', path.basename(deckDir)), emptyOutDir: true },
