@@ -48,8 +48,6 @@ const SHAPE_OK: Record<string, string> = {
   'spotlight.ts': 'the hole is sized to the target plus padding',
   'timer.ts': 'the ring width follows the timer size',
   'stats.ts': 'chart-like rings, dials and sparklines follow their own thickness; the legend swatch is 4 px',
-  'fishbone.ts': 'SVG presentation attributes, which cannot take var() or calc()',
-  'mindmap.ts': 'SVG presentation attributes and per-branch weights, which cannot take var() or calc()',
 }
 
 export function lint(file: string, raw: string): { rule: Rule; at: string }[] {

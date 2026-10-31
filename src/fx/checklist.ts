@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
-import { gapCss, strokeW } from "./layout";
+import { gapCss, radius, strokeW } from "./layout";
 import type { Ctx, StepAdder } from "../types";
 
 export interface ChecklistOpts {
@@ -39,7 +39,8 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
     svg.setAttribute("viewBox", `0 0 ${BOX} ${BOX}`);
     Object.assign(svg.style, { width: `${BOX}px`, height: `${BOX}px`, flex: "none", marginTop: "0.125em", overflow: "visible" });
     const box = svg.appendChild(document.createElementNS(SVG, "rect"));
-    for (const [k, v] of Object.entries({ x: 1, y: 1, width: BOX - 2, height: BOX - 2, rx: 4 })) box.setAttribute(k, String(v));
+    for (const [k, v] of Object.entries({ x: 1, y: 1, width: BOX - 2, height: BOX - 2 })) box.setAttribute(k, String(v));
+    box.setAttribute("style", `rx: ${radius(4)}`);
     Object.assign(box.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(2) });
     const mark = svg.appendChild(document.createElementNS(SVG, "path"));
     mark.setAttribute("d", "M7 17 L14 24 L26 8");
