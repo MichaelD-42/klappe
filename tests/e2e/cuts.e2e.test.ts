@@ -83,6 +83,15 @@ test('the rehearsal under a cut keeps its own record, against the cut\'s duratio
 })
 
 // The overview and the section list tag the appendix with klappe's word, whatever the section is titled.
+test('Q from an appendix reached by the section list goes back to the main step it left', async () => {
+  const page = await open('', '#/b/two/1', 2)
+  await page.keyboard.press('s')
+  await page.locator('.k-selector .k-btn').nth(3).click()
+  expect(await at(page)).toBe('#/x/spare/1')
+  expect(await press(page, 'q')).toBe('#/b/two/1')
+  await page.close()
+})
+
 test('the overview and the section list mark the appendix', async () => {
   const page = await open('', '', 0)
   await page.keyboard.press('s')

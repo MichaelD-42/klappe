@@ -51,7 +51,10 @@ export function bindInput(
   steps: StepAddr[],
 ): (a: Action) => void {
   const main = steps.filter((s) => !s.appendix).length; // the appendix steps come after every main step
-  let back = 0; // where the talk was when the appendix key went there
+  let back = 0; // the last main step, whichever way the appendix was reached
+  stepper.on("step", (a: StepAddr) => {
+    if (!a.appendix) back = a.index;
+  });
   const toggle = (p: Panel, other: Panel) => {
     other.close();
     if (p.isOpen) p.close();
@@ -69,7 +72,6 @@ export function bindInput(
     else if (a === "appendix") {
       if (steps[stepper.index]?.appendix) stepper.goto(back, "cut");
       else if (main < steps.length) {
-        back = Math.max(0, stepper.index);
         stepper.goto(main, "cut");
       }
     }
