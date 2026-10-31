@@ -29,6 +29,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `show` and `hide` option `at`: a GSAP position, so a fade can start with the tween before it (`"<"`) instead of after it.
 - A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
+- `deck.md` key `frame`: `16:9` (default), `4:3`, `1:1` or `9:16`. The stage, scene frames, camera, backgrounds, overlay, transitions, overview cards, `shot`, `pdf` and the safe-area check follow it; full-frame picture prompts in `media/TODO.md` name it.
+
 ### Changed
 
 - A plain text step in `scene.md` replaces the one before: it gets the stage to itself, set large, and fades out when the next one shows (was: each item faded in and stayed, a bullet build-up). `stack: true` in the scene's frontmatter keeps the old build-up. A scene with media, code, a checklist, a table or an agenda keeps its layout.

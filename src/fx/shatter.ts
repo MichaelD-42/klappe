@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 import type { TransitionOpts } from "./transitions";
+import { stage } from "../theme";
 
 export interface ShatterOpts {
   // An element inside the scene (not ctx.html itself: the shards live in ctx.html).
@@ -381,12 +382,12 @@ export function transitionShatter(
   if (!host) {
     host = document.createElement("div");
     host.dataset.kShatter = "";
-    Object.assign(host.style, { position: "absolute", left: "0", top: "0", width: "1920px", height: "1080px" });
+    Object.assign(host.style, { position: "absolute", left: "0", top: "0", width: `${stage.w}px`, height: `${stage.h}px` });
     gsap.set(host, { autoAlpha: 0 });
     worlds.append(host);
   }
   host.replaceChildren(); // one overlay, reused: the previous shatter's shards go
-  const h = build(host, { x: 0, y: 0, w: 1920, h: 1080 }, [from.el], core(opts, impactIn(1920, 1080)), "var(--k-bg)"); // the stage colour behind the old world
+  const h = build(host, { x: 0, y: 0, ...stage }, [from.el], core(opts, impactIn(stage.w, stage.h)), "var(--k-bg)"); // the stage colour behind the old world
   const tl = gsap.timeline();
   h.crack(tl);
   h.fall(tl, copy(from.el));

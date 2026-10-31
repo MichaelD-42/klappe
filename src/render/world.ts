@@ -7,7 +7,7 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { part as fxPart } from "./parts";
-import { motion } from "../theme";
+import { motion, stage } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
@@ -314,15 +314,15 @@ function svgLoop(parent: HTMLElement, text: string): Pinned["loop"] | undefined 
 function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string, svgText?: string): Pinned {
   const d = pinned.appendChild(el("div", "k-layer"));
   d.dataset.kBackground = id;
-  Object.assign(d.style, { width: "1920px", height: "1080px" });
+  Object.assign(d.style, { width: `${stage.w}px`, height: `${stage.h}px` });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
-  const full = { ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem };
+  const full = { ...ctx, rect: { x: 0, y: 0, ...stage }, html: d, problem };
   let img: ImageHandle | undefined;
   let loop: Pinned["loop"];
   if (typeof bg.animate === "function") {
     const own = d.appendChild(el("div", "k-layer"));
     own.setAttribute("data-k-ignore", "");
-    Object.assign(own.style, { width: "1920px", height: "1080px", overflow: "hidden" });
+    Object.assign(own.style, { width: `${stage.w}px`, height: `${stage.h}px`, overflow: "hidden" });
     const animate = bg.animate;
     loop = safe(`${source}: background`, () => animate(own));
   } else if (bg.animate !== undefined) {
@@ -354,7 +354,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     if (!depthOk(l.parallax)) return problem(`layer ${i + 1}: parallax ${l.parallax} out of range; use a depth above 0, up to ${MAX_DEPTH}`), [];
     const e = d.appendChild(el("div", "k-layer"));
     e.dataset.kLayer = String(i + 1);
-    Object.assign(e.style, { width: "1920px", height: "1080px" });
+    Object.assign(e.style, { width: `${stage.w}px`, height: `${stage.h}px` });
     const pic = safe(`${source}: background`, () => image({ ...full, html: e }, { href: l.href, alt: l.alt ?? "", fit: "cover" }));
     if (pic?.el && pic.el.querySelector("img")) pic.el.style.background = "transparent"; // a picture's frame is --k-bg; a layer shows through
     gsap.set(e.children, { autoAlpha: 1 });
@@ -394,7 +394,7 @@ export function renderWorld(
     // The canvas: backgrounds pinned to the screen, under the world the camera moves.
     const canvas = el("div", "k-canvas");
     const pinned = el("div", "k-layer");
-    for (const e of [canvas, pinned]) Object.assign(e.style, { width: "1920px", height: "1080px" });
+    for (const e of [canvas, pinned]) Object.assign(e.style, { width: `${stage.w}px`, height: `${stage.h}px` });
     canvas.append(pinned, world);
     root.append(canvas);
 
@@ -403,7 +403,7 @@ export function renderWorld(
     const stepListeners: CanvasRuntime["stepListeners"] = [];
     const problems: string[] = [];
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
-    const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
+    const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, ...stage };
     let cam = first;
     // Parallax backgrounds and layers on this canvas: k is the drift per unit of parallaxPose, in the parent's units.
     const far: { el: HTMLElement; k: number }[] = [];
@@ -465,7 +465,7 @@ export function renderWorld(
     const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);

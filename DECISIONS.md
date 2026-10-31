@@ -390,3 +390,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: the bullet build-up slide is what klappe is meant to replace. One large statement at a time is what a talk wants, and an agent writing plain list items now gets it without a `scene.ts`.
   - Only a scene of plain items replaces. With media, code, a task list, a table or an agenda, the text is a caption column beside the element, and a large centred statement would sit on top of it.
   - The switch is frontmatter in `scene.md`, the first scene-level key there. Composition presets and the story point are planned as scene frontmatter too, and a plain scene has no `scene.ts` to hold an option.
+- **`frame` in `deck.md` picks one of four shapes (16:9, 4:3, 1:1, 9:16), not any size.**
+  - Why: a free size would be an API to freeze for shapes nobody asked for; these four cover a projector, an old room, a social square and a vertical video. Landscape frames keep 1080 scene px of height and a vertical one 1080 of width, so `--k-size-*` and the 20 px legibility floor mean the same in every frame.
+  - The stage size is one module-level object in `theme.ts`, set once at load like `tempo`. Effects read it when they build, not at import, so nothing else had to pass it around.
+  - Effects and scene code keep their scene-px coordinates: a 16:9 scene is not rescaled into another frame. A deck picks its frame before it is written.

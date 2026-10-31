@@ -1,11 +1,11 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import { rng } from "./mesh3d";
+import { stage } from "../theme";
 import type { TransitionOpts } from "./transitions";
 
 const DURATION = 0.5;
 const FRAMES = 12; // distinct states, about 24 per second: a digital stutter, not a smooth move
-const H = 1080;
 
 export interface GlitchFrame {
   bands: { y: number; h: number; fresh: boolean }[]; // horizontal bands that tile the frame; fresh: the new canvas shows there
@@ -19,6 +19,7 @@ export function glitchFrame(p: number, seed = 1): GlitchFrame {
   const f = Math.min(FRAMES - 1, Math.max(0, Math.floor(p * FRAMES)));
   const rand = rng(seed * 7919 + f);
   const bands: GlitchFrame["bands"] = [];
+  const H = stage.h;
   for (let y = 0; y < H; ) {
     const h = Math.min(H - y, Math.round(30 + rand() * 220));
     bands.push({ y, h, fresh: false });
@@ -41,7 +42,7 @@ export function glitchFrame(p: number, seed = 1): GlitchFrame {
 
 // The bands as one clip-path: zero-width runs down the left edge join them, so they add no area.
 const clip = (bands: GlitchFrame["bands"]) =>
-  bands.length ? `polygon(${bands.map((b) => `0px ${b.y}px, 1920px ${b.y}px, 1920px ${b.y + b.h}px, 0px ${b.y + b.h}px`).join(", ")})` : "inset(50%)";
+  bands.length ? `polygon(${bands.map((b) => `0px ${b.y}px, ${stage.w}px ${b.y}px, ${stage.w}px ${b.y + b.h}px, 0px ${b.y + b.h}px`).join(", ")})` : "inset(50%)";
 
 // A short digital break-up: both canvases show in horizontal bands that jump sideways with a colour split,
 // and the bands turn from old to new over 0.5 s. transitionOptions: { seed } picks another pattern.

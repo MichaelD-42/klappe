@@ -1,9 +1,9 @@
 import { gsap } from "gsap";
+import { stage as STAGE } from "../theme";
 import type { CanvasRuntime } from "../render/world";
 import { registry, type TransitionOpts } from "./transitions";
 import type { Rect } from "../types";
 
-const STAGE = { w: 1920, h: 1080 };
 const FLY = 0.9;
 const SVG = "http://www.w3.org/2000/svg";
 const EASE = "power2.inOut";

@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import type { Rect } from "./types";
-import { motion } from "./theme";
+import { motion, stage } from "./theme";
 
 export interface Pose {
   x: number;
@@ -8,10 +8,8 @@ export interface Pose {
   scale: number;
 }
 
-const W = 1920;
-const H = 1080;
-
 export function frame(t: Rect): Pose {
+  const { w: W, h: H } = stage;
   const scale = Math.min(W / t.w, H / t.h);
   return { x: -t.x * scale + (W - t.w * scale) / 2, y: -t.y * scale + (H - t.h * scale) / 2, scale };
 }
@@ -20,7 +18,7 @@ export function frame(t: Rect): Pose {
 // times as far. Each is scaled up enough to hide its edges at its drift (parallaxScale).
 export const PARALLAX = 40;
 export const MAX_DEPTH = 4;
-export const parallaxScale = (depth: number) => 1 + (2 * depth * PARALLAX) / H;
+export const parallaxScale = (depth: number) => 1 + (2 * depth * PARALLAX) / Math.min(stage.w, stage.h);
 
 // A parallax background's offset with the camera on rect `at` of a canvas of `size`: it drifts the way the
 // content moves, PARALLAX at the canvas edges, so it reads as a far layer. Bounded, so it never shows an edge.
@@ -83,7 +81,7 @@ export function addCameraMove(
 const LEAN_PERSPECTIVE = 1600; // px
 
 // A 3D lean of the whole canvas into the flight's direction, peaking mid-flight at `deg` and exactly 0 at both ends.
-// It turns the canvas (always the 1920x1080 stage), about the screen centre: the world's origin may be far off screen.
+// It turns the canvas (always the stage size), about the screen centre: the world's origin may be far off screen.
 // The origin goes back to the canvas's own (0 0) at the end, which the zoom transition expects.
 function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg: number, duration: number): void {
   const [dx, dy] = [to.x + to.w / 2 - (from.x + from.w / 2), to.y + to.h / 2 - (from.y + from.h / 2)];
@@ -91,7 +89,7 @@ function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg
   if (!len) return; // a pure zoom has no direction to lean into
   const at = (tl.recent() as gsap.core.Tween).startTime(); // the flight's start, not "<": a lean must never start before its step
   gsap.set(canvas, { rotationX: 0, rotationY: 0 }); // written at load: a seek back past the lean writes it too
-  tl.set(canvas, { transformOrigin: "960px 540px", transformPerspective: LEAN_PERSPECTIVE }, at);
+  tl.set(canvas, { transformOrigin: `${stage.w / 2}px ${stage.h / 2}px`, transformPerspective: LEAN_PERSPECTIVE }, at);
   tl.set(canvas, { transformOrigin: "0px 0px", transformPerspective: 0 }, at + duration); // flat again, no 3D context
   // Added last, so a caller's "<" (the parallax drift, dollyZoom) still means the flight's start.
   tl.fromTo(

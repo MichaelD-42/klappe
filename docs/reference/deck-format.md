@@ -35,6 +35,7 @@ Frontmatter keys:
 - `shared-canvas`: section ids that share one canvas, for example `[value-stream, results]`. Use a list of lists for several groups.
 - `safe-area`: the frame inset that `?selftest=walk` keeps ink inside, in scene px, in CSS order: `48`, `[48, 64]` (top and bottom, sides), `[48, 120, 155]` (top, sides, bottom) or `[top, right, bottom, left]`. Default `[48, 64]`. Raise the bottom value for a logo or footer. See [Look checks](#look-checks).
 - `max-words`: the most words a step's on-screen text may have, for example `12`. Only the list item counts, not its notes. `klappe test` fails for each step over it and names it: `#/<section>/<scene>/<step>: 14 words > 12`. Without the key, nothing is checked.
+- `frame`: the stage's shape: `16:9` (default, 1920x1080 scene px), `4:3` (1440x1080), `1:1` (1080x1080) or `9:16` (1080x1920, vertical). Scene frames, the camera, backgrounds, the overlay, transitions, the overview cards, `shot`, `pdf` and the safe-area check follow it, and full-frame picture prompts in `media/TODO.md` name it. Landscape frames stay 1080 high, so text sizes read the same. Effects and `scene.ts` coordinates are in scene px: a scene written for 16:9 needs its positions redone for another frame; use `ctx.rect.w` and `ctx.rect.h` rather than 1920 and 1080. Another value is a deck problem and gives 16:9.
 - `tempo`: `slow`, `normal` (default) or `fast`. Scales the step fade (0.6 s), the camera flight (1.6 s) and the `autoplay` hold (2.5 s) by 1.4, 1 or 0.75: a slower board talk, a quicker demo day. Effects with their own fixed times, and your own tweens in `scene.ts`, keep their durations.
 - `duration`: the talk's planned length in minutes, for example `45`. Only `klappe outline` reads it, to compare its timing estimate.
 
@@ -74,7 +75,7 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 
 Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneModule`.
 
-- `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a 1920x1080 frame at x = its position on the canvas times 1920.
+- `place(rects)` returns the scene's home frame. The engine flies the camera there when the scene starts. `rects` holds the home frames of the scenes before this one on the same canvas, keyed by scene id. Use it to place a scene relative to an earlier one. Without `place()`, a scene gets a frame the size of the stage (1920x1080 for the default `frame`) at x = its position on the canvas times the frame width.
 - `build(ctx)` creates all DOM, hidden. Return the refs you need. Steps receive them.
 - `steps` is an array with one function or `null` per step. It lines up with the list items by position. `null` or a missing entry gives the default step, which shows the step text. A step function is `(tl, refs, ctx) => void`.
 - `auto` is an array with one number or `null` per step. It lines up with the steps by position. A number N advances the deck by itself N seconds after the step has played forward. It also goes into the next scene and through a section transition. `null` or a missing entry waits for a press. A deep link, a jump, a back move and `?instant=1` never advance by themselves. A press during the wait advances one step at once. Opening the overview or the section list stops the wait. Autoplay holds a step for its `auto` time. Example: `auto: [null, 1, 0.5]`.
@@ -140,7 +141,7 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 
 ## overlay.ts
 
-Optional, at the deck root next to `deck.md`. What stays on screen over every scene while the camera moves: a logo, a brand frame, a footer, a chapter label. It is a 1920x1080 layer over the canvases and under klappe's own UI, and clicks go through it to the stage. Export a default `OverlayModule` (`import type { OverlayModule } from "klappe/types"`).
+Optional, at the deck root next to `deck.md`. What stays on screen over every scene while the camera moves: a logo, a brand frame, a footer, a chapter label. It is a stage-size layer (1920x1080 for the default `frame`) over the canvases and under klappe's own UI, and clicks go through it to the stage. Export a default `OverlayModule` (`import type { OverlayModule } from "klappe/types"`).
 
 - `build(ctx)` makes the overlay's DOM once and returns refs. `ctx.html` and `ctx.svg` are the layer; effects that build in them work (`text`, `image`, `icon`). The camera and `onStep` do nothing here and report a problem.
 - `update(at, refs)` runs on every move with where the deck lands: `at.index` and `at.total` (steps in the deck), `at.section`, `at.scene`, `at.step` (from 1), `at.sectionTitle`, `at.sceneTitle`. Set the overlay with `gsap.set` or styles, never a tween, and from `at` alone: then a jump shows what a play does, and `?selftest=walk` checks it as it checks a canvas.
@@ -170,7 +171,7 @@ Catalog: section `234-overlay` (`#/overlay/pinned/1`), with the demo's `decks/de
 Import effects from `"klappe/fx"`, for example `import { shatter, crt, chart } from "klappe/fx"`.
 
 - A helper is `name(ctx, opts)`. Call it in `build()`. It builds its DOM, hidden, in `ctx.svg` or `ctx.html`.
-- A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in 1920x1080 units.
+- A helper's `rect` and `x`, `y` are scene-local: the origin is the top-left of the scene frame, in scene px (1920x1080 for the default `frame`, see `frame` in deck.md).
 - Files that ship with the effects import from `klappe/fx/...`, for example `klappe/fx/art/engineer-desk.svg?raw`.
 - It returns a handle with named steps, for example `{ crack, crack2, fall }`. Each one is `(tl) => void` and only adds tweens. Call them from your step functions.
 - Helpers: `shatter`, `crt`, `drawOn`, `lineArt`, `icon`, `iconTile`, `shout`, `chart`, `parseCsv`, `worldMap`, `figure`, `swarm`, `mesh3d`, `morph`, `bubble`, `counter`, `image`, `video`, and the elements in `elements/`, among them [crt](elements/crt.md) (colour, `settle`, prompts, `cursorAt`), [bubble](elements/bubble.md) (`side`, `maxWidth`), [mesh3d](elements/mesh3d.md) and [timer](elements/timer.md). Options and limits of each are in [effects](effects.md) and the element pages; see also [Markdown triggers](markdown.md) and [Motion and tweens](motion.md).
@@ -346,7 +347,7 @@ Review mode exists only on the dev server, which saves the file: a built deck ha
 
 `?selftest=walk` checks the look of the current scene at every step, once the step has settled. The findings are warnings: they go to `warnings` in the self-test result (the `script#klappe-selftest` JSON) and never fail the self-test. `klappe test --strict` fails the walk on any warning; without `--strict`, warnings never fail a test. Each finding is listed once, at the first step that shows it.
 
-- Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the 1920x1080 frame). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
+- Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the frame, 1920x1080 by default). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
 - Clipped text: shown text that a parent's `overflow: hidden` or `clip` cuts off, which includes `text-overflow: ellipsis` and line clamps. Text that a mask hides completely is not counted.
 
 These are not checked:

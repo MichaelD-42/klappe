@@ -2,12 +2,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
 
-const W = 1920 // the stage size, so a screenshot pixel is a scene pixel
-const H = 1080
-
 // The deck at url in a new page of browser, every play a seek to its end and no UI on top, ready for goto(i).
-// params: more URL flags (theme).
-export async function openDeck(browser, url, viewport = { width: W, height: H }, params = {}) {
+// viewport: its width over 1920 scales the deck's frame (deck.md frame), so a 1920 wide viewport makes a
+// screenshot pixel a scene pixel, whatever the frame's shape. params: more URL flags (theme).
+export async function openDeck(browser, url, viewport = { width: 1920, height: 1080 }, params = {}) {
   const page = await browser.newPage({ viewport })
   const u = new URL(url)
   u.searchParams.set('instant', '1') // every play seeks to its end
@@ -16,6 +14,10 @@ export async function openDeck(browser, url, viewport = { width: W, height: H },
   await page.goto(u.href)
   await page.waitForFunction(() => window.klappe?.stepper?.index >= 0, undefined, { timeout: 60_000 })
   await page.addStyleTag({ content: '.k-ui { display: none !important; }' })
+  const frame = await page.evaluate(() => window.klappe.deck.meta.frame ?? { w: 1920, h: 1080 })
+  const k = viewport.width / 1920
+  const size = { width: Math.round(frame.w * k), height: Math.round(frame.h * k) }
+  if (size.width !== viewport.width || size.height !== viewport.height) await page.setViewportSize(size)
   return page
 }
 
@@ -60,6 +62,7 @@ export async function exportPdf(url, out, { handout = false } = {}) {
   const browser = await chromium.launch()
   try {
     const page = await openDeck(browser, url)
+    const { width: W, height: H } = page.viewportSize()
     const steps = await page.evaluate(() => window.klappe.steps)
     const picked = handout ? steps.filter((s, i) => steps[i + 1]?.scene !== s.scene) : steps
     const shots = []

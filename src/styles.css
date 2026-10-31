@@ -17,8 +17,8 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1920px;
-  height: 1080px;
+  width: var(--k-frame-w, 1920px);
+  height: var(--k-frame-h, 1080px);
   overflow: clip; /* not hidden: scrollIntoView (the overview marker) scrolls a hidden box too, and left a band */
   background: var(--k-bg);
   color: var(--k-fg);
@@ -50,8 +50,8 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1920px;
-  height: 1080px;
+  width: var(--k-frame-w, 1920px);
+  height: var(--k-frame-h, 1080px);
   pointer-events: none;
 }
 
@@ -289,8 +289,8 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 1920px;
-  height: 1080px;
+  width: var(--k-frame-w, 1920px);
+  height: var(--k-frame-h, 1080px);
   transform-origin: 0 0;
 }
 

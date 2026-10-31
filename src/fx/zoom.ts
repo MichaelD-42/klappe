@@ -1,9 +1,9 @@
 import { gsap } from "gsap";
+import { stage as STAGE } from "../theme";
 import type { CanvasRuntime } from "../render/world";
 import type { Rect } from "../types";
 import type { TransitionOpts } from "./transitions";
 
-const STAGE = { w: 1920, h: 1080 };
 const DIVE = 8; // magnification at the end of the dive
 const DIVE_TIME = 0.9;
 const IN_TIME = 0.6;

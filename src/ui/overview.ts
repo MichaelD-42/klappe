@@ -1,10 +1,11 @@
 import type { CanvasRuntime } from "../render/world";
 import { t } from "../strings";
+import { stage } from "../theme";
 import type { Deck, StepAddr } from "../types";
 import { button, OverlayPanel } from "./panel";
 
-// Scene card thumbnail, in stage px.
-const THUMB = { w: 288, h: 162 };
+// Scene card thumbnail, in stage px: the frame's shape, 288 px on its long side.
+const cardSize = () => (stage.w >= stage.h ? { w: 288, h: (288 * stage.h) / stage.w } : { w: (288 * stage.w) / stage.h, h: 288 });
 
 // A copy of the world at its end state, with no camera transform, so the whole canvas shows.
 // Backgrounds are pinned to the screen, outside the world: each card adds its scene's own (backdrop).
@@ -29,13 +30,13 @@ function quiet(copy: HTMLElement, style: Partial<CSSStyleDeclaration> = {}): HTM
   return copy;
 }
 
-// A scene's background, the full 1920x1080 screen scaled to the card. A looping video or an aurora shows
+// A scene's background, the full screen scaled to the card. A looping video or an aurora shows
 // as its still first frame (a cloned canvas is blank).
 function backdrop(bg: HTMLElement): HTMLElement {
   const box = document.createElement("div");
   box.className = "k-ov-bg";
   box.append(quiet(bg.cloneNode(true) as HTMLElement, { transform: "none" }));
-  box.style.transform = `scale(${THUMB.w / 1920})`;
+  box.style.transform = `scale(${cardSize().w / stage.w})`;
   return box;
 }
 
@@ -58,6 +59,7 @@ export class Overview extends OverlayPanel {
     const copies = new Map<CanvasRuntime, HTMLElement>(); // one end-state copy per canvas, cloned again per card
     const sectionLabel = (s: Deck["sections"][number]) => s.module?.overviewLabel ?? s.title;
     // A scene title that repeats in the deck (agenda hops all titled "Today") gets its section's label in front.
+    const THUMB = cardSize();
     const titles = this.deck.sections.flatMap((s) => s.scenes.map((sc) => sc.title));
     const repeated = (t: string) => titles.indexOf(t) !== titles.lastIndexOf(t);
 
@@ -78,6 +80,7 @@ export class Overview extends OverlayPanel {
         const fit = Math.min(THUMB.w / r.w, THUMB.h / r.h);
         const thumb = document.createElement("div");
         thumb.className = "k-ov-thumb";
+        Object.assign(thumb.style, { width: `${THUMB.w}px`, height: `${THUMB.h}px` });
         const scaler = document.createElement("div");
         scaler.className = "k-ov-scaler";
         // Centre the scene's rect in the card.

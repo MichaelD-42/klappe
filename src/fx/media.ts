@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { t } from "../strings";
-import { motion } from "../theme";
+import { motion, stage } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
 
@@ -136,7 +136,11 @@ const key = (href: string) => href.replace(/^\.\//, "");
 export const STEP_LABEL = "step";
 // Ends a prompt made from alt text for a full-frame picture. bin/todo.mjs keeps a copy (it cannot import TS);
 // tests/unit/fx-media.test.ts checks the two match.
-export const FULL_FRAME_PROMPT = ", 16:9, 1920x1080, no text, no logos";
+export function fullFramePrompt({ w, h }: { w: number; h: number }): string {
+  const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
+  const k = gcd(w, h);
+  return `, ${w / k}:${h / k}, ${w}x${h}, no text, no logos`;
+}
 
 export const KEN_BURNS = 6; // seconds: the default push; show() with kenBurns plays it after the fade-in
 const STILL: KenBurnsPose = { scale: 1, x: 0, y: 0 };
@@ -162,7 +166,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   const text = [key(href), alt].filter(Boolean).join(" — ");
   if (url === undefined) {
     // A prompt for an image generator, for a cover picture with alt text.
-    const prompt = cover && alt ? `${alt}${FULL_FRAME_PROMPT}` : undefined;
+    const prompt = cover && alt ? `${alt}${fullFramePrompt(stage)}` : undefined;
     const b = missing(ctx, cover ? rect : fit(rect), t("imageMissing", ctx.deck.lang), text, prompt);
     const f = fade(b, fadeTime, fadeEase);
     return { el: b, show: (tl, at) => f.show(tl, at0(tl, at)), hide: f.hide, move: () => {} };

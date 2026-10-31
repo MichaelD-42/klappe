@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { motion } from "../theme";
+import { motion, stage } from "../theme";
 import type { Ctx, Rect } from "../types";
 
 export interface SwarmOpts {
@@ -62,7 +62,7 @@ export function swarm(ctx: Ctx, opts: SwarmOpts): SwarmHandle {
     pointerEvents: "none",
   });
   // Device pixels per scene unit when the camera rests on this scene, capped so the backing store stays small.
-  const cam = Math.min(1920 / ctx.rect.w, 1080 / ctx.rect.h);
+  const cam = Math.min(stage.w / ctx.rect.w, stage.h / ctx.rect.h);
   const cap = MAX_BACKING / Math.max(rect.w, rect.h);
   let scale = 0;
   const size = (s: number) => {

@@ -15,6 +15,7 @@ export interface DeckMeta {
   confidential: boolean;
   sharedCanvas: string[][];
   safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
+  frame?: { w: number; h: number }; // deck.md frame as the stage size in scene px: 16:9 1920x1080 (default), 4:3, 1:1, 9:16
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
 }
 export type StepKind =

@@ -1,5 +1,6 @@
 import { rand } from "./swarm";
 import type { Ctx } from "../types";
+import { stage } from "../theme";
 
 export interface BurstOpts {
   origin: { x: number; y: number }; // where the pieces pop from, scene px
@@ -54,7 +55,7 @@ export function burst(ctx: Ctx, opts: BurstOpts): BurstHandle {
     pointerEvents: "none",
   });
   // Device pixels per scene unit when the camera rests on this scene, capped so the backing store stays small (as swarm).
-  const cam = Math.min(1920 / ctx.rect.w, 1080 / ctx.rect.h);
+  const cam = Math.min(stage.w / ctx.rect.w, stage.h / ctx.rect.h);
   const scale = Math.min((globalThis.devicePixelRatio || 1) * cam, MAX_BACKING / rect.w);
   canvas.width = Math.round(rect.w * scale);
   canvas.height = Math.round(rect.h * scale);

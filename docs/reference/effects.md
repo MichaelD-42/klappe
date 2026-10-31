@@ -1053,7 +1053,7 @@ const section: SectionModule = { transition: "push" };
 
 ## `irisRadius`
 
-`irisRadius(x, y)` returns the radius in pixels that covers the 1920 x 1080 frame from `(x, y)`: the distance to the farthest corner.
+`irisRadius(x, y)` returns the radius in pixels that covers the frame (1920 x 1080 by default) from `(x, y)`: the distance to the farthest corner.
 
 ## `irisHole`
 
@@ -1105,7 +1105,7 @@ Limits: the copy carries the computed styles of each node inline, which suits a 
 
 ## `magicBox`
 
-`magicBox(rect, stage)` turns a screen rect (`{ left, top, width, height }`) into stage pixels `{ x, y, w, h }`: it removes the stage's offset and undoes the scale that fits the 1920 x 1080 stage to the window.
+`magicBox(rect, stage)` turns a screen rect (`{ left, top, width, height }`) into stage pixels `{ x, y, w, h }`: it removes the stage's offset and undoes the scale that fits the frame (1920 x 1080 by default) stage to the window.
 
 ## `magicFit`
 
