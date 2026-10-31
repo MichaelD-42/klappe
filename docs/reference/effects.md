@@ -764,7 +764,7 @@ steps: [(tl, b) => b.show(tl)],
 
 ### Limits
 
-- The font size is the rect's width over the text's measured width, capped at the rect's height, so a short number is limited by the height and leaves side room. The text is centred; the clip is the glyph outlines, so letters with a descender hang below the middle.
+- The font size is the rect's width over the ink's measured width, capped by the rect's height, so a short number is limited by the height and leaves side room. The glyph ink (measured on a canvas, not the advance) is scaled and centred in the rect, so it touches the rect's sides, or top and bottom, to within a pixel or two. The clip is the glyph outlines.
 - A video plays muted and in a loop on the wall clock (under `data-k-ignore`) while its scene is in view; with reduced motion and in the self-test it holds its first frame.
 - A missing file shows IMAGE MISSING or VIDEO MISSING over the rect and a deck problem, as `image` and `video` do; `klappe test` writes it to `media/TODO.md`.
 

@@ -2,7 +2,6 @@ import { gsap } from "gsap";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
-import { measure } from "./measure";
 import { LOOP_VIDEO, missing } from "./media";
 
 export interface BigTypeOpts {
@@ -32,45 +31,46 @@ export function bigType(ctx: Ctx, opts: BigTypeOpts): BigTypeHandle {
   if (media && url === undefined)
     return fade(missing(ctx, rect, t(LOOP_VIDEO.test(media) ? "videoMissing" : "imageMissing", ctx.deck.lang), [key, alt].filter(Boolean).join(" — ")));
 
-  // Set at PROBE px, measured, then scaled to the rect's width; the rect's height caps it.
+  // The ink is measured at PROBE px on a canvas (the box of the glyphs, not their advance), then scaled to fill the rect
+  // and placed on its centre: the rect's width or height, whichever is tighter, is reached by the ink itself.
   const probe = ctx.html.appendChild(document.createElement("span"));
-  probe.textContent = text; // text, never HTML
-  Object.assign(probe.style, { ...font, position: "absolute", fontSize: `${PROBE}px`, lineHeight: "1", whiteSpace: "nowrap", visibility: "hidden" });
-  const w = measure(ctx, probe, true)?.w;
+  Object.assign(probe.style, { ...font, visibility: "hidden" });
+  const family = getComputedStyle(probe).fontFamily;
   probe.remove();
-  const size = Math.min(rect.h, w ? (rect.w / w) * PROBE : PROBE);
+  const g = document.createElement("canvas").getContext("2d")!;
+  g.font = `${font.fontWeight} ${PROBE}px ${family}`;
+  const m = g.measureText(text);
+  const [l, r, a, d] = [m.actualBoundingBoxLeft, m.actualBoundingBoxRight, m.actualBoundingBoxAscent, m.actualBoundingBoxDescent];
+  const k = Math.min(rect.w / (l + r), rect.h / (a + d)) || 1;
+  const size = PROBE * k;
 
   const b = ctx.html.appendChild(document.createElement("div"));
   Object.assign(b.style, { position: "absolute", left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` });
   gsap.set(b, { autoAlpha: 0 });
-  if (url === undefined) {
-    Object.assign(b.style, { ...font, display: "flex", alignItems: "center", justifyContent: "center", fontSize: `${size}px`, lineHeight: "1", whiteSpace: "nowrap", color: "var(--k-accent)" });
-    b.textContent = text;
-    return fade(b);
-  }
-  // The letters are an SVG clip path on the box, so an image and a video clip alike.
+  const svg = b.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+  svg.setAttribute("width", url === undefined ? String(rect.w) : "0"); // with media it only holds the clip path
+  svg.setAttribute("height", url === undefined ? String(rect.h) : "0");
   const id = `k-bigtype-${n++}`;
+  // With media the letters are a clip path on the box, so an image and a video clip alike; without, they are the fill.
+  svg.innerHTML = url === undefined ? "<text></text>" : `<clipPath id="${id}" clipPathUnits="userSpaceOnUse"><text></text></clipPath>`;
+  const clip = svg.querySelector("text")!;
+  clip.textContent = text; // text, never HTML
+  clip.setAttribute("x", String((rect.w - (l + r) * k) / 2 + l * k));
+  clip.setAttribute("y", String((rect.h - (a + d) * k) / 2 + a * k));
+  Object.assign(clip.style, { ...font, fontSize: `${size}px`, fill: "var(--k-accent)" });
+  if (url === undefined) return fade(b);
   Object.assign(b.style, { clipPath: `url(#${id})`, overflow: "hidden", background: "var(--k-bg)" });
   b.setAttribute("role", "img");
   b.setAttribute("aria-label", alt);
-  const svg = b.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
-  svg.setAttribute("width", "0");
-  svg.setAttribute("height", "0");
-  svg.innerHTML = `<clipPath id="${id}" clipPathUnits="userSpaceOnUse"><text text-anchor="middle" dominant-baseline="central"></text></clipPath>`;
-  const clip = svg.querySelector("text")!;
-  clip.textContent = text;
-  clip.setAttribute("x", String(rect.w / 2));
-  clip.setAttribute("y", String(rect.h / 2));
-  Object.assign(clip.style, { ...font, fontSize: `${size}px` });
-  const m = b.appendChild(document.createElement(LOOP_VIDEO.test(media!) ? "video" : "img"));
-  Object.assign(m.style, { width: "100%", height: "100%", objectFit: "cover", display: "block" });
-  if (m instanceof HTMLImageElement) Object.assign(m, { src: url, alt: "" });
+  const med = b.appendChild(document.createElement(LOOP_VIDEO.test(media!) ? "video" : "img"));
+  Object.assign(med.style, { width: "100%", height: "100%", objectFit: "cover", display: "block" });
+  if (med instanceof HTMLImageElement) Object.assign(med, { src: url, alt: "" });
   else {
     // Wall clock, not the timeline: it plays while its scene is in view; reduced motion and the self-test keep its first frame.
-    Object.assign(m, { src: url, muted: true, defaultMuted: true, loop: true, playsInline: true, preload: "auto" });
-    m.setAttribute("data-k-ignore", "");
+    Object.assign(med, { src: url, muted: true, defaultMuted: true, loop: true, playsInline: true, preload: "auto" });
+    med.setAttribute("data-k-ignore", "");
     const still = ctx.reducedMotion || new URLSearchParams(location.search).has("selftest");
-    ctx.onStep(({ scene }) => (scene === ctx.scene && !still ? void m.play().catch(() => {}) : m.pause()));
+    ctx.onStep(({ scene }) => (scene === ctx.scene && !still ? void med.play().catch(() => {}) : med.pause()));
   }
   return fade(b);
 }

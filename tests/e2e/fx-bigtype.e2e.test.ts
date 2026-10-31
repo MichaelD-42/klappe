@@ -30,26 +30,25 @@ for (const vp of [
   }, 120_000)
 
 // The bold theme's heading face is a wide one that ships with klappe, so the fit does not rest on Inter's width.
-test('a word fills the safe-area width in the heading font; a number fills its own rect', async () => {
-  const page = await open('#/a/word/1', '&theme=bold')
-  const width = (scene: string) =>
-    page.evaluate((s) => {
-      const el = document.querySelector<HTMLElement>(`div[data-scene="${s}"] div[style*="font-weight: 800"]`)!
-      const r = document.createRange()
-      r.selectNodeContents(el)
-      return { w: r.getBoundingClientRect().width, family: getComputedStyle(el).fontFamily, color: getComputedStyle(el).color }
-    }, scene)
-  const word = await width('word')
-  expect(word.w).toBeGreaterThan(1792 * 0.97)
-  expect(word.w).toBeLessThan(1792 * 1.03)
-  expect(word.family).toContain('Space Grotesk')
-  await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index + 2, 'cut'))
-  await settle(page)
-  const num = await width('number')
-  expect(num.w).toBeGreaterThan(1000 * 0.95)
-  expect(num.w).toBeLessThan(1000 * 1.03)
-  await page.close()
-})
+for (const theme of ['', '&theme=bold'])
+  test(`a word fills the safe-area width, a number its own rect (theme ${theme || 'default'})`, async () => {
+    const page = await open('#/a/word/1', theme)
+    const width = (scene: string) =>
+      page.evaluate((s) => {
+        const t = document.querySelector<SVGTextElement>(`div[data-scene="${s}"] svg text`)!
+        return { w: t.getBBox().width, h: t.getBBox().height, family: getComputedStyle(t).fontFamily }
+      }, scene)
+    const word = await width('word')
+    expect(word.w).toBeGreaterThan(1792 * 0.97)
+    expect(word.w).toBeLessThan(1792 * 1.04)
+    if (theme) expect(word.family).toContain('Space Grotesk')
+    await page.evaluate(() => window.klappe.stepper.goto(window.klappe.stepper.index + 2, 'cut'))
+    await settle(page)
+    const num = await width('number')
+    expect(num.w).toBeGreaterThan(1000 * 0.95)
+    expect(num.w).toBeLessThan(1000 * 1.04)
+    await page.close()
+  })
 
 test('media is clipped to the letters by an SVG clip path; the clip text fills the width', async () => {
   const page = await open('#/a/image/1')
@@ -60,8 +59,8 @@ test('media is clipped to the letters by an SVG clip path; the clip text fills t
     return { text: text.textContent, w: text.getBBox().width, img: !!box.querySelector('img'), label: box.getAttribute('aria-label') }
   })
   expect(r.text).toBe('Shipping')
-  expect(r.w).toBeGreaterThan(1792 * 0.95)
-  expect(r.w).toBeLessThan(1792 * 1.03)
+  expect(r.w).toBeGreaterThan(1792 * 0.97)
+  expect(r.w).toBeLessThan(1792 * 1.04)
   expect(r.img).toBe(true)
   expect(r.label).toBe('A red dot on blue')
   await page.close()
