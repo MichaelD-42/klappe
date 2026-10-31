@@ -25,14 +25,17 @@ export async function writeTheme(klappeDir, deckDir, { name, colors, logo, light
   const media = `media/${path.basename(logo)}`
   fs.copyFileSync(logo, path.join(deckDir, media))
   const title = /^title:\s*(.+?)\s*$/m.exec(fs.readFileSync(path.join(deckDir, 'deck.md'), 'utf8'))?.[1]?.replace(/^["']|["']$/g, '') ?? ''
-  const overlay = `import { image, text } from "klappe/fx";
+  // Effects start hidden: update shows them, as the documented example does.
+  const overlay = `import { gsap } from "gsap";
+import { image, text } from "klappe/fx";
 import type { OverlayModule } from "klappe/types";
 
 export default {
-  build: (ctx) => {
-    image(ctx, { href: ${JSON.stringify(media)}, alt: ${JSON.stringify(title ? `${title} logo` : 'Logo')}, rect: { x: 1680, y: 990, w: 176, h: 50 } });
-    text(ctx, { text: ${JSON.stringify(title)}, x: 64, y: 1000, w: 1200, size: 24, color: "--k-muted" });
-  },
+  build: (ctx) => ({
+    logo: image(ctx, { href: ${JSON.stringify(media)}, alt: ${JSON.stringify(title ? `${title} logo` : 'Logo')}, rect: { x: 1680, y: 990, w: 176, h: 50 } }).el,
+    footer: text(ctx, { text: ${JSON.stringify(title)}, x: 64, y: 1000, w: 1200, size: 24, color: "--k-muted" }).el,
+  }),
+  update: (_at, r) => void gsap.set([r.logo, r.footer], { autoAlpha: 1 }),
 } satisfies OverlayModule;
 `
   const target = path.join(deckDir, 'overlay.ts')
