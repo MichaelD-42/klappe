@@ -441,3 +441,9 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **A deck-kind review needs a `RUBRIC deck_arc` line.**
   - Why: every other rubric judges a scene or a file, so a deck with sound scenes and no through-line passed review. `.rubrics/deck_arc.md` reads the deck as the room hears it (`outline --story`); making the line mandatory means the arc is judged, not skipped.
   - The escape is the `unassessable` level (Minor): a deck with one scene, or with fewer than half its scenes carrying a story point (a catalog, a deck not yet given story points), is not marked `flat`. A diff that touches a few scenes is judged only on whether they fit the arc the rest already has.
+
+## 2026-10-31 (backlog batch 5)
+
+- **The e2e server has its own dependency cache, one per cwd.**
+  - Why: Vitest sets `NODE_ENV=test`, which Vite folds into the optimizer's config hash. A dev or `klappe test` server on the shared `node_modules/.vite` (development) and the e2e ones (test) re-optimized after each other, and `klappe test` in a temp cwd (the CLI tests) rewrote the e2e cache with its own aliases. A re-optimize mid-run is what answers 504 Outdated Optimize Dep.
+  - `tests/e2e/setup.ts` uses `node_modules/.vite-e2e-<hash of cwd>` (a throwaway dir under the system temp for a temp cwd) and waits for the optimizer's scan before it returns. Any other e2e test that starts its own Vite server gives it a `cacheDir` too.
