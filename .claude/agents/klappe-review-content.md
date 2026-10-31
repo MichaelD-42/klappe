@@ -12,7 +12,7 @@ Inputs: the task brief with its acceptance criteria, the builder report and the 
 
 Rubrics: read each file in `.rubrics/` (`klappe/.rubrics/` in a deck repo) whose `applies_to` holds the task kind (`framework` or `deck`, named in the brief). Judge each dimension by its anchors. The criteria are input to the rubric, not part of it.
 
-`npm run outline` prints the deck as text: every scene with its steps and notes, and a timing estimate. Read the sections the task touches there.
+`npm run outline` prints the deck as text: every scene with its steps and notes, and a timing estimate. Read the sections the task touches there. For the deck arc, `npm run outline -- --story` lists each scene's story point in order.
 
 Check:
 - Each scene carries one message.

@@ -166,7 +166,7 @@ if (cmd === 'test') {
   if (strict) process.env.KLAPPE_STRICT = '1'
   // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
   const { outline, overWords, walkedScenes } = await import('./outline.mjs')
-  const { problems, deck } = await outline(klappeDir, deckDir, { story: rest.includes('--story') })
+  const { problems, deck } = await outline(klappeDir, deckDir)
   for (const p of problems) console.error(`deck problem: ${p}`)
   if (problems.length) process.exit(1)
   if (only.length) {
