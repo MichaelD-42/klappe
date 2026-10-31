@@ -15,7 +15,10 @@ test('a running dev server picks up a new scene folder in a deck outside its roo
   fs.writeFileSync(path.join(deck, 'sections/10-a/10-b/scene.md'), '## B\n\n- one\n')
   const was = process.env.KLAPPE_DECK_DIR
   process.env.KLAPPE_DECK_DIR = deck // vite.config reads it when the server loads it
-  const server = await createServer({ configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)), server: { port: 0 }, logLevel: 'warn' })
+  // Its own dependency cache: another deck changes the config hash, and a re-optimise in the shared node_modules/.vite
+  // would pull the deps from under the e2e server the other tests use (a cold cache on CI).
+  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-watch-cache-'))
+  const server = await createServer({ configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)), cacheDir, server: { port: 0 }, logLevel: 'warn' })
   if (was === undefined) delete process.env.KLAPPE_DECK_DIR
   else process.env.KLAPPE_DECK_DIR = was
   const browser = await chromium.launch()
@@ -35,5 +38,6 @@ test('a running dev server picks up a new scene folder in a deck outside its roo
     await browser.close()
     await server.close()
     fs.rmSync(deck, { recursive: true })
+    fs.rmSync(cacheDir, { recursive: true, force: true })
   }
 }, 90_000)
