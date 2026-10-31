@@ -7,6 +7,7 @@ import { openDeck } from './pdf.mjs'
 // Renders the deck at url to the MP4 out: each step plays as it does live, camera flights and transitions included,
 // but every frame is a seek of GSAP's root timeline to the frame's time, so the video is the same each run. Then the
 // step's last frame holds for its auto time, else hold seconds. Frames go to the system ffmpeg as JPEGs on stdin.
+// The main talk alone, without the appendix; a ?cut= in url renders that cut.
 // Returns the frame count and the deck problems and page errors, for the terminal. ffmpeg writes <out>.part.mp4, renamed
 // onto out once it exits cleanly: a failure or an abort (signal, as on Ctrl-C) leaves an earlier export as it was.
 export async function exportVideo(url, out, { fps = 30, hold = 3, size = { width: 1920, height: 1080 }, signal } = {}) {
@@ -54,7 +55,7 @@ export async function exportVideo(url, out, { fps = 30, hold = 3, size = { width
     const shot = () => page.screenshot({ type: 'jpeg', quality: 90 })
     // at: the video time the step starts, exact. Frame n shows time n / fps, so rounding does not add up over the steps.
     let at = 0
-    for (const s of steps) {
+    for (const s of steps.filter((s) => !s.appendix)) {
       // Step 0 plays its canvas from the start; later steps play through the stepper, with their transition.
       // Returns the play's length: its tweens' end on the root timeline.
       const d = await page.evaluate(async (i) => {

@@ -32,3 +32,18 @@ test('a handout has one page per scene', async () => {
     fs.rmSync(path.dirname(out), { recursive: true })
   }
 })
+
+// A cut prints its own steps; the appendix prints last, after a page that names it.
+test('the PDF of a cut has its steps, then a page that names the appendix and the appendix steps', async () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-pdf-')), 'cut.pdf')
+  try {
+    const r = await exportPdf(`${inject('BASE_URL')}/?fixture=cuts&cut=short`, out)
+    expect(r.pages).toBe(6) // a/one 1-2, c/three 1, the appendix page, x/spare 1-2
+    expect(r.problems).toEqual([])
+    expect(fs.readFileSync(out, 'latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(6)
+    const handout = await exportPdf(`${inject('BASE_URL')}/?fixture=cuts&cut=short`, out, { handout: true })
+    expect(handout.pages).toBe(3)
+  } finally {
+    fs.rmSync(path.dirname(out), { recursive: true })
+  }
+})

@@ -53,3 +53,17 @@ test('klappe video without ffmpeg on PATH names it and fails', () => {
   expect(r.status).toBe(1)
   expect(r.stderr).toContain('klappe video needs ffmpeg on PATH')
 })
+
+// A cut renders fewer steps than the whole deck; neither renders the appendix.
+test.skipIf(missing.length)('a cut renders its own steps', async () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-video-')), 'deck.mp4')
+  try {
+    const opts = { fps: 10, hold: 0.2, size: { width: 320, height: 180 } }
+    const whole = await exportVideo(`${inject('BASE_URL')}/?fixture=cuts`, out, opts)
+    const cut = await exportVideo(`${inject('BASE_URL')}/?fixture=cuts&cut=short`, out, opts)
+    expect([whole.errors, cut.errors, cut.problems]).toEqual([[], [], []])
+    expect(cut.frames).toBeLessThan(whole.frames)
+  } finally {
+    fs.rmSync(path.dirname(out), { recursive: true })
+  }
+})

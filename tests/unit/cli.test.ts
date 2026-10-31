@@ -88,6 +88,29 @@ test('test stops before the browser on a deck problem, such as a duplicate scene
   expect(r.stdout).not.toContain('RUN'); // vitest never started
 }, 30_000);
 
+// --cut: outline prints the cut; an unknown cut stops pdf before a server starts.
+test('--cut picks a deck.md cut, and an unknown one stops the command', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  const files: Record<string, string> = {
+    'decks/x/deck.md': '---\ntitle: T\ncuts: { short: [a] }\n---\n',
+    'decks/x/sections/10-a/section.md': '# A\n',
+    'decks/x/sections/10-a/10-one/scene.md': '## One\n\n- One.\n',
+    'decks/x/sections/20-b/section.md': '# B\n',
+    'decks/x/sections/20-b/10-two/scene.md': '## Two\n\n- Two.\n',
+  };
+  for (const [f, text] of Object.entries(files)) {
+    mkdirSync(join(cwd, f, '..'), { recursive: true });
+    writeFileSync(join(cwd, f), text);
+  }
+  const r = cli(cwd, 'outline', '--deck', 'x', '--cut', 'short');
+  expect(r.status).toBe(0);
+  expect(r.stdout).toContain('# T, cut short (1 steps');
+  expect(r.stdout).not.toContain('## b:');
+  const bad = cli(cwd, 'pdf', '--deck', 'x', '--cut', 'nope');
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toContain('--cut needs a cut from deck.md cuts: short');
+}, 30_000);
+
 // shot --help rendered every scene of the deck (about 9 min): --help or -h on any command prints the usage and stops.
 test('--help after a command prints the usage, before it picks a deck or starts anything', () => {
   for (const args of [['shot', '--help'], ['test', '-h'], ['--help']]) {

@@ -144,7 +144,8 @@ async function startDeck(svg: Record<string, string>) {
   });
 
   // gsap: `klappe video` drives its root timeline and ticker frame by frame.
-  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router, gsap };
+  // t: `klappe pdf` names the appendix in the deck's language.
+  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router, gsap, t };
   const panel = showProblems(ui, problems, deck.meta.lang);
   late = (msg) => {
     problems.push(msg);
