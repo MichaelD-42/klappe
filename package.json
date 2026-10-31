@@ -8,6 +8,7 @@
     "build": "node bin/klappe.mjs build --deck demo",
     "pdf": "node bin/klappe.mjs pdf --deck demo",
     "shot": "node bin/klappe.mjs shot --deck demo",
+    "video": "node bin/klappe.mjs video --deck demo",
     "outline": "node bin/klappe.mjs outline --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e",

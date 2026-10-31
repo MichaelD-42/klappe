@@ -318,11 +318,11 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 
 ## Video export
 
-`npx klappe video [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080]` renders the deck to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`.
+`npm run video -- [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080]` renders the deck to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`. The file is written only when the export finishes: a failure or Ctrl-C leaves an earlier export as it was.
 
 Each step plays as it does live, in full motion: camera flights, whips and every section transition included. No frame is recorded in real time: each one is a seek of the timeline to the frame's time, so two runs give the same file and a slow machine gives the same video, only later. After its play, a step's last frame holds for its `auto` seconds, else for `--hold` (default 3). `--size` is the viewport; a deck `frame` other than 16:9 keeps its shape at that width.
 
-What moves on the wall clock holds still, as with reduced motion: video and aurora backgrounds, animated SVG files, a deck's own background loop, `mesh3d`, the `crt` decoration, the breathing `glow` and videos in scenes show one frame. A `timer` is not started, so it shows its full time; one with `until` shows the time left at the moment of the export. Online players (YouTube, Vimeo) run outside klappe, so they record however far they got: avoid them in a deck you export.
+What moves on the wall clock holds still, as with reduced motion: video and aurora backgrounds, animated SVG files, a deck's own background loop, `mesh3d`, the `crt` decoration, the breathing `glow` and videos in scenes show one frame. A `timer` is not started, so it shows its full time; one with `until` shows the time left at the moment of the export. Online players (YouTube, Vimeo) run outside klappe, so they record however far they got: avoid them in a deck you export. CSS animations hold their first frame and CSS transitions are not recorded exactly, so animate step content with GSAP on the timeline.
 
 ## Review mode
 

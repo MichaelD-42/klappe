@@ -28,6 +28,25 @@ test.skipIf(missing.length)('video renders each step by seeking, holds it, and e
   }
 })
 
+// An export stopped mid-render (Ctrl-C aborts the same way) leaves the earlier file as it was, and no partial one.
+test.skipIf(missing.length)('an aborted video leaves the earlier export and no partial file', async () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-video-')), 'deck.mp4')
+  fs.writeFileSync(out, 'earlier export')
+  const stop = new AbortController()
+  // Abort once ffmpeg has written the partial file: the render is under way. A long hold keeps it going.
+  const watch = setInterval(() => fs.existsSync(`${out}.part.mp4`) && stop.abort(), 20)
+  try {
+    const r = exportVideo(`${inject('BASE_URL')}/?fixture=video`, out, { fps: 10, hold: 600, size: { width: 320, height: 180 }, signal: stop.signal })
+    await expect(r).rejects.toThrow('interrupted')
+    expect(stop.signal.aborted).toBe(true)
+    expect(fs.readFileSync(out, 'utf8')).toBe('earlier export')
+    expect(fs.readdirSync(path.dirname(out))).toEqual(['deck.mp4'])
+  } finally {
+    clearInterval(watch)
+    fs.rmSync(path.dirname(out), { recursive: true })
+  }
+})
+
 // The CLI checks for ffmpeg before it starts a server or a browser.
 test('klappe video without ffmpeg on PATH names it and fails', () => {
   const r = spawnSync(process.execPath, [path.resolve('bin/klappe.mjs'), 'video', '--deck', 'demo'], { env: { PATH: '' }, encoding: 'utf8' })

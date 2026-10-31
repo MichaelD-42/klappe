@@ -56,11 +56,12 @@ test('--version prints the version from package.json', () => {
   expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
 });
 
-test('outline prints a fresh deck from init, and init adds the shot and outline scripts', () => {
+test('outline prints a fresh deck from init, and init adds the shot, video and outline scripts', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
   expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
   const scripts = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).scripts;
   expect(scripts.shot).toBe('node klappe/bin/klappe.mjs shot');
+  expect(scripts.video).toBe('node klappe/bin/klappe.mjs video');
   expect(scripts.outline).toBe('node klappe/bin/klappe.mjs outline');
   const r = cli(cwd, 'outline');
   expect(r.status).toBe(0);

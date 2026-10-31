@@ -77,6 +77,7 @@ if (cmd === 'init') {
     test: 'node klappe/bin/klappe.mjs test',
     pdf: 'node klappe/bin/klappe.mjs pdf',
     shot: 'node klappe/bin/klappe.mjs shot',
+    video: 'node klappe/bin/klappe.mjs video',
     outline: 'node klappe/bin/klappe.mjs outline',
     'klappe:sync': 'node klappe/bin/sync-claude.mjs',
   }
@@ -280,12 +281,18 @@ if (cmd === 'build') {
   const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server.listen()
   const out = path.resolve(arg('--out') ?? path.join('dist', `${id}.mp4`))
+  // Ctrl-C stops ffmpeg and the browser and drops the partial file, instead of leaving a short video at out.
+  const stop = new AbortController()
+  process.once('SIGINT', () => stop.abort())
   try {
-    const r = await exportVideo(server.resolvedUrls.local[0], out, { fps, hold, size: { width: +m[1], height: +m[2] } })
+    const r = await exportVideo(server.resolvedUrls.local[0], out, { fps, hold, size: { width: +m[1], height: +m[2] }, signal: stop.signal })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.frames} frames, ${(r.frames / fps).toFixed(1)} s.`)
     process.exitCode = r.errors.length ? 1 : 0
+  } catch (e) {
+    console.error(`klappe video: ${e.message.split('\n')[0]}`)
+    process.exitCode = stop.signal.aborted ? 130 : 1
   } finally {
     await server.close()
   }
