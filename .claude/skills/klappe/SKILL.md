@@ -132,7 +132,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
 - Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample data" label (`chart` with `sample: true` shows it).
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
-- Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
+- Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), place your own elements with `ctx.safe`, mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
 
 ## Work through a review
 
