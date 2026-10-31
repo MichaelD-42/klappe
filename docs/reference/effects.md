@@ -775,7 +775,7 @@ Catalog: section `364-titling` (`#/titling/lower-third/1`). A bar at the lower l
 ```ts
 import { lowerThird } from "klappe/fx";
 
-build: (ctx) => lowerThird(ctx, { name: "Ada Lovelace", role: "Analyst" }),
+build: (ctx) => lowerThird(ctx, { name: "Mira Okafor", role: "Analyst" }),
 steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
 ```
 
@@ -789,7 +789,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
 
 ## `endRoll`
 
-Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON) the `# source:` line of a `barRace` or `wordCloud` file, and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
+Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON), the `# source:` line of a `barRace` or `wordCloud` file, and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
 
 ```ts
 import { endRoll } from "klappe/fx";

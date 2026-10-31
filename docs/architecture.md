@@ -51,7 +51,7 @@ flowchart LR
 | Effects | `src/fx/` | Everything `klappe/fx` exports. An effect builds hidden DOM in `build` and returns a handle of step adders. Transitions live here too (`transitions.ts` and one file per heavy one, loaded on demand). |
 | Stepper and camera | `src/stepper.ts`, `src/camera.ts` | Moves between steps: queues presses, plays or seeks the canvas timeline, runs a transition when the canvas changes, and starts auto advance. The camera turns a rect into a world pose and a flight. |
 | Router, input, UI | `src/router.ts`, `src/input.ts`, `src/ui/`, `src/autoplay.ts` | The URL hash and history, keys, the overview, the selector, the problems panel and autoplay. Every manual jump is a cut. |
-| Speaker view | `src/speaker/` | The second window, opened with `?speaker=1`. The main window sends its state; the speaker window sends commands. |
+| Speaker view | `src/speaker/` | The second window, opened with `?speaker=1`. The main window sends its state; the speaker window sends commands. Rehearsal mode times each scene against the `src/plan.ts` estimate. |
 | Self-test | `src/selftest.ts` | Loaded only for `?selftest=walk` or `?selftest=ac`; reports to `window.klappe` for the e2e tests. |
 | Theme | `src/theme.ts`, `src/themes/` | Applies the deck's theme tokens (or `?theme=`), loads the bundled fonts, and holds the motion constants. |
 
@@ -112,7 +112,7 @@ Some things move on the wall clock, not with the steps: video and aurora backgro
 | `test` | Vitest's `e2e` project against a Vite server of the deck: the walk, the acceptance checks and the effect tests, in Playwright's Chromium. |
 | `pdf`, `shot` | A Vite server on a free port and Playwright: `openDeck` loads the deck with `?instant=1&reducedmotion=1` and no UI; `showStep` cuts to a step and waits for fonts and a painted frame. |
 | `video` | `bin/video.mjs`: `openDeck` with `?instant=0&reducedmotion=0&selftest=` (full motion, the backgrounds still, no self-test). GSAP's root timeline is paused and the ticker's clock frozen; each frame sets the root's time, so the stepper's own play (transition and flight) is seeked, not played. Wall-clock loops are held at their start each frame. JPEG frames go to the system `ffmpeg` on stdin (`image2pipe`). |
-| `outline` | No browser: Vite's `runnerImport` loads `src/deck/assemble.ts`, which parses the deck's Markdown. Scene modules are not loaded. |
+| `outline` | No browser: Vite's `runnerImport` loads `src/deck/assemble.ts`, which parses the deck's Markdown, and `src/plan.ts`, the timing estimate it shares with the speaker view. Scene modules are not loaded. |
 | `theme` | No browser: Vite's `runnerImport` loads `src/brand-theme.ts`, a pure derivation of every colour token from two brand colours (the contrast maths are `src/contrast.ts`, shared with the runtime check). `bin/theme.mjs` writes the file and the optional `overlay.ts`. |
 | `init` | Copies `template/` to `decks/<id>/` (a one-scene deck with `data/`, `media/`, `shared/`, `deck.css`, a README and `max-words: 12`), writes the scripts in `package.json`, a `tsconfig.json`, and copies the skill and agents (`sync-claude.mjs`). |
 

@@ -13,9 +13,9 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `bigType`: one word or number set to fill its rect edge to edge, optionally with a picture or video (`media`) showing through the letters. Catalog: `#/media/type-as-image/1`.
 - A deck repo's root `icons/` folder is shared by all its decks, as `themes/` is. `icon()` looks a name up in the deck's `icons/`, then the repo's, then Lucide.
 - `layout:` in `scene.md` frontmatter picks a named composition for the default renderer: `thirds` (text in the left third, media in the right two thirds), `full-bleed` (the scene's image fills the frame, the text a caption on a scrim at the bottom) and `big-number` (the first step's number set very large, the rest as a footnote under it). An unknown name, a `full-bleed` scene without an image or a `big-number` scene whose first step has no number is a deck problem. Catalog: `#/layouts/thirds/1`, `#/layouts/full-bleed/1`, `#/layouts/big-number/1`.
-- `klappe theme --name <name> --colors <hex>,<hex> [--light] [--logo <file>]`: derives a full theme file from two brand colours that passes the contrast rules and keeps the chart series apart for colour-blind readers (the built-in themes are now tested against the same check); a logo is copied to `media/` and set bottom right in a new `overlay.ts`.
+- `klappe theme --name <name> --colors <hex>,<hex> [--light] [--logo <file>] [--force]`: derives a full theme file from two brand colours that passes the contrast rules and generates the code colours too, and keeps the chart series apart for colour-blind readers (the built-in themes are now tested against the same check); a logo is copied to `media/` and set bottom right in a new `overlay.ts`, placed from the frame. An existing theme file is kept unless `--force`.
 - `section.ts` `tokens`: override `--k-*` tokens for one section, for example an inverted run between diagram sections. Its scenes and stage background follow, effects that read sizes in code too; the contrast rules measure the result and name the section. Catalog: `#/rhythm/inverted/1`.
-- Theme tokens `--k-radius`, `--k-stroke` and `--k-gap`: the corner radius of boxes, the weight of diagram lines and the gap between boxes in a laid-out element. Defaults are today's values, so no theme changes; `?theme=sharp` shows square corners, thin lines and wide gaps.
+- Theme tokens `--k-radius`, `--k-stroke` and `--k-gap`: the corner radius of boxes, the weight of diagram lines and the gap between boxes in a laid-out element. Defaults are today's values, so no theme changes; the demo's `sharp` theme (`?theme=sharp` in the klappe repo) shows square corners, thin lines and wide gaps.
 - `code` and code fences highlight Go, Rust, Java, Kotlin, C#, C, C++, Ruby, PHP, Swift, Dockerfile, TOML, XML, Markdown, diff and HCL (`go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`).
 - Markdown: a table in `scene.md` is a `compareTable`, one row per step; `✓` ticks, `✗` crosses, `~` is partly. Catalog: `#/table-card/compare-md/1`.
 - `compareTable` cell `"~"`: partly, a dash in `--k-warn`, spoken "partly". Catalog: `#/table-card/compare/2`.
@@ -52,6 +52,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- The stage covers the window and crops under 1 px, so a near-16:9 window no longer shows a 1 px sliver of the page beside it.
 - `klappe dev` takes `--port <n>` and `--strictPort`; it served on 5173 whatever it was given.
 - `shot --last` shoots a step target as named; it picked nothing for a step that was not its scene's last, and the old PNG stayed on disk.
 - `test --only` prints the scenes it walks, and stops before a browser starts when a target names no scene.

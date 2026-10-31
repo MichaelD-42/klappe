@@ -22,7 +22,7 @@ export default () => {
     },
     {
       "sections/10-a/10-name/scene.ts": {
-        build: (ctx: Ctx) => lowerThird(ctx, { name: "Ada Lovelace", role: "Analyst" }),
+        build: (ctx: Ctx) => lowerThird(ctx, { name: "Mira Okafor", role: "Analyst" }),
         steps: [(tl: gsap.core.Timeline, l: ReturnType<typeof lowerThird>) => l.show(tl), (tl: gsap.core.Timeline, l: ReturnType<typeof lowerThird>) => l.hide(tl)],
       },
       "sections/10-a/20-one/scene.ts": bar("data/one.csv"),

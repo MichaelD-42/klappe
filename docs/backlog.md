@@ -17,4 +17,9 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Deck components in Markdown: a deck registers a fence or trigger for its own helpers (the demo's `speakerProfile`, `planChip`), so `scene.md` can use them without `scene.ts`.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
 - klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
+- Safe area on ctx: effects read the deck's `safe-area` (today `bigType`, titling and the self-test each hard-code 64 and 48); one shared helper.
+- Named layouts on non-landscape frames: `thirds`, `full-bleed` and `big-number` assume a landscape frame with hard-coded 160 and 140 padding; derive it from the frame, or report a deck problem on a portrait one.
+- Video export scene filter: `klappe video --only <section>[/<scene>]`, as `test` has.
+- Shape-token lint by use, not by file: the allow list exempts whole files, and `setAttribute("stroke-width")` is not linted.
+- e2e startup races Vite's dependency re-optimizer ("Re-optimizing dependencies because vite config has changed" on every run; one full run failed 31 tests with 504 Outdated Optimize Dep). Warm or pin `optimizeDeps` in `tests/e2e/setup.ts`.
 - Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable.
