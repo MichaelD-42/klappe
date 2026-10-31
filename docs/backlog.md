@@ -9,7 +9,6 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Titling: a lower third (a name and role, or a quote's source) and an end roll of sources and thanks, built from the sources the deck's charts already record.
 - Composition presets: named layouts in `scene.md` frontmatter beyond the default column and 45/55 text-and-media split (a rule-of-thirds split, a full-bleed picture with a caption, a big number with a footnote). An agent picks a named layout more reliably than it places pixels.
 - Type as image: one word or number set to fill the frame, edge to edge, optionally with a picture or video showing through the letters. `shout`, `kpi` and `counter` stay at text sizes; no effect clips media to text.
-- Brand theme: from a logo and two brand colours, derive a full `--k-*` theme that passes the contrast rules. The logo and footer go in `overlay.ts`.
 - Deck cuts: one deck in several lengths (a 20- and a 45-minute cut that leave sections out) and a backup appendix outside the main flow, one jump away for Q&A. Today a re-cut means a copied deck.
 - Presenter ink: draw on the stage during the talk (a laser dot, and a pen that marks and fades), from the mouse or the speaker view. Live, so it sits under `data-k-ignore` and never on a timeline; clear it on the next step.
 - Icons in Markdown: `:icon-name:` on a list item in `scene.md` sets an icon with the step. Pairs with Text steps replace, not stack. Check first whether `image` already shows a `.svg` as a plain picture.

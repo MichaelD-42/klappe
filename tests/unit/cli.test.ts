@@ -132,3 +132,48 @@ test('init copies the template: deck.md with the common keys and a word cap, the
   const { overWords } = await import('../../bin/outline.mjs');
   expect(await overWords(join(__dirname, '../..'), deck)).toEqual(['#/intro/hello/1: 13 words > 12']);
 }, 60_000);
+
+// A deck repo with one deck, for `theme`.
+const themeRepo = () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  mkdirSync(join(cwd, 'decks', 'talk'), { recursive: true });
+  writeFileSync(join(cwd, 'decks', 'talk', 'deck.md'), '---\ntitle: Acme talk\n---\n');
+  writeFileSync(join(cwd, 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  return cwd;
+};
+
+test('theme writes the theme file and refuses to overwrite it without --force', () => {
+  const cwd = themeRepo();
+  const file = join(cwd, 'decks', 'talk', 'themes', 'acme.css');
+  const run = (...more: string[]) => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', ...more);
+  expect(run().status).toBe(0);
+  expect(readFileSync(file, 'utf8')).toContain('--colors #3366ff,#ff6633');
+  writeFileSync(file, 'mine');
+  const r = run();
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain('--force');
+  expect(readFileSync(file, 'utf8')).toBe('mine');
+  expect(run('--force', '--light').status).toBe(0);
+  expect(readFileSync(file, 'utf8')).toContain('--light');
+});
+
+test('theme rejects bad colours and logos', () => {
+  const cwd = themeRepo();
+  expect(cli(cwd, 'theme', '--deck', 'talk', '--name', 'a', '--colors', 'red,#fff').stderr).toContain('two hex colours');
+  expect(cli(cwd, 'theme', '--deck', 'talk', '--name', 'a', '--colors', '#fff,#000', '--logo', 'x.gif').stderr).toContain('.svg or .png');
+});
+
+test('theme --logo copies the logo and writes overlay.ts, but never overwrites one', () => {
+  const cwd = themeRepo();
+  const run = () => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', '--logo', 'logo.svg', '--force');
+  expect(run().status).toBe(0);
+  expect(existsSync(join(cwd, 'logo.svg'))).toBe(true);
+  expect(existsSync(join(cwd, 'decks', 'talk', 'media', 'logo.svg'))).toBe(true);
+  const overlay = join(cwd, 'decks', 'talk', 'overlay.ts');
+  expect(readFileSync(overlay, 'utf8')).toContain('"media/logo.svg"');
+  expect(readFileSync(overlay, 'utf8')).toContain('"Acme talk"');
+  writeFileSync(overlay, 'mine');
+  const r = run();
+  expect(readFileSync(overlay, 'utf8')).toBe('mine');
+  expect(r.stdout).toContain('satisfies OverlayModule');
+});

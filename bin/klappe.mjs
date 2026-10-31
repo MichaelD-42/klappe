@@ -19,6 +19,7 @@ const usage =
   '       klappe build|outline|init [--deck <id>]\n' +
   '       klappe pdf [--deck <id>] [--handout]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
+  '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
   '       klappe --version'
 // --help on a command too: shot took it for nothing and rendered the whole deck.
@@ -26,7 +27,7 @@ if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
   console.log(usage)
   process.exit(0)
 }
-if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init', 'theme'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
 }
@@ -121,6 +122,20 @@ const deckDir = path.join(decksDir, id)
 if (!fs.existsSync(deckDir)) {
   console.error(`Deck not found: ${deckDir}`)
   process.exit(1)
+}
+
+if (cmd === 'theme') {
+  // Colour 1 is the accent and sets the hue of the page; colour 2 is the second accent. Dark unless --light.
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const { writeTheme } = await import('./theme.mjs')
+  try {
+    const opts = { name: arg('--name'), colors: arg('--colors'), logo: arg('--logo'), light: rest.includes('--light'), force: rest.includes('--force') }
+    for (const line of await writeTheme(klappeDir, deckDir, opts)) console.log(line)
+    process.exit(0)
+  } catch (e) {
+    console.error(e.message)
+    process.exit(1)
+  }
 }
 
 process.env.KLAPPE_DECK_DIR = deckDir

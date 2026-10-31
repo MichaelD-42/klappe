@@ -24,6 +24,12 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-frame-w`, `--k-frame-h` | the stage size in px, set by klappe from `deck.md` `frame` (default 1920 and 1080). Read them in `deck.css`; a theme does not set them. |
 | `--k-scrim` | the layer a `scrim` lays over a picture: `#000` under light text, `#fff` in a light theme |
 
+## Brand theme
+
+`klappe theme --deck <id> --name <name> --colors <hex1>,<hex2> [--light] [--logo <file>] [--force]` writes `decks/<id>/themes/<name>.css` from two brand colours; set `theme: <name>` in `deck.md` to use it. Colour 1 becomes `--k-accent` and sets the hue of the page (`--k-bg`, `--k-surface`, `--k-fg`, `--k-muted`, `--k-line`); colour 2 becomes `--k-accent-2`. The page is dark, or light with `--light` (a warm or grey brand hue gives a neutral cool white, never cream). Each brand colour keeps its hue and moves in lightness only as far as the contrast rules below need. `ok`, `warn` and `bad` are green, amber and red nudged the same way. The six series start from the accent and take the hues farthest apart for protanopia, deuteranopia and tritanopia; the code colours are nudged to 4.5:1 on the panel. The header comment of the file names the inputs, so a re-run gives the same file. The file is not overwritten without `--force`.
+
+`--logo <file.svg|png>` copies the file to `decks/<id>/media/` and, if the deck has no `overlay.ts`, writes one with the logo bottom right and the deck title as a footer (the [overlay.ts](deck-format.md#overlayts) shape). An existing `overlay.ts` is never touched: the command prints the `build()` to merge in. Raise `safe-area` to keep scenes clear of the logo.
+
 ## Which theme is used
 
 Set `theme: <name>` in `deck.md`. The name is looked up in this order, and the first match wins:
