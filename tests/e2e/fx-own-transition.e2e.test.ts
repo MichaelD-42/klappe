@@ -84,3 +84,36 @@ test('an own transition without a reveal label is a problem naming the section a
   expect(r.problems).toEqual([expect.stringContaining('section c')])
   await page.close()
 })
+
+// The transition's layer is one node, reused; seeking the timeline to the middle, to 0 and to the middle again gives the same pose.
+test('an own transition seeks like it plays and reuses its layer', async () => {
+  const page = await open('#/a/one/1')
+  const r = await page.evaluate(async () => {
+    const k = window.klappe
+    const pose = () => {
+      const bar = document.querySelector('[data-k-wipe]') as HTMLElement
+      return [getComputedStyle(bar).opacity, bar.style.transform, getComputedStyle(k.canvases[1].el as HTMLElement).opacity].join('|')
+    }
+    const forward = k.stepper.next()
+    await new Promise((r) => requestAnimationFrame(r))
+    const tl = k.stepper.running[0]
+    tl.pause().progress(0.5)
+    const first = pose()
+    tl.progress(0)
+    const start = pose()
+    tl.progress(0.5)
+    const again = pose()
+    tl.play()
+    await forward
+    const ended = pose()
+    await k.stepper.prev()
+    await k.stepper.next()
+    return { first, start, again, ended, bars: document.querySelectorAll('[data-k-wipe]').length }
+  })
+  expect(r.again).toBe(r.first)
+  expect(r.start).not.toBe(r.first)
+  expect(r.first.startsWith('1|')).toBe(true)
+  expect(r.ended.startsWith('0|')).toBe(true)
+  expect(r.bars).toBe(1)
+  await page.close()
+})

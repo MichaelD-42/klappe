@@ -139,18 +139,24 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `zoomTarget` names a ref on the old canvas for `transition: "zoom"`.
 - `overviewLabel` replaces the section's title in the overview: the row title and the prefix of a repeated scene title.
 - `transitionOptions` passes extra options to the transition, for example `{ shards: 20 }`; an own function gets them as its third argument.
-- An own transition is a function `(from, to, opts) => timeline` (type `OwnTransition` from `klappe/types`): `from` and `to` are the old and the new canvas (`.el` is what to show, hide or move), and the GSAP timeline it returns must end with `from.el` hidden and `to.el` shown, and carry a label `reveal` where the first step of the new section starts (`addLabel("reveal")`; at 0 for a transition that shows the new canvas at once). Only the timeline moves things: no wall clock, so `klappe video` and the seek see the same frames. A function without a `reveal` label is a deck problem naming the section and plays a `fade`; so does one that throws. With reduced motion an own transition plays a `fade`, as the intense built-ins do. Colours from `--k-*` tokens only. Example, a bar in the accent colour that sweeps over the frame (catalog: `#/tr-own/own-card/1`):
+- An own transition is a function `(from, to, opts) => timeline` (type `OwnTransition` from `klappe/types`). klappe calls it once per forward move onto this section's canvas, not at load. `from` and `to` are the old and the new canvas: `.el` is what to show, hide or move, `.world` the camera's layer inside it. `opts` is `transitionOptions`, plus `target` when `zoomTarget` is set. The GSAP timeline it returns must end with `from.el` hidden and `to.el` shown, and carry a label `reveal` where the first step of the new section starts: `addLabel("reveal")`, at 0 for a transition that shows the new canvas at once. `to.el` must be shown by then. Only the timeline moves things (no wall clock), so `klappe video` and a seek see the same frames. A layer the function adds, such as the bar below, is found or made under `from.el.parentElement` by a `data-k-*` attribute, so the next call reuses it; the timeline shows and hides it with tweens or `.set`, and nothing removes it. A function without a `reveal` label is a deck problem naming the section and plays a `fade`; so does one that throws (the error is logged). With reduced motion an own transition is not called: a `fade` plays. Colours from `--k-*` tokens only. Example, a bar in the accent colour that sweeps over the frame (catalog: `#/tr-own/own-card/1`):
 
 ```ts
 const wipe: OwnTransition = (from, to) => {
-  const bar = from.el.parentElement!.appendChild(document.createElement("div"));
-  Object.assign(bar.style, { position: "absolute", inset: "0", background: "var(--k-accent)" });
+  const back = from.el.parentElement!;
+  let bar = back.querySelector<HTMLElement>(":scope > [data-k-wipe]");
+  if (!bar) {
+    bar = back.appendChild(document.createElement("div"));
+    bar.dataset.kWipe = "";
+    Object.assign(bar.style, { position: "absolute", inset: "0", zIndex: "2", background: "var(--k-accent)" });
+    gsap.set(bar, { autoAlpha: 0 });
+  }
   return gsap.timeline()
-    .fromTo(bar, { xPercent: -100 }, { xPercent: 0, duration: 0.4 })
+    .fromTo(bar, { xPercent: -100, autoAlpha: 1 }, { xPercent: 0, duration: 0.4 })
     .set(from.el, { autoAlpha: 0 }).set(to.el, { autoAlpha: 1 })
     .addLabel("reveal")
     .to(bar, { xPercent: 100, duration: 0.4 })
-    .call(() => bar.remove());
+    .set(bar, { autoAlpha: 0 });
 };
 export default { transition: wipe } satisfies SectionModule;
 ```

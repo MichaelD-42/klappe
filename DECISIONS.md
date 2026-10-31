@@ -448,3 +448,8 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **The e2e server has its own dependency cache, one per cwd.**
   - Why: Vitest sets `NODE_ENV=test`, which Vite folds into the optimizer's config hash. A dev or `klappe test` server on the shared `node_modules/.vite` (development) and the e2e ones (test) re-optimized after each other, and `klappe test` in a temp cwd (the CLI tests) rewrote the e2e cache with its own aliases. A re-optimize mid-run is what answers 504 Outdated Optimize Dep.
   - `tests/e2e/setup.ts` uses `node_modules/.vite-e2e-<hash of cwd>` (a throwaway dir under the system temp for a temp cwd) and waits for the optimizer's scan before it returns. Any other e2e test that starts its own Vite server gives it a `cacheDir` too.
+
+## 2026-10-31
+
+- **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**
+  - Why: klappe cannot know how intense a deck's own motion is, so reduced motion treats it like the intense built-ins. A function without `reveal` (or that throws) must not fail the deck mid-talk: the move still lands with a fade, and the problem names the section.
