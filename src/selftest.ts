@@ -497,7 +497,8 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     if (!selector.isOpen) return ["S did not open the selector"];
     const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector button")];
     const titles = labels().map((b) => b.textContent);
-    const want = deck.sections.map((s: any) => s.title);
+    // The appendix carries klappe's word before its title.
+    const want = deck.sections.map((s: any) => (s.appendix ? `${t("appendix", deck.meta.lang)} · ${s.title}` : s.title));
     const bad = [titles.join("|") !== want.join("|") && `buttons [${titles}], want [${want}]`];
     for (const [k, s] of deck.sections.entries()) {
       if (!selector.isOpen) key("s");

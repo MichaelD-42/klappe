@@ -19,7 +19,7 @@ export class Selector extends OverlayPanel {
     for (const s of this.deck.sections) {
       const first = this.steps.findIndex((a) => a.section === s.id);
       if (first < 0) continue; // a section without steps has nowhere to go
-      const b = button(s.title, () => this.pick(() => this.go(first)));
+      const b = button(s.appendix ? `${t("appendix", this.deck.meta.lang)} · ${s.title}` : s.title, () => this.pick(() => this.go(first)));
       if (s.id === here) b.setAttribute("aria-current", "true");
       body.append(b);
     }

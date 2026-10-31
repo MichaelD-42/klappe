@@ -45,9 +45,22 @@ export async function showStep(page, i, at) {
 
 const escape = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 
-// The page before the appendix: its name, large, on the deck's dark.
-const appendixPage = (label, W, H) =>
-  `<div style="width: ${W}px; height: ${H}px; display: grid; place-items: center; background: #1b1d22; color: #e6e8ec; font: 600 96px system-ui, sans-serif;">${escape(label)}</div>`
+// The page before the appendix, shot on the deck page: klappe's word for it in the deck's language, set in the theme's
+// heading font and colours.
+async function appendixShot(page) {
+  await page.evaluate(async () => {
+    const el = document.body.appendChild(document.createElement('div'))
+    el.id = 'k-pdf-appendix'
+    el.textContent = window.klappe.t('appendix', window.klappe.deck.meta.lang)
+    Object.assign(el.style, { position: 'fixed', inset: '0', zIndex: '2147483647', display: 'grid', placeItems: 'center',
+      background: 'var(--k-bg)', color: 'var(--k-fg)', font: '600 var(--k-size-title) var(--k-font-heading)' })
+    await document.fonts.ready
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+  })
+  const shot = (await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64')
+  await page.evaluate(() => document.getElementById('k-pdf-appendix').remove())
+  return shot
+}
 
 // One handout page: the scene's last step, its title, and the notes as paragraphs.
 export function handoutPage({ shot, title, notes }) {
@@ -71,7 +84,8 @@ export async function exportPdf(url, out, { handout = false } = {}) {
     const steps = await page.evaluate(() => window.klappe.steps)
     const picked = handout ? steps.filter((s, i) => steps[i + 1]?.scene !== s.scene) : steps
     const shots = []
-    for (const s of picked) {
+    for (const [k, s] of picked.entries()) {
+      if (!handout && s.appendix && !picked[k - 1]?.appendix) shots.push(await appendixShot(page))
       await showStep(page, s.index)
       shots.push((await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64'))
     }
@@ -84,18 +98,17 @@ export async function exportPdf(url, out, { handout = false } = {}) {
       ),
     }))
 
-    const first = picked.findIndex((s) => s.appendix) // -1: no appendix
     const sheet = await browser.newPage()
     await sheet.setContent(
       handout
         ? `<style>${HANDOUT_CSS}</style>` +
             picked.map((s, k) => handoutPage({ shot: shots[k], ...scenes[s.scene], title: `${s.appendix ? `${label}: ` : ''}${scenes[s.scene].title}` })).join('')
-        : `<style>@page { size: ${W}px ${H}px; margin: 0; } body { margin: 0; } img { display: block; width: ${W}px; height: ${H}px; } body > * + * { break-before: page; }</style>` +
-            shots.map((s, k) => `${k === first ? appendixPage(label, W, H) : ''}<img src="data:image/jpeg;base64,${s}">`).join(''),
+        : `<style>@page { size: ${W}px ${H}px; margin: 0; } body { margin: 0; } img { display: block; width: ${W}px; height: ${H}px; } img + img { break-before: page; }</style>` +
+            shots.map((s) => `<img src="data:image/jpeg;base64,${s}">`).join(''),
     )
     fs.mkdirSync(path.dirname(out), { recursive: true })
     await sheet.pdf({ path: out, preferCSSPageSize: true, printBackground: true })
-    return { pages: picked.length + (!handout && first >= 0 ? 1 : 0), problems, errors }
+    return { pages: shots.length, problems, errors }
   } finally {
     await browser.close()
   }

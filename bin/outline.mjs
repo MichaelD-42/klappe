@@ -57,8 +57,9 @@ export function walkedScenes(deck, targets) {
 // appendix out: it is not part of the talk.
 export async function outline(klappeDir, deckDir, { story = false, cut = null } = {}) {
   const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, sceneSeconds }, LANGS } = await readDeck(klappeDir, deckDir, cut)
-  const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
-  if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
+  const raw = parseFrontmatter(files['deck.md'] ?? '').data.duration
+  if (raw !== undefined && !(typeof raw === 'number' && raw > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
+  const target = deck.meta.duration // a cut's own duration, else the deck's
 
   if (story) {
     const lines = deck.sections.flatMap((s) => s.scenes.map((c) => `#/${s.id}/${c.id}: ${c.story ?? '(no story point)'}`))

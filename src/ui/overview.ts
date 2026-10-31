@@ -69,7 +69,8 @@ export class Overview extends OverlayPanel {
       if (!copies.has(c)) copies.set(c, endState(c));
       const row = document.createElement("section");
       row.className = "k-ov-row";
-      row.append(Object.assign(document.createElement("h3"), { className: "k-ov-caption", textContent: sectionLabel(s) }));
+      const caption = s.appendix ? `${t("appendix", this.deck.meta.lang)} · ${sectionLabel(s)}` : sectionLabel(s);
+      row.append(Object.assign(document.createElement("h3"), { className: "k-ov-caption", textContent: caption }));
       const cards = document.createElement("div");
       cards.className = "k-ov-cards";
 

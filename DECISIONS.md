@@ -460,7 +460,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why every cut keeps it: the appendix is backup for the questions, and a short cut needs it more. A cut that should drop a backup section can make it a normal section and leave it out.
 
 - **`Q` jumps to the appendix and back.**
-  - Why `Q`: Q&A, and it was free in the deck, the speaker view and the review window. Escape stays "close a panel"; giving it a second meaning would make closing the overview in the appendix jump back. The same key goes back to the step the talk was on (the first step if the deck opened in the appendix), as a cut.
+  - Why `Q`: Q&A, and it was free in the deck, the speaker view and the review window; the two windows forward it to the deck. Escape stays "close a panel"; giving it a second meaning would make closing the overview in the appendix jump back. The same key goes back to the step the talk was on (the first step if the deck opened in the appendix), as a cut.
 
 - **A deep link into a section the active cut leaves out is a deck problem and opens at the cut's first step.**
   - Why: the link is stale for this cut (a link from the full talk's notes, a bookmark); the router already falls back to the first step for an unknown section. Silently showing the first step would hide the mistake; adding the section back would break the cut. The problem names the section and the cut.

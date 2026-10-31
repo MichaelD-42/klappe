@@ -59,6 +59,38 @@ test('the speaker counter counts the main talk; in the appendix it counts the ap
   await context.close()
 })
 
+// The rehearsal of a cut: its own record, its own duration, and the appendix outside the total.
+test('the rehearsal under a cut keeps its own record, against the cut\'s duration, without the appendix', async () => {
+  const context = await browser.newContext()
+  const main = await context.newPage()
+  await main.goto(`${inject('BASE_URL')}/?fixture=cuts&cut=short#/a/one/1`)
+  await main.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
+  const speaker = await context.newPage()
+  await speaker.goto(`${inject('BASE_URL')}/?fixture=cuts&cut=short&speaker=1`)
+  await speaker.waitForFunction(() => window.klappe?.speakerView, undefined, { timeout: 30_000 })
+  await expect.poll(() => speaker.locator('.k-sp-progress').textContent()).toBe('1 / 3')
+  await speaker.keyboard.press('p')
+  await speaker.keyboard.press('q')
+  await expect.poll(() => speaker.locator('.k-sp-progress').textContent()).toBe('Appendix 1 / 2')
+  await speaker.waitForTimeout(1500)
+  await speaker.keyboard.press('p')
+  const keys = await speaker.evaluate(() => Object.keys(localStorage).filter((k) => k.includes(':rehearsal')))
+  expect(keys).toHaveLength(1)
+  expect(keys[0]).toMatch(/:rehearsal:cut:short$/)
+  expect(await speaker.locator('.k-sp-plan-total').textContent()).toMatch(/00:00 \/ 10:00$/)
+  await context.close()
+})
+
+// The overview and the section list tag the appendix with klappe's word, whatever the section is titled.
+test('the overview and the section list mark the appendix', async () => {
+  const page = await open('', '', 0)
+  await page.keyboard.press('s')
+  expect(await page.locator('.k-selector .k-btn').allTextContents()).toEqual(['A', 'B', 'C', 'Appendix · Backup'])
+  await page.keyboard.press('o')
+  expect(await page.locator('.k-ov-caption').allTextContents()).toEqual(['A', 'B', 'C', 'Appendix · Backup'])
+  await page.close()
+})
+
 test('?cut= plays the cut: next skips the left-out section into the next one, with that section\'s transition', async () => {
   const page = await open('&cut=short', '#/a/one/2', 1)
   const kinds = await page.evaluate(async () => {

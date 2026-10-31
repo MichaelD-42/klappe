@@ -60,14 +60,16 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const timerButton = button(t("timer", lang), () => send("timer"));
   buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), timerButton);
 
-  // Rehearsal: the time per scene against the plan, kept in localStorage per deck (the channel name has the path and title).
+  // Rehearsal: the time per scene against the plan, kept in localStorage per deck (the channel name has the path and title)
+  // and per deck cut, so the runs of a short and a long cut do not overwrite each other.
   let storage: Storage | undefined;
   try {
     storage = localStorage;
   } catch {
     // storage is blocked: rehearsal works for this session only
   }
-  const rec = rehearsal(`${channelName(deck.meta.title, location.pathname)}:rehearsal`, () => Date.now(), storage);
+  const cut = new URLSearchParams(location.search).get("cut");
+  const rec = rehearsal(`${channelName(deck.meta.title, location.pathname)}:rehearsal${cut === null ? "" : `:cut:${cut}`}`, () => Date.now(), storage);
   const rehearseButton = button(t("rehearse", lang), () => toggleRehearsal());
   const rehearseRow = el("div", "k-sp-buttons");
   rehearseRow.append(rehearseButton, button(t("resetTimes", lang), () => (rec.reset(), showPlan())));
@@ -90,7 +92,8 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     rehearseButton.setAttribute("aria-pressed", String(rec.on));
     rehearseButton.classList.toggle("k-on", rec.on);
     const rows = deck.sections.flatMap((s) => s.scenes.filter((c) => times[`${s.id}/${c.id}`] > 0).map((c) => row(c.title, times[`${s.id}/${c.id}`], sceneSeconds(c))));
-    const spent = Object.values(times).reduce((n, s) => n + s, 0);
+    // The total against duration is the talk's: time in the appendix is not part of it.
+    const spent = deck.sections.filter((s) => !s.appendix).flatMap((s) => s.scenes.map((c) => times[`${s.id}/${c.id}`] ?? 0)).reduce((n, s) => n + s, 0);
     const target = deck.meta.duration;
     if (rows.length && target) rows.push(row(t("total", lang), spent, target * 60, true));
     planLabel.hidden = !rows.length;

@@ -80,11 +80,17 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   if (tempo === undefined) problems.push("deck.md: tempo is slow, normal or fast");
   const frame = FRAMES[String(data.frame ?? "16:9")];
   if (!frame) problems.push("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
+  // A cut is its list of section ids, or { sections, duration } for its own target length.
   const c = data.cuts;
-  const cuts = c && typeof c === "object" && !Array.isArray(c) && Object.values(c).every(Array.isArray)
-    ? Object.fromEntries(Object.entries(c).map(([k, ids]) => [k, (ids as unknown[]).map(String)]))
-    : undefined;
-  if (c !== undefined && !cuts) problems.push("deck.md: cuts needs { <name>: [<section id>, …] }, for example { short: [intro, demo] }");
+  const isMap = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+  const cut = (v: unknown) => {
+    const { sections, duration } = isMap(v) ? v : { sections: v, duration: undefined };
+    if (!Array.isArray(sections) || (duration !== undefined && !(typeof duration === "number" && duration > 0))) return undefined;
+    return { sections: sections.map(String), ...(duration !== undefined && { duration }) };
+  };
+  const cuts = isMap(c) && Object.values(c).every(cut) ? Object.fromEntries(Object.entries(c).map(([k, v]) => [k, cut(v)!])) : undefined;
+  if (c !== undefined && !cuts)
+    problems.push("deck.md: cuts needs { <name>: [<section id>, …] } or { <name>: { sections: […], duration: <minutes> } }");
   return {
     meta: {
       title,

@@ -4,5 +4,6 @@ lang: en
 theme: calm
 intensity: calm
 confidential: false
-cuts: { story: [opening, value-stream] }
+duration: 180
+cuts: { story: { sections: [opening, value-stream], duration: 8 } }
 ---

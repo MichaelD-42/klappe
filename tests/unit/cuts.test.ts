@@ -30,13 +30,20 @@ describe("deck.md cuts", () => {
       cuts: { short: ["a", "c"], long: ["a", "b, c"] },
     });
   });
-  it("reads cuts and reports a bad one", () => {
-    expect(toDeckMeta({ title: "x", cuts: { short: ["a", "c"] } }).meta.cuts).toEqual({ short: ["a", "c"] });
+  it("reads cuts as lists or with their own duration, and reports a bad one", () => {
+    const { data } = parseFrontmatter("---\ncuts: { short: { sections: [a, c], duration: 20 }, long: [a, b, c] }\n---\n");
+    expect(toDeckMeta({ title: "x", ...data }).meta.cuts).toEqual({ short: { sections: ["a", "c"], duration: 20 }, long: { sections: ["a", "b", "c"] } });
     expect(toDeckMeta({ title: "x" }).meta.cuts).toBeUndefined();
-    for (const bad of [["a"], { short: "a" }, "short"]) {
+    for (const bad of [["a"], { short: "a" }, "short", { short: { sections: "a" } }, { short: { sections: ["a"], duration: -5 } }]) {
       const { meta, problems } = toDeckMeta({ title: "x", cuts: bad });
       expect(meta.cuts).toBeUndefined();
-      expect(problems).toContain("deck.md: cuts needs { <name>: [<section id>, …] }, for example { short: [intro, demo] }");
+      expect(problems).toContain("deck.md: cuts needs { <name>: [<section id>, …] } or { <name>: { sections: […], duration: <minutes> } }");
+    }
+  });
+  it("reports a cut that keeps no section of the talk", () => {
+    for (const cut of ["[]", "[x]"]) {
+      const { problems } = assembleDeck({ ...FILES, "deck.md": `---\ntitle: T\ncuts: { qa: ${cut} }\n---\n` }, {});
+      expect(problems).toEqual(["deck.md: cut 'qa' keeps no section of the talk, only the appendix"]);
     }
   });
   it("reports a section id a cut names that the deck lacks", () => {
@@ -92,7 +99,7 @@ describe("cutDeck", () => {
 
 function deckDir() {
   const dir = mkdtempSync(join(tmpdir(), "cuts-"));
-  const files = { ...FILES, "deck.md": "---\ntitle: T\nduration: 1\ncuts: { short: [a, c] }\n---\n" };
+  const files = { ...FILES, "deck.md": "---\ntitle: T\nduration: 5\ncuts: { short: { sections: [a, c], duration: 1 }, plain: [a, c] }\n---\n" };
   for (const [f, text] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, f)), { recursive: true });
     writeFileSync(join(dir, f), text);
@@ -112,8 +119,10 @@ describe("outline --cut", () => {
       "## c: C (1 steps, about 1 min)",
       "## x: Backup (appendix, 1 steps, about 1 min)",
     ]);
+    // A cut without its own duration is judged against the deck's.
+    expect((await outline(klappeDir, dir, { cut: "plain" })).text.split("\n")[0]).toBe("# T, cut plain (3 steps, about 1 min; target 5 min, 4 min under)");
     expect((await outline(klappeDir, dir, { cut: "nope" })).problems).toEqual([
-      "cut 'nope': deck.md has no such cut (short); playing the whole deck",
+      "cut 'nope': deck.md has no such cut (short, plain); playing the whole deck",
     ]);
   });
 });

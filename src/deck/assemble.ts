@@ -64,8 +64,10 @@ export function assembleDeck(
     });
   }
   sections.sort(byOrder);
-  for (const [name, ids] of Object.entries(meta.cuts ?? {}))
+  for (const [name, { sections: ids }] of Object.entries(meta.cuts ?? {})) {
     for (const id of ids) if (!sections.some((s) => s.id === id)) problems.push(`deck.md: cut '${name}' names no section '${id}'`);
+    if (!sections.some((s) => !s.appendix && ids.includes(s.id))) problems.push(`deck.md: cut '${name}' keeps no section of the talk, only the appendix`);
+  }
 
   for (const [kind, ids] of [
     ["section", sections.map((s) => s.id)],

@@ -1,11 +1,11 @@
 import { assembleDeck } from "../assemble";
 
-// Three sections, a cut "short" of two (b left out) and an appendix section between them in folder order, which plays last.
+// Three sections, a cut "short" of two (b left out) with its own 10 minutes and an appendix section between them in folder order, which plays last.
 // c enters through a blackout, so the cut shows that the entered section's transition plays.
 export default () =>
   assembleDeck(
     {
-      "deck.md": "---\ntitle: Fixture\ncuts: { short: [a, c] }\n---\n",
+      "deck.md": "---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 } }\n---\n",
       "sections/10-a/section.md": "# A\n",
       "sections/10-a/10-one/scene.md": "## One\n\n- First.\n- Second.\n",
       "sections/15-x/section.md": "---\nappendix: true\n---\n# Backup\n",

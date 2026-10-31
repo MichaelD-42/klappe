@@ -39,11 +39,17 @@ Frontmatter keys:
 - `frame`: the stage's shape: `16:9` (default, 1920x1080 scene px), `4:3` (1440x1080), `1:1` (1080x1080) or `9:16` (1080x1920, vertical). Scene frames, the camera, backgrounds, the overlay, transitions, the overview cards, `shot`, `pdf` and the safe-area check follow it, and full-frame picture prompts in `media/TODO.md` name it. Landscape frames stay 1080 high, so text sizes read the same. Effects and `scene.ts` coordinates are in scene px: a scene written for 16:9 needs its positions redone for another frame; use `ctx.rect.w` and `ctx.rect.h` rather than 1920 and 1080. Another value is a deck problem and gives 16:9.
 - `tempo`: `slow`, `normal` (default) or `fast`. Scales the step fade (0.6 s), the camera flight (1.6 s) and the `autoplay` hold (2.5 s) by 1.4, 1 or 0.75: a slower board talk, a quicker demo day. Effects with their own fixed times, and your own tweens in `scene.ts`, keep their durations.
 - `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
-- `cuts`: shorter talks from the same deck, by name, each the section ids it keeps: `cuts: { short: [opening, results], long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
+- `cuts`: shorter talks from the same deck, by name, each the section ids it keeps, or the ids and its own `duration`: `cuts: { short: { sections: [opening, results], duration: 20 }, long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
 
 ## Cuts and the appendix
 
-One deck in several lengths: `deck.md` `cuts` names each cut and the sections it keeps. `?cut=<name>` in the URL plays that cut: its sections in deck order, the others left out as if parked. Without `?cut`, the whole deck plays. A cut moves nothing: every scene keeps its place on its canvas, so a `place()` that reads another scene's rect and a `shared-canvas` group with a section cut out of the middle lay out as in the whole deck. Entering the next shown section plays that section's own `transition`. An unknown cut name, or a section id a cut names that the deck lacks, is a deck problem; an unknown name plays the whole deck. A deep link into a section the cut leaves out is a deck problem too, and the deck opens at the cut's first step.
+One deck in several lengths: `deck.md` `cuts` names each deck cut and the sections it keeps, and optionally its own `duration` in minutes. Without one, the cut is judged against the deck's `duration`.
+
+- `?cut=<name>` in the URL plays that cut: its sections in deck order, the others left out as if parked. Without `?cut`, the whole deck plays.
+- A cut moves nothing: every scene keeps its place on its canvas, so a `place()` that reads another scene's rect, and a `shared-canvas` group with a section cut out of the middle, lay out as in the whole deck.
+- Entering the next section the cut shows plays that section's own `transition`.
+- An unknown cut name is a deck problem, and the whole deck plays. A section id a cut names that the deck lacks, and a cut that keeps no section of the talk (an empty list, or only appendix sections), are deck problems too.
+- A deep link on open into a section the cut leaves out is a deck problem, and the deck opens at the cut's first step.
 
 A section with `appendix: true` in the frontmatter of its `section.md` is the appendix: backup slides for the questions, outside the talk.
 
@@ -54,9 +60,9 @@ appendix: true
 # Backup
 ```
 
-The appendix plays after every other section, whatever its folder number, and every cut keeps it. Next and previous never cross into it or out of it: the talk ends at its last main step, and in the appendix they move between appendix steps. `Q` jumps to the first appendix step, and `Q` again goes back to the step you left. The step counter in the speaker view, `End`, the overlay's `total`, autoplay and `klappe video` leave it out; deep links, the overview, the section list, the walk, `shot` and `pdf` reach it. `klappe outline` and `pdf` print it last, marked as the appendix, and the outline's estimate leaves it out.
+The appendix plays after every other section, whatever its folder number, and every cut keeps it. Next and previous never cross into it or out of it: the talk ends at its last main step, and in the appendix they move between appendix steps. `Q` jumps to the first appendix step, and `Q` again goes back to the step you left. The step counter in the speaker view, `End`, the overlay's `total`, autoplay and `klappe video` leave it out; deep links, the overview, the section list, the walk, `shot` and `pdf` reach it. The overview and the section list put "Appendix" before its title. `klappe outline` and `pdf` print it last, marked as the appendix (in `pdf`, a page that names it), and the outline's estimate leaves it out.
 
-The tools take the cut with `--cut <name>`: `klappe outline --cut short` (the estimate of that cut against `duration`), `klappe pdf --cut short` (`dist/<id>-short.pdf`), `klappe video --cut short` (`dist/<id>-short.mp4`) and `klappe test --cut short`, which walks the cut alone. Plain `klappe test` walks the whole deck and its appendix. Catalog: `#/appendix/questions/1`, and the demo's `story` cut.
+The tools take the cut with `--cut <name>`: `klappe outline --cut short` (the estimate of that cut against its own `duration`, else the deck's), `klappe pdf --cut short` (`dist/<id>-short.pdf`), `klappe video --cut short` (`dist/<id>-short.mp4`) and `klappe test --cut short`, which walks the cut alone. Plain `klappe test` walks the whole deck and its appendix. Catalog: `#/appendix/questions/1`, and the demo's `story` cut.
 
 ## deck.css
 
@@ -342,7 +348,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
 - `Q`: to the appendix and back to where the talk was, also from the speaker view.
 - `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
-- In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it. Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
+- In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it (under a [deck cut](#cuts-and-the-appendix), the cut's `duration` if it has one; time in the appendix is not counted). Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck and per deck cut, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
 
 While the deck window shows, it keeps the screen awake: no screensaver or sleep mid-talk. The browser allows this on `localhost` and `https`, not on a built deck served over plain `http` from another machine.
 
