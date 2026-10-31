@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { addCameraMove, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
+import { addCameraMove, flightEase, flightTime, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
 import { code, LANGS } from "../fx/code";
 import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
@@ -416,7 +416,7 @@ export function renderWorld(
         // Parallax backgrounds drift with the flight, from its start; a cut moves them at once.
         const pose = drift(parallaxPose(target, layout.size));
         const els = far.map((f) => f.el);
-        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
+        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration: flightTime(o ?? {}), ease: flightEase(o ?? {}) }, "<");
         cam = target;
       },
       follow(t, point, o) {
@@ -541,7 +541,10 @@ export function renderWorld(
         const early = appendStep(rt.tl, `e:${index++}`, (tl) => {
           const start = tl.duration();
           if (i === 0) {
-            ctx.camera.to(tl, ctx.rect);
+            const pace = sc.module?.camera;
+            if (pace?.ease && !gsap.parseEase(pace.ease))
+              ctx.problem(`camera: unknown ease "${pace.ease}"; using ${flightEase({ ...pace, ease: undefined })}`);
+            ctx.camera.to(tl, ctx.rect, pace);
             // Over the flight's last 0.4 s, so the frame is never empty after it lands; not before the step (a cut).
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }

@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Camera pacing: an ease and a duration per flight (today `addCameraMove` in `src/camera.ts` always eases `power2.inOut`), and a whip mode, a fast flight with motion blur between far scenes. A slow push-in, a whip and a hard stop give a deck a tempo; deck.md `tempo` already scales every flight.
 - Rehearsal timing: a rehearsal mode in the speaker view that records the time spent per scene and shows it against the plan (`duration` in `deck.md`, the `outline` estimate), so the talk's slow parts show from real runs.
 - Own icons at the repo level: a deck repo's `icons/` shared by its decks, as `themes/` is. A deck's own `icons/` works today.
 - Deck arc: a deck-level rubric in `.rubrics/` for the content reviewer (an opening hook, a through-line, set-ups paid off, one ask at the end), and a story view in `klappe outline` that prints each scene's story point in order. Needs the story point in `scene.md` frontmatter, not only in the storyboard outside the deck.

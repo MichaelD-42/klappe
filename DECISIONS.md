@@ -404,3 +404,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - `lineArt` is a line drawing that forces every stroke to `--k-fg`; full-colour art keeps its fills and maps them. Their options and steps differ (layers by id vs one draw), so one function with a mode would carry both sets.
   - An unmapped colour stays in its own colour and is a deck problem, not a silent `--k-fg`: the author sees which hex value needs a token.
   - Layers are the top-level ids only, hidden at load, so the hidden state is known in `build` as the timeline rule asks. Exporters give an id to every group; making all of them layers would hide the whole picture.
+- **Camera pacing is a `camera` key on the scene being entered, not on the section or the deck.**
+  - A flight's character belongs to where it goes: a whip into the far scene, a slow push into the one that matters. `tempo` stays the deck-wide knob; an explicit `duration` is not scaled by it, as an effect's own times are not.
+  - The whip's blur is an SVG Gaussian blur along the flight's direction on the world, written from the tween's progress like `follow`, so seek equals play; CSS `blur()` has no direction. It pans straight, without the zoom-out mid-point of a far flight: the zoom-out is what makes a flight slow to read.

@@ -116,3 +116,22 @@ Limits:
 - It assumes the camera is on the scene's frame when the first dolly starts, and that nothing else moves the camera between two dollies.
 - It scales the target and the canvas's whole pinned layer. A later scene on the same canvas sees the background still grown: go back with `amount: 1` before the scene ends.
 - A target with no size gives `dollyZoom: the target has no size to measure`.
+
+## Pacing: ease, duration, whip
+
+How the camera flies into a scene is set in its `scene.ts`, and a flight inside a scene takes the same options in `ctx.camera.to(tl, rect, opts)`. Catalog: `#/camera/whip/1` (a whip in), `#/camera/whip/2` (a slow push-in).
+
+```ts
+export default {
+  camera: { whip: true }, // how the camera enters this scene
+  build: (ctx) => ({ push: (tl) => ctx.camera.to(tl, near, { duration: 4, ease: "sine.inOut" }) }),
+};
+```
+
+| Name       | Type    | Default                       | Meaning |
+| ---------- | ------- | ----------------------------- | ------- |
+| `duration` | number  | 1.6 s, scaled by `tempo`      | the flight's seconds; a number you give is not scaled by `tempo` |
+| `ease`     | string  | `"power2.inOut"`              | a GSAP ease name: `"none"` for a steady pan, `"sine.inOut"` for a soft push, `"expo.out"` for a fast start and a hard stop |
+| `whip`     | boolean | false                         | a fast pan straight to the scene (no zoom out on the way) with a motion blur along its direction, peaking mid-flight; 0.3 of the camera time (0.48 s), `"expo.inOut"` unless you give `duration` or `ease` |
+
+A slow push-in, a whip and a hard stop give a deck a tempo; use the whip for a change of place, not between neighbours. A parallax background drifts with the flight's time and ease. An ease GSAP does not know is a deck problem, `camera: unknown ease "<name>"; using power2.inOut`, and the flight uses the default. With reduced motion every flight is a cut, so there is no blur.

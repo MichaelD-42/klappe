@@ -67,7 +67,7 @@ export interface Ctx {
       target: Rect,
       // tilt: degrees of a 3D lean into the flight's direction, at its peak mid-flight; none by default, none
       // with reduced motion (the flight is a cut).
-      opts?: { duration?: number; at?: number | string; tilt?: number },
+      opts?: CameraPace & { at?: number | string; tilt?: number },
     ): void;
     // Closes in on a moving point and keeps it centred: point(t) is where it is, in canvas units, at time share t
     // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.
@@ -126,6 +126,13 @@ export interface SceneModule {
   auto?: (number | null)[];
   // The scene's button text in the overview, instead of its title.
   overviewLabel?: string;
+  // How the camera flies into this scene: seconds, a GSAP ease name, or a whip (a fast pan with motion blur).
+  camera?: CameraPace;
+}
+export interface CameraPace {
+  duration?: number;
+  ease?: string;
+  whip?: boolean;
 }
 // Where the deck is, for an overlay's update.
 export interface OverlayAt {

@@ -32,6 +32,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `deck.md` key `frame`: `16:9` (default), `4:3`, `1:1` or `9:16`. The stage, scene frames, camera, backgrounds, overlay, transitions, overview cards, `shot`, `pdf` and the safe-area check follow it; full-frame picture prompts in `media/TODO.md` name it.
 - Review edit mode: with the review window open (`R`, dev server), select an element on the stage and drag, resize or nudge it; on release a `Move <element> from [x, y, w, h] to [x, y, w, h]` line lands in the step's Visuals finding. A preview only, gone on the next step. A double click on `scene.md` text edits it in place and writes it back.
 - `svg`: full-colour art from an exported SVG, its fills kept and painted with theme tokens (a `k-<token>` class or a `colors` map from the file's hex values); top-level ids are layers that `show`, `draw`, `light` and `dim` per step. An unmapped colour, a `<style>` block and a missing id are deck problems. With an export guide for Figma, Illustrator and Inkscape. Catalog: `#/draw/svg/1`.
+- Camera pacing: `scene.ts` `camera: { duration, ease, whip }` sets how the camera flies into the scene, and `ctx.camera.to` takes the same. `whip: true` is a fast pan with a motion blur along its way; `ease` is any GSAP ease name. Catalog: `#/camera/whip/1`.
 
 ### Changed
 
