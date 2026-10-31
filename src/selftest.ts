@@ -512,14 +512,16 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const hold = motion.autoHoldMs;
     motion.autoHoldMs = AC_HOLD_MS;
     try {
-      // Three steps before the end: from step 0 the whole deck does not fit the check's time (ruling R18).
-      await stepper.goto(Math.max(0, steps.length - 4), "cut");
+      // Three steps before the end of the talk, which the appendix is not part of: from step 0 the whole deck does not
+      // fit the check's time (ruling R18).
+      const last = steps.filter((s) => !s.appendix).length - 1;
+      await stepper.goto(Math.max(0, last - 3), "cut");
       const n = log.length;
       autoplay.start();
       const ended = await until(() => since(n, "end").length > 0, CHECK_MS - 3000);
       const bad = [
         !ended && `auto-play did not reach the end (at ${at(stepper.index)})`,
-        stepper.index !== steps.length - 1 && `auto-play ended at ${at(stepper.index)}, want ${at(steps.length - 1)}`,
+        stepper.index !== last && `auto-play ended at ${at(stepper.index)}, want ${at(last)}`,
         autoplay.running && "auto-play still running after the end",
       ];
       await stepper.goto(0, "cut");

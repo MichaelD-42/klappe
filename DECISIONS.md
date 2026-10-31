@@ -454,6 +454,17 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why the code-fence count: `outline` parses `scene.md` in Node and loads no deck `.ts`, so it cannot ask the builder how many steps it has. The parser does not know which names are components and counts their fence as any non-built-in fence, so `outline`, `klappe test` and the browser agree. The builder returns step functions for those steps; a mismatch is a deck problem, as for a `scene.ts`.
   - A name klappe's own fences use (`console`, `chat`, a Shiki language) is a deck problem and the built-in wins, so a deck cannot quietly change what a code block does.
 
+- **A cut filters sections after the layout; the appendix goes last in the step list, and every cut keeps it.**
+  - Why after the layout: `place()` reads earlier scenes' rects by id and a `shared-canvas` group spans sections; laying out the cut deck would move scenes or break `place()` when a section in the middle is cut. So `layoutDeck` runs on the whole deck and `cutDeck` drops sections and canvases, keeping the rects. A cut canvas can have a gap where a cut scene was; the camera flies over it.
+  - Why the appendix last: with the appendix a suffix of `StepAddr[]`, the talk is `[0, main)` and every part that counts steps (counter, `End`, overlay `total`, autoplay's end, video) needs one number, not a mask. Next and previous stay in the flow they start in.
+  - Why every cut keeps it: the appendix is backup for the questions, and a short cut needs it more. A cut that should drop a backup section can make it a normal section and leave it out.
+
+- **`Q` jumps to the appendix and back.**
+  - Why `Q`: Q&A, and it was free in the deck, the speaker view and the review window. Escape stays "close a panel"; giving it a second meaning would make closing the overview in the appendix jump back. The same key goes back to the step the talk was on (the first step if the deck opened in the appendix), as a cut.
+
+- **A deep link into a section the active cut leaves out is a deck problem and opens at the cut's first step.**
+  - Why: the link is stale for this cut (a link from the full talk's notes, a bookmark); the router already falls back to the first step for an unknown section. Silently showing the first step would hide the mistake; adding the section back would break the cut. The problem names the section and the cut.
+
 ## 2026-10-31
 
 - **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**

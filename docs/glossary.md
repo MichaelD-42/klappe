@@ -8,9 +8,13 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Deck repo.** A git repo that holds one or more decks and klappe itself in `klappe/` (`klappe init` sets it up). The klappe repo is a deck repo too, with the demo deck.
 
-**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`. Type `DeckMeta` (`duration` is read only by `klappe outline`).
+**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`, `cuts`. Type `DeckMeta` (`duration` is read only by `klappe outline`).
 
 **Section.** A chapter of a deck: a folder `sections/<NN-id>/` with `section.md` (its `# title` and notes) and an optional `section.ts`. Has scenes; part of a deck. Gets its own canvas unless the deck shares one.
+
+**Cut.** A shorter talk from the same deck: a name in `deck.md` `cuts` and the section ids it keeps; `?cut=<name>` plays it, `--cut` on the tools follows it.
+
+**Appendix.** The sections with `appendix: true` in `section.md`: after the talk, outside next and previous, one key (`Q`) away. Every cut keeps them. `StepAddr.appendix` marks their steps.
 
 **section.ts.** A section's module: its background, its transition, and a `build` for parts every scene of the section uses. Type `SectionModule`.
 

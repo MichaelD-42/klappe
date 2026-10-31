@@ -14,7 +14,7 @@ decks/<id>/
   deck.md
   sections/
     10-opening/
-      section.md          # "# Title", optional "> notes"
+      section.md          # "# Title", optional "> notes", optional frontmatter "appendix: true"
       section.ts          # optional: canvas-wide backdrop
       10-old-way/
         scene.md
@@ -39,6 +39,24 @@ Frontmatter keys:
 - `frame`: the stage's shape: `16:9` (default, 1920x1080 scene px), `4:3` (1440x1080), `1:1` (1080x1080) or `9:16` (1080x1920, vertical). Scene frames, the camera, backgrounds, the overlay, transitions, the overview cards, `shot`, `pdf` and the safe-area check follow it, and full-frame picture prompts in `media/TODO.md` name it. Landscape frames stay 1080 high, so text sizes read the same. Effects and `scene.ts` coordinates are in scene px: a scene written for 16:9 needs its positions redone for another frame; use `ctx.rect.w` and `ctx.rect.h` rather than 1920 and 1080. Another value is a deck problem and gives 16:9.
 - `tempo`: `slow`, `normal` (default) or `fast`. Scales the step fade (0.6 s), the camera flight (1.6 s) and the `autoplay` hold (2.5 s) by 1.4, 1 or 0.75: a slower board talk, a quicker demo day. Effects with their own fixed times, and your own tweens in `scene.ts`, keep their durations.
 - `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
+- `cuts`: shorter talks from the same deck, by name, each the section ids it keeps: `cuts: { short: [opening, results], long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
+
+## Cuts and the appendix
+
+One deck in several lengths: `deck.md` `cuts` names each cut and the sections it keeps. `?cut=<name>` in the URL plays that cut: its sections in deck order, the others left out as if parked. Without `?cut`, the whole deck plays. A cut moves nothing: every scene keeps its place on its canvas, so a `place()` that reads another scene's rect and a `shared-canvas` group with a section cut out of the middle lay out as in the whole deck. Entering the next shown section plays that section's own `transition`. An unknown cut name, or a section id a cut names that the deck lacks, is a deck problem; an unknown name plays the whole deck. A deep link into a section the cut leaves out is a deck problem too, and the deck opens at the cut's first step.
+
+A section with `appendix: true` in the frontmatter of its `section.md` is the appendix: backup slides for the questions, outside the talk.
+
+```md
+---
+appendix: true
+---
+# Backup
+```
+
+The appendix plays after every other section, whatever its folder number, and every cut keeps it. Next and previous never cross into it or out of it: the talk ends at its last main step, and in the appendix they move between appendix steps. `Q` jumps to the first appendix step, and `Q` again goes back to the step you left. The step counter in the speaker view, `End`, the overlay's `total`, autoplay and `klappe video` leave it out; deep links, the overview, the section list, the walk, `shot` and `pdf` reach it. `klappe outline` and `pdf` print it last, marked as the appendix, and the outline's estimate leaves it out.
+
+The tools take the cut with `--cut <name>`: `klappe outline --cut short` (the estimate of that cut against `duration`), `klappe pdf --cut short` (`dist/<id>-short.pdf`), `klappe video --cut short` (`dist/<id>-short.mp4`) and `klappe test --cut short`, which walks the cut alone. Plain `klappe test` walks the whole deck and its appendix. Catalog: `#/appendix/questions/1`, and the demo's `story` cut.
 
 ## deck.css
 
@@ -170,7 +188,7 @@ export default { transition: wipe } satisfies SectionModule;
 Optional, at the deck root next to `deck.md`. What stays on screen over every scene while the camera moves: a logo, a brand frame, a footer, a chapter label. It is a stage-size layer (1920x1080 for the default `frame`) over the canvases and under klappe's own UI, and clicks go through it to the stage. Export a default `OverlayModule` (`import type { OverlayModule } from "klappe/types"`).
 
 - `build(ctx)` makes the overlay's DOM once and returns refs. `ctx.html` and `ctx.svg` are the layer; effects that build in them work (`text`, `image`, `icon`). The camera and `onStep` do nothing here and report a problem.
-- `update(at, refs)` runs on every move with where the deck lands: `at.index` and `at.total` (steps in the deck), `at.section`, `at.scene`, `at.step` (from 1), `at.sectionTitle`, `at.sceneTitle`. Set the overlay with `gsap.set` or styles, never a tween, and from `at` alone: then a jump shows what a play does, and `?selftest=walk` checks it as it checks a canvas.
+- `update(at, refs)` runs on every move with where the deck lands: `at.index` and `at.total` (steps in the talk; an [appendix](#cuts-and-the-appendix) step's `index` is `total` or more), `at.section`, `at.scene`, `at.step` (from 1), `at.sectionTitle`, `at.sceneTitle`. Set the overlay with `gsap.set` or styles, never a tween, and from `at` alone: then a jump shows what a play does, and `?selftest=walk` checks it as it checks a canvas.
 - The overlay is not part of the look checks. Its ink may sit in the margin, so raise `safe-area` to keep scenes clear of it. The overlay that `klappe theme --logo` writes places its logo and footer inside `ctx.safe`.
 
 ```ts
@@ -321,7 +339,8 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 
 - Next: Right arrow, Space, Page Down, Enter, click.
 - Previous: Left arrow, Page Up.
-- Home, End: first and last step.
+- Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
+- `Q`: to the appendix and back to where the talk was, also from the speaker view.
 - `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
 - In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it. Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
 
@@ -336,12 +355,13 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 - `?speaker=1`: open the speaker view.
 - `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
+- `?cut=<name>`: play a cut from `deck.md` `cuts`; see [cuts and the appendix](#cuts-and-the-appendix).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
 
 ## Video export
 
-`npm run video -- [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080]` renders the deck to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`. The file is written only when the export finishes: a failure or Ctrl-C leaves an earlier export as it was.
+`npm run video -- [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080] [--cut <name>]` renders the deck's talk, without the appendix, to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`. The file is written only when the export finishes: a failure or Ctrl-C leaves an earlier export as it was.
 
 Each step plays as it does live, in full motion: camera flights, whips and every section transition included. No frame is recorded in real time: each one is a seek of the timeline to the frame's time, so two runs give the same file and a slow machine gives the same video, only later. After its play, a step's last frame holds for its `auto` seconds, else for `--hold` (default 3). `--size` is the viewport; a deck `frame` other than 16:9 keeps its shape at that width.
 
