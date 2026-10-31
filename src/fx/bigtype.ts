@@ -6,7 +6,7 @@ import { LOOP_VIDEO, missing } from "./media";
 
 export interface BigTypeOpts {
   text: string; // one word or number: it sets on one line
-  rect?: Rect; // default: the scene frame inside the default safe area
+  rect?: Rect; // default: `ctx.safe`, the scene frame inside the deck's safe area
   media?: string; // "media/x.jpg" or ".mp4"/".webm": shows through the letters
   alt?: string; // required with media: it describes the picture
 }
@@ -15,14 +15,12 @@ export interface BigTypeHandle {
   show: StepAdder;
 }
 
-// The default safe area (selftest's SAFE_AREA): top 48, right 64, bottom 48, left 64.
-const frame = (ctx: Ctx): Rect => ({ x: 64, y: 48, w: ctx.rect.w - 128, h: ctx.rect.h - 96 });
 const PROBE = 100; // px: the size the text is measured at
 let n = 0;
 
 export function bigType(ctx: Ctx, opts: BigTypeOpts): BigTypeHandle {
   const { text, media, alt = "" } = opts;
-  const rect = opts.rect ?? frame(ctx);
+  const rect = opts.rect ?? ctx.safe;
   const font = { fontFamily: "var(--k-font-heading)", fontWeight: "800" };
   const fade = (b: HTMLElement): BigTypeHandle => ({ el: b, show: (tl) => void tl.to(b, { autoAlpha: 1, duration: motion.step }) });
   const key = media?.replace(/^\.\//, "");

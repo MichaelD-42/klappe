@@ -63,6 +63,7 @@ export interface SectionDoc {
 }
 export interface Ctx {
   rect: Rect;
+  safe: Rect; // the deck's safe area in scene px (deck.md safe-area, default 48 / 64), inside rect
   svg: SVGGElement;
   html: HTMLElement;
   canvas: { refs: Record<string, any>; rects: Record<string, Rect> };

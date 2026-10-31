@@ -10,7 +10,7 @@ import { aurora } from "./aurora";
 import { measure } from "../fx/measure";
 import { part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
-import { motion, stage, withTokenRoot } from "../theme";
+import { motion, safeRect, stage, withTokenRoot } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
@@ -473,6 +473,7 @@ export function renderWorld(
       if (tokens) Object.assign(d.style, { color: "var(--k-fg)", fontFamily: "var(--k-font)" });
       return {
         rect,
+        safe: safeRect(deck.meta.safeArea, rect),
         svg: g,
         html: d,
         canvas: { refs, rects: layout.rects },

@@ -3,7 +3,7 @@ import type { CanvasRuntime } from "./render/world";
 import { formatHash, resolveHash } from "./router";
 import type { Stepper } from "./stepper";
 import { t } from "./strings";
-import { motion, stage as size } from "./theme";
+import { motion, SAFE_AREA, stage as size } from "./theme";
 import type { SelftestCheck, SelftestResult, StepAddr } from "./types";
 
 export interface SelftestCtx {
@@ -125,8 +125,6 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
   return bad;
 }
 
-// The default safe area, top, right, bottom, left in scene px; deck.md safe-area overrides it.
-export const SAFE_AREA: [number, number, number, number] = [48, 64, 48, 64];
 const GRAPHICS = "img, video, canvas, path, circle, rect, line, polyline, polygon, ellipse, image, use";
 const hides = (o: string) => o === "hidden" || o === "clip";
 type Box = [number, number, number, number]; // left, top, right, bottom in client px

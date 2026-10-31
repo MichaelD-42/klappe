@@ -32,8 +32,8 @@ import type { OverlayModule } from "klappe/types";
 
 export default {
   build: (ctx) => ({
-    logo: image(ctx, { href: ${JSON.stringify(media)}, alt: ${JSON.stringify(title ? `${title} logo` : 'Logo')}, rect: { x: ctx.rect.w - 64 - 176, y: ctx.rect.h - 48 - 50, w: 176, h: 50 } }).el,
-    footer: text(ctx, { text: ${JSON.stringify(title)}, x: 64, y: ctx.rect.h - 48 - 32, w: ctx.rect.w - 64 - 176 - 64 - 24, size: 24, color: "--k-muted" }).el,
+    logo: image(ctx, { href: ${JSON.stringify(media)}, alt: ${JSON.stringify(title ? `${title} logo` : 'Logo')}, rect: { x: ctx.safe.x + ctx.safe.w - 176, y: ctx.safe.y + ctx.safe.h - 50, w: 176, h: 50 } }).el,
+    footer: text(ctx, { text: ${JSON.stringify(title)}, x: ctx.safe.x, y: ctx.safe.y + ctx.safe.h - 32, w: ctx.safe.w - 176 - 24, size: 24, color: "--k-muted" }).el,
   }),
   update: (_at, r) => void gsap.set([r.logo, r.footer], { autoAlpha: 1 }),
 } satisfies OverlayModule;

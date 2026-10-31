@@ -4,15 +4,13 @@ import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
 
-// The default safe area (selftest's SAFE_AREA): top 48, right 64, bottom 48, left 64.
-const frame = (ctx: Ctx): Rect => ({ x: 64, y: 48, w: ctx.rect.w - 128, h: ctx.rect.h - 96 });
 const PX_PER_S = 90; // the roll's speed
 const MAX_ROLL = 40; // s: a long list scrolls faster rather than longer
 
 export interface LowerThirdOpts {
   name: string;
   role?: string;
-  rect?: Rect; // default: the scene frame inside the default safe area; the bar sits at its lower left
+  rect?: Rect; // default: `ctx.safe`, the scene frame inside the deck's safe area; the bar sits at its lower left
 }
 export interface LowerThirdHandle {
   el: HTMLElement;
@@ -21,7 +19,7 @@ export interface LowerThirdHandle {
 }
 
 export function lowerThird(ctx: Ctx, opts: LowerThirdOpts): LowerThirdHandle {
-  const r = opts.rect ?? frame(ctx);
+  const r = opts.rect ?? ctx.safe;
   const bar = ctx.html.appendChild(document.createElement("div"));
   bar.setAttribute("data-k-lowerthird", "");
   Object.assign(bar.style, {
@@ -53,7 +51,7 @@ export function lowerThird(ctx: Ctx, opts: LowerThirdOpts): LowerThirdHandle {
 export interface EndRollOpts {
   title?: string;
   thanks?: string[]; // lines under the sources
-  rect?: Rect; // default: the scene frame inside the default safe area
+  rect?: Rect; // default: `ctx.safe`, the scene frame inside the deck's safe area
 }
 export interface EndRollHandle {
   el: HTMLElement;
@@ -61,7 +59,7 @@ export interface EndRollHandle {
 }
 
 export function endRoll(ctx: Ctx, opts: EndRollOpts = {}): EndRollHandle {
-  const r = opts.rect ?? frame(ctx);
+  const r = opts.rect ?? ctx.safe;
   const box = ctx.html.appendChild(document.createElement("div"));
   box.setAttribute("data-k-endroll", "");
   Object.assign(box.style, { position: "absolute", left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px`, overflow: "hidden", color: "var(--k-fg)", textAlign: "center" });

@@ -1,6 +1,6 @@
 import { contrast } from "./contrast";
 import calm from "./themes/calm.css?raw";
-import type { Deck } from "./types";
+import type { Deck, Rect } from "./types";
 
 export { contrast };
 
@@ -18,6 +18,16 @@ export function setFrame(f: { w: number; h: number }): void {
   document.documentElement.style.setProperty("--k-frame-w", `${f.w}px`);
   document.documentElement.style.setProperty("--k-frame-h", `${f.h}px`);
 }
+
+// The default safe area, top, right, bottom, left in scene px; deck.md safe-area overrides it.
+export const SAFE_AREA: [number, number, number, number] = [48, 64, 48, 64];
+// The safe area as a rect in the scene's own px (origin at the scene's top left), inside a frame of rect's size.
+export const safeRect = (area: [number, number, number, number] = SAFE_AREA, rect: Rect): Rect => ({
+  x: area[3],
+  y: area[0],
+  w: rect.w - area[1] - area[3],
+  h: rect.h - area[0] - area[2],
+});
 
 // The element whose tokens JS-side readers (typeSize, gapPx, strokePx) resolve: the scene being built, so a section's
 // `tokens` reach them; :root outside a build.

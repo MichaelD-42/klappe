@@ -20,10 +20,10 @@ test.each([
   writeFileSync(join(cwd, 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 50"><rect width="176" height="50" fill="#888"/></svg>');
   const t = klappe(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', colors.join(','), '--logo', 'logo.svg', ...(mode === 'light' ? ['--light'] : []));
   expect(t.status, t.stderr).toBe(0);
-  // Positions follow the frame (4:3, 1:1 and 9:16 too) and keep the logo on the default safe line, 48 px up.
+  // Positions follow the deck's safe area (ctx.safe), so any frame and any safe-area work.
   const overlay = readFileSync(join(cwd, 'decks/talk/overlay.ts'), 'utf8');
-  expect(overlay).toContain('ctx.rect.w - 64 - 176');
-  expect(overlay).toContain('ctx.rect.h - 48 - 50');
+  expect(overlay).toContain('ctx.safe.x + ctx.safe.w - 176');
+  expect(overlay).toContain('ctx.safe.y + ctx.safe.h - 50');
   expect(overlay).not.toMatch(/\b(1680|1920|1080|1000|990)\b/);
   const r = klappe(cwd, 'test', '--deck', 'talk', '--only', 'intro');
   expect(r.stdout + r.stderr).not.toContain('contrast');

@@ -756,7 +756,7 @@ steps: [(tl, b) => b.show(tl)],
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `text` | string | required | one word or number; it never wraps |
-| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area (48 px top and bottom, 64 px left and right) | the box the text fills |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` (default 48 px top and bottom, 64 px left and right) | the box the text fills |
 | `media` | string | none | `"media/x.jpg"`, or a `.mp4` or `.webm`, that shows through the letters, cropped to cover the rect |
 | `alt` | string | `""` | describes the picture; required with `media` (a deck problem without it) |
 
@@ -783,7 +783,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
 | --- | --- | --- | --- |
 | `name` | string | required | the first line |
 | `role` | string | none | the second line |
-| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area (48 px top and bottom, 64 px left and right) | the bar sits at this box's lower left |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` (default 48 px top and bottom, 64 px left and right) | the bar sits at this box's lower left |
 
 `show(tl)` slides it in from the left, `hide(tl)` out again. The handle is `{ el, show, hide }`.
 
@@ -802,7 +802,7 @@ steps: [(tl, e) => e.show(tl)],
 | --- | --- | --- | --- |
 | `title` | string | none | the heading above the sources |
 | `thanks` | string[] | none | lines under the sources |
-| `rect` | `{ x, y, w, h }` | the scene frame inside the default safe area | the window the credits scroll through |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` | the window the credits scroll through |
 
 `show(tl)` fades it in and scrolls it; the scroll is a tween on the canvas timeline, so a deep link mid-roll shows the frame playing would. It runs at about 90 px a second, at most 40 s. The handle is `{ el, show }`. The list is read when the step is added, after every scene has built, so a source in a later scene is on it; `ctx.deck.sources` is the same list.
 
