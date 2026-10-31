@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 import { counterText } from "./motion";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
@@ -105,7 +106,7 @@ const formatBetween = (from: number, to: number) => {
 export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
   const w = opts.w ?? 480;
   const root = block(ctx, "kpi", opts.x, opts.y, w, opts.source);
-  Object.assign(root.style, { boxSizing: "border-box", padding: "28px 32px", borderRadius: "16px", background: "var(--k-surface)", border: "2px solid var(--k-line)" });
+  Object.assign(root.style, { boxSizing: "border-box", padding: "28px 32px", borderRadius: radius(16), background: "var(--k-surface)", border: "2px solid var(--k-line)" });
   el(root, "div", { color: "var(--k-muted)" }, opts.label);
   const fmt = d3.format(`,.${decimals(opts.value)}f`);
   // The number and its unit on one line; the unit at about a third of the number's size.
@@ -404,7 +405,7 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
     const line = el(root, "div", { display: "flex", alignItems: "center", gap: "24px", marginBottom: "40px" });
     line.dataset.kLikertRow = String(i);
     el(line, "div", { flex: "0 0 30%" }, row.statement);
-    const track = el(line, "div", { flex: "1", height: "64px", borderRadius: "8px", background: "var(--k-surface)", overflow: "hidden" });
+    const track = el(line, "div", { flex: "1", height: "64px", borderRadius: radius(8), background: "var(--k-surface)", overflow: "hidden" });
     const bar = el(track, "div", { display: "flex", height: "100%" });
     shares.forEach((sh, k) => el(bar, "div", { flex: `${sh} 0 0`, background: fill[k] }));
     const num = el(line, "div", { flex: "0 0 96px", textAlign: "right", color: "var(--k-ok)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" });

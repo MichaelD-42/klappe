@@ -34,4 +34,7 @@
   --k-phosphor-amber: #ffb547;
   --k-blackout: #000;
   --k-scrim: #000;
+  --k-radius: 12px;
+  --k-stroke: 4px;
+  --k-gap: 8px;
 }

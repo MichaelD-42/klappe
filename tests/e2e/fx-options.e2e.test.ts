@@ -201,7 +201,7 @@ test('sequence highlight(i): an earlier message takes the accent again; null lig
       const probe = document.body.appendChild(document.createElement('i'))
       const token = (t: string) => ((probe.style.color = `var(${t})`), getComputedStyle(probe).color)
       const names: Record<string, string> = { [token('--k-accent')]: 'accent', [token('--k-line')]: 'line' }
-      return [...document.querySelectorAll<SVGPathElement>('g[data-scene="seq-light"] path[style*="stroke-width: 4"]')].map((p) => names[getComputedStyle(p).stroke])
+      return [...document.querySelectorAll<SVGPathElement>('g[data-scene="seq-light"] path[style*="--k-stroke) * 1)"]')].map((p) => names[getComputedStyle(p).stroke])
     })
     await page.close()
     return r
@@ -217,7 +217,7 @@ test('swimlanes tasks(ids): the lanes and those tasks, then each link once both 
     const r = await page.evaluate(() => {
       const vis = (e: Element) => getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0.5
       const tasks = ['order', 'pack', 'ship'].filter((id) => vis(document.querySelector(`[data-k-swimlane-task="${id}"]`)!))
-      const links = [...document.querySelectorAll('g[data-scene="lane-tasks"] path[style*="stroke-width: 4"]')].filter(vis).length
+      const links = [...document.querySelectorAll('g[data-scene="lane-tasks"] path[style*="--k-stroke) * 1)"]')].filter(vis).length
       return { tasks, links }
     })
     await page.close()

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 export interface CardStackOpts {
   x: number; // top-left corner of the middle card before it leans, scene-local
@@ -43,13 +44,13 @@ export function cardStack(ctx: Ctx, opts: CardStackOpts): CardStackHandle {
     el.setAttribute("data-k-card", String(i));
     el.appendChild(document.createElement("span")).textContent = text;
     Object.assign(el.style, {
-      position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 28px", borderRadius: "16px", background: "var(--k-surface)",
+      position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 28px", borderRadius: radius(16), background: "var(--k-surface)",
       border: "2px solid var(--k-line)", outline: "2px solid transparent", // border and outline turn accent when pulled: 4 px of accent, no layout change
       color: "var(--k-fg)", font: `600 ${typeSize("label", FONT)}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       transformOrigin: ORIGIN, zIndex: String(i + 1),
     });
     const scrim = el.appendChild(document.createElement("div"));
-    Object.assign(scrim.style, { position: "absolute", inset: "0", borderRadius: "14px", background: "var(--k-bg)", pointerEvents: "none" });
+    Object.assign(scrim.style, { position: "absolute", inset: "0", borderRadius: radius(14), background: "var(--k-bg)", pointerEvents: "none" });
     gsap.set(scrim, { autoAlpha: 0 });
     gsap.set(el, { rotation: move ? 0 : fanPose(i, n), y: 0, scale: 1 }); // closed before show, unless it cannot move
     return { el, scrim };

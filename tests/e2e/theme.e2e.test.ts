@@ -129,3 +129,28 @@ test('a theme that sets the type scale sizes the Markdown scene, text, a fitted 
   expect(px).toEqual({ title: 132, body: 66, text: 66, list: 60, number: 168 })
   await page.close()
 })
+
+// Radius 24 (2x), stroke 8 (2x), gap 32 (4x): a 16 px corner is 32, a 2 px stroke is 4, a 20 px row gap is 80 and
+// the 8 px gap between pyramid layers is 32.
+test('a theme that sets --k-radius, --k-stroke and --k-gap changes a box, a stroke and the gaps', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=layout-tokens`)
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.problems).toEqual([])
+  const page = await open('fixture=layout-tokens#/a/coded/1')
+  const px = await page.evaluate(() => {
+    const scene = document.querySelector('div[data-scene="coded"]')!
+    const svg = document.querySelector('g[data-scene="coded"]')!
+    const box = (id: string) => svg.querySelector<SVGGraphicsElement>(`[data-k-pyramid-layer="${id}"] polygon`)!
+    const [low, high] = [box('a').getBBox(), box('b').getBBox()]
+    const list = [...scene.querySelectorAll<HTMLElement>('div')].find((e) => e.style.top === '600px' && e.style.left === '160px')!
+    return {
+      radius: getComputedStyle([...scene.querySelectorAll<HTMLElement>('div')].find((e) => e.style.borderRadius.includes('--k-radius') && e.style.background.includes('--k-surface'))!).borderRadius,
+      stroke: getComputedStyle(box('a')).strokeWidth,
+      layerGap: low.y - (high.y + high.height),
+      rowGap: getComputedStyle(list).rowGap,
+    }
+  })
+  expect(px).toEqual({ radius: '32px', stroke: '4px', layerGap: 32, rowGap: '80px' })
+  await page.close()
+})

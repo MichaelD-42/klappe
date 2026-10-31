@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokePx, strokeW } from "./layout";
 import { iconGlyph, type IconName } from "./icons";
 import { detour, spread } from "./route";
 import { motion } from "../theme";
@@ -39,7 +40,7 @@ const INSET = 24; // a packet rests this far inside the box edge, clear of the l
 const ARROW = 20; // arrowhead length
 const WAIT = 0.3; // seconds a packet rests at a node
 const DIM = 0.35; // a dimmed node's opacity, as focus() dims
-const STROKE = 3; // a node's outline
+const STROKE = 3; // a node's outline, as drawn at the default --k-stroke
 
 // How far inside its bounding face a node's outline lies, `off` from the face middle along it: where an arrow
 // that enters or leaves that face at that offset meets the shape. 0 for a plain box. Pure.
@@ -65,7 +66,7 @@ const nodeSize = (kind: FlowKind | undefined, cw: number, ch: number): [number, 
 
 // The outline of a node kind in a w x h box, as SVG markup: the shape, filled, inset by half the stroke.
 function shapeSvg(kind: FlowKind, w: number, h: number, paint: string): string {
-  const s = STROKE / 2;
+  const s = strokePx(STROKE) / 2;
   if (kind === "decision") return `<path d="M ${w / 2} ${s} L ${w - s} ${h / 2} L ${w / 2} ${h - s} L ${s} ${h / 2} Z" style="${paint}"/>`;
   if (kind === "terminal") return `<rect x="${s}" y="${s}" width="${w - 2 * s}" height="${h - 2 * s}" rx="${h / 2 - s}" style="${paint}"/>`;
   const [rx, ry] = [w / 2 - s, storeRy(h)];
@@ -201,7 +202,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     const pad = n.kind === "decision" ? `${h * 0.18}px ${w * 0.22}px` : n.kind === "store" ? `${storeRy(h) * 2 + 4}px 12px 8px` : n.kind === "terminal" ? `8px ${h * 0.3}px` : "8px 12px";
     Object.assign(el.style, {
       position: "absolute", left: `${box.x}px`, top: `${box.y}px`, width: `${w}px`, height: `${h}px`, boxSizing: "border-box",
-      padding: pad, border: n.kind ? "none" : `${STROKE}px solid var(--k-line)`, borderRadius: "14px", background: n.kind ? "none" : "var(--k-surface)", color: "var(--k-fg)",
+      padding: pad, border: n.kind ? "none" : `${strokeW(STROKE)} solid var(--k-line)`, borderRadius: radius(14), background: n.kind ? "none" : "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px",
       textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, overflow: "visible", zIndex: "2",
     });
@@ -215,7 +216,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     };
     if (n.kind) {
       el.dataset.kFlowKind = n.kind;
-      outline(0, `fill: var(--k-surface); stroke: var(--k-line); stroke-width: ${STROKE}`);
+      outline(0, `fill: var(--k-surface); stroke: var(--k-line); stroke-width: ${strokeW(STROKE)}`);
     }
     if (n.icon) {
       const i = el.appendChild(document.createElement("div"));
@@ -227,12 +228,12 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%", position: "relative" });
     let ring: Element;
     if (n.kind) {
-      ring = outline(6, "fill: none; stroke: var(--k-accent); stroke-width: 5");
+      ring = outline(6, `fill: none; stroke: var(--k-accent); stroke-width: ${strokeW(5)}`);
       ring.removeAttribute("data-k-flow-shape");
     } else {
       ring = el.appendChild(document.createElement("div"));
       Object.assign((ring as HTMLElement).style, {
-        position: "absolute", inset: "-6px", border: "5px solid var(--k-accent)", borderRadius: "18px", pointerEvents: "none",
+        position: "absolute", inset: "-6px", border: `${strokeW(5)} solid var(--k-accent)`, borderRadius: radius(18), pointerEvents: "none",
       });
     }
     ctx.html.append(el);
@@ -267,7 +268,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
     const line = fmt([...pts.slice(0, -1), base]);
     path.setAttribute("d", line);
     path.setAttribute("data-k-flow-edge", "");
-    Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
+    Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(4), strokeLinejoin: "round" });
     const head = document.createElementNS(SVG, "path");
     const tip = fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z";
     head.setAttribute("d", tip);
@@ -282,7 +283,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       tag.textContent = label;
       Object.assign(tag.style, {
         position: "absolute", left: `${(pts[i].x + pts[i + 1].x) / 2}px`, top: `${(pts[i].y + pts[i + 1].y) / 2}px`,
-        translate: "-50% -50%", padding: "2px 10px", borderRadius: "8px", background: "var(--k-bg)", color: "var(--k-fg)",
+        translate: "-50% -50%", padding: "2px 10px", borderRadius: radius(8), background: "var(--k-bg)", color: "var(--k-fg)",
         font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", zIndex: "3",
       });
       ctx.html.append(tag);
@@ -392,7 +393,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
       const hot = e ? [e.line, e.tip].map((d, i) => {
         const p = document.createElementNS(SVG, "path");
         p.setAttribute("d", d);
-        Object.assign(p.style, i ? { fill: "var(--k-accent)" } : { fill: "none", stroke: "var(--k-accent)", strokeWidth: "6", strokeLinejoin: "round" });
+        Object.assign(p.style, i ? { fill: "var(--k-accent)" } : { fill: "none", stroke: "var(--k-accent)", strokeWidth: strokeW(6), strokeLinejoin: "round" });
         ctx.svg.append(p);
         gsap.set(p, { autoAlpha: 0 });
         return p;
@@ -461,7 +462,7 @@ export function flow(ctx: Ctx, opts: FlowOpts): FlowHandle {
             t.textContent = label;
             Object.assign(t.style, {
               position: "absolute", left: "0", top: `${-r - 40}px`, translate: "-50% 0", whiteSpace: "nowrap", color: "var(--k-fg)", background: "var(--k-bg)",
-              padding: "0 8px", borderRadius: "6px", font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`,
+              padding: "0 8px", borderRadius: radius(6), font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`,
             });
           }
           ctx.html.append(dot);

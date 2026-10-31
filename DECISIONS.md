@@ -407,3 +407,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **Camera pacing is a `camera` key on the scene being entered, not on the section or the deck.**
   - A flight's character belongs to where it goes: a whip into the far scene, a slow push into the one that matters. `tempo` stays the deck-wide knob; an explicit `duration` is not scaled by it, as an effect's own times are not.
   - The whip's blur is an SVG Gaussian blur along the flight's direction on the world, written from the tween's progress like `follow`, so seek equals play; CSS `blur()` has no direction. It pans straight, without the zoom-out mid-point of a far flight: the zoom-out is what makes a flight slow to read.
+- **Layout tokens are three, and the effects scale their other sizes from them.**
+  - `--k-radius` is 12 px (the card radius), `--k-stroke` 4 px (a connector) and `--k-gap` 8 px (pyramid layers); a 16 px corner is `calc(var(--k-radius) * 16 / 12)`, so every default looks as before and a theme changes one number, not a dozen. More tokens would be one per literal.
+  - Chart marks, map lines, icons, figures, halos, the CRT bezel and the SVG attributes of `fishbone` and `mindmap` keep their literals; `tests/lint/design.test.ts` lists each with its reason. A presentation attribute cannot take `var()`.

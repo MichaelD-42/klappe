@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 export interface FlipCardOpts {
   x: number; // top-left corner, scene-local
@@ -34,7 +35,7 @@ export function flipCard(ctx: Ctx, opts: FlipCardOpts): FlipCardHandle {
     const f = card.appendChild(document.createElement("div"));
     f.setAttribute(`data-k-flipcard-${side}`, "");
     Object.assign(f.style, {
-      position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 40px", borderRadius: "16px", background: "var(--k-surface)",
+      position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 40px", borderRadius: radius(16), background: "var(--k-surface)",
       border, color: "var(--k-fg)", font: `600 ${typeSize("body", FONT)}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
       textAlign: "center", backfaceVisibility: "hidden",
     });

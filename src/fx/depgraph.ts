@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
@@ -121,14 +122,14 @@ export function depGraph(ctx: Ctx, opts: DepGraphOpts): DepGraphHandle {
     el.dataset.kDepNode = n.id;
     Object.assign(el.style, {
       position: "absolute", left: `${n.x}px`, top: `${n.y}px`, width: `${n.w}px`, height: `${n.h}px`, boxSizing: "border-box", padding: "4px 12px",
-      border: "3px solid var(--k-line)", borderRadius: "12px", background: "var(--k-surface)", color: "var(--k-fg)", zIndex: "2",
+      border: "3px solid var(--k-line)", borderRadius: radius(12), background: "var(--k-surface)", color: "var(--k-fg)", zIndex: "2",
       display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/1.2 var(--k-font)`,
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = n.label;
     Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%" });
     const ring = el.appendChild(document.createElement("div"));
-    Object.assign(ring.style, { position: "absolute", inset: "-7px", border: "5px solid var(--k-accent)", borderRadius: "16px", pointerEvents: "none" });
+    Object.assign(ring.style, { position: "absolute", inset: "-7px", border: "5px solid var(--k-accent)", borderRadius: radius(16), pointerEvents: "none" });
     gsap.set(el, { autoAlpha: 0 });
     gsap.set(ring, { autoAlpha: 0 });
     return [n.id, { el, text, ring }] as const;
@@ -177,9 +178,9 @@ export function depGraph(ctx: Ctx, opts: DepGraphOpts): DepGraphHandle {
       Object.assign(p.style, style);
       return p;
     };
-    const line = path(d, { fill: "none", stroke: "var(--k-line)", strokeWidth: "3" });
+    const line = path(d, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(3) });
     const head = path(tip, { fill: "var(--k-line)" });
-    const hot = path(d, { fill: "none", stroke: "var(--k-accent)", strokeWidth: "5" });
+    const hot = path(d, { fill: "none", stroke: "var(--k-accent)", strokeWidth: strokeW(5) });
     const hotHead = path(tip, { fill: "var(--k-accent)" });
     gsap.set([line, head], { autoAlpha: 0 });
     gsap.set([hot, hotHead], { autoAlpha: 0 });

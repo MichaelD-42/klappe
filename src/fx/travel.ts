@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import type { Ctx, StepAdder } from "../types";
+import { strokeW } from "./layout";
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -41,7 +42,7 @@ export function travel(ctx: Ctx, el: Element, opts: TravelOpts): TravelHandle {
     line.setAttribute("d", d);
     line.setAttribute("data-k-route", "");
     // No round caps: one would peek out at the start of the hidden dash.
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(4), strokeLinejoin: "round" });
     // Placed before el in the DOM when both are in ctx.svg, so the route paints under it.
     if (el.parentNode === ctx.svg) ctx.svg.insertBefore(line, el);
     // pathLength 1: dash 1, gap 2, offset 1 hides it; offset 0 shows it whole.

@@ -3,6 +3,7 @@ import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { gapPx, strokeW } from "./layout";
 
 export type PyramidOpts = {
   layers: { id: string; label: string }[]; // bottom layer first: the order they build in
@@ -28,14 +29,15 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 // Each layer's corners (bottom left, bottom right, top right, top left) and its label box (the width of its
 // narrower edge, inset), bottom layer first. The layers fill the rect's height with a gap between them.
 export function pyramidLayout(rect: Rect, n: number, shape: Shape = "pyramid"): { points: P[]; label: Rect }[] {
-  const lh = (rect.h - (n - 1) * GAP) / n;
+  const gap = gapPx(GAP);
+  const lh = (rect.h - (n - 1) * gap) / n;
   const bottom = rect.y + rect.h;
   const narrow = shape === "stack" ? 1 : TOP;
   // Half the width at height y: full at the wide end of the rect, narrow at the other; inverted is wide on top.
   const half = (y: number) => (rect.w / 2) * (1 - ((1 - narrow) * (shape === "inverted" ? y - rect.y : bottom - y)) / rect.h);
   const cx = rect.x + rect.w / 2;
   return Array.from({ length: n }, (_, i) => {
-    const [y0, y1] = [bottom - i * (lh + GAP), bottom - i * (lh + GAP) - lh];
+    const [y0, y1] = [bottom - i * (lh + gap), bottom - i * (lh + gap) - lh];
     const [h0, h1] = [half(y0), half(y1)];
     const points = [{ x: cx - h0, y: y0 }, { x: cx + h0, y: y0 }, { x: cx + h1, y: y1 }, { x: cx - h1, y: y1 }].map((p) => ({ x: r2(p.x), y: r2(p.y) }));
     const h = Math.min(h0, h1);
@@ -58,9 +60,9 @@ export function pyramid(ctx: Ctx, opts: PyramidOpts): PyramidHandle {
     const { points, label } = geo[i];
     const g = ctx.svg.appendChild(document.createElementNS(SVG, "g"));
     g.setAttribute("data-k-pyramid-layer", l.id);
-    g.append(poly(points, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: "2" }));
+    g.append(poly(points, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: strokeW(2) }));
     // The accent look, over the plain one: shown while the layer is the newest.
-    const hot = g.appendChild(poly(points, { fill: FILL, stroke: "var(--k-accent)", strokeWidth: "4" }));
+    const hot = g.appendChild(poly(points, { fill: FILL, stroke: "var(--k-accent)", strokeWidth: strokeW(4) }));
     const el = ctx.html.appendChild(document.createElement("div"));
     Object.assign(el.style, {
       position: "absolute", boxSizing: "border-box", left: `${label.x}px`, top: `${label.y}px`, width: `${label.w}px`, height: `${label.h}px`,

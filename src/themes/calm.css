@@ -32,5 +32,8 @@
   --k-phosphor: #7dffa0; /* CRT text, green */
   --k-phosphor-amber: #ffb547; /* CRT text, amber */
   --k-blackout: #000; /* the blackout transition */
+  --k-radius: 12px; /* the corner radius of a box; effects scale their own radii from it */
+  --k-stroke: 4px; /* the weight of a diagram line; box outlines and other strokes scale from it */
+  --k-gap: 8px; /* the gap between boxes in a laid-out element; row and column gaps scale from it */
   --k-scrim: #000; /* the layer that dims a picture under text: black under light text, white under dark */
 }

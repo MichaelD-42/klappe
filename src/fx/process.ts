@@ -3,6 +3,7 @@ import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { gapPx, strokeW } from "./layout";
 
 export type ProcessStepsOpts = {
   steps: string[]; // the stage names, in order
@@ -28,7 +29,8 @@ export function processSteps(ctx: Ctx, opts: ProcessStepsOpts): ProcessStepsHand
   if (!n) throw new Error("processSteps: no steps");
   const { x, y, w, h } = opts;
   const depth = Math.min(h * 0.35, 40); // how far a point reaches into the next chevron's notch
-  const cw = (w - depth - (n - 1) * GAP) / n;
+  const gap = gapPx(GAP);
+  const cw = (w - depth - (n - 1) * gap) / n;
   let cur = opts.current ?? 0;
   if (!(cur >= 0 && cur < n)) {
     ctx.problem(`processSteps: no stage ${cur}; the stages are 0 to ${n - 1}`);
@@ -43,7 +45,7 @@ export function processSteps(ctx: Ctx, opts: ProcessStepsOpts): ProcessStepsHand
   const root = ctx.svg.appendChild(document.createElementNS(SVG, "g"));
   const box = ctx.html.appendChild(document.createElement("div"));
   const stages = opts.steps.map((name, i) => {
-    const x0 = x + i * (cw + GAP);
+    const x0 = x + i * (cw + gap);
     const pts = [
       [x0, y],
       [x0 + cw, y],
@@ -54,8 +56,8 @@ export function processSteps(ctx: Ctx, opts: ProcessStepsOpts): ProcessStepsHand
     ];
     const g = root.appendChild(document.createElementNS(SVG, "g"));
     g.setAttribute("data-k-stage", String(i));
-    g.append(poly(pts, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: "2" }));
-    const hot = g.appendChild(poly(pts, { fill: FILL, stroke: "var(--k-accent)", strokeWidth: "4" }));
+    g.append(poly(pts, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: strokeW(2) }));
+    const hot = g.appendChild(poly(pts, { fill: FILL, stroke: "var(--k-accent)", strokeWidth: strokeW(4) }));
     const left = x0 + (i ? depth : 0) + PAD;
     const el = box.appendChild(document.createElement("div"));
     Object.assign(el.style, {

@@ -5,6 +5,7 @@ import type { Ctx, StepAdder } from "../types";
 import { MARKER_MIX } from "./annotate";
 import { iconGlyph } from "./icons";
 import { typeSize } from "./draw";
+import { gapCss, radius } from "./layout";
 
 export interface CompareTableOpts {
   columns: string[]; // the header of each value column, e.g. the products compared
@@ -41,7 +42,7 @@ const div = (parent: HTMLElement, style: Partial<CSSStyleDeclaration>, text?: st
 // Reduced motion: the marks fade in without the pop.
 export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHandle {
   const cols = opts.columns.length;
-  const grid = { display: "grid", gridTemplateColumns: `minmax(0, 2fr) repeat(${cols}, minmax(0, 1fr))`, columnGap: "24px", alignItems: "center" };
+  const grid = { display: "grid", gridTemplateColumns: `minmax(0, 2fr) repeat(${cols}, minmax(0, 1fr))`, columnGap: gapCss(24), alignItems: "center" };
   const root = document.createElement("div");
   root.setAttribute("data-k-compare", "");
   Object.assign(root.style, {
@@ -97,7 +98,7 @@ export function compareTable(ctx: Ctx, opts: CompareTableOpts): CompareTableHand
       const cell = head.children[i + 1] as HTMLElement;
       const b = div(root, {
         position: "absolute", left: `${cell.offsetLeft - 12}px`, top: "-12px", width: `${cell.offsetWidth + 24}px`, height: `${root.offsetHeight + 12}px`,
-        boxSizing: "border-box", border: "3px solid var(--k-accent)", borderRadius: "12px", zIndex: "-1",
+        boxSizing: "border-box", border: "3px solid var(--k-accent)", borderRadius: radius(12), zIndex: "-1",
         background: `color-mix(in srgb, var(--k-accent) ${MARKER_MIX * 100}%, transparent)`,
       });
       b.setAttribute("data-k-compare-column", String(i));

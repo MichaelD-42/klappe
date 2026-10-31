@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Theme tokens `--k-radius`, `--k-stroke` and `--k-gap`: the corner radius of boxes, the weight of diagram lines and the gap between boxes in a laid-out element. Defaults are today's values, so no theme changes; `?theme=sharp` shows square corners, thin lines and wide gaps.
 - `code` and code fences highlight Go, Rust, Java, Kotlin, C#, C, C++, Ruby, PHP, Swift, Dockerfile, TOML, XML, Markdown, diff and HCL (`go`, `rust`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `ruby`, `php`, `swift`, `dockerfile`, `toml`, `xml`, `markdown`, `diff`, `hcl`).
 - Markdown: a table in `scene.md` is a `compareTable`, one row per step; `✓` ticks, `✗` crosses, `~` is partly. Catalog: `#/table-card/compare-md/1`.
 - `compareTable` cell `"~"`: partly, a dash in `--k-warn`, spoken "partly". Catalog: `#/table-card/compare/2`.

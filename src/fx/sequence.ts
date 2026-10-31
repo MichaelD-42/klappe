@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 type Message = { from: string; to: string; text: string; reply?: boolean };
@@ -70,7 +71,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     el.setAttribute("data-k-seq-actor", a.id);
     Object.assign(el.style, {
       position: "absolute", left: `${x - headW / 2}px`, top: `${opts.y}px`, width: `${headW}px`, height: `${HEAD_H}px`, boxSizing: "border-box",
-      border: `4px solid var(--k-series-${(k % 6) + 1})`, borderRadius: "12px", background: "var(--k-surface)", color: "var(--k-fg)",
+      border: `4px solid var(--k-series-${(k % 6) + 1})`, borderRadius: radius(12), background: "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", justifyContent: "center", padding: "0 10px", textAlign: "center",
       font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", overflow: "hidden", zIndex: "2",
     });
@@ -78,7 +79,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     ctx.html.append(el);
     const line = document.createElementNS(SVG, "path");
     line.setAttribute("d", `M ${r2(x)} ${opts.y + HEAD_H} L ${r2(x)} ${bottom}`);
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "2", strokeDasharray: "6 10", strokeOpacity: "0.5" });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(2), strokeDasharray: "6 10", strokeOpacity: "0.5" });
     ctx.svg.append(line);
     hide(el, line);
     heads.push(el);
@@ -94,7 +95,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     const bar = document.createElementNS(SVG, "rect");
     for (const [k, v] of Object.entries({ x: r2(x - BAR / 2), y: r2(y0), width: BAR, height: r2(y1 - y0) })) bar.setAttribute(k, String(v));
     bar.setAttribute("data-k-seq-activation", a.actor);
-    Object.assign(bar.style, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: "2" });
+    Object.assign(bar.style, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: strokeW(2) });
     ctx.svg.append(bar);
     hide(bar);
     shownWith[a.from].push(bar);
@@ -111,7 +112,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     el.setAttribute("data-k-seq-frame", f.kind);
     Object.assign(el.style, {
       position: "absolute", left: `${opts.x + inset}px`, top: `${r2(y0)}px`, width: `${opts.w - 2 * inset}px`, height: `${r2(y1 - y0)}px`, boxSizing: "border-box",
-      border: "2px solid var(--k-line)", borderRadius: "6px", zIndex: "1", pointerEvents: "none",
+      border: "2px solid var(--k-line)", borderRadius: radius(6), zIndex: "1", pointerEvents: "none",
     });
     const tag = el.appendChild(document.createElement("div"));
     Object.assign(tag.style, { display: "inline-flex", gap: "8px", padding: "2px 10px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${typeSize("label", SMALL)}px/${LINE_H} var(--k-font)`, borderBottomRightRadius: "6px" });
@@ -146,7 +147,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       text.textContent = m.note;
       Object.assign(tag.style, {
         position: "absolute", left: `${r2(l)}px`, top: `${r2(y - h / 2)}px`, width: `${r2(r - l)}px`, height: `${r2(h)}px`, boxSizing: "border-box",
-        border: "2px solid var(--k-line)", borderRadius: "4px", background: "var(--k-surface)", color: "var(--k-fg)", padding: "0 10px",
+        border: "2px solid var(--k-line)", borderRadius: radius(4), background: "var(--k-surface)", color: "var(--k-fg)", padding: "0 10px",
         display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "3",
       });
       ctx.html.append(tag);
@@ -171,7 +172,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     const d = pts.map((p, k) => `${k ? "L" : "M"} ${r2(p[0])} ${r2(p[1])}`).join(" ");
     const line = document.createElementNS(SVG, "path");
     line.setAttribute("d", d);
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(4), strokeLinejoin: "round" });
     ctx.svg.append(line);
     // A dashed line cannot use drawOn (it owns the dash): a solid copy draws on inside an alpha mask instead.
     let drawn: SVGElement = line;
@@ -184,7 +185,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
       mask.style.maskType = "alpha";
       const solid = document.createElementNS(SVG, "path");
       solid.setAttribute("d", d);
-      Object.assign(solid.style, { fill: "none", stroke: "var(--k-fg)", strokeWidth: "8", strokeLinejoin: "round" });
+      Object.assign(solid.style, { fill: "none", stroke: "var(--k-fg)", strokeWidth: strokeW(8), strokeLinejoin: "round" });
       mask.append(solid);
       ctx.svg.append(mask);
       line.setAttribute("mask", `url(#${id})`);
@@ -201,7 +202,7 @@ export function sequence(ctx: Ctx, opts: SequenceOpts): SequenceHandle {
     tag.textContent = m.text;
     // Above a normal arrow, centred between the lifelines; right of a loop, centred on it.
     Object.assign(tag.style, {
-      position: "absolute", padding: "2px 10px", borderRadius: "8px", background: "var(--k-bg)", color: "var(--k-fg)",
+      position: "absolute", padding: "2px 10px", borderRadius: radius(8), background: "var(--k-bg)", color: "var(--k-fg)",
       font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, whiteSpace: "nowrap", zIndex: "3",
       ...(self
         ? { left: `${x0 + LOOP + 10}px`, top: `${y + drop / 2}px`, translate: "0 -50%" }

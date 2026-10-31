@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import * as d3 from "d3";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 export interface TreeNode {
@@ -92,7 +93,7 @@ export function decisionTree(ctx: Ctx, opts: TreeOpts): TreeHandle {
     el.setAttribute("data-k-tree-node", b.id);
     Object.assign(el.style, {
       position: "absolute", left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, boxSizing: "border-box",
-      padding: "6px 10px", border: "3px solid var(--k-line)", borderRadius: "14px", background: "var(--k-surface)", color: "var(--k-fg)",
+      padding: "6px 10px", border: "3px solid var(--k-line)", borderRadius: radius(14), background: "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
     });
@@ -109,21 +110,21 @@ export function decisionTree(ctx: Ctx, opts: TreeOpts): TreeHandle {
   const edges = new Map(lay.boxes.filter((b) => b.parent).map((b) => {
     const p = byId.get(b.parent!)!;
     const [x1, y1, x2, y2] = [p.x + p.w / 2, p.y + p.h, b.x + b.w / 2, b.y];
-    const line = (stroke: string, width: string) => {
+    const line = (stroke: string, px: number) => {
       const el = document.createElementNS(SVG, "path");
       el.setAttribute("d", `M ${x1} ${y1} L ${x2} ${y2}`);
-      Object.assign(el.style, { fill: "none", stroke, strokeWidth: width, strokeLinecap: "round" });
+      Object.assign(el.style, { fill: "none", stroke, strokeWidth: strokeW(px), strokeLinecap: "round" });
       ctx.svg.append(el);
       gsap.set(el, { autoAlpha: 0 });
       return el;
     };
-    const base = line("var(--k-line)", "4");
-    const lit = line("var(--k-accent)", "7");
+    const base = line("var(--k-line)", 4);
+    const lit = line("var(--k-accent)", 7);
     const tag = document.createElement("div");
     tag.textContent = b.edge!;
     Object.assign(tag.style, {
       position: "absolute", left: `${(x1 + x2) / 2}px`, top: `${(y1 + y2) / 2}px`, translate: "-50% -50%", padding: "2px 10px",
-      borderRadius: "8px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`,
+      borderRadius: radius(8), background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${FLOOR}px/${LINE_H} var(--k-font)`,
       whiteSpace: "nowrap", zIndex: "3",
     });
     ctx.html.append(tag);

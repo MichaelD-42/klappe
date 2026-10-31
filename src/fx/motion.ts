@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 export interface MorphOpts {
   from: Element;
@@ -107,7 +108,7 @@ export function bubble(
     maxWidth: `${opts.maxWidth ?? 640}px`,
     boxSizing: "border-box",
     padding: "20px 32px",
-    borderRadius: "6px",
+    borderRadius: radius(6),
     // An outline, like the line art: accent stroke on the background colour.
     border: `${LINE}px solid var(--k-accent)`,
     background: "var(--k-bg)",

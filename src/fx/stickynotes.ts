@@ -3,6 +3,7 @@ import { motion } from "../theme";
 import { rand } from "./swarm";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 export type StickyNotesOpts = {
   notes: { id: string; text: string }[];
@@ -128,7 +129,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
     Object.assign(text.style, { overflowWrap: "anywhere", maxWidth: "100%" });
     Object.assign(el.style, {
       position: "absolute", left: "0", top: "0", width: `${note.w}px`, height: `${note.h}px`, boxSizing: "border-box", padding: "10px 14px",
-      background: `color-mix(in srgb, var(--k-series-${(i % 6) + 1}) ${NOTE_MIX * 100}%, var(--k-bg))`, borderRadius: "4px",
+      background: `color-mix(in srgb, var(--k-series-${(i % 6) + 1}) ${NOTE_MIX * 100}%, var(--k-bg))`, borderRadius: radius(4),
       color: "var(--k-fg)", font: `600 ${typeSize("label", FONT)}px/${LINE_H} var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
       textAlign: "center", zIndex: "2",
     });

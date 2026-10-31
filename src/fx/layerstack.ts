@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { strokeW } from "./layout";
 
 export type LayerStackOpts = {
   layers: { label: string; note?: string }[]; // the top layer first
@@ -62,11 +63,11 @@ export function layerStack(ctx: Ctx, opts: LayerStackOpts): LayerStackHandle {
   const layers = opts.layers.map((l, i) => ({ l, i })).reverse().map(({ l, i }) => {
     const g = root.appendChild(document.createElementNS(SVG, "g"));
     g.setAttribute("data-k-layer", String(i));
-    const edge = { stroke: "var(--k-bg)", strokeWidth: "2" };
+    const edge = { stroke: "var(--k-bg)", strokeWidth: strokeW(2) };
     poly(g, [[cx - a, c], [cx, 2 * c], [cx, 2 * c + t], [cx - a, c + t]], { fill: mix(i, 45), ...edge });
     poly(g, [[cx, 2 * c], [cx + a, c], [cx + a, c + t], [cx, 2 * c + t]], { fill: mix(i, 30), ...edge });
     poly(g, [[cx, 0], [cx + a, c], [cx, 2 * c], [cx - a, c]], { fill: mix(i, 70), ...edge });
-    const hot = poly(g, [[cx, 0], [cx + a, c], [cx + a, c + t], [cx, 2 * c + t], [cx - a, c + t], [cx - a, c]], { fill: "none", stroke: "var(--k-accent)", strokeWidth: "5" });
+    const hot = poly(g, [[cx, 0], [cx + a, c], [cx + a, c + t], [cx, 2 * c + t], [cx - a, c + t], [cx - a, c]], { fill: "none", stroke: "var(--k-accent)", strokeWidth: strokeW(5) });
     const label = box.appendChild(document.createElement("div"));
     label.dataset.kLayerLabel = String(i);
     Object.assign(label.style, {

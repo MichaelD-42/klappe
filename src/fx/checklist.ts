@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
+import { gapCss, strokeW } from "./layout";
 import type { Ctx, StepAdder } from "../types";
 
 export interface ChecklistOpts {
@@ -29,7 +30,7 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
   const root = document.createElement("div");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, display: "flex", flexDirection: "column",
-    gap: `${GAP}px`, font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
+    gap: gapCss(GAP), font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
   });
   const rows = opts.items.map((it) => {
     const row = root.appendChild(document.createElement("div"));
@@ -39,13 +40,13 @@ export function checklist(ctx: Ctx, opts: ChecklistOpts): ChecklistHandle {
     Object.assign(svg.style, { width: `${BOX}px`, height: `${BOX}px`, flex: "none", marginTop: "0.125em", overflow: "visible" });
     const box = svg.appendChild(document.createElementNS(SVG, "rect"));
     for (const [k, v] of Object.entries({ x: 1, y: 1, width: BOX - 2, height: BOX - 2, rx: 4 })) box.setAttribute(k, String(v));
-    Object.assign(box.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "2" });
+    Object.assign(box.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(2) });
     const mark = svg.appendChild(document.createElementNS(SVG, "path"));
     mark.setAttribute("d", "M7 17 L14 24 L26 8");
-    Object.assign(mark.style, { fill: "none", stroke: "var(--k-ok)", strokeWidth: "4", strokeLinecap: "round", strokeLinejoin: "round" });
+    Object.assign(mark.style, { fill: "none", stroke: "var(--k-ok)", strokeWidth: strokeW(4), strokeLinecap: "round", strokeLinejoin: "round" });
     const cross = svg.appendChild(document.createElementNS(SVG, "path"));
     cross.setAttribute("d", "M9 9 L23 23 M23 9 L9 23");
-    Object.assign(cross.style, { fill: "none", stroke: "var(--k-bad)", strokeWidth: "4", strokeLinecap: "round" });
+    Object.assign(cross.style, { fill: "none", stroke: "var(--k-bad)", strokeWidth: strokeW(4), strokeLinecap: "round" });
     gsap.set([mark, cross], { autoAlpha: 0 });
     const text = row.appendChild(document.createElement("div"));
     text.textContent = it.text;
