@@ -8,7 +8,9 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Deck repo.** A git repo that holds one or more decks and klappe itself in `klappe/` (`klappe init` sets it up). The klappe repo is a deck repo too, with the demo deck.
 
-**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`, `cuts`. Type `DeckMeta` (`duration` is read only by `klappe outline`).
+**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`, `cuts`. Type `DeckMeta` (`duration` is read by `klappe outline` and the rehearsal; a cut carries its own).
+
+**Deck component.** A fence the deck registers itself in `components.ts`: a function from the fence body and info to the scene's step functions, used like a built-in fence. A name a built-in fence has is a deck problem and the built-in wins.
 
 **Section.** A chapter of a deck: a folder `sections/<NN-id>/` with `section.md` (its `# title` and notes) and an optional `section.ts`. Has scenes; part of a deck. Gets its own canvas unless the deck shares one.
 
@@ -54,7 +56,7 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Ken Burns.** A slow push into a background picture, once, from the first scene that shows it.
 
-**Transition.** How the deck enters a section's canvas on a forward step: `fade` by default, or `cut`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`, `magicMove`. Set in `section.ts`.
+**Transition.** How the deck enters a section's canvas on a forward step: `fade` by default, or `cut`, `blackout`, `zoom`, `shatter`, `crt`, `push`, `iris`, `glitch`, `cube`, `pageTurn`, `magicMove`, or the deck's own function (`OwnTransition`). Set in `section.ts`.
 
 ## Time and steps
 
@@ -108,7 +110,7 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Intensity.** `calm` or `bold` in `deck.md`: how loud shout-outs and some effects are.
 
-**Safe area.** The margin of the stage that ink should stay out of; `safe-area` in `deck.md`. *See* Bleed.
+**Safe area.** The margin of the stage that ink should stay out of; `safe-area` in `deck.md`; `ctx.safe` is it as a rect in scene px. *See* Bleed.
 
 **Bleed.** Ink that runs past the safe area on purpose, marked `data-k-bleed`.
 

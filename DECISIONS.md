@@ -465,7 +465,5 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **A deep link into a section the active cut leaves out is a deck problem and opens at the cut's first step.**
   - Why: the link is stale for this cut (a link from the full talk's notes, a bookmark); the router already falls back to the first step for an unknown section. Silently showing the first step would hide the mistake; adding the section back would break the cut. The problem names the section and the cut.
 
-## 2026-10-31
-
 - **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**
   - Why: klappe cannot know how intense a deck's own motion is, so reduced motion treats it like the intense built-ins. A function without `reveal` (or that throws) must not fail the deck mid-talk: the move still lands with a fade, and the problem names the section.
