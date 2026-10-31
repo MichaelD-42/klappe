@@ -106,7 +106,7 @@ test('dev serves on the --port it is given', async () => {
       let text = ''
       const timer = setTimeout(() => fail(new Error(`no URL in 30 s:\n${text}`)), 30_000)
       const read = (b: Buffer) => {
-        text += b
+        text += String(b).replace(/\x1b\[[0-9;]*m/g, '') // CI colours Vite's output: a code sits between host and port
         if (/localhost:\d+/.test(text)) clearTimeout(timer), ok(text)
       }
       p.stdout.on('data', read)
