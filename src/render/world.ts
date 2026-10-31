@@ -70,7 +70,7 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
 const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
-// Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
+// Plain text steps replace each other, set large (unless the scene stacks them). Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
 // media, code or terminal the right. Task-list items build one checklist, a table a comparison, a time-range list an agenda.
 // Returns the title and the steps an effect plays, by step number.
 function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
@@ -143,6 +143,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const tableN = firstOf("compare");
   const table = tableN && scene.table ? part(tableN, "compareTable", lists, (c) => fxPart("compareTable")(c, { ...scene.table!, ...lists })) : undefined;
   const title = add(col, el("h2", "", scene.title));
+  // A scene of plain text steps gives each one the stage, large, until the next replaces it; stack: true builds a list.
+  const say = !scene.stack && !fence && scene.steps.every((s) => !s.part && !s.media);
+  let said: Element | undefined; // the plain step on screen: it fades out when the next one shows
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
   scene.steps.forEach((s, i) => {
@@ -177,6 +180,15 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
     p.dataset.step = String(n);
+    if (say && s.kind === "step") {
+      p.classList.add("k-say");
+      const prev = said;
+      said = p;
+      return fx.set(n, (tl) => {
+        tl.to(p, { autoAlpha: 1, duration: motion.step });
+        if (prev) tl.to(prev, { autoAlpha: 0, duration: motion.step }, "<");
+      });
+    }
     const fenced = codeFx ?? termFx ?? chatFx;
     if ((pt?.kind === "code" || pt?.kind === "console" || pt?.kind === "chat") && fenced) {
       return fx.set(n, (tl) => {

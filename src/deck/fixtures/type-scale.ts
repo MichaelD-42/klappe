@@ -17,7 +17,7 @@ export default () => {
     {
       "deck.md": "---\ntitle: Type scale\ntheme: type-scale\n---\n",
       "sections/10-a/section.md": "# A\n",
-      "sections/10-a/10-md/scene.md": "## Title\n\n- Body.\n",
+      "sections/10-a/10-md/scene.md": "---\nstack: true\n---\n## Title\n\n- Body.\n",
       "sections/10-a/20-coded/scene.md": "## Coded\n\n- Text, a list and a number.\n",
     },
     { "sections/10-a/20-coded/scene.ts": coded },

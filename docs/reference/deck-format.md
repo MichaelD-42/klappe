@@ -49,7 +49,15 @@ The design lint checks deck.css too. In-code test fixtures (`?fixture=`) ignore 
 ## scene.md
 
 - `## Title` names the scene. It is required.
-- Each list item is one step.
+- Each list item is one step. In a scene of plain text items (no media, code, task list, table or agenda), each item gets the stage to itself, set large under the title, and fades out when the next one shows. To build them up as a list instead, start the file with frontmatter `stack: true`:
+
+  ```markdown
+  ---
+  stack: true
+  ---
+  ## Three reasons
+  ```
+
 - A `> note` is a speaker note. It belongs to the step above it. Before the first step, it belongs to the scene. A note indented under a list item belongs to that item. Several notes on one step are kept in order, and a blank `>` line starts a new paragraph.
 - A `### Question?` followed by a paragraph is a shout-out. The heading must end with `?`. It makes 2 steps: the question, then the answer. A `> note` after it attaches to the answer step. For a pause between them, build it in `scene.ts` and call `fade` on a step of its own.
 - A scene with no list items gets one step with the title.

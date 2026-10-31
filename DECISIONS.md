@@ -383,3 +383,10 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **The starter deck is a `template/` folder, shaped by the work decks, and sets `max-words: 12`.**
   - Both audited decks grew `data/` and `media/`, the bigger one also `shared/` and `deck.css`; both set the same five `deck.md` keys. The template has those, one scene, and a README with the commands. It has no example `scene.ts` or `overlay.ts`: an agent copies catalog scenes instead.
   - The word cap is on from the first scene, so a long step fails `klappe test` before a deck grows around it; the README says how to raise it.
+
+## 2026-10-31 (backlog top five)
+
+- **Plain text steps replace each other by default; `stack: true` in `scene.md` frontmatter opts into the build-up.**
+  - Why: the bullet build-up slide is what klappe is meant to replace. One large statement at a time is what a talk wants, and an agent writing plain list items now gets it without a `scene.ts`.
+  - Only a scene of plain items replaces. With media, code, a task list, a table or an agenda, the text is a caption column beside the element, and a large centred statement would sit on top of it.
+  - The switch is frontmatter in `scene.md`, the first scene-level key there. Composition presets and the story point are planned as scene frontmatter too, and a plain scene has no `scene.ts` to hold an option.

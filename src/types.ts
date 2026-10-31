@@ -46,6 +46,8 @@ export interface SceneDoc {
   fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
   // The scene's one Markdown table, as compareTable reads it: ✓ ✔ true, ✗ ✘ false, ~ partly, other text as written.
   table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
+  // frontmatter stack: true: plain text steps build up a list instead of replacing each other.
+  stack?: boolean;
 }
 export interface SectionDoc {
   id: string;

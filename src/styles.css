@@ -91,6 +91,17 @@ body {
   max-width: 1500px;
 }
 
+.k-scene p.k-say {
+  position: absolute;
+  left: 160px;
+  top: 50%;
+  translate: 0 -50%;
+  margin: 0;
+  font-size: calc(var(--k-size-title) * 64 / 88);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .k-scene p.k-shout {
   font-size: calc(var(--k-size-title) * 64 / 88);
   font-weight: 700;

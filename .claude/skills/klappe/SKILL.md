@@ -122,6 +122,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - One idea per step. Name the new thing by drawing it in `--k-accent`; it settles when the next step starts.
 - No dead clicks: every press changes the picture and gives the speaker something to say. Chain motion that needs no words with `auto` (seconds per step), so one press runs it.
 - Before a large element or an answer lands, fade out what it would cover. Check each scene's last step for overlap.
+- A plain text step in `scene.md` replaces the one before, large; that is the default because one statement at a time reads better than a growing list. Use frontmatter `stack: true` only when the items must be seen together (a list of three to compare).
 - A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
 - Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample data" label (`chart` with `sample: true` shows it).
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.

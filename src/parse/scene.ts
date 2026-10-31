@@ -1,6 +1,7 @@
 import { parseGroups } from "../fx/code";
 import type { Part, SceneDoc, StepDoc } from "../types";
 import { blocks } from "./blocks";
+import { parseFrontmatter } from "./frontmatter";
 import { idFromFolder } from "./ids";
 
 // [label](href "title") or ![alt](href "title"), in a list item's raw inline Markdown.
@@ -33,7 +34,8 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   let title = "";
   let notes = "";
   const steps: StepDoc[] = [];
-  const bs = blocks(md);
+  const { data, body } = parseFrontmatter(md);
+  const bs = blocks(body);
   let fence: SceneDoc["fence"];
   let table: SceneDoc["table"];
   let parts: Part[] = []; // the fence's parts, matched in order to the items after it
@@ -108,5 +110,5 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   steps.splice(fenceAt, 0, ...parts.map((part) => ({ text: "", notes: "", kind: "step" as const, part })));
   if (!title) problems.push(`${folder}/scene.md: missing ## title`);
   if (!steps.length) steps.push({ text: title, notes: "", kind: "step" });
-  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}) }, problems };
+  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}), ...(data.stack === true ? { stack: true } : {}) }, problems };
 }
