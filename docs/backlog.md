@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Video export: `klappe video` renders a deck to MP4 by stepping each canvas timeline frame by frame in Playwright, holding each step for its `auto` time or a default. Seek equals play, so a frame is exact; wall-clock loops (backgrounds, `mesh3d`, video) need their own clock in this mode. Check first whether the frames can feed ffmpeg without a new npm dependency.
 - Deck cuts: one deck in several lengths (a 20- and a 45-minute cut that leave sections out) and a backup appendix outside the main flow, one jump away for Q&A. Today a re-cut means a copied deck.
 - Presenter ink: draw on the stage during the talk (a laser dot, and a pen that marks and fades), from the mouse or the speaker view. Live, so it sits under `data-k-ignore` and never on a timeline; clear it on the next step.
 - Icons in Markdown: `:icon-name:` on a list item in `scene.md` sets an icon with the step. Pairs with Text steps replace, not stack. Check first whether `image` already shows a `.svg` as a plain picture.

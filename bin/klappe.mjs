@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -22,13 +23,14 @@ const usage =
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
+  '       klappe video [--deck <id>] [--out <file.mp4>] [--fps <n>] [--hold <s>] [--size <w>x<h>]   needs ffmpeg on PATH\n' +
   '       klappe --version'
 // --help on a command too: shot took it for nothing and rendered the whole deck.
 if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
   console.log(usage)
   process.exit(0)
 }
-if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init', 'theme'].includes(cmd)) {
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
 }
@@ -200,6 +202,12 @@ if (cmd === 'outline') {
   process.exit(0)
 }
 
+// Before a server and a browser start: klappe encodes with the system ffmpeg, not an npm package.
+if (cmd === 'video' && spawnSync('ffmpeg', ['-version']).error) {
+  console.error('klappe video needs ffmpeg on PATH')
+  process.exit(1)
+}
+
 // Imported late: init runs before npm i, when vite is not installed yet.
 const { createServer, build } = await import('vite')
 const configFile = path.join(klappeDir, 'vite.config.ts')
@@ -257,6 +265,29 @@ if (cmd === 'build') {
     process.exitCode = r.unknown.length || r.errors.length ? 1 : 0
   } finally {
     await server?.close()
+  }
+} else if (cmd === 'video') {
+  // Page errors fail the export, as in pdf. --size is the viewport; a frame other than 16:9 keeps its shape at that width.
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const fps = Number(arg('--fps') ?? 30)
+  const hold = Number(arg('--hold') ?? 3)
+  const m = (arg('--size') ?? '1920x1080').match(/^(\d+)x(\d+)$/)
+  if (!(Number.isInteger(fps) && fps > 0) || !(hold >= 0) || !m) {
+    console.error('--fps needs a whole number above 0, --hold seconds (0 or more), --size <width>x<height>')
+    process.exit(1)
+  }
+  const { exportVideo } = await import('./video.mjs')
+  const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
+  await server.listen()
+  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}.mp4`))
+  try {
+    const r = await exportVideo(server.resolvedUrls.local[0], out, { fps, hold, size: { width: +m[1], height: +m[2] } })
+    for (const p of r.problems) console.warn(`deck problem: ${p}`)
+    for (const e of r.errors) console.error(`page error: ${e}`)
+    console.log(`Wrote ${out}: ${r.frames} frames, ${(r.frames / fps).toFixed(1)} s.`)
+    process.exitCode = r.errors.length ? 1 : 0
+  } finally {
+    await server.close()
   }
 } else {
   // --port and --strictPort, as Vite's own CLI takes them: several builders run one server each.

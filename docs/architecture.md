@@ -43,7 +43,7 @@ flowchart LR
 
 | Component | Files | Does |
 |---|---|---|
-| CLI | `bin/klappe.mjs` | `init`, `dev`, `build`, `test`, `pdf`, `shot`, `outline`. Picks the deck (`--deck`) and hands it to Vite as `KLAPPE_DECK_DIR`. |
+| CLI | `bin/klappe.mjs` | `init`, `dev`, `build`, `test`, `pdf`, `shot`, `video`, `outline`. Picks the deck (`--deck`) and hands it to Vite as `KLAPPE_DECK_DIR`. |
 | Vite and the scan plugin | `vite.config.ts`, `bin/scan-plugin.mjs` | Serves and bundles klappe with the deck under `@deck`. The plugin scans the deck's code for three virtual modules: the Lucide icons it names, the effects it imports, the code languages it uses, so only those load. |
 | Load and parse | `src/deck/load.ts`, `src/deck/files.ts`, `src/deck/assemble.ts`, `src/parse/` | `import.meta.glob` (in `files.ts`, imported only without `?fixture=`) brings in every `.md` as text, every `sections/**/*.ts` as a module, `data/` as text, `media/` as URLs and the themes. `assembleDeck` builds the `Deck`: sections and scenes in folder order, `scene.md` parsed into steps, notes and parts. |
 | Layout | `src/layout.ts` | Groups sections into canvases (`shared-canvas`), gives each scene its rect (`place()` or the next 1920x1080 frame), and makes the flat step list (`StepAddr[]`) that every other part indexes. |
@@ -102,7 +102,7 @@ Seek must equal play. These hold it, from the cheapest to the strongest:
 
 ## Outside the timeline
 
-Some things move on the wall clock, not with the steps: video and aurora backgrounds, animated SVG files, a deck's own loop, `burst`, `mesh3d`, the `crt` screen's decoration, the breathing `glow`, a running `timer`. They sit under `data-k-ignore`, so the snapshot leaves them out; they hold still with reduced motion and in the self-test; and they run only while their canvas is active (`data-k-active`) or their scene is on screen (`ctx.onStep`). An effect that writes the DOM from a tween's progress (`counter`, `crt`, `chat`, `swarm`) marks that element `data-k-text` or `data-k-progress` instead, so the snapshot compares it.
+Some things move on the wall clock, not with the steps: video and aurora backgrounds, animated SVG files, a deck's own loop, `burst`, `mesh3d`, the `crt` screen's decoration, the breathing `glow`, a running `timer`. They sit under `data-k-ignore`, so the snapshot leaves them out; they hold still with reduced motion, in the self-test and in `klappe video`; and they run only while their canvas is active (`data-k-active`) or their scene is on screen (`ctx.onStep`). An effect that writes the DOM from a tween's progress (`counter`, `crt`, `chat`, `swarm`) marks that element `data-k-text` or `data-k-progress` instead, so the snapshot compares it.
 
 ## Node commands
 
@@ -111,6 +111,7 @@ Some things move on the wall clock, not with the steps: video and aurora backgro
 | `dev`, `build` | Vite with `vite.config.ts`; `build` writes `dist/<id>/` with relative paths. |
 | `test` | Vitest's `e2e` project against a Vite server of the deck: the walk, the acceptance checks and the effect tests, in Playwright's Chromium. |
 | `pdf`, `shot` | A Vite server on a free port and Playwright: `openDeck` loads the deck with `?instant=1&reducedmotion=1` and no UI; `showStep` cuts to a step and waits for fonts and a painted frame. |
+| `video` | `bin/video.mjs`: `openDeck` with `?instant=0&reducedmotion=0&selftest=` (full motion, the backgrounds still, no self-test). GSAP's root timeline is paused and the ticker's clock frozen; each frame sets the root's time, so the stepper's own play (transition and flight) is seeked, not played. Wall-clock loops are held at their start each frame. JPEG frames go to the system `ffmpeg` on stdin (`image2pipe`). |
 | `outline` | No browser: Vite's `runnerImport` loads `src/deck/assemble.ts`, which parses the deck's Markdown. Scene modules are not loaded. |
 | `theme` | No browser: Vite's `runnerImport` loads `src/brand-theme.ts`, a pure derivation of every colour token from two brand colours (the contrast maths are `src/contrast.ts`, shared with the runtime check). `bin/theme.mjs` writes the file and the optional `overlay.ts`. |
 | `init` | Copies `template/` to `decks/<id>/` (a one-scene deck with `data/`, `media/`, `shared/`, `deck.css`, a README and `max-words: 12`), writes the scripts in `package.json`, a `tsconfig.json`, and copies the skill and agents (`sync-claude.mjs`). |

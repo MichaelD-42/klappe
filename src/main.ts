@@ -3,6 +3,7 @@ import "./styles.css";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
+import { gsap } from "gsap";
 import { Autoplay } from "./autoplay";
 import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
@@ -135,7 +136,8 @@ async function startDeck(svg: Record<string, string>) {
     else if (m.index! < steps.length) go(m.index!);
   });
 
-  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router };
+  // gsap: `klappe video` drives its root timeline and ticker frame by frame.
+  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router, gsap };
   const panel = showProblems(ui, problems, deck.meta.lang);
   late = (msg) => {
     problems.push(msg);

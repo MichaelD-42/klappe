@@ -316,6 +316,14 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
 
+## Video export
+
+`npx klappe video [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080]` renders the deck to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`.
+
+Each step plays as it does live, in full motion: camera flights, whips and every section transition included. No frame is recorded in real time: each one is a seek of the timeline to the frame's time, so two runs give the same file and a slow machine gives the same video, only later. After its play, a step's last frame holds for its `auto` seconds, else for `--hold` (default 3). `--size` is the viewport; a deck `frame` other than 16:9 keeps its shape at that width.
+
+What moves on the wall clock holds still, as with reduced motion: video and aurora backgrounds, animated SVG files, a deck's own background loop, `mesh3d`, the `crt` decoration, the breathing `glow` and videos in scenes show one frame. A `timer` is not started, so it shows its full time; one with `until` shows the time left at the moment of the export. Online players (YouTube, Vimeo) run outside klappe, so they record however far they got: avoid them in a deck you export.
+
 ## Review mode
 
 To review your own deck, run it with `npm run dev` and press `R`. A review window opens beside the deck, like the speaker view, and follows it: stepping in either window moves both. For the step shown it gives its place and text and a field each for **Content** (text to correct), **Storytelling** (another effect, another storyline) and **Visuals**. Whatever you type is saved as you type, with no Save button, to `decks/<id>/review.md`; coming back to a step shows what you wrote there. Review one section by going to it and stepping through.
