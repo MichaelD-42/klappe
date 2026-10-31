@@ -126,3 +126,7 @@
 .k-sp-buttons .k-on {
   outline: 2px solid var(--k-accent);
 }
+
+.k-sp-next + .k-sp-label {
+  margin-top: 24px;
+}
