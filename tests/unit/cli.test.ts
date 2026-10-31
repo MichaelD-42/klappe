@@ -100,7 +100,12 @@ test('--help after a command prints the usage, before it picks a deck or starts 
 // klappe dev --port 5174 --strictPort served on 5173.
 test('dev serves on the --port it is given', async () => {
   const { spawn } = await import('node:child_process')
-  const port = String(20000 + Math.floor(Math.random() * 20000))
+  // A free port from the OS, not a random one: random ports overlap the ephemeral range that other servers use.
+  const { createServer } = await import('node:net')
+  const probe = createServer()
+  await new Promise<void>((ok) => probe.listen(0, ok))
+  const port = String((probe.address() as { port: number }).port)
+  await new Promise((ok) => probe.close(ok))
   const p = spawn(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'dev', '--deck', 'demo', '--port', port, '--strictPort'], { cwd: join(__dirname, '../..') })
   try {
     const out = await new Promise<string>((ok, fail) => {

@@ -26,14 +26,17 @@ export default async function setup(project: TestProject) {
   // Vitest sets NODE_ENV=test, which Vite folds into the optimizer's config hash, and `klappe test` runs this setup too
   // (deck repos, and the CLI tests in a temp cwd, whose aliases differ): servers sharing a cache dir re-optimize after
   // each other. So: one dir per cwd, and a throwaway one for a temp cwd.
-  const scratch = process.cwd().startsWith(tmpdir())
+  const scratch = process.cwd().startsWith(tmpdir() + path.sep)
   const cacheDir = scratch
     ? mkdtempSync(path.join(tmpdir(), 'klappe-e2e-cache-'))
     : fileURLToPath(new URL(`../../node_modules/.vite-e2e-${createHash('sha1').update(process.cwd()).digest('hex').slice(0, 8)}`, import.meta.url))
   const server = await createServer({ configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)), cacheDir, server: { port: 0, strictPort: false } })
   await server.listen()
   // Pages must not load while the optimizer still scans, or a late dep bundle turns into 504 Outdated Optimize Dep.
-  await (server.environments.client as any).depsOptimizer?.scanProcessing
+  const optimizer = (server.environments.client as any).depsOptimizer
+  // scanProcessing is undefined once the scan is done, so only the optimizer itself can be checked.
+  if (!optimizer) throw new Error('the e2e server has no client depsOptimizer: wait for the optimizer another way')
+  await optimizer.scanProcessing
   await server.waitForRequestsIdle()
   project.provide('BASE_URL', server.resolvedUrls!.local[0])
   const deckDir = server.config.resolve.alias.find((a) => a.find === '@deck')?.replacement ?? ''
