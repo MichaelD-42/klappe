@@ -449,6 +449,11 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: Vitest sets `NODE_ENV=test`, which Vite folds into the optimizer's config hash. A dev or `klappe test` server on the shared `node_modules/.vite` (development) and the e2e ones (test) re-optimized after each other, and `klappe test` in a temp cwd (the CLI tests) rewrote the e2e cache with its own aliases. A re-optimize mid-run is what answers 504 Outdated Optimize Dep.
   - `tests/e2e/setup.ts` uses `node_modules/.vite-e2e-<hash of cwd>` (a throwaway dir under the system temp for a temp cwd) and waits for the optimizer's scan before it returns. Any other e2e test that starts its own Vite server gives it a `cacheDir` too.
 
+- **A deck component draws the whole scene, and its steps are counted from `scene.md` as a code fence's.**
+  - Why the whole scene: the shapes a deck repeats (the demo's `speakerProfile`) are scene factories that read the title and every step from `ctx.doc`; a component in the default renderer's right-hand slot could not hold them, and one that drew next to klappe's title and text would double them. So a component is a `scene.ts` `build` called from a fence.
+  - Why the code-fence count: `outline` parses `scene.md` in Node and loads no deck `.ts`, so it cannot ask the builder how many steps it has. The parser does not know which names are components and counts their fence as any non-built-in fence, so `outline`, `klappe test` and the browser agree. The builder returns step functions for those steps; past the end of its array a step plays nothing.
+  - A name klappe's own fences use (`console`, `chat`, a Shiki language) is a deck problem and the built-in wins, so a deck cannot quietly change what a code block does.
+
 ## 2026-10-31
 
 - **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**

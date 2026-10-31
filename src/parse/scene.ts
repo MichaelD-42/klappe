@@ -57,8 +57,9 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
       }
       const [lang = "", ...rest] = (b.info ?? "").trim().split(/\s+/);
       const src = b.text.replace(/\n$/, "");
-      const g = GROUPS.exec(rest.join(" "));
-      fence = { lang, src, groups: g ? parseGroups(g[1]) : [[]] };
+      const info = rest.join(" ");
+      const g = GROUPS.exec(info);
+      fence = { lang, src, groups: g ? parseGroups(g[1]) : [[]], ...(info ? { info } : {}) };
       if (lang === "console") {
         const n = src.split("\n").filter((l) => l.startsWith("$ ")).length;
         if (!n) problems.push(`${folder}/scene.md: console block has no "$ " command`);

@@ -8,10 +8,10 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { measure } from "../fx/measure";
-import { part as fxPart } from "./parts";
+import { builtInFence, part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
 import { motion, safeRect, stage, withTokenRoot } from "../theme";
-import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, OwnTransition, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
+import type { Background, CanvasLayout, Components, Ctx, Deck, DeckMeta, Rect, OwnTransition, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
@@ -75,14 +75,16 @@ const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
 // Plain text steps replace each other, set large (unless the scene stacks them). Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
 // media, code or terminal the right. Task-list items build one checklist, a table a comparison, a time-range list an agenda.
+// A fence the deck's components.ts registers draws the whole scene instead, as a scene.ts build would.
 // Returns the title and the steps an effect plays, by step number.
-function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
+function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Components): { title?: HTMLElement; fx: Map<number, StepAdder> } {
   const { html, rect } = ctx;
   const fx = new Map<number, StepAdder>();
   const shown: Element[] = [];
   const add = <E extends Element>(parent: Element, e: E) => (parent.append(e), shown.push(e), e);
   const fence = scene.fence;
-  const hasMedia = scene.steps.some((s) => s.media) || !!fence;
+  const own = fence && !builtInFence(fence.lang) ? components?.[fence.lang] : undefined;
+  const hasMedia = !own && (scene.steps.some((s) => s.media) || !!fence);
   const { layout } = scene;
   const full = layout === "full-bleed";
   const big = layout === "big-number";
@@ -129,6 +131,17 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       return { miss: missing(html, at, where, name, e) };
     }
   };
+  if (own) {
+    const made = part(1, fence!.lang, rect, (c) => {
+      const steps = own(c, fence!.src, fence!.info ?? "");
+      if (!Array.isArray(steps)) throw new Error("components.ts: a component returns an array of step functions");
+      return steps;
+    });
+    // Deck code: a step that throws is logged like a scene.ts step, and the rest of the deck still builds.
+    (made.h ?? [made.miss!]).forEach((f, i) => fx.set(i + 1, (tl) => void safe(`${scene.source} step ${i + 1}`, () => f(tl))));
+    if (made.miss) gsap.set(shown, { autoAlpha: 0 }); // the EFFECT MISSING box
+    return { fx };
+  }
   const lists: Rect = { x: rect.w * 0.083, y: rect.h * 0.28, w: rect.w * (hasMedia ? 0.37 : 0.83), h: rect.h * 0.6 };
   const firstOf = (kind: string) => scene.steps.findIndex((s) => s.part?.kind === kind) + 1;
   if (fence) {
@@ -532,7 +545,7 @@ export function renderWorld(
         const code: Ctx = { ...ctx, problem: (msg) => ctx.problem(`${file}${step ? ` step ${step}` : ""}: ${msg}`) };
         const build = sc.module?.build;
         perScene.set(sc, {
-          ...(build ? { ctx: code, refs: safe(file, () => withTokenRoot(code.html, () => build(code))) } : { ctx: code, refs: undefined, ...withTokenRoot(ctx.html, () => renderDefault(sc, ctx, deck.meta)) }),
+          ...(build ? { ctx: code, refs: safe(file, () => withTokenRoot(code.html, () => build(code))) } : { ctx: code, refs: undefined, ...withTokenRoot(ctx.html, () => renderDefault(sc, ctx, deck.meta, deck.components)) }),
           at: (n) => (step = n),
           bg: pin,
         });

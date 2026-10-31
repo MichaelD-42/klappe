@@ -30,6 +30,11 @@ const table = lazyTable<Parts>({
 // A part's effect. One that was not loaded throws, and the renderer shows EFFECT MISSING with a problem.
 export const part = <K extends keyof Parts>(name: K): Parts[K] => table.get(name);
 
+// A fence klappe draws itself: console, chat, or a language Shiki bundles. A deck component of that name never runs.
+export const builtInFence = (lang: string) => lang === "console" || lang === "chat" || LANGS.includes(lang);
+export const componentProblems = (deck: Deck) =>
+  Object.keys(deck.components ?? {}).filter(builtInFence).map((n) => `components.ts: '${n}' is a built-in fence; the built-in wins`);
+
 // The parts the deck's scene.md files use (a scene with a scene.ts build draws itself), and the grammars
 // Shiki loads: each code fence's, and the lang values of code() when the deck's code imports it (the build scans for both).
 export function partsOf(deck: Deck, fx: string[], langs: string[]): { names: (keyof Parts)[]; langs: string[] } {

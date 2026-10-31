@@ -1,1 +1,1 @@
-# Speaker profile
+# Deck components

@@ -45,7 +45,8 @@ export interface SceneDoc {
   notes: string;
   steps: StepDoc[];
   // The scene's one code or console block. groups: the highlight groups, line lists, 1-based.
-  fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
+  // info: the info string after the language; avatars: a chat fence's picture lines.
+  fence?: { lang: string; src: string; groups: number[][]; info?: string; avatars?: Record<string, string> };
   // The scene's one Markdown table, as compareTable reads it: ✓ ✔ true, ✗ ✘ false, ~ partly, other text as written.
   table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
   // frontmatter stack: true: plain text steps build up a list instead of replacing each other.
@@ -159,6 +160,12 @@ export interface OverlayModule {
   // It must depend on at alone, so a jump shows what a play does.
   update?(at: OverlayAt, refs: any): void;
 }
+// A deck's own Markdown fence: draws the scene whose scene.md has a ```<name> fence, as a scene.ts build would.
+// body: the fence's text; info: its info string after the name. ctx.doc has the scene's title and steps. Returns the
+// step functions, one per scene.md step from the first; a step past the end plays nothing.
+export type Component = (ctx: Ctx, body: string, info: string) => StepAdder[];
+// decks/<id>/components.ts: its default export, by fence name.
+export type Components = Record<string, Component>;
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
 // A deck's own transition: a standalone GSAP timeline that ends with `from` hidden and `to` shown, and has a "reveal" label
@@ -192,6 +199,7 @@ export interface Deck {
   meta: DeckMeta;
   sections: Section[];
   overlay?: OverlayModule; // the deck's overlay.ts
+  components?: Components; // the deck's components.ts
   icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.

@@ -74,7 +74,8 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
 | A clip; full screen with no `rect`; it plays on its step (with sound unless `muted: true`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
-| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
+| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` and its entry in `klappe/decks/demo/components.ts` into the deck's `components.ts`; then a ```` ```speakerProfile ```` fence in `scene.md` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
+| The deck's own element or scene shape, used from `scene.md` | a fence the deck registers in `components.ts` | [deck components](klappe/docs/reference/markdown.md#deck-components) | `109-speaker/20-plan-chip` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
 | A single word or number set to fill the frame, with a picture or clip showing through the letters | `bigType` | [bigType](klappe/docs/reference/effects.md#bigtype) | `190-media/50-type-as-image` |
 | A name and role (or a quote's source) at the lower left of the picture | `lowerThird` | [lowerThird](klappe/docs/reference/effects.md#lowerthird) | `364-titling/10-lower-third` |
@@ -119,6 +120,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem, and `klappe test` stops on it at once. `npm run outline` lists the ids taken.
 - Reach an effect's elements only through its handle (`el` and the named parts), never with `lastElementChild` or `children[i]`. If the handle lacks a part, ask for it in klappe.
 - A scene that plays in several places (a break, an agenda hop) is one function outside `sections/` that returns a `SceneModule`; each `scene.ts` calls it.
+- A shape the deck repeats (a speaker, a product card) is better a fence the deck registers in `components.ts` than a `scene.ts` per scene: each scene is then `scene.md` alone, its options in the fence body ([deck components](klappe/docs/reference/markdown.md#deck-components)).
 
 ## Design rules
 

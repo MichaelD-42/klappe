@@ -18,7 +18,7 @@ describe("parseScene parts", () => {
   it("matches highlight groups to the items after a code fence", () => {
     const { scene, problems } = parse(fence("ts {1-2|4}", "a\nb\nc\nd") + "- First\n- Second\n");
     expect(problems).toEqual([]);
-    expect(scene.fence).toEqual({ lang: "ts", src: "a\nb\nc\nd", groups: [[1, 2], [4]] });
+    expect(scene.fence).toEqual({ lang: "ts", src: "a\nb\nc\nd", groups: [[1, 2], [4]], info: "{1-2|4}" });
     expect(scene.steps.map((s) => [s.text, s.part])).toEqual([
       ["First", { kind: "code", group: 0 }],
       ["Second", { kind: "code", group: 1 }],
@@ -47,6 +47,14 @@ describe("parseScene parts", () => {
     const { scene } = parse(fence("ts", "a"));
     expect(scene.fence?.groups).toEqual([[]]);
     expect(scene.steps.map((s) => s.part)).toEqual([{ kind: "code", group: 0 }]);
+  });
+
+  // outline counts steps without the deck's components.ts, so a component fence must count as any other fence does.
+  it("counts a deck component's fence as a code fence, and keeps the rest of its info string", () => {
+    const { scene } = parse(fence("speakerProfile large", "photo: a.jpeg") + "- Role\n- CV\n");
+    expect(scene.fence).toMatchObject({ lang: "speakerProfile", src: "photo: a.jpeg", info: "large" });
+    expect(scene.steps.map((s) => s.text)).toEqual(["Role", "CV"]);
+    expect(parse(fence("planChip", "x: 1")).scene.steps).toHaveLength(1);
   });
 
   it("makes one console step per $ command", () => {

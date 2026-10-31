@@ -13,7 +13,6 @@ Open work only, ranked, most important first. All of it is in scope for 1.0.0, w
 - Image treatment: a duotone or tint on `image` from the theme's tokens, so photos from different sources read as one set.
 - Split screen: two scenes side by side, the camera cutting between each alone and both together. Check first whether `place()` and a camera frame round both already do it.
 - Handheld drift: a barely visible wall-clock drift of the camera while a step holds, under `data-k-ignore` like the backgrounds. Off with reduced motion; check whether it suits `calm` at all.
-- Deck components in Markdown: a deck registers a fence or trigger for its own helpers (the demo's `speakerProfile`, `planChip`), so `scene.md` can use them without `scene.ts`.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
 - klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
 - Named layouts on non-landscape frames: `thirds`, `full-bleed` and `big-number` assume a landscape frame with hard-coded 160 and 140 padding; derive it from the frame, or report a deck problem on a portrait one.

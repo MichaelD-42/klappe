@@ -12,6 +12,8 @@ export const data = import.meta.glob<string>(["@deck/data/*", "!@deck/data/TODO.
 export const media = import.meta.glob<string>(["@deck/media/*", "!@deck/media/TODO.md"], { query: "?url", import: "default", eager: true });
 // overlay.ts at the deck root: the layer over every scene.
 export const overlay = import.meta.glob("@deck/overlay.ts", { import: "default", eager: true });
+// components.ts at the deck root: the deck's own Markdown fences, by name.
+export const components = import.meta.glob("@deck/components.ts", { import: "default", eager: true });
 // icons/*.svg: the deck's own icons on Lucide's 24 grid, used by name in icon() and iconTile().
 export const icons = import.meta.glob<string>("@deck/icons/*.svg", { query: "?raw", import: "default", eager: true });
 // icons/*.svg at the deck repo root, shared by its decks; a deck's own icon of the same name wins.

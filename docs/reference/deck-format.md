@@ -19,6 +19,7 @@ decks/<id>/
       10-old-way/
         scene.md
         scene.ts          # optional
+  components.ts           # optional: the deck's own scene.md fences, see markdown.md#deck-components
   shared/                 # optional: helpers and scene factories, not loaded as scenes
   icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon(); <repo>/icons/ is shared by all decks
 ```
@@ -113,7 +114,7 @@ Catalog: every card of the transition gallery (`#/tr-cut/cut-card/1` to `#/tr-ma
 
 ### A speaker profile
 
-`decks/demo/shared/speaker-profile.ts` is a factory to copy into a deck's `shared/`: a photo (or several, one per statement), the name, the role and company with a logo, a short CV, statements one per step, and a contact step with a QR code, an email and a web address. Catalog: `#/speaker/profile/1`. The words come from `scene.md`: the title is the name, then one list item each for the role line, the CV, every statement, and the contact step's label under the QR code. The options carry the rest:
+`decks/demo/shared/speaker-profile.ts` is a factory to copy into a deck's `shared/`: a photo (or several, one per statement), the name, the role and company with a logo, a short CV, statements one per step, and a contact step with a QR code, an email and a web address. Catalog: `#/speaker/profile/1`, which calls it from a ```` ```speakerProfile ```` fence that `decks/demo/components.ts` registers (copy that entry too; see [deck components](markdown.md#deck-components)). The words come from `scene.md`: the title is the name, then one list item each for the role line, the CV, every statement, and the contact step's label under the QR code. The options carry the rest; from a `scene.ts`:
 
 ```ts
 import { speakerProfile } from "../../../shared/speaker-profile";
