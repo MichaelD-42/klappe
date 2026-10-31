@@ -12,6 +12,9 @@ const GROUPS = /^\{([\d,\- |]+)\}$/;
 const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
 const CHECK = /^\[([ xX!])\]\s+/;
 const AVATAR = /^!\[([^\]]+)\]\(\s*(\S+?)\s*\)$/;
+const LAYOUTS = ["thirds", "full-bleed", "big-number"] as const;
+// The number a big-number scene sets large: the first word, with an optional sign or currency before it and any unit after.
+export const BIG_NUMBER = /^[+\-−]?[$€£¥]?\d\S*/;
 const MARKS: Record<string, boolean> = { "✓": true, "✔": true, "✗": false, "✘": false };
 
 // The first image, video or chart link in a step. Its link shows as its label; other links stay as written.
@@ -110,5 +113,9 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   steps.splice(fenceAt, 0, ...parts.map((part) => ({ text: "", notes: "", kind: "step" as const, part })));
   if (!title) problems.push(`${folder}/scene.md: missing ## title`);
   if (!steps.length) steps.push({ text: title, notes: "", kind: "step" });
-  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}), ...(data.stack === true ? { stack: true } : {}) }, problems };
+  const layout = LAYOUTS.find((l) => l === data.layout);
+  if (data.layout !== undefined && !layout) problems.push(`${folder}/scene.md: layout '${data.layout}' is not one of ${LAYOUTS.join(", ")}`);
+  if (layout === "full-bleed" && !steps.some((s) => s.media?.kind === "image")) problems.push(`${folder}/scene.md: layout full-bleed needs an image step`);
+  if (layout === "big-number" && !BIG_NUMBER.test(steps[0].text)) problems.push(`${folder}/scene.md: layout big-number needs the first step to start with a number`);
+  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}), ...(data.stack === true ? { stack: true } : {}), ...(layout ? { layout } : {}) }, problems };
 }

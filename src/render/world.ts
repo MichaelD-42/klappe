@@ -1,12 +1,14 @@
 import { gsap } from "gsap";
 import { addCameraMove, flightEase, flightTime, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
 import { code, LANGS } from "../fx/code";
-import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
+import { gapPx } from "../fx/layout";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle, type ImageOpts } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { part as fxPart } from "./parts";
+import { BIG_NUMBER } from "../parse/scene";
 import { motion, stage, withTokenRoot } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
@@ -56,8 +58,8 @@ export const fenceProblem = (lang: string) =>
 
 // The media effect for a step: image, video, or chart from data/. The chart reads and checks the file
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
-function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
-  if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
+function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect, picture?: Partial<ImageOpts>): StepAdder {
+  if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect, ...picture }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect, fallback: m.fallback }).show;
   const c = fxPart("chart")(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
@@ -80,9 +82,19 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const add = <E extends Element>(parent: Element, e: E) => (parent.append(e), shown.push(e), e);
   const fence = scene.fence;
   const hasMedia = scene.steps.some((s) => s.media) || !!fence;
-  const col = hasMedia ? html.appendChild(el("div", "")) : html;
-  if (hasMedia) col.style.width = "45%";
-  const slot: Rect = { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
+  const { layout } = scene;
+  const full = layout === "full-bleed";
+  const big = layout === "big-number";
+  const col = hasMedia || big ? html.appendChild(el("div", "")) : html;
+  if (hasMedia) col.style.width = layout === "thirds" ? `${rect.w / 3 - 160 - gapPx(48)}px` : "45%"; // 160: the scene's side padding
+  // full-bleed: the caption sits at the bottom, over the picture's scrim. big-number: the number and its footnote, centred.
+  if (full) Object.assign(col.style, { position: "absolute", left: "160px", right: "160px", bottom: "140px", width: "auto" });
+  if (big) Object.assign(col.style, { position: "absolute", inset: "140px 160px", display: "flex", flexDirection: "column", justifyContent: "center" });
+  const slot: Rect = full
+    ? { x: 0, y: 0, w: rect.w, h: rect.h }
+    : layout === "thirds"
+      ? { x: rect.w / 3, y: rect.h * 0.13, w: rect.w * 2 / 3 - 160, h: rect.h * 0.74 }
+      : { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
   // An effect that throws (a stub: not built yet) leaves a dashed EFFECT MISSING box in its place and a problem.
   const missing = (parent: Element, at: Rect, where: string, name: string, e: unknown): StepAdder => {
     if (!notBuilt(e)) console.error(`${where}: ${name}: ${message(e)}`);
@@ -144,7 +156,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const table = tableN && scene.table ? part(tableN, "compareTable", lists, (c) => fxPart("compareTable")(c, { ...scene.table!, ...lists })) : undefined;
   const title = add(col, el("h2", "", scene.title));
   // A scene of plain text steps gives each one the stage, large, until the next replaces it; stack: true builds a list.
-  const say = !scene.stack && !fence && scene.steps.every((s) => !s.part && !s.media);
+  const say = !scene.stack && !fence && !big && scene.steps.every((s) => !s.part && !s.media);
   let said: Element | undefined; // the plain step on screen: it fades out when the next one shows
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
@@ -178,8 +190,16 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
       return fx.set(n, (a.h?.show ?? a.miss)!);
     }
-    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
+    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
+    if (big && n === 1) {
+      // The number fills the width inside the side padding; 0.75 em is a wide digit, so the estimate errs small.
+      const num = BIG_NUMBER.exec(s.text)![0];
+      const b = p.appendChild(el("span", "k-big", num));
+      b.style.fontSize = `${Math.min(rect.h * 0.5, (rect.w - 320) / (num.length * 0.75))}px`;
+      b.style.marginBottom = `${gapPx(32)}px`;
+      if (s.text.length > num.length) p.append(el("span", "k-note", s.text.slice(num.length).trim()));
+    }
     if (say && s.kind === "step") {
       p.classList.add("k-say");
       const prev = said;
@@ -210,6 +230,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     back.style.fill = "var(--k-bg)";
     g.append(back);
     for (const e of [wrap, g]) e.setAttribute("data-k-media", String(n));
+    if (full) html.prepend(wrap); // under the caption
     const wrapper = [wrap, g];
     const previous = before;
     before = wrapper;
@@ -217,7 +238,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     try {
       // The effect's problems say where the slot is.
       const problem = (msg: string) => ctx.problem(`${scene.source} step ${n}: ${msg}`);
-      show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot);
+      show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot, full ? { fit: "cover", scrim: 0.7, scrimSide: "bottom" } : undefined);
     } catch (e) {
       show = missing(wrap, slot, `${scene.source} step ${n}`, s.media.kind, e);
     }

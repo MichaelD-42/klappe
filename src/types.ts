@@ -49,6 +49,8 @@ export interface SceneDoc {
   table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
   // frontmatter stack: true: plain text steps build up a list instead of replacing each other.
   stack?: boolean;
+  // frontmatter layout: a named composition for the default renderer; none is the column (or text left, media right).
+  layout?: "thirds" | "full-bleed" | "big-number";
 }
 export interface SectionDoc {
   id: string;
