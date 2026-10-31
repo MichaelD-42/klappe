@@ -118,5 +118,5 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
   if (layout === "full-bleed" && !steps.some((s) => s.media?.kind === "image")) problems.push(`${folder}/scene.md: layout full-bleed needs an image step`);
   if (layout === "thirds" && !fence && !steps.some((s) => s.media)) problems.push(`${folder}/scene.md: layout thirds needs an image, video or chart step, or a code, console or chat block`);
   if (layout === "big-number" && !BIG_NUMBER.test(steps[0].text)) problems.push(`${folder}/scene.md: layout big-number needs the first step to start with a number`);
-  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}), ...(data.stack === true ? { stack: true } : {}), ...(layout ? { layout } : {}) }, problems };
+  return { scene: { id, order, title, notes, steps, ...(fence ? { fence } : {}), ...(table ? { table } : {}), ...(data.stack === true ? { stack: true } : {}), ...(layout ? { layout } : {}), ...(typeof data.story === "string" && data.story ? { story: data.story } : {}) }, problems };
 }

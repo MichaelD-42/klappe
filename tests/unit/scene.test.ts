@@ -159,3 +159,10 @@ describe("parseScene layout", () => {
       expect(parseScene(`---\nlayout: big-number\n---\n## T\n\n- ${n}\n`, "10-t").problems).toEqual([]);
   });
 });
+
+describe("parseScene story", () => {
+  it("keeps the story point from frontmatter and leaves it out without one", () => {
+    expect(parseScene("---\nstory: Reviews catch what agents miss.\n---\n## T\n\n- One.\n", "10-t").scene.story).toBe("Reviews catch what agents miss.");
+    expect(parseScene("## T\n\n- One.\n", "10-t").scene).not.toHaveProperty("story");
+  });
+});

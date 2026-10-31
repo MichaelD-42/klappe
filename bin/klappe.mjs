@@ -17,6 +17,7 @@ if (cmd === '--version' || cmd === '-v') {
 const usage =
   'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
   '       klappe build|outline|init [--deck <id>]\n' +
+  '       klappe outline --story   one line per scene: its link and story point\n' +
   '       klappe pdf [--deck <id>] [--handout]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
@@ -165,7 +166,7 @@ if (cmd === 'test') {
   if (strict) process.env.KLAPPE_STRICT = '1'
   // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
   const { outline, overWords, walkedScenes } = await import('./outline.mjs')
-  const { problems, deck } = await outline(klappeDir, deckDir)
+  const { problems, deck } = await outline(klappeDir, deckDir, { story: rest.includes('--story') })
   for (const p of problems) console.error(`deck problem: ${p}`)
   if (problems.length) process.exit(1)
   if (only.length) {
@@ -193,7 +194,7 @@ if (cmd === 'test') {
 
 if (cmd === 'outline') {
   const { outline } = await import('./outline.mjs')
-  const r = await outline(klappeDir, deckDir)
+  const r = await outline(klappeDir, deckDir, { story: rest.includes('--story') })
   for (const p of r.problems) console.warn(`deck problem: ${p}`)
   process.stdout.write(r.text)
   process.exit(0)

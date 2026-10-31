@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `story: <one sentence>` in `scene.md` frontmatter, the scene's takeaway for the room. `klappe outline --story` prints each scene's deep link and story point in order; plain `outline` shows it under the scene title. A new content rubric, `.rubrics/deck_arc.md`, judges the hook, through-line, set-ups paid off and the one ask at the end from that list; a deck review now needs its `RUBRIC deck_arc` line.
 - `lowerThird`: a name and role bar at the lower left, inside the safe area, that slides in and out. `endRoll`: credits that scroll on the timeline and list every source the deck records (`# source:` lines of `data/` files and the `source` option of the stats), once each, in deck order, with your thanks. `ctx.deck.sources` holds the list. Catalog: `#/titling/lower-third/1`, `#/titling/end-roll/1`.
 - `bigType`: one word or number set to fill its rect edge to edge, optionally with a picture or video (`media`) showing through the letters. Catalog: `#/media/type-as-image/1`.
 - A deck repo's root `icons/` folder is shared by all its decks, as `themes/` is. `icon()` looks a name up in the deck's `icons/`, then the repo's, then Lucide.

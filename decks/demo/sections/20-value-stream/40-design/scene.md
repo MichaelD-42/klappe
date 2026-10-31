@@ -1,3 +1,6 @@
+---
+story: The agent flags the bug, a person checks it, and a one-character fix is found in review, before production.
+---
 ## Caught in review
 
 - The camera follows the stream to Design: the code behind a retry.

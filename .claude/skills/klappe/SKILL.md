@@ -153,7 +153,7 @@ While you work, check only the scenes you touched:
 - After the reviews, `node klappe/bin/verdict.mjs` checks their format and says where the work goes; see [building a deck](.claude/skills/klappe/references/building-a-deck.md) step 7.
 - `npm run shot -- <section>/<scene> --last --size 1366x768` shoots one size. `--at <ms>` shoots a step that far into its play, to check motion. `--url http://localhost:<port>/` reuses a running `npm run dev` of the same deck, so each shot skips the server start.
 
-Before you hand back the whole deck, run the full `npm test` once. Shoot each scene's last step at both sizes with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
+Before you hand back the whole deck, run the full `npm test` once. Shoot each scene's last step at both sizes with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. Write each scene's story point, the one sentence the room should take away, into its `scene.md` as frontmatter `story:`; `npm run outline -- --story` lists them in order, so check the deck reads as one arc. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
 
 Work fast:
 

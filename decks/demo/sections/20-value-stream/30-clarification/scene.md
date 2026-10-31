@@ -1,3 +1,6 @@
+---
+story: Open questions still go to the customer, and the conversations that build trust stay with people.
+---
 ## Clarification
 
 - The camera follows the stream to Clarification.

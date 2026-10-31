@@ -56,10 +56,16 @@ export function walkedScenes(deck, targets) {
 }
 
 // Returns the outline as Markdown and the deck problems the parser found.
-export async function outline(klappeDir, deckDir) {
+// story: only the story view, one line per scene.
+export async function outline(klappeDir, deckDir, { story = false } = {}) {
   const { deck, problems, files, parseFrontmatter } = await readDeck(klappeDir, deckDir)
   const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
   if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
+
+  if (story) {
+    const lines = deck.sections.flatMap((s) => s.scenes.map((c) => `#/${s.id}/${c.id}: ${c.story ?? '(no story point)'}`))
+    return { deck, text: lines.join('\n') + '\n', problems }
+  }
 
   const body = []
   let total = 0
@@ -69,7 +75,7 @@ export async function outline(klappeDir, deckDir) {
     let secs = (words(s.notes) / WPM) * 60
     let n = 0
     for (const c of s.scenes) {
-      lines.push('', `### ${s.id}/${c.id}: ${c.title} (${c.steps.length} ${c.steps.length === 1 ? 'step' : 'steps'})`, ...quote(c.notes, ''))
+      lines.push('', `### ${s.id}/${c.id}: ${c.title} (${c.steps.length} ${c.steps.length === 1 ? 'step' : 'steps'})`, ...(c.story ? [`Story: ${c.story}`] : []), ...quote(c.notes, ''))
       secs += (words(c.notes) / WPM) * 60
       c.steps.forEach((st, i) => {
         const kind = st.kind === 'step' ? '' : `[${st.kind}] `

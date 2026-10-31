@@ -1,3 +1,6 @@
+---
+story: Our process is one stream of five stages, and we will walk it from requirements to verification.
+---
 ## Overview
 
 - Full-frame picture: a hand sketches a process flow on a whiteboard.

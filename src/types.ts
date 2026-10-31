@@ -51,6 +51,8 @@ export interface SceneDoc {
   stack?: boolean;
   // frontmatter layout: a named composition for the default renderer; none is the column (or text left, media right).
   layout?: "thirds" | "full-bleed" | "big-number";
+  // frontmatter story: the scene's one takeaway for the room; `klappe outline --story` lists it, the deck-arc review reads it.
+  story?: string;
 }
 export interface SectionDoc {
   id: string;
