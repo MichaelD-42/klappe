@@ -22,12 +22,22 @@ export async function runSelftest(
     const ownOrigin = new URL(url).origin
     const fromDeck = (src: string) => !src || src.startsWith(ownOrigin) || src.startsWith('data:')
     page.on('console', (m) => m.type() === 'error' && fromDeck(m.location().url) && browserErrors.push(m.text()))
-    page.on('pageerror', (e) => browserErrors.push(e.message))
+    let errored: () => void = () => {}
+    const firstError = new Promise<void>((ok) => (errored = ok))
+    page.on('pageerror', (e) => (browserErrors.push(e.message), errored()))
+    // Vite reloads the page when it optimizes a new dependency on a cold start; the old document's import errors
+    // are gone with it, so a deck that loads after the reload is not failed for them.
+    page.on('framenavigated', (f) => void (f === page.mainFrame() && (browserErrors.length = 0)))
     await page.goto(url)
     // main publishes the steps before the self-test starts; a page without klappe gets the base wait.
-    await page
-      .waitForFunction(() => (window as any).klappe?.steps || document.querySelector('script#klappe-selftest'), undefined, { timeout: BASE_MS })
-      .catch(() => {})
+    const loaded = () => !!((window as any).klappe?.steps || document.querySelector('script#klappe-selftest'))
+    const ready = page.waitForFunction(loaded, undefined, { timeout: BASE_MS }).catch(() => {})
+    // A deck that cannot load (a syntax error in a scene.ts) throws before it publishes: give it a few seconds, then fail.
+    await Promise.race([ready, firstError.then(() => page.waitForFunction(loaded, undefined, { timeout: 5_000 }).catch(() => {}))])
+    if (browserErrors.length && !(await page.evaluate(loaded).catch(() => true))) { // mid-reload: not a failure yet
+      const overlay = await page.evaluate(() => document.querySelector('vite-error-overlay')?.shadowRoot?.querySelector('.message')?.textContent ?? '')
+      throw new Error(`the deck did not load (${url}):\n${[overlay, ...browserErrors].filter(Boolean).join('\n')}`)
+    }
     const steps = await page.evaluate(() => (window as any).klappe?.steps?.length ?? 0)
     const json = await page
       .locator('script#klappe-selftest')

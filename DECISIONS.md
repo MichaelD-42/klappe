@@ -358,3 +358,20 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why: 1.0.0 freezes the deck format, the `scene.ts` API and the CLI. The backlog holds changes to all three (type scale, text steps, frame size, overlay layer, own transitions); freezing before them would put each behind a 2.0. The API audit against the three work decks comes first and may drop entries before they are built.
 - **Sound is in scope; the design spec's v1 non-goal "Audio and narration" is lifted.**
   - Why: sound is the largest cinematic gap. It plays on forward steps only, like video, so seek still equals play; it is opt-in per deck and muted by a key, for rooms with bad audio.
+
+## 2026-10-30 (API audit picks)
+
+- **Parking a scene or section is a `_` folder prefix, not a `skip: true` key.**
+  - Why: `scene.md` and `section.md` have no frontmatter; a prefix needs no new parsing, keeps the parked `scene.ts` out of the build (so a half-written one cannot break the deck), and reads in a file listing.
+- **The type scale is three tokens, and effects follow them by ratio, not by snapping to three sizes.**
+  - Each literal size becomes its role's token times its old share of the default (a 26 px label is 26/28 of `--k-size-label`). The roles: 32 px and under a label, 33 to 60 body, 64 and up a title.
+  - Why: at the defaults every effect looks exactly as before, so no deck changes; a theme that raises a token raises every size of that role in proportion. Snapping would have changed most effects' looks at once.
+  - Legibility floors (20 px) do not scale. `crt`, `timer` and `map` keep their own sizes: those come from fixed geometry (the CRT screen, the dial, the world zoom).
+  - The tokens are read from `:root` once per page; a token set on a scene or section element does not reach the effects.
+- **A container option on effects was not added (the audit's proposal 3).**
+  - Why: it would be one option on about 70 effects, frozen at 1.0, for 20 files in one deck. Passing a context with another parent, `{ ...ctx, html: box }`, already works and is documented as the way.
+- **`show` and `hide` take a GSAP position (`at`) but keep `to`, not `fromTo`.**
+  - Why: the work deck wrote its own fade for the position. A `fromTo` from 0 would flash an element that is already visible; `to` with the element built hidden already keeps seek equal to play.
+- **The overlay layer is `overlay.ts` with `build` and `update(at)`, not deck.md keys and not timeline steps.**
+  - Why: the work deck's frame helper (logo, brand frame, title) needs code, so keys alone would not replace it, and keys beside a module are more API to freeze. `update` gets the step it lands on and sets the overlay from that alone, so it needs no timeline of its own and a jump shows what a play does; the walk compares it with the canvas.
+  - It is under the UI and outside the look checks: its ink sits in the margin that `safe-area` keeps scenes out of.

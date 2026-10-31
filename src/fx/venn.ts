@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import { MARKER_MIX } from "./annotate";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -111,13 +111,13 @@ export function venn(ctx: Ctx, opts: VennOpts): VennHandle {
   };
   const r = circles[0].r;
   const nameEls = names.map((p, i) =>
-    label(p, opts.sets[i].label, { font: `700 ${NAME_FONT}px/1.2 var(--k-font)`, whiteSpace: "nowrap", top: `${p.above ? p.y - 8 : p.y + 8}px`, transform: p.above ? "translateY(-100%)" : "none" }, 2 * r),
+    label(p, opts.sets[i].label, { font: `700 ${typeSize("label", NAME_FONT)}px/1.2 var(--k-font)`, whiteSpace: "nowrap", top: `${p.above ? p.y - 8 : p.y + 8}px`, transform: p.above ? "translateY(-100%)" : "none" }, 2 * r),
   );
   const regionEls = new Map<string, HTMLElement>();
   for (const [k, text] of Object.entries(opts.regions ?? {})) {
     const key = keyOf(k.split("+"));
     const p = regions[key.split("+").map((id) => ids.indexOf(id)).join("+")];
-    const e = label(p, text, { font: `600 ${REGION_FONT}px/1.2 var(--k-font)`, top: `${p.y}px`, transform: "translateY(-50%)" }, 0.6 * r);
+    const e = label(p, text, { font: `600 ${typeSize("label", REGION_FONT)}px/1.2 var(--k-font)`, top: `${p.y}px`, transform: "translateY(-50%)" }, 0.6 * r);
     e.setAttribute("data-k-venn-label", key);
     regionEls.set(key, e);
   }
@@ -138,8 +138,8 @@ export function venn(ctx: Ctx, opts: VennOpts): VennHandle {
       el.style.fontSize = `${size}px`;
       if (over()) ctx.problem(msg);
     };
-    nameEls.forEach((el, i) => shrink(el, NAME_FONT, 1, `venn: name of set "${ids[i]}" too long`));
-    for (const [key, el] of regionEls) shrink(el, REGION_FONT, 2, `venn: label of region "${key}" too long`);
+    nameEls.forEach((el, i) => shrink(el, typeSize("label", NAME_FONT), 1, `venn: name of set "${ids[i]}" too long`));
+    for (const [key, el] of regionEls) shrink(el, typeSize("label", REGION_FONT), 2, `venn: label of region "${key}" too long`);
   };
 
   let lit: string | undefined; // the region lit by the latest light(), until the next one

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type PyramidOpts = {
   layers: { id: string; label: string }[]; // bottom layer first: the order they build in
@@ -63,7 +64,7 @@ export function pyramid(ctx: Ctx, opts: PyramidOpts): PyramidHandle {
     const el = ctx.html.appendChild(document.createElement("div"));
     Object.assign(el.style, {
       position: "absolute", boxSizing: "border-box", left: `${label.x}px`, top: `${label.y}px`, width: `${label.w}px`, height: `${label.h}px`,
-      display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", color: "var(--k-fg)", font: `600 ${MAX_FONT}px/1.2 var(--k-font)`,
+      display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap", color: "var(--k-fg)", font: `600 ${typeSize("label", MAX_FONT)}px/1.2 var(--k-font)`,
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = l.label;
@@ -79,7 +80,7 @@ export function pyramid(ctx: Ctx, opts: PyramidOpts): PyramidHandle {
     if (fitted) return;
     fitted = true;
     for (const { id, el, text } of layers) {
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       const over = () => text.scrollWidth > el.clientWidth + 1 || text.offsetHeight > el.clientHeight;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;

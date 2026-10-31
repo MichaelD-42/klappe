@@ -27,4 +27,5 @@ export const ALLOW = [
   'depLayout', 'depReach', // dependency graph: the columns and the trace's hops, for their unit test
   'calendarLayout', 'calendarSpan', // calendar: the month grid and a span's week bars, for their unit test
   'magicBox', 'magicFit', 'transitionMagicMove', // magic-move: the transition (covered by its kind); the rect and pose maths, for its unit test
+  'typeSize', 'typeCss', // type scale: an effect's font size from --k-size-title, -body and -label
 ]

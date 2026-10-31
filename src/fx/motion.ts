@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface MorphOpts {
   from: Element;
@@ -111,7 +112,7 @@ export function bubble(
     border: `${LINE}px solid var(--k-accent)`,
     background: "var(--k-bg)",
     color: "var(--k-fg)",
-    fontSize: "36px",
+    fontSize: `${typeSize("body", 36)}px`,
     fontWeight: "600",
     lineHeight: "1.3",
   });
@@ -152,11 +153,11 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; to(value
   Object.assign(box.style, { position: "absolute", left: `${x}px`, top: `${y}px`, textAlign: "center", width: "max-content" });
   // The number with its prefix and unit on one line, those at about a third of its size, as kpi sets its unit.
   const line = document.createElement("div");
-  Object.assign(line.style, { fontSize: "144px", fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", whiteSpace: "nowrap" });
+  Object.assign(line.style, { fontSize: `${typeSize("title", 144)}px`, fontWeight: "700", lineHeight: "1", color: "var(--k-accent)", whiteSpace: "nowrap" });
   const side = (text: string, margin: "marginLeft" | "marginRight") => {
     const e = line.appendChild(document.createElement("span"));
     e.textContent = text.trim();
-    Object.assign(e.style, { fontSize: "52px", [margin]: "12px" });
+    Object.assign(e.style, { fontSize: `${typeSize("body", 52)}px`, [margin]: "12px" });
   };
   if (opts.prefix) side(opts.prefix, "marginRight");
   const num = line.appendChild(document.createElement("span"));
@@ -166,7 +167,7 @@ export function counter(ctx: Ctx, opts: CounterOpts): { run: StepAdder; to(value
   if (opts.unit) side(opts.unit, "marginLeft");
   const cap = document.createElement("div");
   cap.textContent = label;
-  Object.assign(cap.style, { fontSize: "36px", marginTop: "12px" });
+  Object.assign(cap.style, { fontSize: `${typeSize("body", 36)}px`, marginTop: "12px" });
   box.append(line, cap);
   ctx.html.append(box);
   gsap.set(box, { xPercent: -50, yPercent: -50, autoAlpha: 0 });

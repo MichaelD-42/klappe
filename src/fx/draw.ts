@@ -84,6 +84,25 @@ export function drawOn(els: Element | ArrayLike<Element>, opts: DrawOnOpts = {})
 // The value of a theme token, for tweens: GSAP cannot tween to a var() string.
 export const token = (el: Element, name: string): string => getComputedStyle(el).getPropertyValue(name).trim();
 
+// The type scale's defaults (styles.css). An effect writes its sizes as drawn at these.
+const TYPE = { title: 88, body: 44, label: 28 };
+// Read once per page: the theme is applied before any effect builds, and a build reads sizes in loops.
+const scale: Partial<Record<keyof typeof TYPE, number>> = {};
+const readScale = (role: keyof typeof TYPE) =>
+  typeof getComputedStyle === "undefined" || !globalThis.document?.documentElement
+    ? undefined
+    : parseFloat(token(document.documentElement, `--k-size-${role}`)) / TYPE[role] || undefined;
+// A font size in the theme's type scale: px as drawn at the default scale, times the role's token over its default
+// (--k-size-label: 32px makes a 28 px label 32). Never under the 20 px legibility floor unless px already was.
+// The tokens are read from :root, where themes and deck.css set them; without a DOM (unit tests) px is kept.
+export const typeSize = (role: keyof typeof TYPE, px: number): number => {
+  const k = (scale[role] ??= readScale(role));
+  return k ? Math.max(Math.min(px, 20), px * k) : px;
+};
+// The same for a stylesheet, where the size is CSS.
+export const typeCss = (role: keyof typeof TYPE, px: number): string =>
+  `max(${Math.min(px, 20)}px, calc(var(--k-size-${role}) * ${px / TYPE[role]}))`;
+
 // Exported SVGs can carry scripts, page-wide styles, handlers, animations that rewrite attributes and
 // links to other files: keep drawing content and in-file references (#id) only. Browsers ignore
 // whitespace and control characters inside a URL scheme, so they are dropped before the match.

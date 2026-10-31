@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { lineDiff } from "./code";
+import { typeSize } from "./draw";
 
 export interface RedlineOpts {
   before: string; // the text as it was
@@ -34,7 +35,7 @@ export function wordDiff(before: string, after: string): WordOp[] {
 // width in one cut at the step's start, then fades it in, so no word shows half clipped and the text never reflows
 // mid-tween. clean fades the deleted words out, then cuts their width to 0. Reduced motion: the marks fade in place.
 export function redline(ctx: Ctx, opts: RedlineOpts): RedlineHandle {
-  const { x, y, size = 48 } = opts;
+  const { x, y, size = typeSize("body", 48) } = opts;
   const root = ctx.html.appendChild(document.createElement("div"));
   root.setAttribute("data-k-redline", "");
   root.setAttribute("aria-label", opts.after);

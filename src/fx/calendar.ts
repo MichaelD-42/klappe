@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type CalendarOpts = {
   month: string; // "2026-11"
@@ -75,13 +76,13 @@ export function calendar(ctx: Ctx, opts: CalendarOpts): CalendarHandle {
   const m = /^(\d{4})-(\d{2})$/.exec(opts.month);
   if (m) {
     const first = new Date(Date.UTC(+m[1], +m[2] - 1, 1));
-    base.push(div(lay.title, { color: "var(--k-fg)", font: "700 40px/60px var(--k-font)" }, new Intl.DateTimeFormat(lang, { month: "long", year: "numeric", timeZone: "UTC" }).format(first)));
+    base.push(div(lay.title, { color: "var(--k-fg)", font: `700 ${typeSize("body", 40)}px/60px var(--k-font)` }, new Intl.DateTimeFormat(lang, { month: "long", year: "numeric", timeZone: "UTC" }).format(first)));
     // A known week from Sunday 2026-11-01 gives each column's name.
     const name = new Intl.DateTimeFormat(lang, { weekday: "short", timeZone: "UTC" });
     lay.weekdays.forEach((r, c) => base.push(div(r, { color: "var(--k-muted)", font: `600 ${FLOOR + 2}px/40px var(--k-font)`, paddingLeft: "10px" }, name.format(new Date(Date.UTC(2026, 10, 1 + ((c + (opts.weekStart ?? 1)) % 7)))))));
   }
   const cells = new Map(lay.days.map((d) => {
-    const e = div(d, { border: "2px solid var(--k-line)", borderRadius: "8px", background: "var(--k-surface)", color: "var(--k-fg)", font: "600 24px/1 var(--k-font)", padding: "8px 10px" }, String(d.day));
+    const e = div(d, { border: "2px solid var(--k-line)", borderRadius: "8px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px" }, String(d.day));
     e.dataset.kDay = d.date;
     base.push(e);
     return [d.date, d] as const;
@@ -108,7 +109,7 @@ export function calendar(ctx: Ctx, opts: CalendarOpts): CalendarHandle {
     },
     mark: (date, o = {}) => {
       const d = cells.get(date);
-      const el = d && div(d, { border: "4px solid var(--k-accent)", borderRadius: "8px", background: tint, color: "var(--k-fg)", font: "600 24px/1 var(--k-font)", padding: "8px 10px", zIndex: "1" }, String(d.day));
+      const el = d && div(d, { border: "4px solid var(--k-accent)", borderRadius: "8px", background: tint, color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px", zIndex: "1" }, String(d.day));
       if (el && o.label) {
         const t = el.appendChild(document.createElement("div"));
         t.textContent = o.label;

@@ -353,3 +353,17 @@ test('chart to(column) on a donut: the slices turn to the new shares, the values
   expect(b.dash[0]).toBeGreaterThan(a.dash[0])
   expect(b.dash[1]).toBeLessThan(a.dash[1])
 }, 90_000)
+
+test('show and hide with at: "<" start with the tween before, so a step fades two boxes in one beat', async () => {
+  const page = await open('#/a/together/2')
+  const r = await page.evaluate(() => {
+    const c = window.klappe.canvases.find((c: { el: Element }) => c.el.querySelector('[data-scene="together"]'))
+    const [a, b] = [...document.querySelectorAll('[data-scene="together"] [data-box]')]
+    const starts = (el: Element) => c.tl.getChildren(true, true, false).filter((t: gsap.core.Tween) => t.targets().includes(el)).map((t: gsap.core.Tween) => t.startTime())
+    return { a: starts(a), b: starts(b), hidden: [a, b].map((e) => getComputedStyle(e).visibility) }
+  })
+  expect(r.b).toEqual(r.a)
+  expect(r.a).toHaveLength(2)
+  expect(r.hidden).toEqual(['hidden', 'hidden'])
+  await page.close()
+}, 60_000)

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import * as d3 from "d3";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface MindNode {
   label: string;
@@ -17,6 +18,7 @@ export interface MindMapHandle {
 const SVG = "http://www.w3.org/2000/svg";
 const FONT = 26; // fixed in scene units: 18.5 px at 1366
 const CHAR_W = 14; // about one character at FONT
+const charW = () => (CHAR_W * typeSize("label", FONT)) / FONT; // follows the type scale
 const DIM = 0.35; // the branches light() leaves out
 const MAIN_R = 0.5; // a branch's distance from the centre, as a share of the leaves' ellipse
 
@@ -32,7 +34,7 @@ export function mindMapLayout(root: MindNode, rect: Rect): MindMapLayout {
   d3.cluster<MindNode>().size([2 * Math.PI, 1]).separation(() => 1)(h);
   const longest = Math.max(0, ...h.leaves().filter((n) => n.depth > 1).map((n) => n.data.label.length));
   const [cx, cy] = [rect.x + rect.w / 2, rect.y + rect.h / 2];
-  const [rx, ry] = [Math.max(rect.w / 4, rect.w / 2 - longest * CHAR_W - 28), rect.h / 2 - FONT * 1.6];
+  const [rx, ry] = [Math.max(rect.w / 4, rect.w / 2 - longest * charW() - 28), rect.h / 2 - typeSize("label", FONT) * 1.6];
   const at = (a: number, r: number) => ({ x: Math.round((cx + rx * r * Math.sin(a)) * 100) / 100, y: Math.round((cy - ry * r * Math.cos(a)) * 100) / 100 });
   const anchor = (a: number): MindSpot["anchor"] => (Math.sin(a) > 0.2 ? "start" : Math.sin(a) < -0.2 ? "end" : "middle");
   const mains = (h.children ?? []) as d3.HierarchyPointNode<MindNode>[];
@@ -41,10 +43,10 @@ export function mindMapLayout(root: MindNode, rect: Rect): MindMapLayout {
     ((n.children ?? []) as d3.HierarchyPointNode<MindNode>[]).map((c) => ({ label: c.data.label, ...at(c.x, 1), anchor: anchor(c.x), branch: i, parent: i })),
   );
   const box = (s: MindSpot) => {
-    const w = s.label.length * CHAR_W + 16;
+    const w = s.label.length * charW() + 16;
     const x0 = s.anchor === "start" ? s.x + 12 : s.anchor === "end" ? s.x - 12 - w : s.x - w / 2;
-    const y0 = s.anchor === "middle" ? (s.y < cy ? s.y - FONT * 1.5 : s.y + FONT * 0.3) : s.y - FONT * 0.6;
-    return { x0, x1: x0 + w, y0, y1: y0 + FONT * 1.2 };
+    const y0 = s.anchor === "middle" ? (s.y < cy ? s.y - typeSize("label", FONT) * 1.5 : s.y + typeSize("label", FONT) * 0.3) : s.y - typeSize("label", FONT) * 0.6;
+    return { x0, x1: x0 + w, y0, y1: y0 + typeSize("label", FONT) * 1.2 };
   };
   const boxes = leaves.map(box);
   for (let i = 0; i < boxes.length; i++)
@@ -75,7 +77,7 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
     gsap.set(path, { strokeDasharray: "1 1", strokeDashoffset: 1, autoRound: false });
     return path;
   };
-  const label = (s: { label: string; x: number; y: number }, attrs: Record<string, string | number>, size = FONT, parent: Element = root) => {
+  const label = (s: { label: string; x: number; y: number }, attrs: Record<string, string | number>, size = typeSize("label", FONT), parent: Element = root) => {
     const t = el(parent, "text", { x: s.x, y: s.y, "font-size": size, ...attrs });
     t.textContent = s.label;
     t.style.fill = "var(--k-fg)";
@@ -83,7 +85,7 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
   };
 
   const c = lay.centre;
-  const topW = opts.root.label.length * CHAR_W * 1.3 + 48;
+  const topW = opts.root.label.length * charW() * 1.3 + 48;
   const centre = el(root, "g", { "data-k-mind-centre": "" });
   const disc = el(centre, "rect", { x: c.x - topW / 2, y: c.y - 40, width: topW, height: 80, rx: 12, "stroke-width": 4 });
   Object.assign(disc.style, { fill: "var(--k-surface)", stroke: "var(--k-accent)" });
@@ -98,7 +100,7 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
     gsap.set(bg, { opacity: 1 }); // inline from load, as a seek back over light() leaves it
     const line = curve(lit[0], c, b);
     Object.assign(line.style, { stroke: colour(i), strokeWidth: "8" });
-    const w = b.label.length * CHAR_W + 32;
+    const w = b.label.length * charW() + 32;
     const g = el(lit[1], "g", { "data-k-mind-branch": String(i) });
     const tag = el(g, "rect", { x: b.x - w / 2, y: b.y - 26, width: w, height: 52, rx: 10, "stroke-width": 3 });
     Object.assign(tag.style, { fill: "var(--k-bg)", stroke: colour(i) });
@@ -109,8 +111,8 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
       const dot = el(lit[1], "circle", { cx: l.x, cy: l.y, r: 6 });
       dot.style.fill = colour(i);
       const dx = l.anchor === "start" ? 12 : l.anchor === "end" ? -12 : 0;
-      const dy = l.anchor === "middle" ? (l.y < c.y ? -FONT * 0.8 : FONT * 1.2) : FONT * 0.35;
-      const text = label({ ...l, x: l.x + dx, y: l.y + dy }, { "text-anchor": l.anchor }, FONT, lit[1]);
+      const dy = l.anchor === "middle" ? (l.y < c.y ? -typeSize("label", FONT) * 0.8 : typeSize("label", FONT) * 1.2) : typeSize("label", FONT) * 0.35;
+      const text = label({ ...l, x: l.x + dx, y: l.y + dy }, { "text-anchor": l.anchor }, typeSize("label", FONT), lit[1]);
       gsap.set([dot, text], { autoAlpha: 0 });
       return { twig, shown: [dot, text] };
     });

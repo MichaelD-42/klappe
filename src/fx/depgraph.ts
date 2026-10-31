@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
 
@@ -122,7 +122,7 @@ export function depGraph(ctx: Ctx, opts: DepGraphOpts): DepGraphHandle {
     Object.assign(el.style, {
       position: "absolute", left: `${n.x}px`, top: `${n.y}px`, width: `${n.w}px`, height: `${n.h}px`, boxSizing: "border-box", padding: "4px 12px",
       border: "3px solid var(--k-line)", borderRadius: "12px", background: "var(--k-surface)", color: "var(--k-fg)", zIndex: "2",
-      display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${MAX_FONT}px/1.2 var(--k-font)`,
+      display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/1.2 var(--k-font)`,
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = n.label;
@@ -192,8 +192,8 @@ export function depGraph(ctx: Ctx, opts: DepGraphOpts): DepGraphHandle {
     if (fitted) return;
     fitted = true;
     for (const [id, { el, text }] of els) {
-      const over = () => text.scrollHeight > el.clientHeight || text.offsetHeight > 2 * 1.2 * parseFloat(el.style.fontSize || `${MAX_FONT}`) + 1;
-      for (let size = MAX_FONT; size >= FLOOR; size -= 2) {
+      const over = () => text.scrollHeight > el.clientHeight || text.offsetHeight > 2 * 1.2 * parseFloat(el.style.fontSize || `${typeSize("label", MAX_FONT)}`) + 1;
+      for (let size = typeSize("label", MAX_FONT); size >= FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;
         if (!over()) break;
       }

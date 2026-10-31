@@ -24,3 +24,10 @@ test('the selftest wait grows with the step count', () => {
   expect(selftestTimeout(10)).toBeLessThan(115_000)
   expect(selftestTimeout(644)).toBeGreaterThan(200_000)
 })
+
+// A deck that cannot load (a syntax error in a scene.ts) never publishes its steps: fail on its error, not after the wait.
+test('a page that errors before the deck loads fails within seconds, with the error', async () => {
+  const t0 = Date.now()
+  await expect(runSelftest(`data:text/html,<script>throw new Error("scene.ts: Unexpected token")</script>`)).rejects.toThrow('scene.ts: Unexpected token')
+  expect(Date.now() - t0).toBeLessThan(20_000)
+}, 60_000)

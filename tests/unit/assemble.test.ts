@@ -50,6 +50,22 @@ describe("assembleDeck", () => {
     expect(r.problems.some((p) => p.includes("duplicate scene id 'a'"))).toBe(true);
     expect(r.problems.some((p) => p.includes("duplicate section id 's'"))).toBe(true);
   });
+  it("leaves out a section or scene whose folder starts with _", () => {
+    const { deck, problems } = assembleDeck(
+      {
+        "deck.md": DECK,
+        "sections/10-s/section.md": "# S",
+        "sections/10-s/10-a/scene.md": "## A\n\n- a",
+        "sections/10-s/_20-b/scene.md": "## B\n\n- b",
+        "sections/_20-t/section.md": "# T",
+        "sections/_20-t/10-c/scene.md": "## C\n\n- c",
+      },
+      { "sections/10-s/_20-b/scene.ts": { steps: [null, null] } },
+    );
+    expect(problems).toEqual([]);
+    expect(deck.sections.map((s) => s.id)).toEqual(["s"]);
+    expect(deck.sections[0].scenes.map((c) => c.id)).toEqual(["a"]);
+  });
   it("reports a scene folder without scene.md", () => {
     const r = assembleDeck(
       { "deck.md": DECK, "sections/10-s/section.md": "# S" },

@@ -14,13 +14,18 @@ if (cmd === '--version' || cmd === '-v') {
   process.exit(0)
 }
 
+const usage =
+  'usage: klappe dev|build|pdf|outline|init [--deck <id>]\n' +
+  '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
+  '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
+  '       klappe --version'
+// --help on a command too: shot took it for nothing and rendered the whole deck.
+if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
+  console.log(usage)
+  process.exit(0)
+}
 if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
-  console.error(
-    'usage: klappe dev|build|pdf|outline|init [--deck <id>]\n' +
-      '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
-      '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
-      '       klappe --version',
-  )
+  console.error(usage)
   process.exit(1)
 }
 

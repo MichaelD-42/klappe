@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typed } from "./crt";
+import { typeCss } from "./draw";
 
 export interface ChatMessage {
   from: string; // "user" sits right; anyone else left. A name other than "assistant" shows above the bubble.
@@ -52,12 +53,12 @@ const CSS = `
 .k-chat-body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
 .k-chat-user .k-chat-body { align-items: flex-end; }
 .k-chat-face { flex: none; width: ${FACE}px; height: ${FACE}px; border-radius: 50%; overflow: hidden; display: flex; align-items: center;
-  justify-content: center; background: var(--k-surface); color: var(--k-fg); font: 600 26px/1 var(--k-font); }
+  justify-content: center; background: var(--k-surface); color: var(--k-fg); font: 600 ${typeCss("label", 26)}/1 var(--k-font); }
 .k-chat-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
-.k-chat-name { margin: 0 0 6px 4px; color: var(--k-muted); font: 600 24px/1.2 var(--k-font); }
+.k-chat-name { margin: 0 0 6px 4px; color: var(--k-muted); font: 600 ${typeCss("label", 24)}/1.2 var(--k-font); }
 .k-chat-hold { position: relative; max-width: 72%; }
 .k-chat-bubble { position: relative; box-sizing: border-box; padding: 18px 28px; border: 3px solid var(--k-surface); border-radius: 6px;
-  background: var(--k-surface); color: var(--k-fg); font: 400 32px/1.35 var(--k-font); white-space: pre-line; overflow-wrap: anywhere; }
+  background: var(--k-surface); color: var(--k-fg); font: 400 ${typeCss("label", 32)}/1.35 var(--k-font); white-space: pre-line; overflow-wrap: anywhere; }
 .k-chat-user .k-chat-bubble { background: var(--k-bg); border-color: var(--k-accent); }
 .k-chat-ghost { visibility: hidden; }
 .k-chat-live { position: absolute; inset: 18px 28px; }

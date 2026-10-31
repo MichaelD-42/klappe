@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import type { Ctx, Part, StepAdder } from "../types";
 import { iconGlyph } from "./icons";
+import { typeSize } from "./draw";
 
 export type AgendaRow = Extract<Part, { kind: "agenda" }>["rows"][number];
 export interface AgendaOpts {
@@ -33,7 +34,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
   const root = document.createElement("div");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, boxSizing: "border-box", paddingLeft: "28px",
-    display: "flex", flexDirection: "column", gap: `${GAP}px`, font: `600 ${MAX_FONT}px/1.25 var(--k-font)`, zIndex: "2",
+    display: "flex", flexDirection: "column", gap: `${GAP}px`, font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
   });
   const rows = opts.rows.map((r, i) => {
     const el = root.appendChild(document.createElement("div"));
@@ -60,7 +61,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
   let fits: boolean | undefined;
   const fit = () => {
     if (fits !== undefined) return fits;
-    let size = MAX_FONT;
+    let size = typeSize("body", MAX_FONT);
     const over = () => opts.h !== undefined && root.offsetHeight > opts.h;
     for (; size > FLOOR; size -= 2) {
       root.style.fontSize = `${size}px`;

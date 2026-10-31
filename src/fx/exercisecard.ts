@@ -3,6 +3,7 @@ import type { IconNode } from "lucide";
 import { t } from "../strings";
 import type { Ctx, StepAdder } from "../types";
 import { iconGlyph } from "./icons";
+import { typeSize } from "./draw";
 
 export interface ExerciseCardOpts {
   title: string;
@@ -47,7 +48,7 @@ export function exerciseCard(ctx: Ctx, opts: ExerciseCardOpts): ExerciseCardHand
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, boxSizing: "border-box", padding: "1.2em 1.4em",
     background: "var(--k-surface)", border: "2px solid var(--k-line)", borderRadius: "16px", color: "var(--k-fg)",
-    font: `400 ${MAX_FONT}px/1.3 var(--k-font)`, display: "flex", flexDirection: "column", gap: "0.6em", zIndex: "2",
+    font: `400 ${typeSize("body", MAX_FONT)}px/1.3 var(--k-font)`, display: "flex", flexDirection: "column", gap: "0.6em", zIndex: "2",
   });
   div(root, { fontSize: "1.35em", fontWeight: "700", overflowWrap: "anywhere" }, opts.title);
   const meta: [IconNode, string][] = [];
@@ -78,7 +79,7 @@ export function exerciseCard(ctx: Ctx, opts: ExerciseCardOpts): ExerciseCardHand
   let fits: boolean | undefined;
   const fit = () => {
     if (fits !== undefined) return fits;
-    let size = MAX_FONT;
+    let size = typeSize("body", MAX_FONT);
     const over = () => opts.h !== undefined && root.offsetHeight > opts.h;
     for (; size > FLOOR; size -= 2) {
       root.style.fontSize = `${size}px`;

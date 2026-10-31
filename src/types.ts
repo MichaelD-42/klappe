@@ -123,6 +123,24 @@ export interface SceneModule {
   // The scene's button text in the overview, instead of its title.
   overviewLabel?: string;
 }
+// Where the deck is, for an overlay's update.
+export interface OverlayAt {
+  index: number; // the step's place in the whole deck, from 0
+  total: number; // the deck's step count
+  section: string; // ids
+  scene: string;
+  step: number; // the step in its scene, from 1
+  sectionTitle: string;
+  sceneTitle: string;
+}
+// decks/<id>/overlay.ts: content over every scene that the camera does not move (a logo, a frame, a chapter label).
+export interface OverlayModule {
+  // Makes the overlay's DOM once, in a 1920x1080 layer over the stage. Effects that build in ctx.html work here.
+  build(ctx: Ctx): any;
+  // Called on every move, with where the deck lands: set the overlay to match, with gsap.set or styles, never a tween.
+  // It must depend on at alone, so a jump shows what a play does.
+  update?(at: OverlayAt, refs: any): void;
+}
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
 export interface SectionModule {
@@ -150,6 +168,7 @@ export interface Section extends SectionDoc {
 export interface Deck {
   meta: DeckMeta;
   sections: Section[];
+  overlay?: OverlayModule; // the deck's overlay.ts
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
   themes?: Record<string, string>;

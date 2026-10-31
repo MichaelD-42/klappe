@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type LayerStackOpts = {
   layers: { label: string; note?: string }[]; // the top layer first
@@ -70,7 +71,7 @@ export function layerStack(ctx: Ctx, opts: LayerStackOpts): LayerStackHandle {
     label.dataset.kLayerLabel = String(i);
     Object.assign(label.style, {
       position: "absolute", left: `${L.labelX}px`, top: "0", width: `${L.labelW}px`, whiteSpace: "nowrap", overflow: "hidden",
-      color: "var(--k-fg)", font: `600 ${MAX_FONT}px/1.2 var(--k-font)`,
+      color: "var(--k-fg)", font: `600 ${typeSize("label", MAX_FONT)}px/1.2 var(--k-font)`,
     });
     const name = label.appendChild(document.createElement("div"));
     name.textContent = l.label;
@@ -78,14 +79,14 @@ export function layerStack(ctx: Ctx, opts: LayerStackOpts): LayerStackHandle {
     const note = l.note ? box.appendChild(document.createElement("div")) : undefined;
     if (note) {
       note.textContent = l.note!;
-      Object.assign(note.style, { position: "absolute", left: `${L.labelX}px`, top: "0", width: `${L.labelW}px`, color: "var(--k-muted)", font: `500 ${NOTE_FONT}px/1.3 var(--k-font)` });
+      Object.assign(note.style, { position: "absolute", left: `${L.labelX}px`, top: "0", width: `${L.labelW}px`, color: "var(--k-muted)", font: `500 ${typeSize("label", NOTE_FONT)}px/1.3 var(--k-font)` });
       gsap.set(note, { autoAlpha: 0 });
     }
     // The label's middle level with the middle of the slab's right face; the note under it.
     const at = (y: number) => y + 1.5 * c + t / 2;
     gsap.set(g, { y: L.together[i], autoAlpha: 0 });
     gsap.set(label, { y: at(L.together[i]), yPercent: -50, autoAlpha: 0 });
-    if (note) gsap.set(note, { y: at(L.together[i]) + MAX_FONT * 0.6 + 6 });
+    if (note) gsap.set(note, { y: at(L.together[i]) + typeSize("label", MAX_FONT) * 0.6 + 6 });
     gsap.set(hot, { autoAlpha: 0 });
     return { i, g, hot, label, name, note, at };
   }).reverse();
@@ -97,7 +98,7 @@ export function layerStack(ctx: Ctx, opts: LayerStackOpts): LayerStackHandle {
     fitted = true;
     const over = (e: HTMLElement) => e.scrollWidth > e.clientWidth + 1;
     for (const { i, name, label } of layers) {
-      for (let size = MAX_FONT; size >= FLOOR; size -= 2) {
+      for (let size = typeSize("label", MAX_FONT); size >= FLOOR; size -= 2) {
         label.style.fontSize = `${size}px`;
         if (!over(name)) break;
       }
@@ -112,7 +113,7 @@ export function layerStack(ctx: Ctx, opts: LayerStackOpts): LayerStackHandle {
       const d = { duration: motion.step, ease: "power2.inOut" };
       tl.to(x.g, { y: ys[x.i], ...d }, t0 + k * 0.08);
       tl.to(x.label, { y: x.at(ys[x.i]), ...d }, t0 + k * 0.08);
-      if (x.note) tl.to(x.note, { y: x.at(ys[x.i]) + MAX_FONT * 0.6 + 6, ...d }, t0 + k * 0.08);
+      if (x.note) tl.to(x.note, { y: x.at(ys[x.i]) + typeSize("label", MAX_FONT) * 0.6 + 6, ...d }, t0 + k * 0.08);
     });
   };
   const unlight = (tl: gsap.core.Timeline, at: number) => {

@@ -7,6 +7,8 @@ It covers spec examples A (old way), B (value stream), C (global team). Boot, Co
 
 Use numeric prefixes. They set the order. The prefix is not part of the id.
 
+A section or scene folder whose name starts with `_` (`_30-backup`) is parked: its files stay in `sections/`, but the deck, `outline` and `klappe test` leave it out and its `scene.ts` is not loaded. Rename it back to bring it in.
+
 ```
 decks/<id>/
   deck.md
@@ -74,6 +76,10 @@ Use `import type { SceneModule } from "klappe/types"`. Export a default `SceneMo
 - `ctx.camera.to` also takes `tilt` (degrees): the flight leans a little into its direction and lands flat. `tilt(ctx, rect)` is the step adder for it; see [camera](elements/camera.md).
 - Keep one master timeline per canvas. The engine owns it.
 
+### Put an effect inside a box
+
+An effect builds in `ctx.html`. To build one inside your own element (a card, a band), pass a context with that element as `html` and its size as `rect`: `timer({ ...ctx, html: box, rect: { ...ctx.rect, w: 600, h: 320 } }, …)`. Its `x` and `y` are then relative to the box, and an effect that measures or fits its text reads the box's size from `rect`. The box must be positioned (`position: absolute` or `relative`). An effect that draws in `ctx.svg` still draws in the scene's SVG layer, so this is for HTML effects. klappe has no `parent` option on effects (DECISIONS, 2026-10-30).
+
 ### Reuse a scene with options
 
 When several scenes share one shape and differ only in their words or numbers, write the shape once as a function that takes options and returns a `SceneModule`. Put it in `decks/<id>/shared/`. klappe loads every `.ts` under `sections/` as a scene or section module, so a helper there would be taken for one. Each scene then needs two lines:
@@ -121,6 +127,33 @@ Export a default `SectionModule`. `build(ctx)` draws the backdrop for the whole 
 - `background` puts a full-frame picture from `media/` behind every scene of the section: `{ href: "media/sky.png", alt: "A night sky over a plant", scrim: 0.6, kenBurns: true }`. The background is pinned to the screen: the camera moves the scene content over a still picture. A `scene.ts` can set its own `background` too; it replaces the section's while that scene is in view, and the two cross-fade as the camera flies in and out. The first scene's background is visible from load and fades in with its canvas; no step shows it. Canvas transitions carry it along: the zoom dives into it, the shatter breaks it. `scrim` (0 to 1) lays the theme's `--k-scrim` over it for text on top (black, or white in a light theme); use 0.6 or more, so theme text keeps 4.5:1 contrast over any picture. `scrimSide` (`"bottom"`, `"left"` and so on) lays it on that side only, full over 45% of the frame and clear by 85%, so the rest of the picture keeps its light; keep the text on that side. `kenBurns` adds a slow push of 6 s, once, from the first step of the first scene that shows the background; reduced motion leaves it out. `alt` describes the picture: a missing file then shows a prompt in its placeholder and in `media/TODO.md`.
 - An animated background: an `href` to a `.mp4` or `.webm` file in `media/` plays muted in a loop and covers the stage (`kenBurns` is for pictures only); `{ animate: "aurora" }` instead of `href` draws a slow drift of light in the theme's accent colours, with no file. `scrim` works for both. They move on the wall clock, not with the steps: under `data-k-ignore`, so the self-test leaves them out. Only the background on screen moves; the one the camera leaves stops once the flight has landed. With reduced motion and in the self-test they stay still. Two more kinds move the same way. An `.svg` `href` whose file animates itself (CSS keyframes or SMIL) is inlined, sanitised as `lineArt` is but with its animations kept, in a shadow root, so its styles and ids stay its own; its `<style>` can use the theme tokens (`stroke: var(--k-line)`). A still `.svg` stays a picture. And `animate` takes a function, `(el) => ({ play, pause })`: it draws into `el` (the whole stage) and returns how to play and pause its loop, which it starts paused; klappe calls them. Catalog: `#/fullscreen/svg-loop/1`, `#/fullscreen/own-loop/1`. Catalog for a video: `#/fullscreen/video-loop/1`. A missing video shows VIDEO MISSING and a deck problem; a background with neither `href` nor `animate` reports `background: needs an href or animate`. Catalog: `#/fullscreen/aurora/1`.
 - `parallax: true` makes a background drift a little with each camera flight, the way the content moves: up to 40 px from rest at either end of the canvas, so it reads as a far layer. It is scaled up 7 % so its edges never show. A deep link lands it where the flights would have; with reduced motion it moves at once, as the camera does. A number instead of `true` is a depth: `parallax: 2` drifts twice as far (up to 4, 160 px). `layers: [{ href, alt, parallax }]` stacks pictures with transparent parts over the background, each drifting by its own depth, so a near layer (`parallax: 3`) moves further than the far background and the frame reads as several planes; each is scaled up enough to hide its edges, and fades with its background. A depth outside above 0 to 4 reports `background: parallax <n> out of range` (for a layer, `background: layer <i>: parallax …`) and the layer is left out. Keep near layers at the frame's edges: they sit over the scrim and can lower the contrast of text under them. Catalog: `#/parallax/near/1`.
+
+## overlay.ts
+
+Optional, at the deck root next to `deck.md`. What stays on screen over every scene while the camera moves: a logo, a brand frame, a footer, a chapter label. It is a 1920x1080 layer over the canvases and under klappe's own UI, and clicks go through it to the stage. Export a default `OverlayModule` (`import type { OverlayModule } from "klappe/types"`).
+
+- `build(ctx)` makes the overlay's DOM once and returns refs. `ctx.html` and `ctx.svg` are the layer; effects that build in them work (`text`, `image`, `icon`). The camera and `onStep` do nothing here and report a problem.
+- `update(at, refs)` runs on every move with where the deck lands: `at.index` and `at.total` (steps in the deck), `at.section`, `at.scene`, `at.step` (from 1), `at.sectionTitle`, `at.sceneTitle`. Set the overlay with `gsap.set` or styles, never a tween, and from `at` alone: then a jump shows what a play does, and `?selftest=walk` checks it as it checks a canvas.
+- The overlay is not part of the look checks. Its ink may sit in the margin, so raise `safe-area` to keep scenes clear of it.
+
+```ts
+import { gsap } from "gsap";
+import { image, text } from "klappe/fx";
+import type { OverlayModule } from "klappe/types";
+
+export default {
+  build: (ctx) => ({
+    logo: image(ctx, { href: "media/logo.svg", alt: "Company logo", rect: { x: 1680, y: 990, w: 176, h: 50 } }).el,
+    chapter: text(ctx, { text: "", x: 64, y: 1000, w: 1200, size: 24, color: "--k-muted" }).el,
+  }),
+  update: (at, r) => {
+    r.chapter.textContent = at.sectionTitle;
+    gsap.set([r.logo, r.chapter], { autoAlpha: at.section === "opening" ? 0 : 1 }); // a bare title section
+  },
+} satisfies OverlayModule;
+```
+
+Catalog: section `234-overlay` (`#/overlay/pinned/1`), with the demo's `decks/demo/overlay.ts`.
 
 ## Effects
 

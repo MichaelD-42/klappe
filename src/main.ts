@@ -10,6 +10,7 @@ import { buildStepList, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
 import { loadTransitions } from "./fx/transitions";
 import { loadParts } from "./render/parts";
+import { mountOverlay } from "./render/overlay";
 import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
@@ -70,6 +71,8 @@ async function startDeck(svg: Record<string, string>) {
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg, onProblem });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
+  const overlay = mountOverlay(stage, deck, { total: steps.length, reducedMotion, problem: (msg) => (late ? late(msg) : problems.push(msg)) });
+  if (overlay) stepper.on("step", overlay);
 
   const autoplay = new Autoplay(stepper, (a) => autoDelay(a, true) ?? motion.autoHoldMs);
   // Every manual jump (selector, overview, speaker, history) stops auto-play.

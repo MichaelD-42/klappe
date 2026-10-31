@@ -20,6 +20,11 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `spotlight.on([a, b])`: up to four holes at once. Catalog: `#/spotlight/on-a-flow/4`.
 - `worldMap.region(tl, country, { share })`: shade a country by a value from 0 to 1; a later call moves it. Catalog: `#/map/world/7`.
 - `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
+- Type scale tokens `--k-size-title`, `--k-size-body` and `--k-size-label` (defaults 88, 44 and 28 px): a theme sets the text hierarchy, and the Markdown scene, `text()` and every effect's text follow it in proportion. `crt`, `timer` and `map` keep their own sizes. Defaults leave every look as it was.
+- `text` option `class`: a `deck.css` class styles the box; only the size, colour and weight given are set inline over it.
+- `overlay.ts` at the deck root: a layer over every scene that the camera does not move, for a logo, a brand frame or a chapter label. `build` makes it once, `update(at)` sets it on every move from where the deck lands; the walk checks it. Catalog: `#/overlay/pinned/1`.
+- `show` and `hide` option `at`: a GSAP position, so a fade can start with the tween before it (`"<"`) instead of after it.
+- A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
 ### Changed
 
@@ -27,6 +32,10 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `klappe test` fails within seconds when the deck cannot load (a syntax error in a `scene.ts`), and prints the error with its file and line; each walk waited about 230 s before.
+- `klappe dev` no longer exits with ENOENT when a scene folder is renamed or moved while it runs.
+- A running `klappe dev` picks up a new scene folder in a deck outside klappe's folder (a deck repo); it needed a restart.
+- `--help` or `-h` on any command prints the usage; `shot --help` rendered every scene of the deck.
 - `formula`: `\step` terms build in the order they are written; a fraction's denominator showed before its numerator.
 - `chart`, `barRace` and `wordCloud` read a CSV's columns in the header's order: a header such as `team,2024,2025` took `2024` as the label column, because JS lists keys that look like numbers first.
 - A sankey chart no longer makes GSAP warn "GSAP target not found" on every deck load.

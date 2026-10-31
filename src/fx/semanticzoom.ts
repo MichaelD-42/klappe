@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface ZoomBox {
   label: string;
@@ -69,10 +70,10 @@ export function zoomLayout(boxes: ZoomBox[], rect: Rect, frameW = 1920, linked: 
       const pad = r.w * PAD;
       const head = font * HEADER;
       // The camera on this box is frameW / view.w times closer than on the scene's frame: its children's labels shrink by that.
-      place(b.children, { x: r.x + pad, y: r.y + head, w: r.w - 2 * pad, h: r.h - head - pad }, depth + 1, (FONT * zoomView(r).w) / frameW, cell);
+      place(b.children, { x: r.x + pad, y: r.y + head, w: r.w - 2 * pad, h: r.h - head - pad }, depth + 1, (typeSize("label", FONT) * zoomView(r).w) / frameW, cell);
     });
   };
-  place(boxes, rect, 0, FONT);
+  place(boxes, rect, 0, typeSize("label", FONT));
   return out;
 }
 
@@ -85,7 +86,7 @@ export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHand
   for (const c of cells) {
     const el = ctx.html.appendChild(document.createElement("div"));
     el.dataset.kZoomBox = c.id;
-    const line = (3 * c.font) / FONT; // 3 px on screen at its level
+    const line = (3 * c.font) / typeSize("label", FONT); // 3 px on screen at its level
     Object.assign(el.style, {
       position: "absolute", left: `${c.x}px`, top: `${c.y}px`, width: `${c.w}px`, height: `${c.h}px`, boxSizing: "border-box",
       border: `${line}px solid var(--k-line)`, borderRadius: `${c.font * 0.4}px`, background: "var(--k-surface)", color: "var(--k-fg)",
@@ -123,7 +124,7 @@ export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHand
     Object.assign(svg.style, { position: "absolute", left: "0", top: "0", overflow: "visible", pointerEvents: "none" });
     const line = svg.appendChild(document.createElementNS(SVG, "path"));
     line.setAttribute("d", `M ${p(s0)} L ${p(s1 - head)}`);
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: String((3 * a.font) / FONT) });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: String((3 * a.font) / typeSize("label", FONT)) });
     const tip = svg.appendChild(document.createElementNS(SVG, "path"));
     tip.setAttribute("d", `M ${p(s1)} L ${p(s1 - head, head / 2)} L ${p(s1 - head, -head / 2)} Z`);
     tip.style.fill = "var(--k-line)";

@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
 import * as d3 from "d3";
-import { drawOn } from "./draw";
+import { drawOn, typeSize } from "./draw";
 import type { Ctx, Rect, StepAdder } from "../types";
 
 export interface TreeNode {
@@ -94,7 +94,7 @@ export function decisionTree(ctx: Ctx, opts: TreeOpts): TreeHandle {
       position: "absolute", left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, boxSizing: "border-box",
       padding: "6px 10px", border: "3px solid var(--k-line)", borderRadius: "14px", background: "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
-      font: `600 ${MAX_FONT}px/${LINE_H} var(--k-font)`, zIndex: "2",
+      font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
     });
     const text = el.appendChild(document.createElement("div"));
     text.textContent = b.label;
@@ -137,7 +137,7 @@ export function decisionTree(ctx: Ctx, opts: TreeOpts): TreeHandle {
     fitted = true;
     for (const b of lay.boxes) {
       const [el, text] = [els.get(b.id)!, texts.get(b.id)!];
-      let size = MAX_FONT;
+      let size = typeSize("label", MAX_FONT);
       const over = () => text.offsetHeight > LINE_H * size * 2 + 1 || text.offsetHeight > el.clientHeight - 12 || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;

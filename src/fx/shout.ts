@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface ShoutOpts {
   question: string;
@@ -60,9 +61,9 @@ export function shout(ctx: Ctx, opts: ShoutOpts): ShoutHandle {
     e.style.maxWidth = "1500px";
     return e;
   };
-  const row = box(root, { ...centre, color: "var(--k-fg)", fontSize: fit(k.font, opts.question) }, "question");
+  const row = box(root, { ...centre, color: "var(--k-fg)", fontSize: fit(typeSize("title", k.font), opts.question) }, "question");
   const q = inner(row, opts.question);
-  const a = box(root, { ...centre, color: "var(--k-accent)", fontSize: fit(k.font * 0.7, opts.answer) }, "answer");
+  const a = box(root, { ...centre, color: "var(--k-accent)", fontSize: fit(typeSize("title", k.font * 0.7), opts.answer) }, "answer");
   const at = inner(a, opts.answer);
   const earlier = answers.get(ctx.html) ?? [];
   answers.set(ctx.html, [...earlier, a]);

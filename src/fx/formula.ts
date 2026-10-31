@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface FormulaOpts {
   tex: string; // TeX; wrap each term that builds on its own step in \step{…}
@@ -40,7 +41,7 @@ export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
   const box = ctx.html.appendChild(document.createElement("div"));
   Object.assign(box.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, height: `${opts.h}px`,
-    display: "flex", alignItems: "center", justifyContent: "center", color: "var(--k-fg)", fontSize: `${opts.size ?? 64}px`,
+    display: "flex", alignItems: "center", justifyContent: "center", color: "var(--k-fg)", fontSize: `${opts.size ?? typeSize("title", 64)}px`,
   });
   box.dataset.kFormula = "";
   let terms: HTMLElement[] = [];
@@ -76,7 +77,7 @@ export function formula(ctx: Ctx, opts: FormulaOpts): FormulaHandle {
     if (fitted) return;
     fitted = true;
     const over = () => box.scrollWidth > box.clientWidth + 1 || box.scrollHeight > box.clientHeight + 1;
-    let size = opts.size ?? 64;
+    let size = opts.size ?? typeSize("title", 64);
     for (; size > FLOOR && over(); size -= 2) box.style.fontSize = `${size - 2}px`;
     if (over()) ctx.problem(`formula: does not fit ${opts.w} x ${opts.h} at ${FLOOR}px; split it or widen the rect`);
   };

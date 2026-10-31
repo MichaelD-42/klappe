@@ -1,4 +1,4 @@
-# Basics: `show`, `hide`, `title`, `text`
+# Basics: `show`, `hide`, `title`, `text`, `typeSize`
 
 The plain building blocks of a `scene.ts` scene: a title, text boxes, and fades in and out of any element.
 
@@ -30,6 +30,7 @@ steps: [
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
 | `duration` | number | 0.6 | seconds of the fade |
+| `at` | GSAP position | the step's end | where the fade starts on the step: `"<"` with the tween before, `"<0.2"` 0.2 s after its start |
 
 `show` does not hide anything first: build the element hidden. `title` and `text` do this for you; for your own element, call `gsap.set(el, { autoAlpha: 0 })` in `build`. A `show` that hid the element when the adder is made would act outside the timeline, so a seek and a play could differ.
 
@@ -46,11 +47,18 @@ steps: [
 | `text` | string | required | the text |
 | `x`, `y` | number | required | top-left corner, scene units |
 | `w` | number | required | the width the text wraps at |
-| `size` | number | 44 | font size in scene px, as a Markdown scene's text |
+| `size` | number | `--k-size-body` (44) | font size in scene px, as a Markdown scene's text |
 | `color` | string | `"--k-fg"` | a theme token name, for example `"--k-muted"` or `"--k-accent"` |
 | `weight` | number | 400 | font weight |
+| `class` | string | none | a class from the deck's `deck.css` for the box's look. Then the class sets the font and colour, and only `size`, `color` and `weight` given here are set inline over it |
 
 A `color` that is not a `--k-*` name (for example `"red"`) reports `text: color "red" is not a --k-* token name` and the box uses `--k-fg`. So does a `--k-*` name the theme does not define (for example `"--k-nope"`), with `text: unknown token "--k-nope"`.
+
+A deck's own colours can pass the check: name them as tokens in `deck.css`, `:root { --k-brand-teal: #00857c; }`, and pass `color: "--k-brand-teal"`. For a whole text style (face, size, colour, spacing), give the box a `class`.
+
+## `typeSize` and `typeCss`
+
+`typeSize(role, px)` gives a font size in the theme's type scale: `px` as drawn at the default scale, times the role's token over its default (`"title"` 88, `"body"` 44, `"label"` 28; see [Themes](../themes.md)). Under a theme with `--k-size-label: 42px`, `typeSize("label", 24)` is 36. It never drops under 20 px unless `px` did. Every effect sizes its text this way, so a hand-built element sized with it follows the theme as they do. `typeCss(role, px)` gives the same size as CSS, for a stylesheet. In `deck.css`, use `var(--k-size-body)` and its siblings directly.
 
 ## Handle
 

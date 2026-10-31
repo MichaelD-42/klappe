@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 // A Ken Burns pose: scale, and a drift in scene px.
 export interface KenBurnsPose {
@@ -84,19 +85,19 @@ function missing(ctx: Ctx, rect: Rect, label: string, text: string, prompt?: str
     gap: "24px",
     border: "4px dashed var(--k-accent)",
     color: "var(--k-accent)",
-    fontSize: "48px",
+    fontSize: `${typeSize("body", 48)}px`,
     fontWeight: "700",
   });
   const t = document.createElement("div");
   t.textContent = label;
   const s = document.createElement("div");
   s.textContent = text;
-  s.style.fontSize = "32px";
+  s.style.fontSize = `${typeSize("label", 32)}px`;
   b.append(t, s);
   if (prompt) {
     const p = document.createElement("div");
     p.textContent = prompt;
-    Object.assign(p.style, { fontSize: "28px", fontWeight: "400", maxWidth: "80%" });
+    Object.assign(p.style, { fontSize: `${typeSize("label", 28)}px`, fontWeight: "400", maxWidth: "80%" });
     b.append(p);
   }
   ctx.problem(`${label}: ${text}`);
@@ -185,7 +186,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     c.textContent = opts.credit;
     Object.assign(c.style, {
       position: "absolute", right: "12px", bottom: "12px", maxWidth: "calc(100% - 24px)", padding: "2px 10px", borderRadius: "4px",
-      background: "color-mix(in srgb, var(--k-bg) 75%, transparent)", color: "var(--k-fg)", font: "500 20px/1.3 var(--k-font)",
+      background: "color-mix(in srgb, var(--k-bg) 75%, transparent)", color: "var(--k-fg)", font: `500 ${typeSize("label", 20)}px/1.3 var(--k-font)`,
       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     });
   }
@@ -267,7 +268,7 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     right: "0",
     top: "100%",
     marginTop: "8px",
-    fontSize: "24px",
+    fontSize: `${typeSize("label", 24)}px`,
     color: "var(--k-fg)",
     whiteSpace: "nowrap",
     overflow: "hidden",

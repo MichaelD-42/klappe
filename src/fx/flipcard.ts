@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export interface FlipCardOpts {
   x: number; // top-left corner, scene-local
@@ -34,7 +35,7 @@ export function flipCard(ctx: Ctx, opts: FlipCardOpts): FlipCardHandle {
     f.setAttribute(`data-k-flipcard-${side}`, "");
     Object.assign(f.style, {
       position: "absolute", inset: "0", boxSizing: "border-box", padding: "32px 40px", borderRadius: "16px", background: "var(--k-surface)",
-      border, color: "var(--k-fg)", font: `600 ${FONT}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
+      border, color: "var(--k-fg)", font: `600 ${typeSize("body", FONT)}px/1.25 var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
       textAlign: "center", backfaceVisibility: "hidden",
     });
     f.appendChild(document.createElement("span")).textContent = text;
@@ -60,7 +61,7 @@ export function flipCard(ctx: Ctx, opts: FlipCardOpts): FlipCardHandle {
       const text = f.firstElementChild as HTMLElement;
       // The face's content box: its size less the padding.
       const over = () => text.offsetHeight > f.clientHeight - 64 || text.scrollWidth > f.clientWidth - 80;
-      let size = FONT;
+      let size = typeSize("body", FONT);
       for (; size > FLOOR; size -= 2) {
         text.style.fontSize = `${size}px`;
         if (!over()) break;

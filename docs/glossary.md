@@ -14,6 +14,8 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **section.ts.** A section's module: its background, its transition, and a `build` for parts every scene of the section uses. Type `SectionModule`.
 
+**overlay.ts.** The deck's optional layer over every scene that the camera does not move (a logo, a frame, a chapter label): `build` once, `update` on every move from where the deck lands. Type `OverlayModule`.
+
 **Scene.** One place on a canvas: a folder `sections/<NN-id>/<NN-id>/` with `scene.md` and an optional `scene.ts`. Has steps; part of a section. The camera flies to it.
 
 **scene.md.** A scene's `## title`, its steps (list items), its speaker notes (`> quote`), and Markdown parts. Parsed into `SceneDoc`; a scene's `ctx.doc`.

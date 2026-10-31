@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
+import { typeSize } from "./draw";
 import { counterText } from "./motion";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
@@ -73,7 +74,7 @@ const svgEl = (parent: Element, tag: string, attrs: Record<string, string | numb
 
 // The block every stat sits in: absolute at (x, y), hidden, its source in data-k-note for the speaker view.
 function block(ctx: Ctx, kind: string, x: number, y: number, w: number, source?: string): HTMLElement {
-  const root = el(ctx.html, "div", { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, color: "var(--k-fg)", font: "600 28px/1.25 var(--k-font)" });
+  const root = el(ctx.html, "div", { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${w}px`, color: "var(--k-fg)", font: `600 ${typeSize("label", 28)}px/1.25 var(--k-font)` });
   root.setAttribute(`data-k-${kind}`, "");
   root.dataset.kNote = `${t("source", ctx.deck.lang)}: ${source || t("originNotStated", ctx.deck.lang)}`;
   gsap.set(root, { autoAlpha: 0 });
@@ -109,8 +110,8 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
   const fmt = d3.format(`,.${decimals(opts.value)}f`);
   // The number and its unit on one line; the unit at about a third of the number's size.
   const line0 = el(root, "div", { whiteSpace: "nowrap", margin: "8px 0" });
-  const num = el(line0, "span", { font: "700 112px/1.1 var(--k-font)", fontVariantNumeric: "tabular-nums" });
-  if (opts.unit) el(line0, "span", { font: "600 40px/1 var(--k-font)", marginLeft: "8px" }, opts.unit.trim());
+  const num = el(line0, "span", { font: `700 ${typeSize("title", 112)}px/1.1 var(--k-font)`, fontVariantNumeric: "tabular-nums" });
+  if (opts.unit) el(line0, "span", { font: `600 ${typeSize("body", 40)}px/1 var(--k-font)`, marginLeft: "8px" }, opts.unit.trim());
   let badge: HTMLElement | undefined;
   const mark = (value: number) => {
     const d = kpiDelta(value, opts.previous!, opts.better);
@@ -179,7 +180,7 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
   }
   gsap.set(on, { autoAlpha: 0 });
   const text = el(root, "div", { marginTop: "20px", display: "flex", gap: "16px", alignItems: "baseline" });
-  const num = el(text, "span", { font: "700 64px/1 var(--k-font)", color: "var(--k-accent)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flexShrink: "0" });
+  const num = el(text, "span", { font: `700 ${typeSize("title", 64)}px/1 var(--k-font)`, color: "var(--k-accent)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flexShrink: "0" });
   if (opts.label) el(text, "span", {}, opts.label);
   const show = (v: number) => `${Math.round(v)} %`;
   num.textContent = show(0);
@@ -384,7 +385,7 @@ export function likertShares(counts: number[]): number[] {
 // a deck problem and stays empty.
 export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
   const root = block(ctx, "likert", opts.x, opts.y, opts.w, opts.source);
-  const legend = el(root, "div", { display: "flex", flexWrap: "wrap", gap: "8px 28px", marginBottom: "28px", fontSize: "24px", color: "var(--k-muted)" });
+  const legend = el(root, "div", { display: "flex", flexWrap: "wrap", gap: "8px 28px", marginBottom: "28px", fontSize: `${typeSize("label", 24)}px`, color: "var(--k-muted)" });
   const okScale = !opts.scale || (opts.scale.length >= 4 && opts.scale.length <= 7);
   if (!okScale) ctx.problem(`likert: scale needs 4 to 7 point names, got ${opts.scale!.length}`);
   // A scale of another length falls back to the deck language's five names.

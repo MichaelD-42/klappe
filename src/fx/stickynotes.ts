@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import { rand } from "./swarm";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type StickyNotesOpts = {
   notes: { id: string; text: string }[];
@@ -112,7 +113,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
     const l = labels[i];
     Object.assign(el.style, {
       position: "absolute", left: `${l.x}px`, top: `${l.y}px`, width: `${l.w}px`, height: `${LABEL_H - PAD}px`, boxSizing: "border-box",
-      borderBottom: "3px solid var(--k-line)", color: "var(--k-fg)", font: `700 26px/${LINE_H} var(--k-font)`, textAlign: "center",
+      borderBottom: "3px solid var(--k-line)", color: "var(--k-fg)", font: `700 ${typeSize("label", 26)}px/${LINE_H} var(--k-font)`, textAlign: "center",
       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     });
     gsap.set(el, { autoAlpha: 0 });
@@ -128,7 +129,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
     Object.assign(el.style, {
       position: "absolute", left: "0", top: "0", width: `${note.w}px`, height: `${note.h}px`, boxSizing: "border-box", padding: "10px 14px",
       background: `color-mix(in srgb, var(--k-series-${(i % 6) + 1}) ${NOTE_MIX * 100}%, var(--k-bg))`, borderRadius: "4px",
-      color: "var(--k-fg)", font: `600 ${FONT}px/${LINE_H} var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
+      color: "var(--k-fg)", font: `600 ${typeSize("label", FONT)}px/${LINE_H} var(--k-font)`, display: "flex", alignItems: "center", justifyContent: "center",
       textAlign: "center", zIndex: "2",
     });
     gsap.set(el, { ...scatter[i], scale: 1, autoAlpha: 0 });
@@ -156,7 +157,7 @@ export function stickyNotes(ctx: Ctx, opts: StickyNotesOpts): StickyNotesHandle 
     if (fitted) return;
     fitted = true;
     for (const [id, { el, text }] of notes) {
-      let size = FONT;
+      let size = typeSize("label", FONT);
       const over = () => text.offsetHeight > el.clientHeight || text.scrollWidth > text.clientWidth;
       for (; size > FLOOR; size -= 2) {
         el.style.fontSize = `${size}px`;

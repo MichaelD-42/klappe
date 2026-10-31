@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
+import { typeSize } from "./draw";
 
 export type ProcessStepsOpts = {
   steps: string[]; // the stage names, in order
@@ -59,7 +60,7 @@ export function processSteps(ctx: Ctx, opts: ProcessStepsOpts): ProcessStepsHand
     const el = box.appendChild(document.createElement("div"));
     Object.assign(el.style, {
       position: "absolute", boxSizing: "border-box", left: `${left}px`, top: `${y}px`, width: `${x0 + cw - PAD / 2 - left}px`, height: `${h}px`,
-      display: "flex", alignItems: "center", gap: "0.4em", whiteSpace: "nowrap", color: colorOf(i, cur), font: `600 ${MAX_FONT}px/1.2 var(--k-font)`,
+      display: "flex", alignItems: "center", gap: "0.4em", whiteSpace: "nowrap", color: colorOf(i, cur), font: `600 ${typeSize("label", MAX_FONT)}px/1.2 var(--k-font)`,
     });
     const num = el.appendChild(document.createElement("span"));
     num.textContent = String(i + 1);
@@ -77,7 +78,7 @@ export function processSteps(ctx: Ctx, opts: ProcessStepsOpts): ProcessStepsHand
     if (fitted) return;
     fitted = true;
     const over = () => stages.some(({ el }) => el.scrollWidth > el.clientWidth + 1);
-    let size = MAX_FONT;
+    let size = typeSize("label", MAX_FONT);
     for (; size > FLOOR; size -= 2) {
       for (const { el } of stages) el.style.fontSize = `${size}px`;
       if (!over()) break;

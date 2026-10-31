@@ -26,9 +26,26 @@ function lucideFiles(from) {
   return files
 }
 
+// A folder renamed while `klappe dev` runs can vanish between listing and reading: read it as empty, not crash.
+const gone = (e) => {
+  if (e.code !== 'ENOENT') throw e
+}
+const read = (f) => {
+  try {
+    return fs.readFileSync(f, 'utf8')
+  } catch (e) {
+    return gone(e) ?? ''
+  }
+}
+
 function codeFiles(dir, out = []) {
-  if (!fs.existsSync(dir)) return out
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+  let entries
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch (e) {
+    return gone(e) ?? out
+  }
+  for (const e of entries) {
     if (e.name === 'node_modules' || e.name.startsWith('.')) continue
     const p = path.join(dir, e.name)
     if (e.isDirectory()) codeFiles(p, out)
@@ -41,7 +58,7 @@ function codeFiles(dir, out = []) {
 export function namedIcons(dirs, files) {
   const keys = new Set()
   for (const f of dirs.flatMap((d) => codeFiles(d)))
-    for (const [, s] of fs.readFileSync(f, 'utf8').matchAll(LITERAL)) {
+    for (const [, s] of read(f).matchAll(LITERAL)) {
       const k = iconKey(s)
       if (files.has(k)) keys.add(k)
     }
@@ -52,7 +69,7 @@ export function namedIcons(dirs, files) {
 export function importedFx(dirs) {
   const names = new Set()
   for (const f of dirs.flatMap((d) => codeFiles(d))) {
-    const text = fs.readFileSync(f, 'utf8')
+    const text = read(f)
     for (const [, type, list] of text.matchAll(/import\s*(type\s+)?\{([^}]*)\}\s*from\s*["']klappe\/fx["']/g))
       for (const n of type ? [] : list.split(',')) {
         const m = /^\s*(?:type\s+)?(\w+)/.exec(n)
@@ -67,7 +84,7 @@ export function importedFx(dirs) {
 export function usedLangs(dirs) {
   const langs = new Set()
   for (const f of dirs.flatMap((d) => codeFiles(d)))
-    for (const [, l] of fs.readFileSync(f, 'utf8').matchAll(/\blang\s*:\s*["'`]([\w+#-]+)["'`]/g)) langs.add(l)
+    for (const [, l] of read(f).matchAll(/\blang\s*:\s*["'`]([\w+#-]+)["'`]/g)) langs.add(l)
   return [...langs].sort()
 }
 
@@ -97,6 +114,9 @@ export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
     },
     // In dev, a new icon name or effect import in a scene reloads the page with it in.
     configureServer(server) {
+      // Vite watches its root; a deck outside it (a deck repo's decks/<id>) must be watched too, or a new scene
+      // folder stays out of the deck's globs until a restart.
+      server.watcher.add(deckDir)
       const update = (file) => {
         if (!CODE.test(file) || !all.some((d) => !path.relative(d, file).startsWith('..'))) return
         let changed = false
