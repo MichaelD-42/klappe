@@ -72,12 +72,13 @@ test('the rehearsal under a cut keeps its own record, against the cut\'s duratio
   await speaker.keyboard.press('p')
   await speaker.keyboard.press('q')
   await expect.poll(() => speaker.locator('.k-sp-progress').textContent()).toBe('Appendix 1 / 2')
-  await speaker.waitForTimeout(1500)
+  await speaker.waitForTimeout(3000) // counted, the appendix would show 00:03 or more
   await speaker.keyboard.press('p')
   const keys = await speaker.evaluate(() => Object.keys(localStorage).filter((k) => k.includes(':rehearsal')))
   expect(keys).toHaveLength(1)
   expect(keys[0]).toMatch(/:rehearsal:cut:short$/)
-  expect(await speaker.locator('.k-sp-plan-total').textContent()).toMatch(/00:00 \/ 10:00$/)
+  // Up to a second on a busy machine between P and the jump is the talk's; the appendix's 3 s are not.
+  expect(await speaker.locator('.k-sp-plan-total').textContent()).toMatch(/00:0[01] \/ 10:00$/)
   await context.close()
 })
 
