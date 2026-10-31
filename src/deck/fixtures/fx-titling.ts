@@ -1,4 +1,4 @@
-import { chart, endRoll, kpi, lowerThird } from "klappe/fx";
+import { barRace, chart, endRoll, kpi, lowerThird, wordCloud } from "klappe/fx";
 import type { Ctx } from "../../types";
 import { assembleDeck } from "../assemble";
 
@@ -16,6 +16,8 @@ export default () => {
       "sections/10-a/30-two/scene.md": "## Two\n",
       "sections/10-a/40-again/scene.md": "## Again\n",
       "sections/10-a/50-kpi/scene.md": "## Kpi\n",
+      "sections/10-a/52-race/scene.md": "## Race\n\n- Show.\n",
+      "sections/10-a/54-words/scene.md": "## Words\n\n- Show.\n",
       "sections/10-a/60-roll/scene.md": "## Roll\n",
     },
     {
@@ -33,6 +35,8 @@ export default () => {
         ],
         steps: [(tl: gsap.core.Timeline, k: ReturnType<typeof kpi>[]) => k.forEach((x) => x.show(tl))],
       },
+      "sections/10-a/52-race/scene.ts": { build: (ctx: Ctx) => barRace(ctx, { src: "data/race.csv", rect }), steps: [(tl: gsap.core.Timeline, c: ReturnType<typeof barRace>) => c.show(tl)] },
+      "sections/10-a/54-words/scene.ts": { build: (ctx: Ctx) => wordCloud(ctx, { src: "data/words.csv", rect }), steps: [(tl: gsap.core.Timeline, c: ReturnType<typeof wordCloud>) => c.show()(tl)] },
       "sections/10-a/60-roll/scene.ts": {
         build: (ctx: Ctx) => endRoll(ctx, { title: "Sources", thanks: ["Thanks to the team"] }),
         steps: [(tl: gsap.core.Timeline, e: ReturnType<typeof endRoll>) => e.show(tl)],
@@ -42,6 +46,8 @@ export default () => {
   r.deck.files = {
     data: {
       "data/one.csv": "# source: Statistik A\nq,units\nQ1,120\nQ2,185\n",
+      "data/race.csv": "# source: Race R\nyear,alpha,beta\n2020,10,20\n2021,30,25\n",
+      "data/words.csv": "# source: Words W\nword,count\nfast,9\nslow,4\n",
       "data/two.csv": "# source: Statistik B\nq,units\nQ1,20\nQ2,85\n",
     },
     media: {},

@@ -1325,6 +1325,7 @@ export function barRace(ctx: Ctx, opts: BarRaceOpts): BarRaceHandle {
   const fmt = d3.format(`,.${dec}f`);
   const numeric = periods.every((p) => Number.isFinite(+p));
 
+  addSource(ctx, loaded.source);
   const root = svg(ctx.svg, "g", {
     "data-k-src": opts.src,
     "data-k-chart": "race",

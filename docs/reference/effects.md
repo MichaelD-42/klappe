@@ -789,7 +789,7 @@ steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
 
 ## `endRoll`
 
-Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON) and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
+Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON) the `# source:` line of a `barRace` or `wordCloud` file, and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
 
 ```ts
 import { endRoll } from "klappe/fx";
@@ -806,9 +806,7 @@ steps: [(tl, e) => e.show(tl)],
 
 `show(tl)` fades it in and scrolls it; the scroll is a tween on the canvas timeline, so a deep link mid-roll shows the frame playing would. It runs at about 90 px a second, at most 40 s. The handle is `{ el, show }`. The list is read when the step is added, after every scene has built, so a source in a later scene is on it; `ctx.deck.sources` is the same list.
 
-### Limits
-
-- With reduced motion the list stands still at the top of the rect; a list taller than the rect is cut off.
+With reduced motion (and in the PDF and `shot`) the list stands still and whole: one that is taller than the rect flows into columns, up to six.
 
 ## `shout`
 

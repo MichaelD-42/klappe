@@ -70,7 +70,7 @@ export function endRoll(ctx: Ctx, opts: EndRollOpts = {}): EndRollHandle {
   const add = (parent: HTMLElement, text: string, font: string, color = "var(--k-fg)", attr?: string) => {
     const e = parent.appendChild(document.createElement("div"));
     e.textContent = text; // text, never HTML
-    e.style.cssText = `font:${font};color:${color};margin:0 0 12px`;
+    e.style.cssText = `font:${font};color:${color};margin:0 0 12px;break-inside:avoid`;
     if (attr) e.setAttribute(attr, "");
   };
   if (opts.title) add(inner, opts.title, `800 ${typeSize("title", 64)}px/1.2 var(--k-font-heading)`, "var(--k-accent)");
@@ -89,7 +89,11 @@ export function endRoll(ctx: Ctx, opts: EndRollOpts = {}): EndRollHandle {
         for (const s of ctx.deck.sources) add(list, s, `500 ${typeSize("label", 32)}px/1.3 var(--k-font)`, "var(--k-fg)", "data-k-source");
       }
       tl.to(box, { autoAlpha: 1, duration: motion.step });
-      if (ctx.reducedMotion) return; // the list stands still, from its top
+      if (ctx.reducedMotion) {
+        // The list stands still, whole: a long one flows into columns (up to 6) until it fits the rect.
+        for (let k = 2; inner.offsetHeight > r.h && k <= 6; k++) list.style.columnCount = String(k);
+        return;
+      }
       const h = inner.offsetHeight;
       tl.fromTo(inner, { y: r.h }, { y: -h, duration: Math.min(MAX_ROLL, (r.h + h) / PX_PER_S), ease: "none" });
     },
