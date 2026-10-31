@@ -665,7 +665,7 @@ The shards copy the target as it is at that point; build and show it before the 
 
 ## `shout`
 
-Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make the same three steps with the deck's `intensity`.
+Catalog: section `210-shout` (`#/shout/calm/1`). A shout-out: the room dims, a big question lands at full size, then the answer follows. In Markdown, `### Question?` and a paragraph make two steps, the question and the answer, with the deck's `intensity`.
 
 From `decks/demo/sections/210-shout/20-bold/scene.ts`:
 
@@ -689,10 +689,10 @@ steps: [
 | Handle | Step |
 | --- | --- |
 | `enter` | the dim and question come in and grow to full size: 1.04 calm, 1.12 bold (an earlier shout's answer leaves) |
-| `fade` | the question fades |
+| `fade` | optional, a pause beat between the two: the question fades (bold keeps a trace) |
 | `answer` | the dim lifts and the answer builds in |
 
-Text is set with `textContent`, never as HTML. The three steps must be three entries in `steps` (or three Markdown steps).
+Text is set with `textContent`, never as HTML. Each handle you call is one entry in `steps`, so a shout with `fade` takes three steps in `scene.md` and one without it two. The demo's bold scene uses `fade`.
 
 ## `swarm`
 

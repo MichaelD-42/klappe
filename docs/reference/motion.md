@@ -30,7 +30,7 @@ When no effect fits, add a tween with `tl.to(element, vars)`. Position the eleme
 | scale | `scale`, `scaleX`, `scaleY` | `tl.to(box, { scale: 1.5, duration: 0.6 })` |
 | show, hide | `autoAlpha` (opacity and visibility) | `tl.to(box, { autoAlpha: 1, duration: 0.6 })` |
 
-`width` and `height` move the layout (text reflows); `scale` is cheaper and keeps the box's shape, but stretches text. For a text-safe grow, use `scale` on the box with one factor for both axes. The default duration is 0.6 s (`motion.step`); a camera flight is 1.6 s.
+`width` and `height` move the layout (text reflows); `scale` is cheaper and keeps the box's shape, but stretches text. For a text-safe grow, use `scale` on the box with one factor for both axes. The default duration is 0.6 s (`motion.step`); a camera flight is 1.6 s. Both scale with `tempo` in `deck.md`.
 
 Catalog: section `330-tweens` (`#/tweens/boxes/1`). Three boxes, the same moves, a different ease each. From `decks/demo/sections/330-tweens/10-boxes/scene.ts`:
 

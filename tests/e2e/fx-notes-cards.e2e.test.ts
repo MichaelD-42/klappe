@@ -162,6 +162,7 @@ for (const [name, url, scene, steps] of [
   ['demo', '/#/notes-cards/affinity/', 'affinity', 4],
 ] as const)
   test(`no note overlaps another or a formed group column (${name})`, async () => {
+    if (name === 'demo' && !inject('IS_DEMO_DECK')) return // a deck repo has no such scene
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
     for (let step = 1; step <= steps; step++) {
       await page.goto(`${inject('BASE_URL')}${url}${step}`)

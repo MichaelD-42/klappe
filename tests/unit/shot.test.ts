@@ -26,3 +26,9 @@ test('no target picks every step; last keeps the last step of each scene', () =>
 test('a target that names no step is reported', () => {
   expect(pickSteps(steps, ['a/x/9', 'c', 'a'], false).unknown).toEqual(['a/x/9', 'c'])
 })
+
+// --last with a step target picked nothing, and the old PNG on disk passed for a new shot.
+test('a step target is shot as named under last; last thins only section and scene targets', () => {
+  expect(ids(pickSteps(steps, ['a/x/1'], true))).toEqual(['a/x/1'])
+  expect(ids(pickSteps(steps, ['a/x/1', 'a/y'], true))).toEqual(['a/x/1', 'a/y/2'])
+})

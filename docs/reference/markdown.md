@@ -7,7 +7,7 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 | image | `- ![An engineer at a desk](media/desk.png "Prompt for the generator")` | the picture in the right-hand slot; the text in a left column | [image](effects.md#image) |
 | video | `- [Intro clip](https://www.youtube.com/watch?v=dQw4w9WgXcQ)` or a link to a `.mp4` or `.webm` | a video box with the title as caption | [video](effects.md#video) |
 | chart | `- [Units by quarter](data/chart-bar.csv)` | a bar chart beside the text. Other types need `scene.ts` | [chart](effects.md#chart) |
-| shout-out | `### Who owns the release?` and a paragraph `The team that ships it.` | three steps: enter, fade, answer; a `> note` goes on the answer | [shout](effects.md#shout) |
+| shout-out | `### Who owns the release?` and a paragraph `The team that ships it.` | two steps: the question, then the answer; a `> note` goes on the answer | [shout](effects.md#shout) |
 | code fence with groups | ```` ```ts {1-2\|4} ```` | one step per group, its lines lit; list items after the block are the steps' text | [code](elements/code.md) |
 | console fence | ```` ```console ```` with `$ npm test` and output lines | each `$ ` line types and its output appears; one step per command | [terminal](elements/terminal.md) |
 | chat fence | ```` ```chat ```` with `user: Where do I start?` and `Start with the tests.` | a messenger thread in the right-hand slot; one step per message line; list items after the block are the steps' text; a line `![Ana](media/ana.jpeg)` gives that sender an avatar | [chat](elements/chat.md) |

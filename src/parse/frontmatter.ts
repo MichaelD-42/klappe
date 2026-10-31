@@ -44,6 +44,9 @@ export function parseFrontmatter(md: string): { data: Record<string, unknown>; b
   return { data, body: m[2] };
 }
 
+// deck.md tempo: a factor on the step, camera and auto-hold times.
+const TEMPO: Record<string, number> = { slow: 1.4, normal: 1, fast: 0.75 };
+
 export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; problems: string[] } {
   const problems: string[] = [];
   const title = typeof data.title === "string" ? data.title : "";
@@ -63,6 +66,8 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
     ? ([nums[0], nums[1] ?? nums[0], nums[2] ?? nums[0], nums[3] ?? nums[1] ?? nums[0]] as [number, number, number, number])
     : undefined;
   if (sa !== undefined && !safeArea) problems.push("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
+  const tempo = TEMPO[String(data.tempo ?? "normal")];
+  if (tempo === undefined) problems.push("deck.md: tempo is slow, normal or fast");
   return {
     meta: {
       title,
@@ -72,6 +77,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       confidential: data.confidential === true,
       sharedCanvas,
       ...(safeArea && { safeArea }),
+      tempo: tempo ?? 1,
     },
     problems,
   };

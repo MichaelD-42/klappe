@@ -63,17 +63,25 @@ test('the vignette shows only in bold', async () => {
   expect(v.opacity).toBeCloseTo(1, 1)
 })
 
-// A shout-out is three steps: enter, fade, answer. Scene 3 has two (roots 2 and 3): steps 6-8 are the first, 9-11 the second.
+// A shout-out is two steps: the question, then the answer. Scene 3 has two (roots 2 and 3): steps 4-5 are the first, 6-7 the second.
 for (const fixture of ['fx-shout', 'fx-shout-bold'])
   test(`${fixture}: the first answer is gone once the second question has entered`, async () => {
-    expect((await look(fixture, 8, 2, 'answer', 0)).visibility).toBe('visible')
-    expect((await look(fixture, 9, 2, 'answer', 0)).visibility).toBe('hidden')
-    expect((await look(fixture, 9, 3, 'question')).visibility).toBe('visible')
+    expect((await look(fixture, 5, 2, 'answer', 0)).visibility).toBe('visible')
+    expect((await look(fixture, 6, 2, 'answer', 0)).visibility).toBe('hidden')
+    expect((await look(fixture, 6, 3, 'question')).visibility).toBe('visible')
   })
 
-test('bold keeps a faint trace of the question after the fade; calm clears it', async () => {
-  const bold = await look('fx-shout-bold', 1, 0, 'question')
+// The second click lifts the question and the dim and shows the answer: no blank beat between them.
+for (const fixture of ['fx-shout', 'fx-shout-bold'])
+  test(`${fixture}: the answer follows the question on the next step`, async () => {
+    expect((await look(fixture, 1, 0, 'question')).visibility).toBe('hidden')
+    expect((await look(fixture, 1, 0, 'answer')).visibility).toBe('visible')
+    expect((await look(fixture, 1, 0, 'dim')).visibility).toBe('hidden')
+  })
+
+// The pause beat stays in scene.ts (h.fade): steps 8-10 of the bold fixture.
+test('bold keeps a faint trace of the question on the fade step', async () => {
+  const bold = await look('fx-shout-bold', 9, 4, 'question')
   expect(bold.opacity).toBeGreaterThan(0.05)
   expect(bold.opacity).toBeLessThan(0.3)
-  expect((await look('fx-shout', 1, 0, 'question')).visibility).toBe('hidden')
 })

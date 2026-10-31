@@ -15,9 +15,10 @@ export interface DeckMeta {
   confidential: boolean;
   sharedCanvas: string[][];
   safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
+  tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
 }
 export type StepKind =
-  "step" | "shout-enter" | "shout-fade" | "shout-answer";
+  "step" | "shout-enter" | "shout-answer";
 // A step built from Markdown by an element: a code group, a console command, a chat message, a task-list item, a table row,
 // an agenda.
 export type Part =

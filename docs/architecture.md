@@ -112,7 +112,7 @@ Some things move on the wall clock, not with the steps: video and aurora backgro
 | `test` | Vitest's `e2e` project against a Vite server of the deck: the walk, the acceptance checks and the effect tests, in Playwright's Chromium. |
 | `pdf`, `shot` | A Vite server on a free port and Playwright: `openDeck` loads the deck with `?instant=1&reducedmotion=1` and no UI; `showStep` cuts to a step and waits for fonts and a painted frame. |
 | `outline` | No browser: Vite's `runnerImport` loads `src/deck/assemble.ts`, which parses the deck's Markdown. Scene modules are not loaded. |
-| `init` | Writes a starter deck, the scripts in `package.json`, a `tsconfig.json`, and copies the skill and agents (`sync-claude.mjs`). |
+| `init` | Copies `template/` to `decks/<id>/` (a one-scene deck with `data/`, `media/`, `shared/`, `deck.css`, a README and `max-words: 12`), writes the scripts in `package.json`, a `tsconfig.json`, and copies the skill and agents (`sync-claude.mjs`). |
 
 ## Tests
 

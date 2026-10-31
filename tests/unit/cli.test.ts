@@ -95,3 +95,40 @@ test('--help after a command prints the usage, before it picks a deck or starts 
     expect(r.stdout).toContain('usage: klappe');
   }
 });
+
+// klappe dev --port 5174 --strictPort served on 5173.
+test('dev serves on the --port it is given', async () => {
+  const { spawn } = await import('node:child_process')
+  const port = String(20000 + Math.floor(Math.random() * 20000))
+  const p = spawn(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'dev', '--deck', 'demo', '--port', port, '--strictPort'], { cwd: join(__dirname, '../..') })
+  try {
+    const out = await new Promise<string>((ok, fail) => {
+      let text = ''
+      const timer = setTimeout(() => fail(new Error(`no URL in 30 s:\n${text}`)), 30_000)
+      const read = (b: Buffer) => {
+        text += String(b).replace(/\x1b\[[0-9;]*m/g, '') // CI colours Vite's output: a code sits between host and port
+        if (/localhost:\d+/.test(text)) clearTimeout(timer), ok(text)
+      }
+      p.stdout.on('data', read)
+      p.stderr.on('data', read)
+    })
+    expect(out).toContain(`localhost:${port}`)
+  } finally {
+    p.kill()
+  }
+}, 40_000)
+
+// The starter deck comes from template/: the folders and deck.md keys the work decks each ended up with.
+test('init copies the template: deck.md with the common keys and a word cap, the slots and a README', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
+  const deck = join(cwd, 'decks/talk');
+  const md = readFileSync(join(deck, 'deck.md'), 'utf8');
+  for (const key of ['title: talk', 'lang: en', 'theme: calm', 'intensity: calm', 'confidential: false', 'max-words: 12']) expect(md).toContain(key);
+  for (const f of ['deck.css', 'data', 'media', 'shared', 'README.md', 'sections/10-intro/10-hello/scene.md']) expect(existsSync(join(deck, f)), f).toBe(true);
+  expect(readFileSync(join(deck, 'README.md'), 'utf8')).toContain('npm run klappe:sync');
+  // The word cap is on from the first scene: a long step is reported.
+  writeFileSync(join(deck, 'sections/10-intro/10-hello/scene.md'), '## Hello\n\n- one two three four five six seven eight nine ten eleven twelve thirteen\n');
+  const { overWords } = await import('../../bin/outline.mjs');
+  expect(await overWords(join(__dirname, '../..'), deck)).toEqual(['#/intro/hello/1: 13 words > 12']);
+}, 60_000);

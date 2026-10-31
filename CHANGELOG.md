@@ -22,16 +22,23 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `chart` option `columns` and step `to(column)`: a bar or donut chart moves from one number column to the next (2024 to 2025) on one axis, its values counting. Catalog: `#/chart/years/2`.
 - Type scale tokens `--k-size-title`, `--k-size-body` and `--k-size-label` (defaults 88, 44 and 28 px): a theme sets the text hierarchy, and the Markdown scene, `text()` and every effect's text follow it in proportion. `crt`, `timer` and `map` keep their own sizes. Defaults leave every look as it was.
 - `text` option `class`: a `deck.css` class styles the box; only the size, colour and weight given are set inline over it.
+- `klappe init` copies `template/`: one scene, `data/`, `media/`, `shared/`, a `deck.css` slot, a README with the commands (`npm run klappe:sync` among them) and `max-words: 12` in `deck.md`, so a long step fails `klappe test` from the start.
+- `klappe pdf --handout`: one A4 page per scene, its last step with its title and speaker notes under it, to send after the talk.
+- `deck.md` key `tempo`: `slow`, `normal` or `fast` scales the step fades, camera flights and autoplay holds (1.4, 1, 0.75).
 - `overlay.ts` at the deck root: a layer over every scene that the camera does not move, for a logo, a brand frame or a chapter label. `build` makes it once, `update(at)` sets it on every move from where the deck lands; the walk checks it. Catalog: `#/overlay/pinned/1`.
 - `show` and `hide` option `at`: a GSAP position, so a fade can start with the tween before it (`"<"`) instead of after it.
 - A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
 ### Changed
 
+- A Markdown shout-out (`### Question?` and a paragraph) is two steps, the question and then the answer; the fade step between them is gone. A `scene.ts` that lists three step functions for one now reports a step count problem: drop the `fade` step, or keep it in `scene.ts` with a three-step `scene.md`.
 - `likert` takes a `scale` of 4 to 7 point names, and each row then one count per point; a scale of another length reports `likert: scale needs 4 to 7 point names` (was: needs 5).
 
 ### Fixed
 
+- `klappe dev` takes `--port <n>` and `--strictPort`; it served on 5173 whatever it was given.
+- `shot --last` shoots a step target as named; it picked nothing for a step that was not its scene's last, and the old PNG stayed on disk.
+- `test --only` prints the scenes it walks, and stops before a browser starts when a target names no scene.
 - `klappe test` fails within seconds when the deck cannot load (a syntax error in a `scene.ts`), and prints the error with its file and line; each walk waited about 230 s before.
 - `klappe dev` no longer exits with ENOENT when a scene folder is renamed or moved while it runs.
 - A running `klappe dev` picks up a new scene folder in a deck outside klappe's folder (a deck repo); it needed a restart.

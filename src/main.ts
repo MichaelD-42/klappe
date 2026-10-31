@@ -14,7 +14,7 @@ import { mountOverlay } from "./render/overlay";
 import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
-import { applyTheme, loadFonts, motion } from "./theme";
+import { applyTheme, loadFonts, motion, setTempo } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
@@ -26,6 +26,7 @@ import type { StepAddr } from "./types";
 
 const errors = installErrorCapture();
 const { deck, problems } = await loadDeck();
+setTempo(deck.meta.tempo ?? 1);
 const layout = layoutDeck(deck);
 problems.push(...layout.problems);
 const steps = buildStepList(deck, layout.canvases);
