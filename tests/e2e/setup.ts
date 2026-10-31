@@ -1,7 +1,7 @@
 import { createServer } from 'vite'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import type { TestProject } from 'vitest/node'
@@ -26,7 +26,7 @@ export default async function setup(project: TestProject) {
   // Vitest sets NODE_ENV=test, which Vite folds into the optimizer's config hash, and `klappe test` runs this setup too
   // (deck repos, and the CLI tests in a temp cwd, whose aliases differ): servers sharing a cache dir re-optimize after
   // each other. So: one dir per cwd, and a throwaway one for a temp cwd.
-  const scratch = process.cwd().startsWith(tmpdir() + path.sep)
+  const scratch = [tmpdir(), realpathSync(tmpdir())].some((t) => process.cwd().startsWith(t + path.sep))
   const cacheDir = scratch
     ? mkdtempSync(path.join(tmpdir(), 'klappe-e2e-cache-'))
     : fileURLToPath(new URL(`../../node_modules/.vite-e2e-${createHash('sha1').update(process.cwd()).digest('hex').slice(0, 8)}`, import.meta.url))
