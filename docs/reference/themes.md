@@ -71,6 +71,8 @@ Every token not listed here comes from calm.
 
 At load, the resolved theme is measured on the real page. A failure is a deck problem, so `klappe test` fails on it. The messages look like `theme: --k-fg on --k-bg contrast 1.9 < 4.5`.
 
+A section's `tokens` (see [deck format](deck-format.md#sectionts)) are measured the same way, over the colour tokens the section overrides combined with the deck theme for the rest; the message names the section: `theme: section light: --k-fg on --k-bg contrast 1.2 < 4.5`. Sizes, radius, stroke and gap are not measured.
+
 - `--k-fg` and `--k-muted` on `--k-bg` and on `--k-surface`: at least 4.5:1.
 - `--k-accent` on `--k-bg` and on `--k-surface`: at least 3:1.
 - `--k-line` on `--k-bg`: at least 3:1 (non-text contrast), and dimmer than `--k-muted`.

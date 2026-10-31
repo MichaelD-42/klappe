@@ -16,6 +16,19 @@ export function setFrame(f: { w: number; h: number }): void {
   document.documentElement.style.setProperty("--k-frame-h", `${f.h}px`);
 }
 
+// The element whose tokens JS-side readers (typeSize, gapPx, strokePx) resolve: the scene being built, so a section's
+// `tokens` reach them; :root outside a build.
+export let tokenRoot: Element | undefined;
+export function withTokenRoot<T>(el: Element, fn: () => T): T {
+  const was = tokenRoot;
+  tokenRoot = el;
+  try {
+    return fn();
+  } finally {
+    tokenRoot = was;
+  }
+}
+
 // CSS variables defined in themes/calm.css.
 export const cssVars = { bg: "--k-bg", fg: "--k-fg", accent: "--k-accent", font: "--k-font" };
 
@@ -98,17 +111,28 @@ export function applyTheme(deck: Deck, override?: string | null): string[] {
     probe.style[prop] = `var(${v})`;
     return getComputedStyle(probe)[prop];
   };
-  for (const [fg, bg, min] of CHECKS) {
-    const [a, b] = [read(fg, "color"), read(bg, "backgroundColor")];
-    let c: number;
-    try {
-      c = contrast(a, b);
-    } catch {
-      // oklch(), color-mix() and color() are serialised in their own space; not measured.
-      problems.push(`theme: ${/^rgb/.test(a) ? bg : fg} not a readable colour (${/^rgb/.test(a) ? b : a})`);
-      continue;
+  // The deck's theme, then each section's overrides on top: only the pairs that touch an overridden token.
+  const measure = (label: string, only?: string[]) => {
+    for (const [fg, bg, min] of CHECKS) {
+      if (only && !only.includes(fg) && !only.includes(bg)) continue;
+      const [a, b] = [read(fg, "color"), read(bg, "backgroundColor")];
+      let c: number;
+      try {
+        c = contrast(a, b);
+      } catch {
+        // oklch(), color-mix() and color() are serialised in their own space; not measured.
+        problems.push(`theme: ${label}${/^rgb/.test(a) ? bg : fg} not a readable colour (${/^rgb/.test(a) ? b : a})`);
+        continue;
+      }
+      if (c < min) problems.push(`theme: ${label}${fg} on ${bg} contrast ${c.toFixed(1)} < ${min}`);
     }
-    if (c < min) problems.push(`theme: ${fg} on ${bg} contrast ${c.toFixed(1)} < ${min}`);
+  };
+  measure("");
+  for (const s of deck.sections) {
+    const tokens = s.module?.tokens ?? {};
+    for (const [k, v] of Object.entries(tokens)) k.startsWith("--k-") && probe.style.setProperty(k, v);
+    if (Object.keys(tokens).length) measure(`section ${s.id}: `, Object.keys(tokens));
+    probe.removeAttribute("style");
   }
   probe.remove();
   return problems;

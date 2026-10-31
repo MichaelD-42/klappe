@@ -1,3 +1,5 @@
+import { tokenRoot } from "../theme";
+
 // The layout tokens' defaults (calm.css). An effect writes its sizes as drawn at these.
 const RADIUS = 12;
 const STROKE = 4;
@@ -10,9 +12,10 @@ export const strokeW = (px: number): string => `calc(var(--k-stroke) * ${px / ST
 export const gapCss = (px: number): string => `calc(var(--k-gap) * ${px / GAP})`;
 
 // The same for geometry computed in JS: px scaled by the resolved token. Read from :root, where themes and deck.css set
-// them; without a DOM (unit tests) px is kept.
+// them, or on the scene being built for a section's `tokens`; without a DOM (unit tests) px is kept.
 const scaled = (name: string, base: number, px: number): number => {
-  const v = typeof getComputedStyle === "undefined" || !globalThis.document?.documentElement ? NaN : parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  const el = typeof getComputedStyle === "undefined" ? undefined : (tokenRoot ?? globalThis.document?.documentElement);
+  const v = el ? parseFloat(getComputedStyle(el).getPropertyValue(name)) : NaN;
   return Number.isFinite(v) ? (px * v) / base : px;
 };
 export const gapPx = (px: number): number => scaled("--k-gap", GAP, px);

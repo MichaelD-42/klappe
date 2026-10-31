@@ -155,6 +155,8 @@ export interface OverlayModule {
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
 export interface SectionModule {
+  // --k-* tokens for this section's scenes and its stage background only, for example an inverted section: { "--k-bg": "#fff", "--k-fg": "#0f1b2d" }.
+  tokens?: Record<string, string>;
   // Behind every scene of this section, pinned to the screen: the camera moves the content over it.
   background?: Background;
   // How the deck enters this section's canvas on a forward step. Default: fade.

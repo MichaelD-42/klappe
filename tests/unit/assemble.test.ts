@@ -75,6 +75,17 @@ describe("assembleDeck", () => {
   });
 });
 
+describe("section tokens", () => {
+  const files = { "deck.md": DECK, "sections/10-a/section.md": "# A\n", "sections/10-a/10-x/scene.md": "## X\n" };
+  it("reports a key that is not a --k-* property, naming the section", () => {
+    const { problems } = assembleDeck(files, { "sections/10-a/section.ts": { tokens: { "--k-bg": "#fff", color: "red" } } });
+    expect(problems).toEqual(["sections/10-a/section.ts: tokens: 'color' is not a --k-* token"]);
+  });
+  it("accepts --k-* keys", () => {
+    expect(assembleDeck(files, { "sections/10-a/section.ts": { tokens: { "--k-bg": "#fff" } } }).problems).toEqual([]);
+  });
+});
+
 describe("toDeckRelative", () => {
   it("cuts glob keys down to the deck-relative path", () => {
     expect(toDeckRelative("/C:/x/decks/demo/deck.md")).toBe("deck.md");

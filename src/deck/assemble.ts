@@ -53,10 +53,13 @@ export function assembleDeck(
       scenes.push({ ...r.scene, sectionId: parsed.section.id, module, source: `${cp}/scene.md`, folder: cf });
     }
     scenes.sort(byOrder);
+    const module = modules[`${sp}/section.ts`] as SectionModule | undefined;
+    for (const k of Object.keys(module?.tokens ?? {}))
+      if (!k.startsWith("--k-")) problems.push(`${sp}/section.ts: tokens: '${k}' is not a --k-* token`);
     sections.push({
       ...parsed.section,
       scenes,
-      module: modules[`${sp}/section.ts`] as SectionModule | undefined,
+      module,
       folder: sf,
     });
   }

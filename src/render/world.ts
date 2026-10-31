@@ -7,8 +7,8 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { part as fxPart } from "./parts";
-import { motion, stage } from "../theme";
-import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
+import { motion, stage, withTokenRoot } from "../theme";
+import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
@@ -433,7 +433,7 @@ export function renderWorld(
         cam = end;
       },
     };
-    const ctxAt = (rect: Rect, attr: string, id: string, cls: string): Ctx => {
+    const ctxAt = (rect: Rect, attr: string, id: string, cls: string, tokens?: Record<string, string>): Ctx => {
       const g = document.createElementNS(SVG, "g");
       g.setAttribute(attr, id);
       g.setAttribute("transform", `translate(${rect.x} ${rect.y})`);
@@ -442,6 +442,10 @@ export function renderWorld(
       d.setAttribute(attr, id);
       Object.assign(d.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` });
       html.append(d);
+      // A section's tokens, on the scene's box and its SVG group, so CSS and getComputedStyle both see them.
+      for (const [k, v] of Object.entries(tokens ?? {})) k.startsWith("--k-") && [d, g].forEach((e) => e.style.setProperty(k, v));
+      // color and font-family inherit as computed values from the stage: re-resolve them against the section's tokens.
+      if (tokens) Object.assign(d.style, { color: "var(--k-fg)", fontFamily: "var(--k-font)" });
       return {
         rect,
         svg: g,
@@ -459,16 +463,30 @@ export function renderWorld(
     for (const s of sections) {
       const build = s.module?.build;
       if (build)
-        Object.assign(refs, safe(`section ${s.id}`, () => build(ctxAt({ x: 0, y: 0, w, h }, "data-section", s.id, "k-layer"))));
+        Object.assign(refs, safe(`section ${s.id}`, () => {
+          const c = ctxAt({ x: 0, y: 0, w, h }, "data-section", s.id, "k-layer", s.module?.tokens);
+          return withTokenRoot(c.html, () => build(c));
+        }));
     }
     // One pinned element per background: the section's is shared by every scene that does not set its own.
     const pins = new Map<Background, Pinned>();
+    const colours = new Map<Section, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
+        const tokens = s.module?.tokens;
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene", tokens), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);
+        // An inverted section reads edge to edge: with no picture of its own it pins a plain --k-bg layer behind its scenes.
+        if (!bg && tokens?.["--k-bg"] && !(pin = colours.get(s))) {
+          const d = pinned.appendChild(el("div", "k-layer"));
+          Object.assign(d.style, { width: `${stage.w}px`, height: `${stage.h}px`, background: "var(--k-bg)" });
+          d.dataset.kBackground = s.id;
+          for (const [k, v] of Object.entries(tokens)) k.startsWith("--k-") && d.style.setProperty(k, v);
+          gsap.set(d, { autoAlpha: 0 });
+          colours.set(s, (pin = { el: d, layers: [] }));
+        }
         if (bg && !pin) {
           const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
           const svgText = bg.href ? opts.svg?.[bg.href.replace(/^\.\//, "")] : undefined;
@@ -488,7 +506,7 @@ export function renderWorld(
         const code: Ctx = { ...ctx, problem: (msg) => ctx.problem(`${file}${step ? ` step ${step}` : ""}: ${msg}`) };
         const build = sc.module?.build;
         perScene.set(sc, {
-          ...(build ? { ctx: code, refs: safe(file, () => build(code)) } : { ctx: code, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
+          ...(build ? { ctx: code, refs: safe(file, () => withTokenRoot(code.html, () => build(code))) } : { ctx: code, refs: undefined, ...withTokenRoot(ctx.html, () => renderDefault(sc, ctx, deck.meta)) }),
           at: (n) => (step = n),
           bg: pin,
         });
@@ -549,7 +567,7 @@ export function renderWorld(
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }
           const fn = sc.module?.steps?.[i];
-          if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => fn(tl, refs, ctx));
+          if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => withTokenRoot(ctx.html, () => fn(tl, refs, ctx)));
           else defaultStep(tl, sc, i + 1, ctx.html, fx);
           // Last, so the step's content does not wait for them: they run alongside from the step's start.
           if (i === 0) {
