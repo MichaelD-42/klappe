@@ -206,3 +206,17 @@ test('JS-resolved tokens follow the section: --k-size-body reaches typeSize at b
   expect(await size('second')).toBeCloseTo(60, 5)
   await page.close()
 })
+
+// 1366x768 is 0.7 px wide of 16:9: the stage must still reach the viewport's right edge, or the page's black shows there.
+test('the stage covers the whole viewport at 1366x768, so an inverted section has no strip at the edge', async () => {
+  const page = await open('fixture=section-rhythm#/light/second/1')
+  const r = await page.evaluate(() => {
+    const b = document.querySelector('.k-stage')!.getBoundingClientRect()
+    return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, w: innerWidth, h: innerHeight }
+  })
+  expect(r.left).toBeLessThanOrEqual(0)
+  expect(r.top).toBeLessThanOrEqual(0)
+  expect(r.right).toBeGreaterThanOrEqual(r.w)
+  expect(r.bottom).toBeGreaterThanOrEqual(r.h)
+  await page.close()
+})
