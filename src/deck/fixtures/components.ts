@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { text } from "klappe/fx";
+import { text, typeSize } from "klappe/fx";
 import type { Components } from "../../types";
 
 // A deck's own fences: stamp draws the fence body, then the scene's second step; ts shadows the built-in code fence,
@@ -12,6 +12,16 @@ const components: Components = {
     const b = text(ctx, { text: ctx.doc!.steps[1].text, x: 160, y: 400, w: 1200 });
     b.el.dataset.stampNext = "";
     return [a.show, b.show];
+  },
+  // The step reads a token when it runs, so a section's own tokens must reach it.
+  sized: (ctx) => {
+    const a = text(ctx, { text: "Sized", x: 160, y: 200, w: 1200 });
+    return [
+      (tl) => {
+        a.el.dataset.sized = String(typeSize("body", 44));
+        a.show(tl);
+      },
+    ];
   },
   broken: () => {
     throw new Error("no photo");
@@ -32,8 +42,10 @@ export default () => {
       "sections/10-a/30-shadow/scene.md": "## Shadow\n\n```ts\nconst a = 1;\n```\n\n- One.\n",
       "sections/10-a/40-broken/scene.md": "## Broken\n\n```broken\n```\n\n- One.\n",
       "sections/10-a/50-short/scene.md": "## Short\n\n```stamp\nHi\n```\n\n- One.\n- Two.\n- Three.\n",
+      "sections/20-b/section.md": "# B\n",
+      "sections/20-b/10-sized/scene.md": "## Gap\n\n```sized\n```\n\n- One.\n",
     },
-    {},
+    { "sections/20-b/section.ts": { tokens: { "--k-size-body": "88px" } } },
   );
   r.deck.components = components;
   return r;

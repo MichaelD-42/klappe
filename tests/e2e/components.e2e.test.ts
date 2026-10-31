@@ -48,3 +48,10 @@ test('a component named like a built-in fence never runs: the built-in draws the
   expect(await page.evaluate(() => document.querySelector('div[data-scene="shadow"]')?.textContent)).toContain('const a = 1;')
   await page.close()
 }, 60_000)
+
+test('a component step reads the tokens of its own section', async () => {
+  const page = await open('#/b/sized/1')
+  // typeSize('body', 44) is 44 at the default body size; the section sets 88px
+  expect(await page.evaluate(() => document.querySelector<HTMLElement>('div[data-scene="sized"] [data-sized]')?.dataset.sized)).toBe('88')
+  await page.close()
+}, 60_000)

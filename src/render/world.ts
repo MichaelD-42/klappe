@@ -623,7 +623,7 @@ export function renderWorld(
           }
           const fn = sc.module?.steps?.[i];
           if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => withTokenRoot(ctx.html, () => fn(tl, refs, ctx)));
-          else defaultStep(tl, sc, i + 1, ctx.html, fx);
+          else withTokenRoot(ctx.html, () => defaultStep(tl, sc, i + 1, ctx.html, fx));
           // Last, so the step's content does not wait for them: they run alongside from the step's start.
           if (i === 0) {
             // The camera arrives at a scene with another background: the two cross-fade during the flight.
