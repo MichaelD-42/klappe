@@ -56,6 +56,16 @@ The first column labels the rows; every later column with a number in any row is
 - A radar reads 3 to 12 dimensions and up to 2 series; a heatmap up to 24 rows and 24 columns; a treemap up to 40 tiles (DATA ERROR past these). A treemap tile too small for its name shows none: merge the small ones into Other.
 - A funnel reads up to 8 stages. A sankey reads up to 16 nodes, 6 columns and 8 nodes in one column; it refuses a cycle and a node that flows into itself (DATA ERROR with the reason).
 
+### Your own chart
+
+For a chart `chart` lacks, draw it yourself in `scene.ts` with d3. Catalog: `#/chart/dumbbell/1`, a dumbbell (before and after per team) in `decks/demo/sections/110-chart/90-dumbbell/scene.ts`. The recipe:
+
+- `import * as d3 from "d3"` and use its scales, shapes and axes; draw into `d3.select(ctx.svg)`. klappe's own d3 is used, so a deck repo installs nothing.
+- Read the rows with `parseCsv(ctx.files.data["data/<file>.csv"])`, with a `# source:` line in the file, and report empty data with `ctx.problem`.
+- Colour with tokens only, as styles (`style("fill", "var(--k-ok)")`), and size text with `typeSize("label", 28)` so it follows the theme's type scale.
+- Build every mark in `build()`, hidden (`gsap.set(…, { autoAlpha: 0 })`) or at its start (a line of zero length); a step only tweens them (`tl.to(el, { attr: { x2 } })`). Then a jump shows what a play does, and `?selftest=walk` checks it.
+- One reveal per step: the frame and the starting values, then the change.
+
 ## `kpi`, `waffle`, `progress`
 
 Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
@@ -433,7 +443,7 @@ build: (ctx) => [
 steps: [(tl, icons) => icons.forEach((i, n) => i.draw(tl, n ? "<" : undefined)), (tl, icons) => icons.forEach((i, n) => i.light(tl, n ? "<" : undefined))],
 ```
 
-`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`.
+`icon(ctx, name, { x, y, size?, color })`: `name` is a Lucide name in kebab case (`"shield-check"`) or the icon itself (`import { ShieldCheck } from "klappe/fx/lucide"`); `x`, `y` is the centre; `size` defaults to 96; `color` is required. An unknown name draws a crossed box and reports `icon: unknown Lucide name '<name>'`. The deck's own icons in `icons/` are used by name the same way (see [`ownIcons`](#ownicons)).
 
 Only the icons a deck uses are bundled. The build finds a name when it stands in the deck's code as a string literal (`"rocket"`, also inside an array or a flow node). A name built at run time (`"ro" + "cket"`, or read from a file) is not found and reports the unknown-name problem: pass the icon itself instead. The same holds for `iconTile` and the `icon` of a `flow` node.
 
@@ -458,6 +468,16 @@ steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 ```
 
 `iconTile(ctx, name, { x, y, size?, tone })`: `tone` is a theme token, short (`"accent"`, `"ok"`, `"warn"`) or full (`"--k-accent"`). Prefer the colour tokens: the CRT ones (`"phosphor"`, `"phosphor-amber"`) stay bright in every theme and wash out on a light stage; an unknown tone falls back to accent with the problem `iconTile: unknown tone '<tone>'`. `size` defaults to 96; the glyph is 60% of it. `draw` and `light` are as for `icon`.
+
+## `ownIcons`
+
+A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
+
+- Draw it on Lucide's grid: `viewBox="0 0 24 24"`, strokes only, about 2 px wide. Another viewBox reports `icons/<name>.svg: viewBox must be 0 0 24 24, as a Lucide icon` and the icon is not loaded.
+- klappe strips each shape's own paint (`fill`, `stroke`, `stroke-width`, `style`, `class`, opacities), scripts, links, `<title>` and `<desc>`: the icon draws in the klappe stroke, in the colour or tone the call gives, and a closed shape gets the 0.2 tint.
+- A deck icon wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
+
+`ownIcons(files)` is the engine's loader for these files; a deck does not call it.
 
 ## `iconGlyph`
 

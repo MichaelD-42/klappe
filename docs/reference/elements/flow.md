@@ -44,6 +44,7 @@ Each method returns a step adder: call it with the timeline, `r.f.show()(tl)`.
 | `fire(from, to)` | a state machine's transition: the edge from `from` to `to` draws on in `--k-accent` (each call its own copy, so one edge can fire twice), the edge fired before goes back to `--k-line`, and the ring moves to `to` as the line arrives. Start with `highlight([state])` for the start state. An edge that is not there reports `flow: no edge from "a" to "b"` and only the ring moves |
 | `dim(ids)` | those nodes, and every arrow with an end on one of them, fade to 0.35 opacity over 0.6 s; the nodes dimmed before and not in `ids` come back. `dim([])` brings all back. For "this part is out of scope" while you talk about the rest. Add it after `show`. Catalog: `#/flow/flowchart/2` |
 | `node(id)` | not a step: the box element, as a `callout` target |
+| `edgeAt(from, to, t?)` | not a step: the point `{ x, y }` at share `t` (0 to 1, default 0.5) of the drawn edge, in scene units, for a gate, a badge or a tag of your own on it. An edge the flow lacks gives `undefined` and the problem `flow: no edge from "a" to "b"` |
 
 ### Limits
 

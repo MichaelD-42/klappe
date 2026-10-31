@@ -26,7 +26,7 @@ export async function loadDeck() {
     fixture.deck.themes = { ...themesOf(), ...fixture.deck.themes };
     return fixture; // fixtures keep the klappe look, so a deck repo's deck.css cannot break them
   }
-  const { deckCss, files, modules, data, media, overlay } = await import("./files");
+  const { deckCss, files, modules, data, media, overlay, icons } = await import("./files");
   // Appended after the klappe styles; applyTheme moves it after the theme, so the deck wins at equal specificity.
   for (const css of Object.values(deckCss)) {
     const s = Object.assign(document.createElement("style"), { textContent: css });
@@ -42,5 +42,6 @@ export async function loadDeck() {
   r.deck.themes = themesOf();
   r.deck.files = { data: byLink(data), media: byLink(media) };
   r.deck.overlay = Object.values(overlay)[0] as OverlayModule | undefined;
+  r.deck.icons = Object.fromEntries(Object.entries(icons).map(([k, v]) => [`icons/${k.split("/").pop()}`, v]));
   return r;
 }

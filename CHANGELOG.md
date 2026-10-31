@@ -276,6 +276,9 @@ The M4 effects so far: moving backgrounds, spotlight and marks, board numbers an
 - `agenda`: `move(tl, toRow, at)` slides the marker and the colours to another row; `slide: false`; the handle has `el` and `rows`.
 - `terminal`: a `wrap` option for long lines; `show(tl, at?)`.
 - Handles expose their elements: `iconTile` and `icon` (`el`), `counter` (`el`, `caption`), `image` (`el`), `chart` (`bars`, the bar rects in data order).
+- `flow` handle `edgeAt(from, to, t?)`: the point at a share of a drawn edge, for a gate or a tag on it.
+- Own icons: `icons/<name>.svg` in the deck, on Lucide's 24 grid, is used by name in `icon()` and `iconTile()` and drawn in the klappe stroke. Catalog: `#/icons/own-icons/1`.
+- Your own chart: a recipe and a catalog scene for a chart `chart` lacks, drawn with d3 in `scene.ts` (a dumbbell). Catalog: `#/chart/dumbbell/1`.
 
 ### Changed
 

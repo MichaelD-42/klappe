@@ -134,3 +134,21 @@ test('shapeEdge: a pill rounds in at its ends; a store at its top and bottom', (
   expect(shapeEdge('store', 200, 100, 'top', 0)).toBe(0)
   expect(shapeEdge('store', 200, 100, 'top', 60)).toBeGreaterThan(0)
 })
+
+// A gate or a tag on an edge: the point at a share of the drawn edge's length, without reaching for flowRoutes.
+test('edgeAt gives the point at a share of an edge, and reports an edge that is not there', () => {
+  const problems: string[] = []
+  const el = () => ({ append() {}, setAttribute() {}, style: {}, appendChild: (c: unknown) => c })
+  ;(globalThis as any).document = { createElement: el, createElementNS: el }
+  const ctx: any = { svg: el(), html: el(), problem: (m: string) => problems.push(m) }
+  try {
+    const f = flow(ctx, { nodes, edges, grid: { x: 0, y: 0, w: 1600, h: 760, cols: 4, rows: 2 } })
+    const [a, mid, b] = [0, 0.5, 1].map((t) => f.edgeAt('web', 'api', t)!)
+    expect(a.y).toBe(b.y) // the same row: one straight line
+    expect(mid.x).toBeCloseTo((a.x + b.x) / 2, 5)
+    expect(f.edgeAt('web', 'db')).toBeUndefined()
+  } finally {
+    delete (globalThis as any).document
+  }
+  expect(problems).toEqual(['flow: no edge from "web" to "db"'])
+})
