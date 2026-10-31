@@ -4,8 +4,9 @@ import { gsap } from "gsap";
 
 // One gallery card per transition: the kind (the scene title) large, the section.ts line that asks for it, what it
 // does (step 1 of scene.md), and a tile on the other side, so each frame has a shape the transition visibly moves.
+// `call` replaces the section.ts line, for a transition that is no name.
 // The name carries one data-k-match key on every card: the magicMove card flies it from the card before.
-export function transitionCard(icon: string, side: "left" | "right"): SceneModule {
+export function transitionCard(icon: string, side: "left" | "right", call?: string): SceneModule {
   const x = side === "left" ? 160 : 760;
   return {
     build(ctx) {
@@ -17,7 +18,7 @@ export function transitionCard(icon: string, side: "left" | "right"): SceneModul
       gsap.set(name, { autoAlpha: 0 });
       return {
         name,
-        call: text(ctx, { text: `section.ts: { transition: "${kind}" }`, x, y: 480, w: 1000, size: 40, weight: 600 }),
+        call: text(ctx, { text: call ?? `section.ts: { transition: "${kind}" }`, x, y: 480, w: 1000, size: 40, weight: 600 }),
         what: text(ctx, { text: ctx.doc!.steps[0].text, x, y: 560, w: 1000, size: 40, color: "--k-muted" }),
         tile: iconTile(ctx, icon, { x: side === "left" ? 1500 : 420, y: 540, size: 260, tone: "accent" }),
       };

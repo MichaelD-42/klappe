@@ -53,14 +53,21 @@ export function assembleDeck(
       scenes.push({ ...r.scene, sectionId: parsed.section.id, module, source: `${cp}/scene.md`, folder: cf });
     }
     scenes.sort(byOrder);
+    const module = modules[`${sp}/section.ts`] as SectionModule | undefined;
+    for (const k of Object.keys(module?.tokens ?? {}))
+      if (!k.startsWith("--k-")) problems.push(`${sp}/section.ts: tokens: '${k}' is not a --k-* token`);
     sections.push({
       ...parsed.section,
       scenes,
-      module: modules[`${sp}/section.ts`] as SectionModule | undefined,
+      module,
       folder: sf,
     });
   }
   sections.sort(byOrder);
+  for (const [name, { sections: ids }] of Object.entries(meta.cuts ?? {})) {
+    for (const id of ids) if (!sections.some((s) => s.id === id)) problems.push(`deck.md: cut '${name}' names no section '${id}'`);
+    if (!sections.some((s) => !s.appendix && ids.includes(s.id))) problems.push(`deck.md: cut '${name}' keeps no section of the talk, only the appendix`);
+  }
 
   for (const [kind, ids] of [
     ["section", sections.map((s) => s.id)],

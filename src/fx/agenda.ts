@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import type { Ctx, Part, StepAdder } from "../types";
 import { iconGlyph } from "./icons";
 import { typeSize } from "./draw";
+import { gapCss, radius } from "./layout";
 
 export type AgendaRow = Extract<Part, { kind: "agenda" }>["rows"][number];
 export interface AgendaOpts {
@@ -34,7 +35,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
   const root = document.createElement("div");
   Object.assign(root.style, {
     position: "absolute", left: `${opts.x}px`, top: `${opts.y}px`, width: `${opts.w}px`, boxSizing: "border-box", paddingLeft: "28px",
-    display: "flex", flexDirection: "column", gap: `${GAP}px`, font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
+    display: "flex", flexDirection: "column", gap: gapCss(GAP), font: `600 ${typeSize("body", MAX_FONT)}px/1.25 var(--k-font)`, zIndex: "2",
   });
   const rows = opts.rows.map((r, i) => {
     const el = root.appendChild(document.createElement("div"));
@@ -53,7 +54,7 @@ export function agenda(ctx: Ctx, opts: AgendaOpts): AgendaHandle {
     return el;
   });
   const bar = root.appendChild(document.createElement("div"));
-  Object.assign(bar.style, { position: "absolute", left: "0", width: "8px", borderRadius: "4px", background: "var(--k-accent)" });
+  Object.assign(bar.style, { position: "absolute", left: "0", width: "8px", borderRadius: radius(4), background: "var(--k-accent)" });
   ctx.html.append(root);
   gsap.set([root, bar], { autoAlpha: 0 });
   gsap.set(bar, { y: 0 }); // the transform from load, as a seek back over a move leaves it

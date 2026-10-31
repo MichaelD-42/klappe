@@ -1,0 +1,6 @@
+/* sharp: Calm's colours with square corners, thinner strokes and wide whitespace. Try it with ?theme=sharp. */
+:root {
+  --k-radius: 0px;
+  --k-stroke: 3px;
+  --k-gap: 24px;
+}

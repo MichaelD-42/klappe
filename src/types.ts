@@ -16,7 +16,10 @@ export interface DeckMeta {
   sharedCanvas: string[][];
   safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
   frame?: { w: number; h: number }; // deck.md frame as the stage size in scene px: 16:9 1920x1080 (default), 4:3, 1:1, 9:16
+  duration?: number; // deck.md duration: the planned talk length in minutes
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
+  // deck.md cuts: a shorter talk by name, the section ids it keeps and its own duration; ?cut=<name> plays one.
+  cuts?: Record<string, { sections: string[]; duration?: number }>;
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-answer";
@@ -44,20 +47,28 @@ export interface SceneDoc {
   notes: string;
   steps: StepDoc[];
   // The scene's one code or console block. groups: the highlight groups, line lists, 1-based.
-  fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
+  // info: the info string after the language; avatars: a chat fence's picture lines.
+  fence?: { lang: string; src: string; groups: number[][]; info?: string; avatars?: Record<string, string> };
   // The scene's one Markdown table, as compareTable reads it: ✓ ✔ true, ✗ ✘ false, ~ partly, other text as written.
   table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
   // frontmatter stack: true: plain text steps build up a list instead of replacing each other.
   stack?: boolean;
+  // frontmatter layout: a named composition for the default renderer; none is the column (or text left, media right).
+  layout?: "thirds" | "full-bleed" | "big-number";
+  // frontmatter story: the scene's one takeaway for the room; `klappe outline --story` lists it, the deck-arc review reads it.
+  story?: string;
 }
 export interface SectionDoc {
   id: string;
   order: number;
   title: string;
   notes: string;
+  // frontmatter appendix: true: outside the main flow, after it; next and previous never enter it, the jump key does.
+  appendix?: boolean;
 }
 export interface Ctx {
   rect: Rect;
+  safe: Rect; // the deck's safe area in scene px (deck.md safe-area, default 48 / 64), inside rect
   svg: SVGGElement;
   html: HTMLElement;
   canvas: { refs: Record<string, any>; rects: Record<string, Rect> };
@@ -94,7 +105,8 @@ export interface Ctx {
   // read text from here instead of copying it into scene.ts.
   doc?: SceneDoc;
   // From deck.md: the language for effect words and number formats, and the shout-out intensity.
-  deck: { lang: string; intensity: "calm" | "bold" };
+  // sources: the origins charts and stats record, deduplicated, in deck order (endRoll lists them); complete once every scene has built.
+  deck: { lang: string; intensity: "calm" | "bold"; sources: string[] };
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
@@ -137,7 +149,7 @@ export interface CameraPace {
 // Where the deck is, for an overlay's update.
 export interface OverlayAt {
   index: number; // the step's place in the whole deck, from 0
-  total: number; // the deck's step count
+  total: number; // the main flow's step count; an appendix step's index is total or more
   section: string; // ids
   scene: string;
   step: number; // the step in its scene, from 1
@@ -152,13 +164,24 @@ export interface OverlayModule {
   // It must depend on at alone, so a jump shows what a play does.
   update?(at: OverlayAt, refs: any): void;
 }
+// A deck's own Markdown fence: draws the scene whose scene.md has a ```<name> fence, as a scene.ts build would.
+// body: the fence's text; info: its info string after the name. ctx.doc has the scene's title and steps. Returns the
+// step functions, one per scene.md step from the first; a mismatch is a deck problem.
+export type Component = (ctx: Ctx, body: string, info: string) => StepAdder[];
+// decks/<id>/components.ts: its default export, by fence name.
+export type Components = Record<string, Component>;
 // The keys of the registry in src/fx/transitions.ts. A literal here keeps klappe/types free of imports.
 export type TransitionKind = "cut" | "fade" | "blackout" | "zoom" | "shatter" | "crt" | "push" | "iris" | "glitch" | "cube" | "pageTurn" | "magicMove";
+// A deck's own transition: a standalone GSAP timeline that ends with `from` hidden and `to` shown, and has a "reveal" label
+// where the first step of the new canvas starts. opts is the section's transitionOptions.
+export type OwnTransition = (from: { el: HTMLElement; world: HTMLElement }, to: { el: HTMLElement; world: HTMLElement }, opts: Record<string, unknown>) => gsap.core.Timeline;
 export interface SectionModule {
+  // --k-* tokens for this section's scenes and its stage background only, for example an inverted section: { "--k-bg": "#fff", "--k-fg": "#0f1b2d" }.
+  tokens?: Record<string, string>;
   // Behind every scene of this section, pinned to the screen: the camera moves the content over it.
   background?: Background;
-  // How the deck enters this section's canvas on a forward step. Default: fade.
-  transition?: TransitionKind;
+  // How the deck enters this section's canvas on a forward step: a built-in name or your own function. Default: fade.
+  transition?: TransitionKind | OwnTransition;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
   zoomTarget?: string;
   // Extra options for the transition, for example { shards: 20 } for shatter.
@@ -180,6 +203,7 @@ export interface Deck {
   meta: DeckMeta;
   sections: Section[];
   overlay?: OverlayModule; // the deck's overlay.ts
+  components?: Components; // the deck's components.ts
   icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
@@ -198,6 +222,7 @@ export interface StepAddr {
   scene: string;
   step: number;
   auto?: number | null; // from SceneModule.auto
+  appendix?: true; // an appendix section's step: after every main step, outside next and previous
 }
 export interface SelftestCheck {
   name: string;

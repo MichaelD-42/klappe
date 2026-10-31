@@ -69,12 +69,17 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | A person moving; seated at a table, `seated` or `sit` | `figure` | [figure](klappe/docs/reference/effects.md#figure) | `130-figure/10-walk`, `130-figure/30-table` |
 | Full-colour art exported from Figma, Illustrator or Inkscape, its colours mapped to theme tokens, shown layer by layer by id | `svg` | [svg](klappe/docs/reference/effects.md#svg) | `120-draw/15-svg` |
 | A line drawing from an SVG file, stroke by stroke; draw on any path you made | `lineArt`; `drawOn` | [lineArt](klappe/docs/reference/effects.md#lineart), [drawOn](klappe/docs/reference/effects.md#drawon) | `120-draw/10-desk`, `120-draw/30-shapes` |
-| An icon, or an icon on a tile; a company or product glyph Lucide lacks goes in the deck's `icons/<name>.svg` on the 24 grid and is used by name | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles`, `140-icons/30-own-icons` |
+| An icon, or an icon on a tile; a company or product glyph Lucide lacks goes in the deck's (or the repo's) `icons/<name>.svg` on the 24 grid and is used by name | `icon`, `iconTile` | [icon](klappe/docs/reference/effects.md#icon) | `140-icons/10-icons`, `140-icons/20-tiles`, `140-icons/30-own-icons` |
+| A picture beside its text, a picture over the whole frame with a caption, one huge figure with a footnote; pick the layout before placing pixels | `layout: thirds`, `full-bleed` or `big-number` in `scene.md` frontmatter | [scene.md](klappe/docs/reference/deck-format.md#scenemd) | `191-layouts/10-thirds`, `191-layouts/20-full-bleed`, `191-layouts/30-big-number` |
 | A picture, with a credit line for a stock or press photo; one detail of it, step by step | `image` (`credit`); `loupe` | [image](klappe/docs/reference/effects.md#image), [loupe](klappe/docs/reference/effects.md#loupe) | `190-media/20-image-and-video`, `236-loupe/10-detail` |
 | A clip; full screen with no `rect`; it plays on its step (with sound unless `muted: true`), or on a later `play(tl)` step | `video` | [video](klappe/docs/reference/effects.md#video) | `190-media/20-image-and-video`, `190-media/30-full-frame` |
 | Before and after | `wipe` | [wipe](klappe/docs/reference/effects.md#wipe) | `230-fullscreen/60-wipe` |
-| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
+| Introduce a speaker: photo, role and company, short CV, statements, contact with a QR | the `speakerProfile` factory: copy `klappe/decks/demo/shared/speaker-profile.ts` into the deck's `shared/` and its entry in `klappe/decks/demo/components.ts` into the deck's `components.ts`; then a ```` ```speakerProfile ```` fence in `scene.md` | [deck-format](klappe/docs/reference/deck-format.md#a-speaker-profile) | `109-speaker/10-profile` |
+| The deck's own element or scene shape, used from `scene.md` | a fence the deck registers in `components.ts` | [deck components](klappe/docs/reference/markdown.md#deck-components) | `109-speaker/20-plan-chip` |
 | A link to take home | `qr` | [qr](klappe/docs/reference/effects.md#qr) | `190-media/40-qr` |
+| A single word or number set to fill the frame, with a picture or clip showing through the letters | `bigType` | [bigType](klappe/docs/reference/effects.md#bigtype) | `190-media/50-type-as-image` |
+| A name and role (or a quote's source) at the lower left of the picture | `lowerThird` | [lowerThird](klappe/docs/reference/effects.md#lowerthird) | `364-titling/10-lower-third` |
+| Closing credits: the sources the deck recorded, and thanks | `endRoll` | [endRoll](klappe/docs/reference/effects.md#endroll) | `364-titling/20-end-roll` |
 | A hard question for the room | `### Question?` in `scene.md`; `shout` in `scene.ts` | [shout](klappe/docs/reference/effects.md#shout) | `210-shout/10-calm` |
 | Break with the old way | `shatter` | [shatter](klappe/docs/reference/effects.md#shatter) | `200-shatter/10-card` |
 | Volume | `swarm` | [swarm](klappe/docs/reference/effects.md#swarm) | `220-swarm/10-stream` |
@@ -89,8 +94,9 @@ Find the intent, read the reference entry, then copy the catalog scene (a folder
 | What a group said, weighted, from a `data/` file | `wordCloud` | [wordCloud](klappe/docs/reference/effects.md#wordcloud) | `216-words/10-cloud` |
 | A background: a picture, a looping video, `animate: "aurora"`, optionally `parallax` | `background` in `section.ts` or `scene.ts` | [section.ts](klappe/docs/reference/deck-format.md#sectionts) | `230-fullscreen/20-background`, `230-fullscreen/45-aurora`, `230-fullscreen/46-video-loop`, `235-parallax/10-near` |
 | On screen over every scene while the camera moves: a logo, a brand frame, a footer, a chapter label | `overlay.ts` at the deck root, `build` and `update(at)` | [overlay.ts](klappe/docs/reference/deck-format.md#overlayts) | `234-overlay/10-pinned` |
-| Between sections: slide in, `"push"`; open from a point, `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element across (a logo, a title chip), `"magicMove"` with the same `el.dataset.kMatch` on both | `transition` in `section.ts` | [transitions](klappe/docs/reference/effects.md#transitions) | the gallery, one section per kind: `350-tr-cut/10-cut-card` to `361-tr-magicmove/10-magicmove-card`; a zoom into a named target, `170-zoom/10-dive`; a magic move with two keys, `301-magic-a/10-before` |
+| Between sections: slide in, `"push"`; a look none of these has, your own function in `transition` (a timeline with a `reveal` label; contract in deck-format, `section.ts`); open from a point, `"iris"`; a bold break, `"glitch"`; the old section turns away, `"cube"`; the next page of a story, `"pageTurn"`; carry an element across (a logo, a title chip), `"magicMove"` with the same `el.dataset.kMatch` on both | `transition` in `section.ts` | [transitions](klappe/docs/reference/effects.md#transitions) | the gallery, one section per kind: `350-tr-cut/10-cut-card` to `361-tr-magicmove/10-magicmove-card`; a zoom into a named target, `170-zoom/10-dive`; a magic move with two keys, `301-magic-a/10-before`; your own function (see deck-format): `362-tr-own/10-own-card` |
 | Move the camera inside a scene: ride along, `follow`; jolt on a landing, `impactShake`; pull focus to one item, `rackFocus`; lean a long flight, `tilt`; a big reveal, `dollyZoom`; pace a flight (a whip between far scenes, a slow push-in), `camera: { whip, duration, ease }` in `scene.ts` or the same options on `ctx.camera.to` | `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom`; `camera` | [camera](klappe/docs/reference/elements/camera.md) | `237-camera/10-follow`, `237-camera/20-rack-focus`, `237-camera/30-tilt`, `237-camera/40-dolly`, `237-camera/50-whip` |
+| A shorter version of the talk, or backup slides for Q&A | `cuts` in `deck.md`; `appendix: true` in `section.md` | [cuts and the appendix](klappe/docs/reference/deck-format.md#cuts-and-the-appendix) | `990-appendix/10-questions`, and the demo's story cut in its deck.md |
 | Anything else | your own tween | [motion](klappe/docs/reference/motion.md) | `330-tweens/10-boxes` |
 
 What `scene.md` does by itself: [markdown](klappe/docs/reference/markdown.md). Folders and keys, and many scenes with one shape from a factory in `shared/`: [deck-format](klappe/docs/reference/deck-format.md).
@@ -109,16 +115,18 @@ One master GSAP timeline per canvas; seek must equal play.
 
 ## Writing scene.ts
 
+- Before you place a picture and its text by pixels in `scene.ts`, check `layout:` in the `scene.md` frontmatter (`thirds`, `full-bleed`, `big-number`): a named layout is more reliable than coordinates and needs no `scene.ts`.
 - With `build()`, klappe draws nothing for the scene, not even its title. Put `ctx.doc.title` into an `h2` you build hidden and show in step 1.
 - `ctx.html` paints over `ctx.svg`: an HTML box with a background hides the SVG helpers under it. Within a layer, what you build later paints on top.
 - klappe loads every `.ts` under `sections/` as a scene or section module. Keep helpers outside `sections/`, for example in `decks/<id>/shared/`. Section and scene slugs are ids for the whole deck: a repeat is a `duplicate section id` or `duplicate scene id` problem, and `klappe test` stops on it at once. `npm run outline` lists the ids taken.
 - Reach an effect's elements only through its handle (`el` and the named parts), never with `lastElementChild` or `children[i]`. If the handle lacks a part, ask for it in klappe.
 - A scene that plays in several places (a break, an agenda hop) is one function outside `sections/` that returns a `SceneModule`; each `scene.ts` calls it.
+- A shape the deck repeats (a speaker, a product card) is better a fence the deck registers in `components.ts` than a `scene.ts` per scene: each scene is then `scene.md` alone, its options in the fence body ([deck components](klappe/docs/reference/markdown.md#deck-components)).
 
 ## Design rules
 
 - Colours only as `var(--k-*)` tokens ([themes](klappe/docs/reference/themes.md)). No colour literals and no deck-own colour tokens: a colour klappe lacks is a request for a new `--k-*` token.
-- GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(document.documentElement).getPropertyValue("--k-accent").trim()` and tween that value.
+- GSAP does not interpolate a `var()` colour: mid-tween the colour is wrong. For a colour tween, read the token in `build()` with `getComputedStyle(ctx.html).getPropertyValue("--k-accent").trim()` (from the scene, so a section's `tokens` apply) and tween that value.
 - Text at least 20 scene px (14 px at 1366). Lines, arrows and borders use `--k-line`, at least 2 px; what the room must follow uses `--k-accent`.
 - One idea per step. Name the new thing by drawing it in `--k-accent`; it settles when the next step starts.
 - No dead clicks: every press changes the picture and gives the speaker something to say. Chain motion that needs no words with `auto` (seconds per step), so one press runs it.
@@ -127,7 +135,7 @@ One master GSAP timeline per canvas; seek must equal play.
 - A picture or a number beats a bullet. Keep text to a few words; speaker notes (`> note`) carry the rest. Put a note under the step where the speaker needs it, not at the end of the scene.
 - Do not write a fake image or data file: leave the link, and `klappe test` lists it in `media/TODO.md` or `data/TODO.md`. A number on screen has a source (a `# source:` line in its CSV, or a source line on screen); made-up values carry a visible "Sample data" label (`chart` with `sample: true` shows it).
 - On a picture or a gradient, measure contrast yourself: 4.5:1 for body text, 3:1 for large text. The theme check measures only token pairs.
-- Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
+- Keep ink inside the safe area: set `safe-area` in deck.md (for example `[48, 120, 155]` for a footer), place your own elements with `ctx.safe`, mark intended bleeds with `data-k-bleed`, and read the walk's `warnings`; see deck-format.md "Look checks".
 
 ## Work through a review
 
@@ -148,7 +156,7 @@ While you work, check only the scenes you touched:
 - After the reviews, `node klappe/bin/verdict.mjs` checks their format and says where the work goes; see [building a deck](.claude/skills/klappe/references/building-a-deck.md) step 7.
 - `npm run shot -- <section>/<scene> --last --size 1366x768` shoots one size. `--at <ms>` shoots a step that far into its play, to check motion. `--url http://localhost:<port>/` reuses a running `npm run dev` of the same deck, so each shot skips the server start.
 
-Before you hand back the whole deck, run the full `npm test` once. Shoot each scene's last step at both sizes with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
+Before you hand back the whole deck, run the full `npm test` once. Shoot each scene's last step at both sizes with `npm run shot -- <section> --last` (and `--theme bold`), read the PNGs, and fix every deck problem and page error it prints. Write each scene's story point, the one sentence the room should take away, into its `scene.md` as frontmatter `story:`; `npm run outline -- --story` lists them in order, so check the deck reads as one arc. `npm run outline` prints the deck as text, with a timing estimate against `duration` in `deck.md`: read it to check that each scene carries one message.
 
 Work fast:
 

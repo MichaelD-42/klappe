@@ -3,6 +3,7 @@ import { MARKER_MIX } from "./annotate";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { gapPx, radius } from "./layout";
 
 export type CalendarOpts = {
   month: string; // "2026-11"
@@ -35,17 +36,18 @@ export function calendarLayout(month: string, weekStart: 0 | 1, r: Rect): Calend
   const cw = r.w / 7;
   const top = r.y + TITLE_H + WEEKDAY_H;
   const ch = (r.y + r.h - top) / rows;
-  const problems = cw - GAP < MIN_W ? [`calendar: a ${r.w}px wide grid has days under ${MIN_W}px; widen the rect`] : [];
+  const gap = gapPx(GAP);
+  const problems = cw - gap < MIN_W ? [`calendar: a ${r.w}px wide grid has days under ${MIN_W}px; widen the rect`] : [];
   const days = Array.from({ length: count }, (_, i) => {
     const [col, row] = [(lead + i) % 7, Math.floor((lead + i) / 7)];
-    return { date: `${m[1]}-${m[2]}-${String(i + 1).padStart(2, "0")}`, day: i + 1, col, row, x: r.x + col * cw, y: top + row * ch, w: cw - GAP, h: ch - GAP };
+    return { date: `${m[1]}-${m[2]}-${String(i + 1).padStart(2, "0")}`, day: i + 1, col, row, x: r.x + col * cw, y: top + row * ch, w: cw - gap, h: ch - gap };
   });
   // The last column's and row's cells end at the rect's edge: their gap sits on the inside.
   for (const d of days) {
     if (d.col === 6) d.w = cw;
     if (d.row === rows - 1) d.h = ch;
   }
-  const weekdays = Array.from({ length: 7 }, (_, c) => ({ x: r.x + c * cw, y: r.y + TITLE_H, w: cw - GAP, h: WEEKDAY_H }));
+  const weekdays = Array.from({ length: 7 }, (_, c) => ({ x: r.x + c * cw, y: r.y + TITLE_H, w: cw - gap, h: WEEKDAY_H }));
   return { days, rows, title: { x: r.x, y: r.y, w: r.w, h: TITLE_H }, weekdays, problems };
 }
 
@@ -82,7 +84,7 @@ export function calendar(ctx: Ctx, opts: CalendarOpts): CalendarHandle {
     lay.weekdays.forEach((r, c) => base.push(div(r, { color: "var(--k-muted)", font: `600 ${FLOOR + 2}px/40px var(--k-font)`, paddingLeft: "10px" }, name.format(new Date(Date.UTC(2026, 10, 1 + ((c + (opts.weekStart ?? 1)) % 7)))))));
   }
   const cells = new Map(lay.days.map((d) => {
-    const e = div(d, { border: "2px solid var(--k-line)", borderRadius: "8px", background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px" }, String(d.day));
+    const e = div(d, { border: "2px solid var(--k-line)", borderRadius: radius(8), background: "var(--k-surface)", color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px" }, String(d.day));
     e.dataset.kDay = d.date;
     base.push(e);
     return [d.date, d] as const;
@@ -109,7 +111,7 @@ export function calendar(ctx: Ctx, opts: CalendarOpts): CalendarHandle {
     },
     mark: (date, o = {}) => {
       const d = cells.get(date);
-      const el = d && div(d, { border: "4px solid var(--k-accent)", borderRadius: "8px", background: tint, color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px", zIndex: "1" }, String(d.day));
+      const el = d && div(d, { border: "4px solid var(--k-accent)", borderRadius: radius(8), background: tint, color: "var(--k-fg)", font: `600 ${typeSize("label", 24)}px/1 var(--k-font)`, padding: "8px 10px", zIndex: "1" }, String(d.day));
       if (el && o.label) {
         const t = el.appendChild(document.createElement("div"));
         t.textContent = o.label;
@@ -132,7 +134,7 @@ export function calendar(ctx: Ctx, opts: CalendarOpts): CalendarHandle {
         lanes.set(b.row, lane + 1);
         const [a, z] = [lay.days.find((d) => d.row === b.row && d.col === b.from)!, lay.days.find((d) => d.row === b.row && d.col === b.to)!];
         const r = { x: a.x + 6, y: a.y + a.h - 8 - BAR - lane * (BAR + 4), w: z.x + z.w - a.x - 12, h: BAR };
-        const e = div(r, { borderRadius: "6px", background: "var(--k-accent)", color: "var(--k-bg)", font: `700 ${FLOOR}px/${BAR}px var(--k-font)`, padding: "0 10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", zIndex: "2" }, k === 0 ? (o.label ?? "") : "");
+        const e = div(r, { borderRadius: radius(6), background: "var(--k-accent)", color: "var(--k-bg)", font: `700 ${FLOOR}px/${BAR}px var(--k-font)`, padding: "0 10px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", zIndex: "2" }, k === 0 ? (o.label ?? "") : "");
         e.dataset.kSpan = `${from}..${to}`;
         gsap.set(e, { autoAlpha: 0, scaleX: 0, transformOrigin: "0 50%" });
         return e;

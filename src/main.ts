@@ -3,17 +3,18 @@ import "./styles.css";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
+import { gsap } from "gsap";
 import { Autoplay } from "./autoplay";
 import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
-import { buildStepList, layoutDeck } from "./layout";
+import { buildStepList, cutDeck, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
 import { loadTransitions } from "./fx/transitions";
-import { loadParts } from "./render/parts";
+import { componentProblems, loadParts } from "./render/parts";
 import { ownIcons } from "./fx/icons";
 import { mountOverlay } from "./render/overlay";
 import { renderWorld, svgBackgrounds } from "./render/world";
-import { Router } from "./router";
+import { decode, Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, loadFonts, motion, setFrame, setTempo } from "./theme";
 import { bindInput } from "./input";
@@ -26,15 +27,21 @@ import { Selector } from "./ui/selector";
 import type { StepAddr } from "./types";
 
 const errors = installErrorCapture();
-const { deck, problems } = await loadDeck();
-setTempo(deck.meta.tempo ?? 1);
-if (deck.meta.frame) setFrame(deck.meta.frame);
-problems.push(...ownIcons(deck.icons ?? {}));
-const layout = layoutDeck(deck);
+const loaded = await loadDeck();
+const problems = loaded.problems;
+const query = new URLSearchParams(location.search);
+setTempo(loaded.deck.meta.tempo ?? 1);
+if (loaded.deck.meta.frame) setFrame(loaded.deck.meta.frame);
+problems.push(...ownIcons(loaded.deck.icons ?? {}));
+problems.push(...componentProblems(loaded.deck));
+// Laid out whole, then cut (?cut=) and the appendix moved last: a cut moves no scene on its canvas.
+const whole = layoutDeck(loaded.deck);
+problems.push(...whole.problems);
+const layout = cutDeck(loaded.deck, query.get("cut"), decode(location.hash.replace(/^#\/?/, "").split("/")[0]), whole.canvases);
 problems.push(...layout.problems);
+const deck = layout.deck;
 const steps = buildStepList(deck, layout.canvases);
 if (!steps.length) problems.push("deck has no steps");
-const query = new URLSearchParams(location.search);
 const channel = openChannel(deck.meta.title);
 document.title = deck.meta.title;
 
@@ -55,7 +62,7 @@ if (query.get("review") === "1") {
   // transitions), and the text of animated background SVG files.
   const [, , svg] = await Promise.all([
     loadParts(deck, query.has("fixture")),
-    loadTransitions(deck.sections.flatMap((s) => (s.module?.transition ? [s.module.transition] : []))),
+    loadTransitions(deck.sections.flatMap((s) => (typeof s.module?.transition === "string" ? [s.module.transition] : []))),
     svgBackgrounds(deck),
   ]);
   await startDeck(svg);
@@ -75,7 +82,7 @@ async function startDeck(svg: Record<string, string>) {
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg, onProblem });
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
-  const overlay = mountOverlay(stage, deck, { total: steps.length, reducedMotion, problem: (msg) => (late ? late(msg) : problems.push(msg)) });
+  const overlay = mountOverlay(stage, deck, { total: steps.filter((s) => !s.appendix).length, reducedMotion, problem: (msg) => (late ? late(msg) : problems.push(msg)) });
   if (overlay) stepper.on("step", overlay);
 
   const autoplay = new Autoplay(stepper, (a) => autoDelay(a, true) ?? motion.autoHoldMs);
@@ -119,7 +126,7 @@ async function startDeck(svg: Record<string, string>) {
     : undefined;
   // Starts or pauses the current scene's timer; a scene without one ignores it.
   const timer = () => document.dispatchEvent(new CustomEvent("klappe:timer"));
-  bindInput(stepper, { overview, selector, speaker, review, autoplay, timer }, stage, steps.length - 1);
+  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer }, stage, steps);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   const state = (i: number) =>
@@ -129,13 +136,16 @@ async function startDeck(svg: Record<string, string>) {
     if (m.t === "hello" && stepper.index >= 0) state(stepper.index);
     if (m.t !== "cmd") return;
     if (m.cmd === "timer") return timer();
+    if (m.cmd === "appendix") return run("appendix");
     autoplay.stop();
     if (m.cmd === "next") stepper.next();
     else if (m.cmd === "prev") stepper.prev();
     else if (m.index! < steps.length) go(m.index!);
   });
 
-  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router };
+  // gsap: `klappe video` drives its root timeline and ticker frame by frame.
+  // t: `klappe pdf` names the appendix in the deck's language.
+  window.klappe = { ...window.klappe, stepper, canvases, steps, deck, errors, problems, selector, overview, speaker, channel, autoplay, router, gsap, t };
   const panel = showProblems(ui, problems, deck.meta.lang);
   late = (msg) => {
     problems.push(msg);

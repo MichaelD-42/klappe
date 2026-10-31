@@ -138,3 +138,31 @@ describe("scene.md frontmatter", () => {
     expect(parseScene("## Points\n\n- One.\n", "10-points").scene.stack).toBeUndefined();
   });
 });
+
+describe("parseScene layout", () => {
+  const pic = '- ![A dot](media/dot.png "A dot")';
+  it("keeps a named layout and rejects an unknown one, listing the names", () => {
+    expect(parseScene(`---\nlayout: thirds\n---\n## T\n\n${pic}\n`, "10-t").scene.layout).toBe("thirds");
+    const { scene, problems } = parseScene("---\nlayout: wide\n---\n## T\n\n- One.\n", "10-t");
+    expect(scene.layout).toBeUndefined();
+    expect(problems).toEqual(["10-t/scene.md: layout 'wide' is not one of thirds, full-bleed, big-number"]);
+  });
+  it("thirds needs media or a fence", () => {
+    expect(parseScene("---\nlayout: thirds\n---\n## T\n\n- Words.\n", "10-t").problems).toEqual(["10-t/scene.md: layout thirds needs an image, video or chart step, or a code, console or chat block"]);
+    expect(parseScene("---\nlayout: thirds\n---\n## T\n\n```ts\nlet a\n```\n- A.\n", "10-t").problems).toEqual([]);
+  });
+  it("full-bleed needs a picture; big-number needs a number first", () => {
+    expect(parseScene("---\nlayout: full-bleed\n---\n## T\n\n- Words.\n", "10-t").problems).toEqual(["10-t/scene.md: layout full-bleed needs an image step"]);
+    expect(parseScene(`---\nlayout: full-bleed\n---\n## T\n\n${pic}\n`, "10-t").problems).toEqual([]);
+    expect(parseScene("---\nlayout: big-number\n---\n## T\n\n- Many fewer.\n", "10-t").problems).toEqual(["10-t/scene.md: layout big-number needs the first step to start with a number"]);
+    for (const n of ["42% fewer", "$1.2M saved", "-3.5x", "1,200 users"])
+      expect(parseScene(`---\nlayout: big-number\n---\n## T\n\n- ${n}\n`, "10-t").problems).toEqual([]);
+  });
+});
+
+describe("parseScene story", () => {
+  it("keeps the story point from frontmatter and leaves it out without one", () => {
+    expect(parseScene("---\nstory: Reviews catch what agents miss.\n---\n## T\n\n- One.\n", "10-t").scene.story).toBe("Reviews catch what agents miss.");
+    expect(parseScene("## T\n\n- One.\n", "10-t").scene).not.toHaveProperty("story");
+  });
+});

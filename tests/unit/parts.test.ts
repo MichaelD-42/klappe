@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assembleDeck } from "../../src/deck/assemble";
-import { loadParts, part, partsOf } from "../../src/render/parts";
+import { componentProblems, loadParts, part, partsOf } from "../../src/render/parts";
 
 const deck = (scenes: Record<string, string>, modules: Record<string, unknown> = {}) =>
   assembleDeck(
@@ -37,6 +37,17 @@ describe("partsOf", () => {
   it("skips a scene that builds itself in scene.ts", () => {
     const d = deck({ "10-b": "## B\n\n### Why?\n\nBecause.\n" }, { "sections/10-a/10-b/scene.ts": { build: () => ({}), steps: [] } });
     expect(partsOf(d, [], []).names).toEqual([]);
+  });
+});
+
+describe("componentProblems", () => {
+  it("reports a deck component named like a built-in fence", () => {
+    const d = deck({ "10-b": "## B\n\n- One.\n" });
+    d.components = { ts: () => [], chat: () => [], stamp: () => [] };
+    expect(componentProblems(d)).toEqual([
+      "components.ts: 'ts' is a built-in fence; the built-in wins",
+      "components.ts: 'chat' is a built-in fence; the built-in wins",
+    ]);
   });
 });
 

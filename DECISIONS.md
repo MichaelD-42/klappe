@@ -407,3 +407,63 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **Camera pacing is a `camera` key on the scene being entered, not on the section or the deck.**
   - A flight's character belongs to where it goes: a whip into the far scene, a slow push into the one that matters. `tempo` stays the deck-wide knob; an explicit `duration` is not scaled by it, as an effect's own times are not.
   - The whip's blur is an SVG Gaussian blur along the flight's direction on the world, written from the tween's progress like `follow`, so seek equals play; CSS `blur()` has no direction. It pans straight, without the zoom-out mid-point of a far flight: the zoom-out is what makes a flight slow to read.
+- **Layout tokens are three, and the effects scale their other sizes from them.**
+  - `--k-radius` is 12 px (the card radius), `--k-stroke` 4 px (a connector) and `--k-gap` 8 px (pyramid layers); a 16 px corner is `calc(var(--k-radius) * 16 / 12)`, so every default looks as before and a theme changes one number, not a dozen. More tokens would be one per literal.
+  - Chart marks, map lines, icons, figures, halos, the CRT bezel and the SVG attributes of `fishbone` and `mindmap` keep their literals; `tests/lint/design.test.ts` lists each with its reason. A presentation attribute cannot take `var()`.
+- **A section's tokens are inline custom properties on its scenes, with a pinned `--k-bg` layer for the stage; the JS-side readers follow a scoped element.**
+  - Inline on the scene's box and SVG group, not a stylesheet rule, so no selector or load order can lose; `color` and `font-family` are set again there because they inherit as computed values from the stage. The stage's own `--k-bg` stays the deck's: the section's colour is a pinned layer in the canvas, which the existing background cross-fade, the transitions and the overview already carry, so a flight between an inverted and a normal section never shows the wrong colour. A section with a `background` picture keeps the picture and gets no colour layer.
+  - `typeSize`, `gapPx` and `strokePx` read tokens in JS, so they resolve on the scene being built or stepped (`withTokenRoot`), else on `:root`. Contrast is measured only on the pairs that touch an overridden colour, since the rest is the deck theme's, already measured.
+- **The colour-blind check is worst-case CIE76 ΔE under Machado 2009 matrices, with a floor of 10.**
+  - Each pair of series colours is measured as seen with normal sight, protanopia, deuteranopia and tritanopia (Machado 2009, full severity, on linear sRGB), and the smallest ΔE counts. CIE76 is the plainest Lab distance and needs no table; the floor only has to separate "apart" from "confusable", not rank colours. Series 1 to 4 are checked against each other, 5 and 6 against their neighbours, as `themes.md` says.
+  - The floor is 10, just under `bold`, the closest built-in at 11.5; the others measure 14.6 to 27.8. A higher floor would fail a shipped theme, a lower one would admit pairs that merge for deuteranopes. `tests/unit/brand-theme.test.ts` applies it to every built-in and every generated theme.
+- **A generated theme sets the `--k-code-*` colours too, each nudged to 4.5:1 on the derived panel.**
+  - The brief lists the other colour tokens, but a light theme that inherits calm's pale code colours has unreadable code on its light panel, and a dark one with a hue-tinted panel can fall under 4.5:1 too. Starting from daylight's (light) and calm's (dark) colours and nudging each in lightness keeps the hue.
+- **Named layouts: `big-number` footnotes add up, and its number size is an estimate.**
+  - The default renderer's plain text steps replace each other, but a number that vanished when its footnote came would defeat the layout, so `big-number` stacks its steps like `stack: true`. `thirds` and `full-bleed` keep the media-scene behaviour (text stays).
+  - The number is measured in the DOM during the build (set at 100 px, measured with `measure`, scaled to the width inside the side padding, capped at 0.6 of the frame height with a line height of 0.8, which suits digits). Without layout (no size) it stays at 100 px. The first word is the number, so a unit is written without a space (`42%`, not `42 %`).
+  - `full-bleed` puts a bottom `--k-scrim` of 0.7 under the caption (the background feature's mechanism, full over the bottom 45%). The image is built before the text in the DOM so the caption paints over it.
+- **`bigType` clips media with an SVG clip path, and sizes the text from one DOM measurement.**
+  - `background-clip: text` clips an image but not a video, so the box carries `clip-path: url(#id)` onto an SVG `<text>` and an `<img>` or `<video>` fills it: one path for both, seekable (only the box's fade is on the timeline). The ink box (`actualBoundingBox*`) is measured on a canvas at 100 px in the heading font and scaled to the rect, then centred by that box; the text is SVG in both cases (fill, or clip), so what is measured is what is drawn. An HTML span's advance width left a visible margin (side bearings, and an SVG text drawn slightly differently).
+  - The default rect repeats the self-test's default safe area, since `ctx` carries no deck `safe-area`; a deck with another `safe-area` passes `rect`.
+  - Follow-up (2026-10-31): `ctx.safe` now carries the deck's safe area, one default in `src/theme.ts` shared with the self-test; `bigType` and the titling effects default to it, so a deck passes `rect` only to leave the safe area.
+- **Sources are collected in `ctx.deck.sources` as charts and stats build; `endRoll` fills its rows in its step.**
+  - One array per `build` call, shared by every scene's `ctx.deck`, filled by `chart` (the CSV's `# source:` or the JSON's `source`) and the stats' `source` option as each builds, in deck order and deduplicated by exact text. "Origin not stated" is a placeholder, not a source, so it is never added. A scene built after the roll is not yet in the list at build time, so the roll's container is built in `build` (the timeline rule) and its text rows are added when `show(tl)` is called in pass 2, after every scene has built; no tween exists before then that depends on them.
+  - The roll's scroll length is measured once in that step (`offsetHeight`) and fixed into a `fromTo` tween, so seek equals play. Speed is 90 px a second, capped at 40 s.
+
+- **Rehearsal times live in `localStorage`, not in the deck.**
+  - Why: they are one presenter's runs on one machine; a file in the deck would show up in diffs and be shared. Key: the channel name (path and title) plus `:rehearsal`. A new run replaces the last; the plan is the `outline` estimate (`src/plan.ts`), so the two never disagree.
+  - A scene over its estimate is `--k-warn`; over by half again (1.5x) is `--k-bad`. The estimate is a flat pace (130 words a minute, 15 s a step), so a small overrun is noise and a large one is a real slow spot; 1.5x is a judgement, not a measured value. It is not configurable: one more knob for a hint on a side panel.
+
+- **`klappe video` seeks GSAP's root timeline per frame and holds wall-clock loops still.**
+  - Each frame sets the paused root timeline's time, so the stepper plays a step exactly as live (transition, flight, delays) and every frame is still a seek: the file is the same each run, however slow the machine. Seeking the canvas timeline alone would miss the transitions, which are standalone timelines on the root; all of them are, so none is cut. Playwright's fake clock was the other way: it moves GSAP only at its 16 ms frame ticks, so a frame is not its exact time.
+  - Wall-clock loops (backgrounds, `mesh3d`, CSS and Web Animations, videos) hold their start, as with reduced motion; the ticker's clock is frozen by `lagSmoothing` and ticked by hand, so `mesh3d` still draws. A clock of their own driven by the frame was out of scope for v1 (ruling, 2026-10-31): every loop would need to take its time from outside.
+  - Encoding uses the system `ffmpeg` from `PATH`, JPEG frames on stdin; no npm dependency (ruling). `window.klappe.gsap` exposes the page's GSAP, since `bin/` cannot import the deck's bundle.
+
+- **A deck-kind review needs a `RUBRIC deck_arc` line.**
+  - Why: every other rubric judges a scene or a file, so a deck with sound scenes and no through-line passed review. `.rubrics/deck_arc.md` reads the deck as the room hears it (`outline --story`); making the line mandatory means the arc is judged, not skipped.
+  - The escape is the `unassessable` level (Minor): a deck with one scene, or with fewer than half its scenes carrying a story point (a catalog, a deck not yet given story points), is not marked `flat`. A diff that touches a few scenes is judged only on whether they fit the arc the rest already has.
+
+## 2026-10-31 (backlog batch 5)
+
+- **The e2e server has its own dependency cache, one per cwd.**
+  - Why: Vitest sets `NODE_ENV=test`, which Vite folds into the optimizer's config hash. A dev or `klappe test` server on the shared `node_modules/.vite` (development) and the e2e ones (test) re-optimized after each other, and `klappe test` in a temp cwd (the CLI tests) rewrote the e2e cache with its own aliases. A re-optimize mid-run is what answers 504 Outdated Optimize Dep.
+  - `tests/e2e/setup.ts` uses `node_modules/.vite-e2e-<hash of cwd>` (a throwaway dir under the system temp for a temp cwd) and waits for the optimizer's scan before it returns. Any other e2e test that starts its own Vite server gives it a `cacheDir` too.
+
+- **A deck component draws the whole scene, and its steps are counted from `scene.md` as a code fence's.**
+  - Why the whole scene: the shapes a deck repeats (the demo's `speakerProfile`) are scene factories that read the title and every step from `ctx.doc`; a component in the default renderer's right-hand slot could not hold them, and one that drew next to klappe's title and text would double them. So a component is a `scene.ts` `build` called from a fence.
+  - Why the code-fence count: `outline` parses `scene.md` in Node and loads no deck `.ts`, so it cannot ask the builder how many steps it has. The parser does not know which names are components and counts their fence as any non-built-in fence, so `outline`, `klappe test` and the browser agree. The builder returns step functions for those steps; a mismatch is a deck problem, as for a `scene.ts`.
+  - A name klappe's own fences use (`console`, `chat`, a Shiki language) is a deck problem and the built-in wins, so a deck cannot quietly change what a code block does.
+
+- **A cut filters sections after the layout; the appendix goes last in the step list, and every cut keeps it.**
+  - Why after the layout: `place()` reads earlier scenes' rects by id and a `shared-canvas` group spans sections; laying out the cut deck would move scenes or break `place()` when a section in the middle is cut. So `layoutDeck` runs on the whole deck and `cutDeck` drops sections and canvases, keeping the rects. A cut canvas can have a gap where a cut scene was; the camera flies over it.
+  - Why the appendix last: with the appendix a suffix of `StepAddr[]`, the talk is `[0, main)` and every part that counts steps (counter, `End`, overlay `total`, autoplay's end, video) needs one number, not a mask. Next and previous stay in the flow they start in.
+  - Why every cut keeps it: the appendix is backup for the questions, and a short cut needs it more. A cut that should drop a backup section can make it a normal section and leave it out.
+
+- **`Q` jumps to the appendix and back.**
+  - Why `Q`: Q&A, and it was free in the deck, the speaker view and the review window; the two windows forward it to the deck. Escape stays "close a panel"; giving it a second meaning would make closing the overview in the appendix jump back. The same key goes back to the step the talk was on (the first step if the deck opened in the appendix), as a cut.
+
+- **A deep link into a section the active cut leaves out is a deck problem and opens at the cut's first step.**
+  - Why: the link is stale for this cut (a link from the full talk's notes, a bookmark); the router already falls back to the first step for an unknown section. Silently showing the first step would hide the mistake; adding the section back would break the cut. The problem names the section and the cut.
+
+- **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**
+  - Why: klappe cannot know how intense a deck's own motion is, so reduced motion treats it like the intense built-ins. A function without `reveal` (or that throws) must not fail the deck mid-talk: the move still lands with a fade, and the problem names the section.

@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 
 export interface MindNode {
   label: string;
@@ -87,7 +88,7 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
   const c = lay.centre;
   const topW = opts.root.label.length * charW() * 1.3 + 48;
   const centre = el(root, "g", { "data-k-mind-centre": "" });
-  const disc = el(centre, "rect", { x: c.x - topW / 2, y: c.y - 40, width: topW, height: 80, rx: 12, "stroke-width": 4 });
+  const disc = el(centre, "rect", { x: c.x - topW / 2, y: c.y - 40, width: topW, height: 80, style: `rx: ${radius(12)}; stroke-width: ${strokeW(4)}` });
   Object.assign(disc.style, { fill: "var(--k-surface)", stroke: "var(--k-accent)" });
   centre.append(label({ ...c, y: c.y + 12, label: opts.root.label }, { "text-anchor": "middle", "font-weight": 700 }, 34));
   gsap.set(centre, { autoAlpha: 0 });
@@ -99,15 +100,15 @@ export function mindMap(ctx: Ctx, opts: MindMapOpts): MindMapHandle {
     const lit = [el(bg, "g", {}), el(bg, "g", {})];
     gsap.set(bg, { opacity: 1 }); // inline from load, as a seek back over light() leaves it
     const line = curve(lit[0], c, b);
-    Object.assign(line.style, { stroke: colour(i), strokeWidth: "8" });
+    Object.assign(line.style, { stroke: colour(i), strokeWidth: strokeW(8) });
     const w = b.label.length * charW() + 32;
     const g = el(lit[1], "g", { "data-k-mind-branch": String(i) });
-    const tag = el(g, "rect", { x: b.x - w / 2, y: b.y - 26, width: w, height: 52, rx: 10, "stroke-width": 3 });
+    const tag = el(g, "rect", { x: b.x - w / 2, y: b.y - 26, width: w, height: 52, style: `rx: ${radius(10)}; stroke-width: ${strokeW(3)}` });
     Object.assign(tag.style, { fill: "var(--k-bg)", stroke: colour(i) });
     g.append(label({ ...b, y: b.y + 9 }, { "text-anchor": "middle", "font-weight": 700 }));
     const kids = lay.leaves.filter((l) => l.parent === i).map((l) => {
       const twig = curve(lit[0], b, l);
-      Object.assign(twig.style, { stroke: colour(i), strokeWidth: "4" });
+      Object.assign(twig.style, { stroke: colour(i), strokeWidth: strokeW(4) });
       const dot = el(lit[1], "circle", { cx: l.x, cy: l.y, r: 6 });
       dot.style.fill = colour(i);
       const dx = l.anchor === "start" ? 12 : l.anchor === "end" ? -12 : 0;

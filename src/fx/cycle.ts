@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import { arrow } from "./shape";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -84,7 +85,7 @@ function box(ctx: Ctx, label: string, r: Rect, attr: string) {
   el.setAttribute(attr, "");
   Object.assign(el.style, {
     position: "absolute", left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px`, boxSizing: "border-box",
-    padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: "12px", outline: "2px solid transparent",
+    padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: radius(12), outline: "2px solid transparent",
     background: "var(--k-surface)", color: "var(--k-fg)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
     font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
   });
@@ -140,7 +141,7 @@ export function cycle(ctx: Ctx, opts: CycleOpts): CycleHandle {
     b.el.setAttribute("data-k-cycle-phase", String(i));
     return b;
   });
-  const stroke = { stroke: "var(--k-line)", strokeWidth: "4" };
+  const stroke = { stroke: "var(--k-line)", strokeWidth: strokeW(4) };
   const arcs = lay.arcs.map((a) => ({ d: path(ctx, a.d, stroke), head: path(ctx, a.head, stroke) }));
   const fit = fitter(ctx, boxes, "cycle");
   let lit: number | undefined; // the phase lit by the latest phase() step, set when the step is added
@@ -188,8 +189,8 @@ export function vModel(ctx: Ctx, opts: VModelOpts): VModelHandle {
   });
   const links = lay.links.map((k, i) => {
     const d = `M${k.x1} ${k.y} L${k.x2} ${k.y}`;
-    const base = path(ctx, d, { stroke: "var(--k-line)", strokeWidth: "3", strokeDasharray: "10 12", strokeLinecap: "butt" });
-    const on = path(ctx, d, { stroke: "var(--k-accent)", strokeWidth: "6" });
+    const base = path(ctx, d, { stroke: "var(--k-line)", strokeWidth: strokeW(3), strokeDasharray: "10 12", strokeLinecap: "butt" });
+    const on = path(ctx, d, { stroke: "var(--k-accent)", strokeWidth: strokeW(6) });
     on.setAttribute("data-k-v-link", String(i));
     return { base, on };
   });

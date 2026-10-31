@@ -4,6 +4,7 @@ import { t } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 // The fence languages loadHighlighter bundles, each its own chunk; any other language shows plain.
 const GRAMMARS: Record<string, () => Promise<{ default: LanguageRegistration[] }>> = {
@@ -128,7 +129,7 @@ const CPS = 34; // typing speed, characters a second, as terminal types
 
 // Monospace is allowed under .k-code: code is not a label.
 const CSS = `
-.k-code { position: absolute; margin: 0; box-sizing: border-box; overflow: hidden; border-radius: 12px;
+.k-code { position: absolute; margin: 0; box-sizing: border-box; overflow: hidden; border-radius: ${radius(12)};
   background: var(--k-surface); color: var(--k-code-foreground); font-family: var(--k-font-code); font-variant-ligatures: none; }
 .k-code > div { position: absolute; left: 0; right: 0; top: ${PAD_Y}px; }
 .k-code [data-line] { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; white-space: pre; padding-left: calc(${PAD_X}px + var(--gutter, 0px)); }

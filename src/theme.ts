@@ -1,5 +1,8 @@
+import { contrast } from "./contrast";
 import calm from "./themes/calm.css?raw";
-import type { Deck } from "./types";
+import type { Deck, Rect } from "./types";
+
+export { contrast };
 
 // Motion tokens in seconds, except autoHoldMs. Read them when a step is built, not at import: setTempo scales them.
 const BASE = { camera: 1.6, step: 0.6, autoHoldMs: 2500 };
@@ -16,6 +19,29 @@ export function setFrame(f: { w: number; h: number }): void {
   document.documentElement.style.setProperty("--k-frame-h", `${f.h}px`);
 }
 
+// The default safe area, top, right, bottom, left in scene px; deck.md safe-area overrides it.
+export const SAFE_AREA: [number, number, number, number] = [48, 64, 48, 64];
+// The safe area as a rect in the scene's own px (origin at the scene's top left), inside a frame of rect's size.
+export const safeRect = (area: [number, number, number, number] = SAFE_AREA, rect: Rect): Rect => ({
+  x: area[3],
+  y: area[0],
+  w: rect.w - area[1] - area[3],
+  h: rect.h - area[0] - area[2],
+});
+
+// The element whose tokens JS-side readers (typeSize, gapPx, strokePx) resolve: the scene being built, so a section's
+// `tokens` reach them; :root outside a build.
+export let tokenRoot: Element | undefined;
+export function withTokenRoot<T>(el: Element, fn: () => T): T {
+  const was = tokenRoot;
+  tokenRoot = el;
+  try {
+    return fn();
+  } finally {
+    tokenRoot = was;
+  }
+}
+
 // CSS variables defined in themes/calm.css.
 export const cssVars = { bg: "--k-bg", fg: "--k-fg", accent: "--k-accent", font: "--k-font" };
 
@@ -23,27 +49,6 @@ export const cssVars = { bg: "--k-bg", fg: "--k-fg", accent: "--k-accent", font:
 export function parseTokens(css: string): Record<string, string> {
   const root = /:root\s*\{([^}]*)\}/.exec(css.replace(/\/\*[\s\S]*?\*\//g, ""));
   return Object.fromEntries([...(root?.[1] ?? "").matchAll(/(--k-[\w-]+)\s*:\s*([^;]+);?/g)].map((m) => [m[1], m[2].trim()]));
-}
-
-const rgb = (c: string): [number, number, number] => {
-  const h = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(c.trim())?.[1];
-  if (h) {
-    const f = h.length === 3 ? [...h].map((x) => x + x).join("") : h;
-    return [0, 2, 4].map((i) => parseInt(f.slice(i, i + 2), 16)) as [number, number, number];
-  }
-  const n = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(c.trim());
-  if (!n) throw new Error(`unsupported colour: ${c}`);
-  return [+n[1], +n[2], +n[3]];
-};
-const lum = (c: string) => {
-  const [r, g, b] = rgb(c).map((v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-
-/** WCAG contrast ratio of two colours (#rgb, #rrggbb or rgb()). */
-export function contrast(a: string, b: string): number {
-  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
 }
 
 /** Keys are `deck:<name>`, `repo:<name>` and `builtin:<name>`, checked in that order. */
@@ -98,17 +103,28 @@ export function applyTheme(deck: Deck, override?: string | null): string[] {
     probe.style[prop] = `var(${v})`;
     return getComputedStyle(probe)[prop];
   };
-  for (const [fg, bg, min] of CHECKS) {
-    const [a, b] = [read(fg, "color"), read(bg, "backgroundColor")];
-    let c: number;
-    try {
-      c = contrast(a, b);
-    } catch {
-      // oklch(), color-mix() and color() are serialised in their own space; not measured.
-      problems.push(`theme: ${/^rgb/.test(a) ? bg : fg} not a readable colour (${/^rgb/.test(a) ? b : a})`);
-      continue;
+  // The deck's theme, then each section's overrides on top: only the pairs that touch an overridden token.
+  const measure = (label: string, only?: string[]) => {
+    for (const [fg, bg, min] of CHECKS) {
+      if (only && !only.includes(fg) && !only.includes(bg)) continue;
+      const [a, b] = [read(fg, "color"), read(bg, "backgroundColor")];
+      let c: number;
+      try {
+        c = contrast(a, b);
+      } catch {
+        // oklch(), color-mix() and color() are serialised in their own space; not measured.
+        problems.push(`theme: ${label}${/^rgb/.test(a) ? bg : fg} not a readable colour (${/^rgb/.test(a) ? b : a})`);
+        continue;
+      }
+      if (c < min) problems.push(`theme: ${label}${fg} on ${bg} contrast ${c.toFixed(1)} < ${min}`);
     }
-    if (c < min) problems.push(`theme: ${fg} on ${bg} contrast ${c.toFixed(1)} < ${min}`);
+  };
+  measure("");
+  for (const s of deck.sections) {
+    const tokens = s.module?.tokens ?? {};
+    for (const [k, v] of Object.entries(tokens)) k.startsWith("--k-") && probe.style.setProperty(k, v);
+    if (Object.keys(tokens).length) measure(`section ${s.id}: `, Object.keys(tokens));
+    probe.removeAttribute("style");
   }
   probe.remove();
   return problems;

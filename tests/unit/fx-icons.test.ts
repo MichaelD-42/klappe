@@ -59,6 +59,17 @@ describe("the scan plugin", () => {
       fs.rmSync(dir, { recursive: true });
     }
   });
+  it("finds the effects a deck component imports through shared/, with no scene.ts calling it", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-comp-"));
+    try {
+      fs.mkdirSync(path.join(dir, "shared"));
+      fs.writeFileSync(path.join(dir, "components.ts"), `import { chip } from "./shared/chip";\nexport default { chip };`);
+      fs.writeFileSync(path.join(dir, "shared", "chip.ts"), `import { qr, text } from "klappe/fx";`);
+      expect(importedFx([dir])).toEqual(["qr", "text"]);
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
   it("lists the languages deck code names as literal lang values", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-langs-"));
     try {

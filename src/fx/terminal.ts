@@ -4,6 +4,7 @@ import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typed } from "./crt";
 import { typeSize } from "./draw";
+import { radius } from "./layout";
 
 export interface TerminalOpts {
   lines: string[]; // "$ " lines are commands, the rest their output
@@ -42,7 +43,7 @@ const INDENT = 2; // characters before a wrapped continuation row
 
 // Monospace is allowed under .k-term: a terminal is code, not a label.
 const CSS = `
-.k-term { position: absolute; box-sizing: border-box; overflow: hidden; border-radius: 12px;
+.k-term { position: absolute; box-sizing: border-box; overflow: hidden; border-radius: ${radius(12)};
   background: var(--k-surface); color: var(--k-fg); font-family: var(--k-font-code); font-variant-ligatures: none; }
 .k-term > div { position: absolute; left: 0; right: 0; top: 0; padding-left: ${PAD_X}px; white-space: pre; overflow: hidden; }
 .k-term .k-term-prompt { color: var(--k-accent); }

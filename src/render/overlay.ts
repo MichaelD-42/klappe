@@ -1,4 +1,4 @@
-import { stage as size } from "../theme";
+import { safeRect, stage as size } from "../theme";
 import type { Ctx, Deck, StepAddr } from "../types";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -24,6 +24,7 @@ export function mountOverlay(
   const still = () => problem("the camera does not move the overlay");
   const ctx: Ctx = {
     rect: { x: 0, y: 0, ...size },
+    safe: safeRect(deck.meta.safeArea, { x: 0, y: 0, ...size }),
     svg: g,
     html,
     canvas: { refs: {}, rects: {} },
@@ -32,7 +33,7 @@ export function mountOverlay(
     onStep: () => problem("onStep is for scenes; set the overlay in update"),
     problem,
     reducedMotion: opts.reducedMotion,
-    deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
+    deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources: [] },
   };
   const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
   let refs: unknown;

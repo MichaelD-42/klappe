@@ -3,7 +3,7 @@ import type { StepAddr } from "./types";
 export const formatHash = (a: StepAddr): string => `#/${a.section}/${a.scene}/${a.step}`;
 
 // A bad escape stays raw: it matches no id, so the hash falls back like any other garbage.
-const decode = (s: string) => {
+export const decode = (s: string) => {
   try {
     return decodeURIComponent(s);
   } catch {

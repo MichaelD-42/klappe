@@ -4,6 +4,7 @@ import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { dataError, keysOf, parseCsv, showsSample, type Row } from "./chart";
 import { typeSize } from "./draw";
+import { addSource } from "./sources";
 
 export interface CloudWord {
   text: string;
@@ -102,6 +103,7 @@ export function wordCloud(ctx: Ctx, opts: WordCloudOpts): WordCloudHandle {
   const bad = rows.findIndex((r) => !((r[weight] as number) > 0) || !String(r[label]).trim());
   if (bad >= 0) return fail(t("dataError", ctx.deck.lang), `row ${bad + 1}, no word or ${weight} not above zero`);
 
+  addSource(ctx, rows.source);
   root.setAttribute("data-k-note", `${t("source", ctx.deck.lang)}: ${opts.src} — ${rows.source || t("originNotStated", ctx.deck.lang)}`);
   const sample = showsSample(opts.sample, rows.source);
   // The label takes a 40 px strip at the top of rect, so no word sits under it.

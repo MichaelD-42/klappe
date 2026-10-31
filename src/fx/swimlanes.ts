@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import { detour, spread } from "./route";
 import { motion } from "../theme";
 import type { Ctx, Point as Pt, Rect, StepAdder } from "../types";
@@ -131,7 +132,7 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
     const b = bands.get(l.id)!;
     const band = document.createElementNS(SVG, "rect");
     for (const [k, v] of Object.entries({ x: b.x, y: b.y + 3, width: b.w, height: b.h - 6 })) band.setAttribute(k, String(r2(v)));
-    Object.assign(band.style, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: "2" });
+    Object.assign(band.style, { fill: "var(--k-surface)", stroke: "var(--k-line)", strokeWidth: strokeW(2) });
     ctx.svg.append(band);
     gsap.set(band, { autoAlpha: 0 });
     bandEls.set(l.id, band);
@@ -156,7 +157,7 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
     el.setAttribute("data-k-swimlane-task", t.id);
     Object.assign(el.style, {
       position: "absolute", left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px`, boxSizing: "border-box",
-      padding: "8px 12px", border: "3px solid var(--k-line)", borderRadius: "14px", background: "var(--k-bg)", color: "var(--k-fg)",
+      padding: "8px 12px", border: "3px solid var(--k-line)", borderRadius: radius(14), background: "var(--k-bg)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",
     });
     const text = el.appendChild(document.createElement("div"));
@@ -177,7 +178,7 @@ export function swimlanes(ctx: Ctx, opts: SwimlanesOpts): SwimlanesHandle {
     // The line stops at the arrowhead's base; the head is its own triangle that appears when the line arrives.
     const path = document.createElementNS(SVG, "path");
     path.setAttribute("d", fmt([...pts.slice(0, -1), base]));
-    Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4", strokeLinejoin: "round" });
+    Object.assign(path.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(4), strokeLinejoin: "round" });
     const head = document.createElementNS(SVG, "path");
     head.setAttribute("d", fmt([q, { x: base.x - d.y * 11, y: base.y + d.x * 11 }, { x: base.x + d.y * 11, y: base.y - d.x * 11 }]) + " Z");
     Object.assign(head.style, { fill: "var(--k-line)" });

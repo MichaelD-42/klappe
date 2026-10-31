@@ -2,29 +2,20 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Rehearsal timing: a rehearsal mode in the speaker view that records the time spent per scene and shows it against the plan (`duration` in `deck.md`, the `outline` estimate), so the talk's slow parts show from real runs.
-- Own icons at the repo level: a deck repo's `icons/` shared by its decks, as `themes/` is. A deck's own `icons/` works today.
-- Deck arc: a deck-level rubric in `.rubrics/` for the content reviewer (an opening hook, a through-line, set-ups paid off, one ask at the end), and a story view in `klappe outline` that prints each scene's story point in order. Needs the story point in `scene.md` frontmatter, not only in the storyboard outside the deck.
-- Video export: `klappe video` renders a deck to MP4 by stepping each canvas timeline frame by frame in Playwright, holding each step for its `auto` time or a default. Seek equals play, so a frame is exact; wall-clock loops (backgrounds, `mesh3d`, video) need their own clock in this mode. Check first whether the frames can feed ffmpeg without a new npm dependency.
-- Titling: a lower third (a name and role, or a quote's source) and an end roll of sources and thanks, built from the sources the deck's charts already record.
-- Composition presets: named layouts in `scene.md` frontmatter beyond the default column and 45/55 text-and-media split (a rule-of-thirds split, a full-bleed picture with a caption, a big number with a footnote). An agent picks a named layout more reliably than it places pixels.
-- Section rhythm: a `section.ts` token override (an inverted or dark section, a picture section between diagram sections), so a deck can pace like a magazine. Today the theme is per deck.
-- Type as image: one word or number set to fill the frame, edge to edge, optionally with a picture or video showing through the letters. `shout`, `kpi` and `counter` stay at text sizes; no effect clips media to text.
-- Brand theme: from a logo and two brand colours, derive a full `--k-*` theme that passes the contrast rules. The logo and footer go in `overlay.ts`.
-- Spacing and shape tokens: gaps, corner radius and stroke weight as `--k-*` tokens, so a brand with sharp corners and wide whitespace can say so.
-- Deck cuts: one deck in several lengths (a 20- and a 45-minute cut that leave sections out) and a backup appendix outside the main flow, one jump away for Q&A. Today a re-cut means a copied deck.
 - Presenter ink: draw on the stage during the talk (a laser dot, and a pen that marks and fades), from the mouse or the speaker view. Live, so it sits under `data-k-ignore` and never on a timeline; clear it on the next step.
 - Icons in Markdown: `:icon-name:` on a list item in `scene.md` sets an icon with the step. Pairs with Text steps replace, not stack. Check first whether `image` already shows a `.svg` as a plain picture.
 - Establishing shot: a step that pulls the camera out to the whole canvas, then pushes into the next scene. An authored move on the timeline, not the `O` overview.
 - Monotony check: a look warning when several scenes in a row are text only or share one layout. The walk knows each scene's parts.
-- Own transitions: `section.ts` `transition` takes a function as a background's `animate` does, with the same `reveal` label contract, so a deck has its own transition without forking klappe. Today `TransitionKind` is a closed union of twelve.
 - Deck conversion: turn a PPTX or PDF into a draft deck folder (sections, `scene.md` steps, notes, `data/` for chart numbers with their source, `media/TODO.md` for the pictures). Probably a skill workflow over the `klappe` skill, not engine code; the storyteller prompt's "Convert deck" step is the spec.
 - Pictogram chart: units drawn as icons ("1 in 4 engineers") that fill step by step, from `waffle` and `icon`.
 - Layout grid: a column grid that scenes place on, or a look check that flags near-misses across scenes (a title a few px off where the other scenes put it). The `shot --sheet` contact sheet shows drift; nothing checks it.
 - Image treatment: a duotone or tint on `image` from the theme's tokens, so photos from different sources read as one set.
 - Split screen: two scenes side by side, the camera cutting between each alone and both together. Check first whether `place()` and a camera frame round both already do it.
 - Handheld drift: a barely visible wall-clock drift of the camera while a step holds, under `data-k-ignore` like the backgrounds. Off with reduced motion; check whether it suits `calm` at all.
-- Deck components in Markdown: a deck registers a fence or trigger for its own helpers (the demo's `speakerProfile`, `planChip`), so `scene.md` can use them without `scene.ts`.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
 - klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
-- Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable. The API audit (first) may still drop entries before they are built.
+- Named layouts on non-landscape frames: `thirds`, `full-bleed` and `big-number` assume a landscape frame with hard-coded 160 and 140 padding; derive it from the frame, or report a deck problem on a portrait one.
+- Video export scene filter: `klappe video --only <section>[/<scene>]`, as `test` has.
+- Shape-token lint by use, not by file: the allow list exempts whole files, and `setAttribute("stroke-width")` is not linted.
+- Agent instructions say `npm test -- --only <section>/<scene>`, which fails in the klappe repo (`npm test` is plain `vitest run`); `node bin/klappe.mjs test --only …` works. Make the agent files (`.claude/agents/klappe-builder.md`, `klappe-review-tech.md`, `klappe-review-look.md`) give a command that works in both the klappe repo and deck repos.
+- Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable.

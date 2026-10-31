@@ -16,10 +16,19 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-font`, `--k-font-code` | text font; code and terminal font. klappe bundles Inter Variable (calm), Space Grotesk Variable (bold) and JetBrains Mono Variable (code, both); a theme may name any of them, an installed font, or a font the deck's `deck.css` declares with `@font-face`. The faces they name are loaded before the deck renders. |
 | `--k-font-heading` | the scene title font (`.k-scene h2`, so also `title()`). Every built-in theme sets it to `var(--k-font)`, so titles look as before; a theme may name another face. |
 | `--k-size-title`, `--k-size-body`, `--k-size-label` | the type scale, in px: a scene title, body text, a label. Defaults 88, 44 and 28 px, so a theme sets them only to change them. Every effect's text follows its role in proportion (a 26 px label is 26/28 of `--k-size-label`), never under the 20 px legibility floor; fitted text still shrinks to its box. Set them on `:root`. `crt`, `timer` and `map` size their text from their own geometry and do not follow. |
+| `--k-radius` | the corner radius of a box (cards, nodes, panels, chips). Default 12 px; an effect's smaller and larger radii scale with it (a 6 px corner is half of it), so `0px` squares the boxes of the diagram, card, list and panel effects. A circle stays round. Not covered, in the radius and stroke rows: `chart` (marks, cell outline, label halos), `stats` (rings, dials, sparkline, legend swatch), `map`, `figure`, `shape` (own width option), `icons`, `annotate`, `attention` and `spotlight` (sized from their target), `pointer`, `qr`, `splitflap`, `semanticzoom`, `shatter`, `timer`, `crt` and the `media` caption chip. |
+| `--k-stroke` | the weight of a diagram line (arrows, connectors, outlines). Default 4 px; thinner and heavier strokes scale with it (a 2 px outline is half of it). Chart marks, map lines, icons and drawn figures keep their own weights. |
+| `--k-gap` | the gap between boxes in a laid-out element (pyramid and process layers, calendar cells, list and table rows, chat messages). Default 8 px; larger gaps scale with it. `?theme=sharp` (`themes/sharp.css` in this repo) sets `0px`, 3 px and 24 px. |
 | `--k-code-foreground`, `--k-code-background`, `--k-code-token-constant`, `-string`, `-comment`, `-keyword`, `-parameter`, `-function`, `-string-expression`, `-punctuation`, `-link` | syntax colours, mapped from Shiki's `css-variables` theme |
 | `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition; the CRT screen is always dark, so these stay bright in a light theme too |
 | `--k-frame-w`, `--k-frame-h` | the stage size in px, set by klappe from `deck.md` `frame` (default 1920 and 1080). Read them in `deck.css`; a theme does not set them. |
 | `--k-scrim` | the layer a `scrim` lays over a picture: `#000` under light text, `#fff` in a light theme |
+
+## Brand theme
+
+`klappe theme --deck <id> --name <name> --colors <hex1>,<hex2> [--light] [--logo <file>] [--force]` writes `decks/<id>/themes/<name>.css` from two brand colours; set `theme: <name>` in `deck.md` to use it. Colour 1 becomes `--k-accent` and sets the hue of the page (`--k-bg`, `--k-surface`, `--k-fg`, `--k-muted`, `--k-line`); colour 2 becomes `--k-accent-2`. The page is dark, or light with `--light` (a warm or grey brand hue gives a neutral cool white, never cream). Each brand colour keeps its hue and moves in lightness only as far as the contrast rules below need. `ok`, `warn` and `bad` are green, amber and red nudged the same way. The six series start from the accent and take the hues farthest apart for protanopia, deuteranopia and tritanopia; the code colours are nudged to 4.5:1 on the panel. The header comment of the file names the inputs, so a re-run gives the same file. The file is not overwritten without `--force`.
+
+`--logo <file.svg|png>` copies the file to `decks/<id>/media/` and, if the deck has no `overlay.ts`, writes one with the logo bottom right and the deck title as a footer (the [overlay.ts](deck-format.md#overlayts) shape). An existing `overlay.ts` is never touched: the command prints the `build()` to merge in. Raise `safe-area` to keep scenes clear of the logo.
 
 ## Which theme is used
 
@@ -67,6 +76,8 @@ Every token not listed here comes from calm.
 ## Contrast rules
 
 At load, the resolved theme is measured on the real page. A failure is a deck problem, so `klappe test` fails on it. The messages look like `theme: --k-fg on --k-bg contrast 1.9 < 4.5`.
+
+A section's `tokens` (see [deck format](deck-format.md#sectionts)) are measured the same way, over the colour tokens the section overrides combined with the deck theme for the rest; the message names the section: `theme: section light: --k-fg on --k-bg contrast 1.2 < 4.5`. Sizes, radius, stroke and gap are not measured.
 
 - `--k-fg` and `--k-muted` on `--k-bg` and on `--k-surface`: at least 4.5:1.
 - `--k-accent` on `--k-bg` and on `--k-surface`: at least 3:1.

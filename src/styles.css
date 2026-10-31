@@ -102,6 +102,22 @@ body {
   line-height: 1.25;
 }
 
+.k-scene .k-big {
+  display: block;
+  font-family: var(--k-font-heading);
+  font-weight: 700;
+  line-height: 0.8; /* digits have no descenders; the box hugs them so the number can be larger */
+  white-space: nowrap;
+  color: var(--k-accent);
+}
+
+.k-scene .k-note {
+  display: block;
+  margin: 0;
+  font-size: var(--k-size-label);
+  line-height: 1.35;
+}
+
 .k-scene p.k-shout {
   font-size: calc(var(--k-size-title) * 64 / 88);
   font-weight: 700;

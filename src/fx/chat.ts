@@ -3,6 +3,7 @@ import { motion } from "../theme";
 import type { Ctx, StepAdder } from "../types";
 import { typed } from "./crt";
 import { typeCss } from "./draw";
+import { gapCss, radius } from "./layout";
 
 export interface ChatMessage {
   from: string; // "user" sits right; anyone else left. A name other than "assistant" shows above the bubble.
@@ -45,7 +46,7 @@ const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2)
 // wraps at the same places and the thread never reflows while it streams.
 const CSS = `
 .k-chat { position: absolute; overflow: hidden; }
-.k-chat-track { position: absolute; left: 0; right: 0; top: 0; display: flex; flex-direction: column; gap: ${GAP}px; }
+.k-chat-track { position: absolute; left: 0; right: 0; top: 0; display: flex; flex-direction: column; gap: ${gapCss(GAP)}; }
 .k-chat-row { display: flex; flex-direction: column; align-items: flex-start; }
 .k-chat-row.k-chat-user { align-items: flex-end; }
 .k-chat-faces .k-chat-row { flex-direction: row; align-items: flex-end; gap: 16px; }
@@ -57,12 +58,12 @@ const CSS = `
 .k-chat-face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
 .k-chat-name { margin: 0 0 6px 4px; color: var(--k-muted); font: 600 ${typeCss("label", 24)}/1.2 var(--k-font); }
 .k-chat-hold { position: relative; max-width: 72%; }
-.k-chat-bubble { position: relative; box-sizing: border-box; padding: 18px 28px; border: 3px solid var(--k-surface); border-radius: 6px;
+.k-chat-bubble { position: relative; box-sizing: border-box; padding: 18px 28px; border: 3px solid var(--k-surface); border-radius: ${radius(6)};
   background: var(--k-surface); color: var(--k-fg); font: 400 ${typeCss("label", 32)}/1.35 var(--k-font); white-space: pre-line; overflow-wrap: anywhere; }
 .k-chat-user .k-chat-bubble { background: var(--k-bg); border-color: var(--k-accent); }
 .k-chat-ghost { visibility: hidden; }
 .k-chat-live { position: absolute; inset: 18px 28px; }
-.k-chat-dots { position: absolute; left: 0; top: 0; display: flex; gap: 12px; padding: 30px 28px; border-radius: 6px; background: var(--k-surface); }
+.k-chat-dots { position: absolute; left: 0; top: 0; display: flex; gap: 12px; padding: 30px 28px; border-radius: ${radius(6)}; background: var(--k-surface); }
 .k-chat-dots > span { width: 14px; height: 14px; border-radius: 50%; background: var(--k-muted); }
 `;
 

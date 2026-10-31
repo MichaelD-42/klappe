@@ -1,14 +1,17 @@
 import { gsap } from "gsap";
 import { addCameraMove, flightEase, flightTime, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
 import { code, LANGS } from "../fx/code";
-import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
+import { gapPx } from "../fx/layout";
+import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle, type ImageOpts } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
 import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
-import { part as fxPart } from "./parts";
-import { motion, stage } from "../theme";
-import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
+import { measure } from "../fx/measure";
+import { builtInFence, part as fxPart } from "./parts";
+import { BIG_NUMBER } from "../parse/scene";
+import { motion, safeRect, stage, withTokenRoot } from "../theme";
+import type { Background, CanvasLayout, Components, Ctx, Deck, DeckMeta, Rect, OwnTransition, Scene, Section, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
   layout: CanvasLayout;
@@ -19,7 +22,7 @@ export interface CanvasRuntime {
   tl: gsap.core.Timeline;
   refs: Record<string, any>;
   // How the deck enters each section on this canvas, by section id (from section.ts).
-  entries: Record<string, { kind: TransitionKind; opts: TransitionOpts }>;
+  entries: Record<string, { kind: TransitionKind | OwnTransition; opts: TransitionOpts }>;
   // ctx.onStep listeners; the stepper calls them on every move.
   stepListeners: Parameters<Ctx["onStep"]>[0][];
   // ctx.problem messages; the self-test adds them to the deck's problems.
@@ -56,8 +59,8 @@ export const fenceProblem = (lang: string) =>
 
 // The media effect for a step: image, video, or chart from data/. The chart reads and checks the file
 // itself (DATA MISSING, DATA ERROR). No chart title: the step text already names it.
-function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): StepAdder {
-  if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect }).show;
+function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect, picture?: Partial<ImageOpts>): StepAdder {
+  if (m.kind === "image") return image(ctx, { href: m.href, alt: m.alt, rect, ...picture }).show;
   if (m.kind === "video") return video(ctx, { href: m.href, title: m.title ?? m.alt, rect, fallback: m.fallback }).show;
   const c = fxPart("chart")(ctx, { src: m.href.replace(/^\.\//, ""), rect });
   return (tl) => {
@@ -72,17 +75,29 @@ const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
 // Plain text steps replace each other, set large (unless the scene stacks them). Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
 // media, code or terminal the right. Task-list items build one checklist, a table a comparison, a time-range list an agenda.
+// A fence the deck's components.ts registers draws the whole scene instead, as a scene.ts build would.
 // Returns the title and the steps an effect plays, by step number.
-function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
+function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Components): { title?: HTMLElement; fx: Map<number, StepAdder> } {
   const { html, rect } = ctx;
   const fx = new Map<number, StepAdder>();
   const shown: Element[] = [];
   const add = <E extends Element>(parent: Element, e: E) => (parent.append(e), shown.push(e), e);
   const fence = scene.fence;
-  const hasMedia = scene.steps.some((s) => s.media) || !!fence;
-  const col = hasMedia ? html.appendChild(el("div", "")) : html;
-  if (hasMedia) col.style.width = "45%";
-  const slot: Rect = { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
+  const own = fence && !builtInFence(fence.lang) ? components?.[fence.lang] : undefined;
+  const hasMedia = !own && (scene.steps.some((s) => s.media) || !!fence);
+  const { layout } = scene;
+  const full = layout === "full-bleed";
+  const big = layout === "big-number";
+  const col = hasMedia || big ? html.appendChild(el("div", "")) : html;
+  if (hasMedia) col.style.width = layout === "thirds" ? `${rect.w / 3 - 160 - gapPx(48)}px` : "45%"; // 160: the scene's side padding
+  // full-bleed: the caption sits at the bottom, over the picture's scrim. big-number: the number and its footnote, centred.
+  if (full) Object.assign(col.style, { position: "absolute", left: "160px", right: "160px", bottom: "140px", width: "auto" });
+  if (big) Object.assign(col.style, { position: "absolute", inset: "140px 160px", display: "flex", flexDirection: "column", justifyContent: "center" });
+  const slot: Rect = full
+    ? { x: 0, y: 0, w: rect.w, h: rect.h }
+    : layout === "thirds"
+      ? { x: rect.w / 3, y: rect.h * 0.13, w: rect.w * 2 / 3 - 160, h: rect.h * 0.74 }
+      : { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
   // An effect that throws (a stub: not built yet) leaves a dashed EFFECT MISSING box in its place and a problem.
   const missing = (parent: Element, at: Rect, where: string, name: string, e: unknown): StepAdder => {
     if (!notBuilt(e)) console.error(`${where}: ${name}: ${message(e)}`);
@@ -116,6 +131,19 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       return { miss: missing(html, at, where, name, e) };
     }
   };
+  if (own) {
+    const made = part(1, fence!.lang, rect, (c) => {
+      const steps = own(c, fence!.src, fence!.info ?? "");
+      if (!Array.isArray(steps)) throw new Error("components.ts: a component returns an array of step functions");
+      return steps;
+    });
+    if (made.h && made.h.length !== scene.steps.length)
+      ctx.problem(`${scene.source}: components.ts '${fence!.lang}' gave ${made.h.length} step functions, scene.md has ${scene.steps.length} steps`);
+    // Deck code: a step that throws is logged like a scene.ts step, and the rest of the deck still builds.
+    (made.h ?? [made.miss!]).forEach((f, i) => fx.set(i + 1, (tl) => void safe(`${scene.source} step ${i + 1}`, () => f(tl))));
+    if (made.miss) gsap.set(shown, { autoAlpha: 0 }); // the EFFECT MISSING box
+    return { fx };
+  }
   const lists: Rect = { x: rect.w * 0.083, y: rect.h * 0.28, w: rect.w * (hasMedia ? 0.37 : 0.83), h: rect.h * 0.6 };
   const firstOf = (kind: string) => scene.steps.findIndex((s) => s.part?.kind === kind) + 1;
   if (fence) {
@@ -144,7 +172,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const table = tableN && scene.table ? part(tableN, "compareTable", lists, (c) => fxPart("compareTable")(c, { ...scene.table!, ...lists })) : undefined;
   const title = add(col, el("h2", "", scene.title));
   // A scene of plain text steps gives each one the stage, large, until the next replaces it; stack: true builds a list.
-  const say = !scene.stack && !fence && scene.steps.every((s) => !s.part && !s.media);
+  const say = !scene.stack && !fence && !big && scene.steps.every((s) => !s.part && !s.media);
   let said: Element | undefined; // the plain step on screen: it fades out when the next one shows
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
@@ -178,8 +206,18 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
       const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
       return fx.set(n, (a.h?.show ?? a.miss)!);
     }
-    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
+    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
+    if (big && n === 1) {
+      // The number is set at 100 px, measured, and scaled to the width inside the side padding; the height caps it.
+      const num = BIG_NUMBER.exec(s.text)![0];
+      const b = p.appendChild(el("span", "k-big", num));
+      b.style.fontSize = "100px";
+      const w = measure(ctx, b, true)?.w;
+      b.style.fontSize = `${Math.min(rect.h * 0.6, w ? ((rect.w - 320) / w) * 100 : 100)}px`;
+      b.style.marginBottom = `${gapPx(32)}px`;
+      if (s.text.length > num.length) p.append(el("span", "k-note", s.text.slice(num.length).trim()));
+    }
     if (say && s.kind === "step") {
       p.classList.add("k-say");
       const prev = said;
@@ -210,6 +248,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     back.style.fill = "var(--k-bg)";
     g.append(back);
     for (const e of [wrap, g]) e.setAttribute("data-k-media", String(n));
+    if (full) html.prepend(wrap); // under the caption
     const wrapper = [wrap, g];
     const previous = before;
     before = wrapper;
@@ -217,7 +256,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     try {
       // The effect's problems say where the slot is.
       const problem = (msg: string) => ctx.problem(`${scene.source} step ${n}: ${msg}`);
-      show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot);
+      show = mediaShow({ ...ctx, html: wrap, svg: g, problem }, s.media, slot, full ? { fit: "cover", scrim: 0.7, scrimSide: "bottom" } : undefined);
     } catch (e) {
       show = missing(wrap, slot, `${scene.source} step ${n}`, s.media.kind, e);
     }
@@ -380,6 +419,7 @@ export function renderWorld(
   const perScene = new Map<Scene, { ctx: Ctx; at: (n: number) => void; refs: any; title?: HTMLElement; fx?: Map<number, StepAdder>; bg?: Pinned }>();
   const onScreen = new Map<CanvasLayout, Pinned | undefined>(); // the background each canvas shows, while pass 2 builds
   const files = deck.files ?? { data: {}, media: {} };
+  const sources: string[] = []; // shared by every scene's ctx.deck
   const runtimes = canvases.map((layout) => {
     const { w, h } = layout.size;
     const world = el("div", "k-world");
@@ -433,7 +473,7 @@ export function renderWorld(
         cam = end;
       },
     };
-    const ctxAt = (rect: Rect, attr: string, id: string, cls: string): Ctx => {
+    const ctxAt = (rect: Rect, attr: string, id: string, cls: string, tokens?: Record<string, string>): Ctx => {
       const g = document.createElementNS(SVG, "g");
       g.setAttribute(attr, id);
       g.setAttribute("transform", `translate(${rect.x} ${rect.y})`);
@@ -442,8 +482,13 @@ export function renderWorld(
       d.setAttribute(attr, id);
       Object.assign(d.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` });
       html.append(d);
+      // A section's tokens, on the scene's box and its SVG group, so CSS and getComputedStyle both see them.
+      for (const [k, v] of Object.entries(tokens ?? {})) k.startsWith("--k-") && [d, g].forEach((e) => e.style.setProperty(k, v));
+      // color and font-family inherit as computed values from the stage: re-resolve them against the section's tokens.
+      if (tokens) Object.assign(d.style, { color: "var(--k-fg)", fontFamily: "var(--k-font)" });
       return {
         rect,
+        safe: safeRect(deck.meta.safeArea, rect),
         svg: g,
         html: d,
         canvas: { refs, rects: layout.rects },
@@ -452,23 +497,37 @@ export function renderWorld(
         onStep: (fn) => stepListeners.push(fn),
         problem: (msg) => (problems.push(msg), opts.onProblem?.(msg)),
         reducedMotion: opts.reducedMotion,
-        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity },
+        deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources },
       };
     };
 
     for (const s of sections) {
       const build = s.module?.build;
       if (build)
-        Object.assign(refs, safe(`section ${s.id}`, () => build(ctxAt({ x: 0, y: 0, w, h }, "data-section", s.id, "k-layer"))));
+        Object.assign(refs, safe(`section ${s.id}`, () => {
+          const c = ctxAt({ x: 0, y: 0, w, h }, "data-section", s.id, "k-layer", s.module?.tokens);
+          return withTokenRoot(c.html, () => build(c));
+        }));
     }
     // One pinned element per background: the section's is shared by every scene that does not set its own.
     const pins = new Map<Background, Pinned>();
+    const colours = new Map<Section, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
+        const tokens = s.module?.tokens;
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene", tokens), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);
+        // An inverted section reads edge to edge: with no picture of its own it pins a plain --k-bg layer behind its scenes.
+        if (!bg && tokens?.["--k-bg"] && !(pin = colours.get(s))) {
+          const d = pinned.appendChild(el("div", "k-layer"));
+          Object.assign(d.style, { width: `${stage.w}px`, height: `${stage.h}px`, background: "var(--k-bg)" });
+          d.dataset.kBackground = s.id;
+          for (const [k, v] of Object.entries(tokens)) k.startsWith("--k-") && d.style.setProperty(k, v);
+          gsap.set(d, { autoAlpha: 0 });
+          colours.set(s, (pin = { el: d, layers: [] }));
+        }
         if (bg && !pin) {
           const source = own ? sc.source : `${sc.source.split("/").slice(0, -2).join("/")}/section.ts`;
           const svgText = bg.href ? opts.svg?.[bg.href.replace(/^\.\//, "")] : undefined;
@@ -488,7 +547,7 @@ export function renderWorld(
         const code: Ctx = { ...ctx, problem: (msg) => ctx.problem(`${file}${step ? ` step ${step}` : ""}: ${msg}`) };
         const build = sc.module?.build;
         perScene.set(sc, {
-          ...(build ? { ctx: code, refs: safe(file, () => build(code)) } : { ctx: code, refs: undefined, ...renderDefault(sc, ctx, deck.meta) }),
+          ...(build ? { ctx: code, refs: safe(file, () => withTokenRoot(code.html, () => build(code))) } : { ctx: code, refs: undefined, ...withTokenRoot(ctx.html, () => renderDefault(sc, ctx, deck.meta, deck.components)) }),
           at: (n) => (step = n),
           bg: pin,
         });
@@ -517,9 +576,23 @@ export function renderWorld(
     const entries = Object.fromEntries(
       sections.map((s) => {
         const m = s.module;
-        // Reduced motion: the dive, the CRT flash, the shatter, the push, the glitch, the cube, the page turn and the magic move fade instead.
-        const kind = opts.reducedMotion && INTENSE.includes(m?.transition as TransitionKind) ? "fade" : m?.transition ?? "fade";
-        return [s.id, { kind, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
+        // Reduced motion: the dive, the CRT flash, the shatter, the push, the glitch, the cube, the page turn, the magic move and
+        // a deck's own transition fade instead.
+        const t = m?.transition ?? "fade";
+        const kind = opts.reducedMotion && (typeof t === "function" || INTENSE.includes(t)) ? "fade" : t;
+        // No "reveal" label is a deck problem naming the section; the throw makes playTransition play a fade.
+        const own: OwnTransition | undefined = typeof kind === "function" ? kind : undefined;
+        let reported = false;
+        const checked: typeof kind = own
+          ? (from, to, o) => {
+              const tl = own(from, to, o);
+              if ("reveal" in tl.labels) return tl;
+              if (!reported) opts.onProblem?.(`section ${s.id}: its own transition has no "reveal" label; playing fade`);
+              reported = true;
+              throw new Error(`section ${s.id}: no "reveal" label`);
+            }
+          : kind;
+        return [s.id, { kind: checked, opts: { ...m?.transitionOptions, ...(m?.zoomTarget ? { target: m.zoomTarget } : {}) } }];
       }),
     );
     const backgrounds = Object.fromEntries(sections.flatMap((s) => s.scenes).flatMap((sc) => {
@@ -549,8 +622,8 @@ export function renderWorld(
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }
           const fn = sc.module?.steps?.[i];
-          if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => fn(tl, refs, ctx));
-          else defaultStep(tl, sc, i + 1, ctx.html, fx);
+          if (fn) safe(`${sc.source.replace(/scene\.md$/, "scene.ts")} step ${i + 1}`, () => withTokenRoot(ctx.html, () => fn(tl, refs, ctx)));
+          else withTokenRoot(ctx.html, () => defaultStep(tl, sc, i + 1, ctx.html, fx));
           // Last, so the step's content does not wait for them: they run alongside from the step's start.
           if (i === 0) {
             // The camera arrives at a scene with another background: the two cross-fade during the flight.

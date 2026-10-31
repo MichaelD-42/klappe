@@ -6,6 +6,7 @@ import { t as tr } from "../strings";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 
 export type RoadmapOpts = {
   // Dates as "YYYY-MM-DD"; an empty label makes a dot: no stem, no label, out of the spacing. A status settles the dot
@@ -135,9 +136,9 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     return e;
   };
 
-  const axis: Element[] = [svgEl("line", { x1: opts.x, y1: ay, x2: opts.x + opts.w, y2: ay }, { stroke: "var(--k-line)", strokeWidth: "4" })];
+  const axis: Element[] = [svgEl("line", { x1: opts.x, y1: ay, x2: opts.x + opts.w, y2: ay }, { stroke: "var(--k-line)", strokeWidth: strokeW(4) })];
   for (const t of L.ticks) {
-    axis.push(svgEl("line", { x1: t.x, y1: ay - 10, x2: t.x, y2: ay + 10 }, { stroke: "var(--k-line)", strokeWidth: "2" }));
+    axis.push(svgEl("line", { x1: t.x, y1: ay - 10, x2: t.x, y2: ay + 10 }, { stroke: "var(--k-line)", strokeWidth: strokeW(2) }));
     const e = div({ position: "absolute", left: `${t.x - 80}px`, top: `${ay + 14}px`, width: "160px", textAlign: "center", color: "var(--k-muted)", font: `500 ${FLOOR}px/1.2 var(--k-font)`, whiteSpace: "nowrap", zIndex: "3" });
     // Knocked out of the today line like the milestone labels, hugging the text so the line shows beside it.
     Object.assign(e.appendChild(document.createElement("span")).style, { background: "var(--k-bg)", padding: "0 6px" });
@@ -154,8 +155,8 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
     const status = st && st in STATUS ? STATUS[st] : undefined;
     const tone = status?.tone ?? "var(--k-line)"; // the dot's settled colour
     const [y0, y1] = m.above ? [ay - DOT, ay - STEM] : [ay + DOT, ay + STEM];
-    const stem = m.dot ? undefined : svgEl("line", { x1: m.x, y1: y0, x2: m.x, y2: y1 }, { stroke: "var(--k-line)", strokeWidth: "3" });
-    const dot = svgEl("circle", { cx: m.x, cy: ay, r: DOT }, { fill: tone, stroke: "var(--k-bg)", strokeWidth: "3" });
+    const stem = m.dot ? undefined : svgEl("line", { x1: m.x, y1: y0, x2: m.x, y2: y1 }, { stroke: "var(--k-line)", strokeWidth: strokeW(3) });
+    const dot = svgEl("circle", { cx: m.x, cy: ay, r: DOT }, { fill: tone, stroke: "var(--k-bg)", strokeWidth: strokeW(3) });
     gsap.set(dot, { scale: 0, svgOrigin: `${m.x} ${ay}` }); // the transform from load, as a seek back over reveal leaves it
     if (m.dot) return [m.id, { dot, tone }];
     const boxH = m.above ? ay - STEM - (opts.y + TODAY_H + 8) : opts.y + opts.h - (ay + STEM);
@@ -188,7 +189,7 @@ export function roadmap(ctx: Ctx, opts: RoadmapOpts): RoadmapHandle {
   const bars = new Map(L.phases.map((p) => {
     const bar = div({
       position: "absolute", left: `${p.left}px`, top: `${ay + BAR_TOP + p.lane * LANE}px`, width: `${p.width}px`, height: `${BAR}px`,
-      boxSizing: "border-box", borderRadius: "8px", border: "2px solid var(--k-line)", background: "var(--k-surface)", color: "var(--k-fg)",
+      boxSizing: "border-box", borderRadius: radius(8), border: "2px solid var(--k-line)", background: "var(--k-surface)", color: "var(--k-fg)",
       display: "flex", alignItems: "center", padding: "0 12px", overflow: "hidden", zIndex: "1",
     });
     bar.setAttribute("data-k-roadmap-phase", p.id);

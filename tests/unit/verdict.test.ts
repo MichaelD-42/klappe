@@ -25,12 +25,14 @@ function run(args: string[], ...reports: string[]) {
 }
 
 const FULL = 'RUBRIC intent_fidelity: full — AK-1 at bin/x.mjs:3';
+const ARC = 'RUBRIC deck_arc: shaped — s1 — the hook, the line and the ask';
 const CLEAR = 'RUBRIC scene_purpose: clear — s1/intro — the room learns X';
 
 test('AK-1: reads the real rubrics with their rules', () => {
-  expect(Object.keys(rubrics).sort()).toEqual(['intent_fidelity', 'scene_purpose']);
+  expect(Object.keys(rubrics).sort()).toEqual(['deck_arc', 'intent_fidelity', 'scene_purpose']);
   expect(rubrics.intent_fidelity.rule.divergent).toEqual({ severity: 'Critical', disposition: 'planner' });
   expect(rubrics.scene_purpose.applies_to).toEqual(['deck']);
+  expect(rubrics.deck_arc.applies_to).toEqual(['deck']);
 });
 
 test('AK-2: parseReport flags a bad first line, a bad severity, an unknown dimension and an unknown level', () => {
@@ -66,7 +68,7 @@ test('AK-2: VERDICT: PASS with a blocking finding or RUBRIC line is a format pro
 test('AK-2: every dimension of the kind needs a RUBRIC line across the reports', () => {
   const p = [parseReport(`VERDICT: PASS\n${FULL}`, rubrics)];
   expect(missingDimensions(p, rubrics, 'framework')).toEqual([]);
-  expect(missingDimensions(p, rubrics, 'deck')).toEqual(['scene_purpose']);
+  expect(missingDimensions(p, rubrics, 'deck')).toEqual(['deck_arc', 'scene_purpose']);
 });
 
 test('AK-2: the CLI prints each format problem and exits 2', () => {
@@ -90,7 +92,7 @@ test('AK-3: the CLI prints the decision with reasons and exits 0 for merge, 1 ot
   const ok = run(['--kind', 'framework'], `VERDICT: PASS\n${FULL}`, 'VERDICT: PASS\nx:1 — Minor — p — e');
   expect(ok.status).toBe(0);
   expect(ok.stdout.trim()).toBe('DECISION: merge');
-  const no = run(['--kind', 'deck'], `VERDICT: FAIL\nRUBRIC intent_fidelity: partial — AK-2 open`, 'VERDICT: PASS\nRUBRIC scene_purpose: weak — s2/b — repeats s1');
+  const no = run(['--kind', 'deck'], `VERDICT: FAIL\nRUBRIC intent_fidelity: partial — AK-2 open`, 'VERDICT: PASS\nRUBRIC scene_purpose: weak — s2/b — repeats s1\n' + ARC);
   expect(no.status).toBe(1);
   expect(no.stdout.trim().split('\n')).toEqual([
     'DECISION: builder',
@@ -100,17 +102,17 @@ test('AK-3: the CLI prints the decision with reasons and exits 0 for merge, 1 ot
 });
 
 test('AK-4: --log appends one JSON line per RUBRIC line; no --log writes nothing', () => {
-  const reports = [`VERDICT: PASS\n${FULL}\n${CLEAR}`];
+  const reports = [`VERDICT: PASS\n${FULL}\n${CLEAR}\n${ARC}`];
   // two runs into one log: it appends
   const log = join(mkdtempSync(join(tmpdir(), 'verdict-log-')), 'v.jsonl');
   run(['--kind', 'deck', '--task', 'T9', '--log', log], ...reports);
   run(['--kind', 'deck', '--log', log], ...reports);
   const rows = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
-  expect(rows).toHaveLength(4);
+  expect(rows).toHaveLength(6);
   expect(Object.keys(rows[0])).toEqual(['date', 'task', 'kind', 'dimension', 'version', 'level', 'ref', 'severity', 'disposition']);
   expect(rows[0]).toMatchObject({ task: 'T9', kind: 'deck', dimension: 'intent_fidelity', version: 1, level: 'full', ref: null, severity: 'none', disposition: 'pass' });
   expect(rows[1]).toMatchObject({ dimension: 'scene_purpose', ref: 's1/intro' });
-  expect(rows[2].task).toBeNull();
+  expect(rows[3].task).toBeNull();
   const none = run(['--kind', 'deck'], ...reports);
   expect(readdirSync(none.dir)).toEqual(['r0.txt']);
 });

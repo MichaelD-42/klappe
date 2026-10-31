@@ -5,11 +5,12 @@ import { runSelftest } from './driver'
 // The driver's wait grows with the deck (selftestTimeout); this ceiling only stops a hung run.
 const WALK_CEILING_MS = 1_800_000
 
-// `klappe test --only <targets> [--bail] [--strict]` sets these: walk only those scenes, stop at the first failing step,
-// and fail on look warnings.
+// `klappe test --only <targets> [--bail] [--strict] [--cut <name>]` sets these: walk only those scenes, stop at the first
+// failing step, fail on look warnings, and walk a deck.md cut.
 const only = process.env.KLAPPE_ONLY
 const strict = !!process.env.KLAPPE_STRICT
-const flags = (only ? `&only=${encodeURIComponent(only)}` : '') + (process.env.KLAPPE_BAIL ? '&bail' : '')
+const cut = process.env.KLAPPE_CUT
+const flags = (only ? `&only=${encodeURIComponent(only)}` : '') + (process.env.KLAPPE_BAIL ? '&bail' : '') + (cut ? `&cut=${encodeURIComponent(cut)}` : '')
 
 // The whole-deck walk is the slowest test: on a machine with cores to spare it runs in parts of whole sections,
 // each in its own browser. --only picks scenes itself, so it walks in one part.

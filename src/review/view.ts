@@ -58,7 +58,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     fixed[k] = { box, said, note, reopen };
   }
   const status = el("p", "k-rv-status");
-  const send = (cmd: "next" | "prev" | "goto", i?: number) => channel.send({ t: "cmd", cmd, index: i });
+  const send = (cmd: "next" | "prev" | "goto" | "appendix", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-rv-buttons");
   buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")));
   view.append(place, said, moved, form, buttons, status);
@@ -222,9 +222,9 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   addEventListener("keydown", (e) => {
     if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
     const a = keyAction(e);
-    if (a === "next" || a === "prev") send(a);
+    if (a === "next" || a === "prev" || a === "appendix") send(a);
     else if (a === "home") send("goto", 0);
-    else if (a === "end") send("goto", steps.length - 1);
+    else if (a === "end") send("goto", steps.filter((s) => !s.appendix).length - 1);
     else return;
     e.preventDefault();
   });

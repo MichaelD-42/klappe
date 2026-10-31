@@ -129,3 +129,94 @@ test('a theme that sets the type scale sizes the Markdown scene, text, a fitted 
   expect(px).toEqual({ title: 132, body: 66, text: 66, list: 60, number: 168 })
   await page.close()
 })
+
+// Radius 24 (2x), stroke 8 (2x), gap 32 (4x): a 16 px corner is 32, a 2 px stroke is 4, a 20 px row gap is 80 and
+// the 8 px gap between pyramid layers is 32.
+test('a theme that sets --k-radius, --k-stroke and --k-gap changes a box, a stroke and the gaps', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=layout-tokens`)
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.problems).toEqual([])
+  const page = await open('fixture=layout-tokens#/a/coded/1')
+  const px = await page.evaluate(() => {
+    const scene = document.querySelector('div[data-scene="coded"]')!
+    const svg = document.querySelector('g[data-scene="coded"]')!
+    const box = (id: string) => svg.querySelector<SVGGraphicsElement>(`[data-k-pyramid-layer="${id}"] polygon`)!
+    const [low, high] = [box('a').getBBox(), box('b').getBBox()]
+    const list = [...scene.querySelectorAll<HTMLElement>('div')].find((e) => e.style.top === '600px' && e.style.left === '160px')!
+    return {
+      radius: getComputedStyle([...scene.querySelectorAll<HTMLElement>('div')].find((e) => e.style.borderRadius.includes('--k-radius') && e.style.background.includes('--k-surface'))!).borderRadius,
+      stroke: getComputedStyle(box('a')).strokeWidth,
+      layerGap: low.y - (high.y + high.height),
+      rowGap: getComputedStyle(list).rowGap,
+    }
+  })
+  expect(px).toEqual({ radius: '32px', stroke: '4px', layerGap: 32, rowGap: '80px' })
+  await page.close()
+})
+
+// A section.ts `tokens` override reaches the section's scenes, its stage background and the JS that reads tokens.
+test('a section that overrides tokens is inverted edge to edge; the others keep the deck theme', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=section-rhythm`)
+  expect(r.errors).toEqual([])
+  expect(r.checks.filter((c) => !c.ok)).toEqual([])
+  expect(r.problems).toEqual([])
+  const page = await open('fixture=section-rhythm#/dark/first/1')
+  const read = (scene: string) =>
+    page.evaluate((id) => {
+      const d = document.querySelector(`div[data-scene="${id}"]`)!
+      const g = document.querySelector(`g[data-scene="${id}"]`)!
+      const pin = document.querySelector<HTMLElement>(`[data-k-background]`)
+      return {
+        bg: getComputedStyle(d).getPropertyValue('--k-bg').trim(),
+        svgBg: getComputedStyle(g).getPropertyValue('--k-bg').trim(),
+        color: getComputedStyle(d).color,
+        body: getComputedStyle(d).getPropertyValue('--k-size-body').trim(),
+        pin: pin ? getComputedStyle(pin).backgroundColor : '',
+      }
+    }, scene)
+  expect((await read('first')).bg).toBe('#0f1b2d')
+  expect((await read('second')).bg).toBe('#ffffff')
+  expect((await read('second')).svgBg).toBe('#ffffff')
+  expect((await read('second')).color).toBe('rgb(15, 27, 45)')
+  expect((await read('third')).bg).toBe('#0f1b2d')
+  await page.close()
+  // A deep link into the second section shows its background: the visible pinned layer is white, the stage behind is not.
+  const deep = await open('fixture=section-rhythm#/light/second/1')
+  const shown = await deep.evaluate(() => {
+    const pins = [...document.querySelectorAll<HTMLElement>('[data-k-background]')]
+    const on = pins.filter((p) => Number(getComputedStyle(p).opacity) > 0.99 && p.closest('.k-canvas') && Number(getComputedStyle(p.closest('.k-canvas')!).opacity) > 0.99)
+    return on.map((p) => getComputedStyle(p).backgroundColor)
+  })
+  expect(shown).toEqual(['rgb(255, 255, 255)'])
+  await deep.close()
+})
+
+test('a section token override is measured: a light background with calm text is a deck problem naming the section', async () => {
+  const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=section-rhythm-contrast`)
+  expect(r.problems).toContainEqual(expect.stringMatching(/^theme: section light: --k-fg on --k-bg contrast 1\.\d < 4\.5$/))
+  expect(r.problems.every((p) => p.startsWith('theme: section light: '))).toBe(true)
+})
+
+test('JS-resolved tokens follow the section: --k-size-body reaches typeSize at build time', async () => {
+  const page = await open('fixture=section-rhythm#/light/second/1')
+  const size = (id: string) => page.evaluate((i) => Number(document.querySelector(`div[data-scene="${i}"]`)!.getAttribute('data-body')), id)
+  // --k-size-body 60px over the default 44px, on the second section only.
+  expect(await size('first')).toBe(44)
+  expect(await size('second')).toBeCloseTo(60, 5)
+  await page.close()
+})
+
+// 1366x768 is 0.7 px wide of 16:9: the stage must still reach the viewport's right edge, or the page's black shows there.
+test('the stage covers the whole viewport at 1366x768, so an inverted section has no strip at the edge', async () => {
+  const page = await open('fixture=section-rhythm#/light/second/1')
+  const r = await page.evaluate(() => {
+    const b = document.querySelector('.k-stage')!.getBoundingClientRect()
+    return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, w: innerWidth, h: innerHeight }
+  })
+  expect(r.left).toBeLessThanOrEqual(0)
+  expect(r.top).toBeLessThanOrEqual(0)
+  expect(r.right).toBeGreaterThanOrEqual(r.w)
+  expect(r.bottom).toBeGreaterThanOrEqual(r.h)
+  await page.close()
+})

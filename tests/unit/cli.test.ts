@@ -56,11 +56,12 @@ test('--version prints the version from package.json', () => {
   expect(r.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
 });
 
-test('outline prints a fresh deck from init, and init adds the shot and outline scripts', () => {
+test('outline prints a fresh deck from init, and init adds the shot, video and outline scripts', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
   expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
   const scripts = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).scripts;
   expect(scripts.shot).toBe('node klappe/bin/klappe.mjs shot');
+  expect(scripts.video).toBe('node klappe/bin/klappe.mjs video');
   expect(scripts.outline).toBe('node klappe/bin/klappe.mjs outline');
   const r = cli(cwd, 'outline');
   expect(r.status).toBe(0);
@@ -87,6 +88,29 @@ test('test stops before the browser on a deck problem, such as a duplicate scene
   expect(r.stdout).not.toContain('RUN'); // vitest never started
 }, 30_000);
 
+// --cut: outline prints the cut; an unknown cut stops pdf before a server starts.
+test('--cut picks a deck.md cut, and an unknown one stops the command', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  const files: Record<string, string> = {
+    'decks/x/deck.md': '---\ntitle: T\ncuts: { short: [a] }\n---\n',
+    'decks/x/sections/10-a/section.md': '# A\n',
+    'decks/x/sections/10-a/10-one/scene.md': '## One\n\n- One.\n',
+    'decks/x/sections/20-b/section.md': '# B\n',
+    'decks/x/sections/20-b/10-two/scene.md': '## Two\n\n- Two.\n',
+  };
+  for (const [f, text] of Object.entries(files)) {
+    mkdirSync(join(cwd, f, '..'), { recursive: true });
+    writeFileSync(join(cwd, f), text);
+  }
+  const r = cli(cwd, 'outline', '--deck', 'x', '--cut', 'short');
+  expect(r.status).toBe(0);
+  expect(r.stdout).toContain('# T, cut short (1 steps');
+  expect(r.stdout).not.toContain('## b:');
+  const bad = cli(cwd, 'pdf', '--deck', 'x', '--cut', 'nope');
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toContain('--cut needs a cut from deck.md cuts: short');
+}, 30_000);
+
 // shot --help rendered every scene of the deck (about 9 min): --help or -h on any command prints the usage and stops.
 test('--help after a command prints the usage, before it picks a deck or starts anything', () => {
   for (const args of [['shot', '--help'], ['test', '-h'], ['--help']]) {
@@ -99,7 +123,12 @@ test('--help after a command prints the usage, before it picks a deck or starts 
 // klappe dev --port 5174 --strictPort served on 5173.
 test('dev serves on the --port it is given', async () => {
   const { spawn } = await import('node:child_process')
-  const port = String(20000 + Math.floor(Math.random() * 20000))
+  // A free port from the OS, not a random one: random ports overlap the ephemeral range that other servers use.
+  const { createServer } = await import('node:net')
+  const probe = createServer()
+  await new Promise<void>((ok) => probe.listen(0, ok))
+  const port = String((probe.address() as { port: number }).port)
+  await new Promise((ok) => probe.close(ok))
   const p = spawn(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'dev', '--deck', 'demo', '--port', port, '--strictPort'], { cwd: join(__dirname, '../..') })
   try {
     const out = await new Promise<string>((ok, fail) => {
@@ -132,3 +161,48 @@ test('init copies the template: deck.md with the common keys and a word cap, the
   const { overWords } = await import('../../bin/outline.mjs');
   expect(await overWords(join(__dirname, '../..'), deck)).toEqual(['#/intro/hello/1: 13 words > 12']);
 }, 60_000);
+
+// A deck repo with one deck, for `theme`.
+const themeRepo = () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  mkdirSync(join(cwd, 'decks', 'talk'), { recursive: true });
+  writeFileSync(join(cwd, 'decks', 'talk', 'deck.md'), '---\ntitle: Acme talk\n---\n');
+  writeFileSync(join(cwd, 'logo.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  return cwd;
+};
+
+test('theme writes the theme file and refuses to overwrite it without --force', () => {
+  const cwd = themeRepo();
+  const file = join(cwd, 'decks', 'talk', 'themes', 'acme.css');
+  const run = (...more: string[]) => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', ...more);
+  expect(run().status).toBe(0);
+  expect(readFileSync(file, 'utf8')).toContain('--colors #3366ff,#ff6633');
+  writeFileSync(file, 'mine');
+  const r = run();
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain('--force');
+  expect(readFileSync(file, 'utf8')).toBe('mine');
+  expect(run('--force', '--light').status).toBe(0);
+  expect(readFileSync(file, 'utf8')).toContain('--light');
+});
+
+test('theme rejects bad colours and logos', () => {
+  const cwd = themeRepo();
+  expect(cli(cwd, 'theme', '--deck', 'talk', '--name', 'a', '--colors', 'red,#fff').stderr).toContain('two hex colours');
+  expect(cli(cwd, 'theme', '--deck', 'talk', '--name', 'a', '--colors', '#fff,#000', '--logo', 'x.gif').stderr).toContain('.svg or .png');
+});
+
+test('theme --logo copies the logo and writes overlay.ts, but never overwrites one', () => {
+  const cwd = themeRepo();
+  const run = () => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', '--logo', 'logo.svg', '--force');
+  expect(run().status).toBe(0);
+  expect(existsSync(join(cwd, 'logo.svg'))).toBe(true);
+  expect(existsSync(join(cwd, 'decks', 'talk', 'media', 'logo.svg'))).toBe(true);
+  const overlay = join(cwd, 'decks', 'talk', 'overlay.ts');
+  expect(readFileSync(overlay, 'utf8')).toContain('"media/logo.svg"');
+  expect(readFileSync(overlay, 'utf8')).toContain('"Acme talk"');
+  writeFileSync(overlay, 'mine');
+  const r = run();
+  expect(readFileSync(overlay, 'utf8')).toBe('mine');
+  expect(r.stdout).toContain('satisfies OverlayModule');
+});

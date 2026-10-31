@@ -1,3 +1,6 @@
+---
+story: An AI agent turns thousands of documents into structured facts, so analysis takes hours, not weeks.
+---
 ## Analysis
 
 - The camera flies to the Analysis stage.

@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 import { typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 
 export type FishboneOpts = {
   effect: string; // the problem, in the head
@@ -75,11 +76,11 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
   const root = el(ctx.svg, "g", { "data-k-fishbone": "" });
 
   const [a, b] = lay.spine;
-  const spine = el(root, "line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, "stroke-width": 6, "stroke-linecap": "round", pathLength: 1 });
+  const spine = el(root, "line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, style: `stroke-width: ${strokeW(6)}`, "stroke-linecap": "round", pathLength: 1 });
   spine.style.stroke = "var(--k-fg)";
   draw(spine);
   const head = el(root, "g", {});
-  const box = el(head, "rect", { x: lay.head.x, y: lay.head.y, width: lay.head.w, height: lay.head.h, rx: 10, "stroke-width": 4 });
+  const box = el(head, "rect", { x: lay.head.x, y: lay.head.y, width: lay.head.w, height: lay.head.h, style: `rx: ${radius(10)}; stroke-width: ${strokeW(4)}` });
   Object.assign(box.style, { fill: "var(--k-surface)", stroke: "var(--k-accent)" });
   const say = ctx.html.appendChild(document.createElement("div"));
   say.textContent = opts.effect;
@@ -92,23 +93,23 @@ export function fishbone(ctx: Ctx, opts: FishboneOpts): FishboneHandle {
 
   const bones = lay.bones.map((bn, i) => {
     const g = el(root, "g", { "data-k-bone": String(i) });
-    const line = el(g, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, "stroke-width": 4, "stroke-linecap": "round", pathLength: 1 });
+    const line = el(g, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, style: `stroke-width: ${strokeW(4)}`, "stroke-linecap": "round", pathLength: 1 });
     line.style.stroke = "var(--k-muted)";
     draw(line);
     const w = bn.label.length * charW() + 32;
     const ly = bn.top ? bn.end.y - LABEL_H : bn.end.y;
     const tag = el(g, "g", {});
-    const frame = el(tag, "rect", { x: bn.end.x - w / 2, y: ly, width: w, height: LABEL_H - 8, rx: 8, "stroke-width": 3 });
+    const frame = el(tag, "rect", { x: bn.end.x - w / 2, y: ly, width: w, height: LABEL_H - 8, style: `rx: ${radius(8)}; stroke-width: ${strokeW(3)}` });
     Object.assign(frame.style, { fill: "var(--k-bg)", stroke: "var(--k-line)" });
     text(tag, bn.label, { x: bn.end.x, y: ly + (LABEL_H - 8) / 2 + typeSize("label", FONT) * 0.35, "text-anchor": "middle", "font-weight": 700 });
     // The accent look over the plain one, shown while the bone is lit.
     const hot = el(g, "g", {});
-    const hl = el(hot, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, "stroke-width": 6, "stroke-linecap": "round" });
+    const hl = el(hot, "line", { x1: bn.base.x, y1: bn.base.y, x2: bn.end.x, y2: bn.end.y, style: `stroke-width: ${strokeW(6)}`, "stroke-linecap": "round" });
     hl.style.stroke = "var(--k-accent)";
-    const hf = el(hot, "rect", { x: bn.end.x - w / 2, y: ly, width: w, height: LABEL_H - 8, rx: 8, "stroke-width": 4, fill: "none" });
+    const hf = el(hot, "rect", { x: bn.end.x - w / 2, y: ly, width: w, height: LABEL_H - 8, style: `rx: ${radius(8)}; stroke-width: ${strokeW(4)}`, fill: "none" });
     hf.style.stroke = "var(--k-accent)";
     const items = bn.items.map((it) => {
-      const tick = el(g, "line", { x1: it.at.x - TICK, y1: it.at.y, x2: it.at.x, y2: it.at.y, "stroke-width": 3 });
+      const tick = el(g, "line", { x1: it.at.x - TICK, y1: it.at.y, x2: it.at.x, y2: it.at.y, style: `stroke-width: ${strokeW(3)}` });
       tick.style.stroke = "var(--k-muted)";
       const t = text(g, it.text, { x: it.at.x - TICK - 8, y: it.at.y + typeSize("label", FONT) * 0.35, "text-anchor": "end" });
       return [tick, t];

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { MARKER_MIX } from "./annotate";
 import { drawOn, typeSize } from "./draw";
+import { strokeW } from "./layout";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -97,7 +98,7 @@ export function venn(ctx: Ctx, opts: VennOpts): VennHandle {
   // The outlines, above the fills.
   const outlines = circles.map((c, i) => {
     const p = el("path", { d: ring(c), "data-k-venn-set": ids[i] });
-    Object.assign((p as SVGElement).style, { fill: "none", stroke: "var(--k-line)", strokeWidth: "4" });
+    Object.assign((p as SVGElement).style, { fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(4) });
     gsap.set(p, { autoAlpha: 0 });
     return p;
   });

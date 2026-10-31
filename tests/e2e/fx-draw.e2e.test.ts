@@ -1,4 +1,7 @@
 import { chromium, type Page } from '@playwright/test'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
@@ -201,8 +204,11 @@ test('lineArt keeps drawing content only and normalises inline-styled exports', 
 
 // Deck code imports the shipped art through the klappe/fx alias of the real Vite config.
 test('klappe/fx/art/*.svg?raw resolves through the Vite config', async () => {
+  // Its own dependency cache: a second server on node_modules/.vite flips its config hash (NODE_ENV) against the CLI tests'.
+  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-draw-cache-'))
   const server = await createServer({
     configFile: fileURLToPath(new URL('../../vite.config.ts', import.meta.url)),
+    cacheDir,
     server: { middlewareMode: true },
     appType: 'custom',
   })
@@ -213,6 +219,7 @@ test('klappe/fx/art/*.svg?raw resolves through the Vite config', async () => {
     }
   } finally {
     await server.close()
+    fs.rmSync(cacheDir, { recursive: true, force: true })
   }
 })
 

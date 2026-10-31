@@ -1,5 +1,6 @@
 import { gsap } from "gsap";
 import { drawOn, typeSize } from "./draw";
+import { radius, strokeW } from "./layout";
 import { motion } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
 
@@ -77,7 +78,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
     gsap.set(p, { autoAlpha: 0 });
     return p;
   };
-  const stroke = (w: number) => ({ fill: "none", stroke: "var(--k-line)", strokeWidth: String(w), strokeLinecap: "round" });
+  const stroke = (w: number) => ({ fill: "none", stroke: "var(--k-line)", strokeWidth: strokeW(w), strokeLinecap: "round" });
   const lines = [
     path(`M ${plot.x} ${bottom} L ${plot.x} ${plot.y + ARROW}`, stroke(4)),
     path(`M ${plot.x} ${bottom} L ${right - ARROW} ${bottom}`, stroke(4)),
@@ -108,7 +109,7 @@ export function matrix(ctx: Ctx, opts: MatrixOpts): MatrixHandle {
   const chip = slots.tl[0] ?? { w: 0, h: CHIP_H };
   const items = new Map(opts.items.map((it) => {
     const c = div({
-      left: "0", top: "0", width: `${chip.w}px`, height: `${chip.h}px`, padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: "12px",
+      left: "0", top: "0", width: `${chip.w}px`, height: `${chip.h}px`, padding: "4px 12px", border: "2px solid var(--k-line)", borderRadius: radius(12),
       outline: "2px solid transparent", // in the accent during its step: 4 px of accent in all, with no change to the layout
       background: "var(--k-surface)", color: "var(--k-fg)", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
       font: `600 ${typeSize("label", MAX_FONT)}px/${LINE_H} var(--k-font)`, zIndex: "2",

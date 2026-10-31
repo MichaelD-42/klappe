@@ -530,11 +530,11 @@ steps: [(tl, t) => t.draw(tl), (tl, t) => t.light(tl)],
 
 ## `ownIcons`
 
-A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
+A company or product glyph Lucide lacks: save it as `icons/<name>.svg` in the deck folder (or in the deck repo's root `icons/`, shared by all its decks) and use `"<name>"` in `icon()`, `iconTile()` and `iconGlyph()`, like a Lucide name. Catalog: `#/icons/own-icons/1`, with `decks/demo/icons/release-gate.svg`.
 
 - Draw it on Lucide's grid: `viewBox="0 0 24 24"`, strokes only, about 2 px wide. Another viewBox reports `icons/<name>.svg: viewBox must be 0 0 24 24, as a Lucide icon` and the icon is not loaded.
 - klappe strips each shape's own paint (`fill`, `stroke`, `stroke-width`, `style`, `class`, opacities), scripts, links, `<title>` and `<desc>`: the icon draws in the klappe stroke, in the colour or tone the call gives, and a closed shape gets the 0.2 tint.
-- A deck icon wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
+- The lookup order is the deck's `icons/`, then the repo's `icons/`, then Lucide: a deck icon wins over a repo icon, and either wins over a Lucide icon of the same name. Brand logos are pictures, not icons: show them with `image`.
 
 `ownIcons(files)` is the engine's loader for these files; a deck does not call it.
 
@@ -741,6 +741,72 @@ The shards copy the target as it is at that point; build and show it before the 
 ## `shatterGeometry`
 
 `shatterGeometry(w, h, impact, shards = 30, seed)` gives the crack and shard shapes for a `w` x `h` box: `cells` (the shard polygons, which tile the box), `cracks` (`{ pts, r }`, `r` the distance from the impact) and `reach` (impact to the farthest corner). It is pure; `shatter` uses it, and tests check that the shards tile the box.
+
+## `bigType`
+
+Catalog: section `190-media` (`#/media/type-as-image/1`). One word or number set on one line to fill its rect edge to edge, in `--k-font-heading` and `--k-accent`. With `media`, a picture or a video shows through the letters instead. `shout`, `kpi` and `counter` stay at text sizes.
+
+```ts
+import { bigType } from "klappe/fx";
+
+build: (ctx) => bigType(ctx, { text: "Shipping", media: "media/city.png", alt: "A city at dusk: a river, bridges and lit towers" }),
+steps: [(tl, b) => b.show(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `text` | string | required | one word or number; it never wraps |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` (default 48 px top and bottom, 64 px left and right) | the box the text fills |
+| `media` | string | none | `"media/x.jpg"`, or a `.mp4` or `.webm`, that shows through the letters, cropped to cover the rect |
+| `alt` | string | `""` | describes the picture; required with `media` (a deck problem without it) |
+
+`show(tl)` fades it in. The handle is `{ el, show }`.
+
+### Limits
+
+- The font size is the rect's width over the ink's measured width, capped by the rect's height, so a short number is limited by the height and leaves side room. The glyph ink (measured on a canvas, not the advance) is scaled and centred in the rect, so it touches the rect's sides, or top and bottom, to within a pixel or two. The clip is the glyph outlines.
+- A video plays muted and in a loop on the wall clock (under `data-k-ignore`) while its scene is in view; with reduced motion and in the self-test it holds its first frame.
+- A missing file shows IMAGE MISSING or VIDEO MISSING over the rect and a deck problem, as `image` and `video` do; `klappe test` writes it to `media/TODO.md`.
+
+## `lowerThird`
+
+Catalog: section `364-titling` (`#/titling/lower-third/1`). A bar at the lower left with a name and, under it, a role (or a quote's source), on `--k-surface` with an `--k-accent` edge.
+
+```ts
+import { lowerThird } from "klappe/fx";
+
+build: (ctx) => lowerThird(ctx, { name: "Mira Okafor", role: "Analyst" }),
+steps: [(tl, l) => l.show(tl), (tl, l) => l.hide(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `name` | string | required | the first line |
+| `role` | string | none | the second line |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` (default 48 px top and bottom, 64 px left and right) | the bar sits at this box's lower left |
+
+`show(tl)` slides it in from the left, `hide(tl)` out again. The handle is `{ el, show, hide }`.
+
+## `endRoll`
+
+Catalog: section `364-titling` (`#/titling/end-roll/1`). Credits that scroll up the frame: an optional title, every source the deck records, then your thanks. The sources are the `# source:` line of each `data/` file a chart loads (or the `source` of its JSON), the `# source:` line of a `barRace` or `wordCloud` file, and the `source` option of `kpi`, `waffle`, `progress`, `gauge` and `likert`, deduplicated by exact text and in deck order wherever the roll sits. A stat or chart with no origin stated adds nothing.
+
+```ts
+import { endRoll } from "klappe/fx";
+
+build: (ctx) => endRoll(ctx, { title: "Sources", thanks: ["Thank you for listening"] }),
+steps: [(tl, e) => e.show(tl)],
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `title` | string | none | the heading above the sources |
+| `thanks` | string[] | none | lines under the sources |
+| `rect` | `{ x, y, w, h }` | `ctx.safe`, the scene frame inside the deck's `safe-area` | the window the credits scroll through |
+
+`show(tl)` fades it in and scrolls it; the scroll is a tween on the canvas timeline, so a deep link mid-roll shows the frame playing would. It runs at about 90 px a second, at most 40 s. The handle is `{ el, show }`. The list is read when the step is added, after every scene has built, so a source in a later scene is on it; `ctx.deck.sources` is the same list.
+
+With reduced motion (and in the PDF and `shot`) the list stands still and whole: one that is taller than the rect flows into columns, up to six.
 
 ## `shout`
 

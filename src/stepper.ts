@@ -67,11 +67,16 @@ export class Stepper {
   goto(i: number, how: How): Promise<void> {
     return this.enqueue(() => i, how);
   }
+  // Next and previous stay in the flow they start in, the main talk or the appendix: the main talk ends at its last step,
+  // and the appendix starts at its first.
   next(): Promise<void> {
-    return this.enqueue(() => this.i + 1, "play");
+    return this.enqueue(() => (this.inFlow(this.i + 1) ? this.i + 1 : this.steps.length), "play");
   }
   prev(): Promise<void> {
-    return this.enqueue(() => this.i - 1, "cut");
+    return this.enqueue(() => (this.inFlow(this.i - 1) ? this.i - 1 : -1), "cut");
+  }
+  private inFlow(j: number): boolean {
+    return !this.steps[j] || !this.steps[j].appendix === !this.steps[this.i]?.appendix;
   }
 
   // Review focus 2: finish what is playing, then run moves one at a time.

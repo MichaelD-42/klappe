@@ -3,7 +3,7 @@ import type { CanvasRuntime } from "./render/world";
 import { formatHash, resolveHash } from "./router";
 import type { Stepper } from "./stepper";
 import { t } from "./strings";
-import { motion, stage as size } from "./theme";
+import { motion, SAFE_AREA, stage as size } from "./theme";
 import type { SelftestCheck, SelftestResult, StepAddr } from "./types";
 
 export interface SelftestCtx {
@@ -125,8 +125,6 @@ function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string
   return bad;
 }
 
-// The default safe area, top, right, bottom, left in scene px; deck.md safe-area overrides it.
-export const SAFE_AREA: [number, number, number, number] = [48, 64, 48, 64];
 const GRAPHICS = "img, video, canvas, path, circle, rect, line, polyline, polygon, ellipse, image, use";
 const hides = (o: string) => o === "hidden" || o === "clip";
 type Box = [number, number, number, number]; // left, top, right, bottom in client px
@@ -235,12 +233,18 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   try {
     for (let i = 0; i < steps.length; i++) {
       if (!picked(i)) continue;
-      // A run of picked steps plays on from a cut to the step before it; the full walk checks that cut.
-      if (i > 0 && !picked(i - 1)) {
+      // next() never enters the appendix: its first step is a jump, a cut, as the appendix key makes it.
+      if (steps[i].appendix && !steps[i - 1]?.appendix) {
         reset();
-        await stepper.goto(i - 1, "cut");
+        await stepper.goto(i, "cut");
+      } else {
+        // A run of picked steps plays on from a cut to the step before it; the full walk checks that cut.
+        if (i > 0 && !picked(i - 1)) {
+          reset();
+          await stepper.goto(i - 1, "cut");
+        }
+        await stepper.next();
       }
-      await stepper.next();
       played[i] = state(i);
     }
   } finally {
@@ -266,7 +270,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
       checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
       // Soft: each finding once, at the first step that shows it.
       for (const w of look(active(i), steps[i].scene, stage, safe)) if (!seen.has(w)) seen.add(w), warnings.push(`step ${hash}: ${w}`);
-      if (i === steps.length - 1) continue; // next() on the last step only ends the deck
+      if (i === steps.length - 1 || steps[i + 1].appendix !== steps[i].appendix) continue; // next() here only ends the talk
       await stepper.next();
       await stepper.prev();
       const back = firstDiff(seek, state(i), ["seek", "back"]);
@@ -493,7 +497,8 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     if (!selector.isOpen) return ["S did not open the selector"];
     const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector button")];
     const titles = labels().map((b) => b.textContent);
-    const want = deck.sections.map((s: any) => s.title);
+    // The appendix carries klappe's word before its title.
+    const want = deck.sections.map((s: any) => (s.appendix ? `${t("appendix", deck.meta.lang)} · ${s.title}` : s.title));
     const bad = [titles.join("|") !== want.join("|") && `buttons [${titles}], want [${want}]`];
     for (const [k, s] of deck.sections.entries()) {
       if (!selector.isOpen) key("s");
@@ -508,14 +513,16 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     const hold = motion.autoHoldMs;
     motion.autoHoldMs = AC_HOLD_MS;
     try {
-      // Three steps before the end: from step 0 the whole deck does not fit the check's time (ruling R18).
-      await stepper.goto(Math.max(0, steps.length - 4), "cut");
+      // Three steps before the end of the talk, which the appendix is not part of: from step 0 the whole deck does not
+      // fit the check's time (ruling R18).
+      const last = steps.filter((s) => !s.appendix).length - 1;
+      await stepper.goto(Math.max(0, last - 3), "cut");
       const n = log.length;
       autoplay.start();
       const ended = await until(() => since(n, "end").length > 0, CHECK_MS - 3000);
       const bad = [
         !ended && `auto-play did not reach the end (at ${at(stepper.index)})`,
-        stepper.index !== steps.length - 1 && `auto-play ended at ${at(stepper.index)}, want ${at(steps.length - 1)}`,
+        stepper.index !== last && `auto-play ended at ${at(stepper.index)}, want ${at(last)}`,
         autoplay.running && "auto-play still running after the end",
       ];
       await stepper.goto(0, "cut");

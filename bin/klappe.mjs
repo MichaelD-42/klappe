@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -17,16 +18,20 @@ if (cmd === '--version' || cmd === '-v') {
 const usage =
   'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
   '       klappe build|outline|init [--deck <id>]\n' +
+  '       klappe outline --story   one line per scene: its link and story point\n' +
+  '       klappe outline|pdf|video|test --cut <name>   a deck.md cut instead of the whole deck\n' +
   '       klappe pdf [--deck <id>] [--handout]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
+  '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
+  '       klappe video [--deck <id>] [--out <file.mp4>] [--fps <n>] [--hold <s>] [--size <w>x<h>]   needs ffmpeg on PATH\n' +
   '       klappe --version'
 // --help on a command too: shot took it for nothing and rendered the whole deck.
 if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
   console.log(usage)
   process.exit(0)
 }
-if (!['dev', 'build', 'test', 'pdf', 'shot', 'outline', 'init'].includes(cmd)) {
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
 }
@@ -73,6 +78,7 @@ if (cmd === 'init') {
     test: 'node klappe/bin/klappe.mjs test',
     pdf: 'node klappe/bin/klappe.mjs pdf',
     shot: 'node klappe/bin/klappe.mjs shot',
+    video: 'node klappe/bin/klappe.mjs video',
     outline: 'node klappe/bin/klappe.mjs outline',
     'klappe:sync': 'node klappe/bin/sync-claude.mjs',
   }
@@ -123,7 +129,33 @@ if (!fs.existsSync(deckDir)) {
   process.exit(1)
 }
 
+if (cmd === 'theme') {
+  // Colour 1 is the accent and sets the hue of the page; colour 2 is the second accent. Dark unless --light.
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const { writeTheme } = await import('./theme.mjs')
+  try {
+    const opts = { name: arg('--name'), colors: arg('--colors'), logo: arg('--logo'), light: rest.includes('--light'), force: rest.includes('--force') }
+    for (const line of await writeTheme(klappeDir, deckDir, opts)) console.log(line)
+    process.exit(0)
+  } catch (e) {
+    console.error(e.message)
+    process.exit(1)
+  }
+}
+
 process.env.KLAPPE_DECK_DIR = deckDir
+
+// --cut <name>: a cut from deck.md cuts; outline, pdf, video and test follow it. An unknown name stops before a server starts.
+const cut = rest.includes('--cut') ? rest[rest.lastIndexOf('--cut') + 1] : undefined
+if (cut !== undefined) {
+  const cuts = (await (await import('./outline.mjs')).outline(klappeDir, deckDir)).deck.meta.cuts ?? {}
+  if (!cut || cut.startsWith('-') || !cuts[cut]) {
+    console.error(`--cut needs a cut from deck.md cuts: ${Object.keys(cuts).join(', ') || '(none)'}`)
+    process.exit(1)
+  }
+}
+// The deck's URL on a server, with the cut.
+const deckUrl = (server) => `${server.resolvedUrls.local[0]}${cut ? `?cut=${encodeURIComponent(cut)}` : ''}`
 
 // Lists missing media and data files in the deck. bin/todo.mjs may be absent; then this does nothing.
 async function writeTodos() {
@@ -143,14 +175,15 @@ if (cmd === 'test') {
   }
   const bail = rest.includes('--bail')
   const strict = rest.includes('--strict')
-  const own = new Set(['--deck', '--only'])
+  const own = new Set(['--deck', '--only', '--cut'])
   const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail' && a !== '--strict')
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'
   if (strict) process.env.KLAPPE_STRICT = '1'
+  if (cut) process.env.KLAPPE_CUT = cut
   // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
   const { outline, overWords, walkedScenes } = await import('./outline.mjs')
-  const { problems, deck } = await outline(klappeDir, deckDir)
+  const { problems, deck } = await outline(klappeDir, deckDir, { cut: cut ?? null })
   for (const p of problems) console.error(`deck problem: ${p}`)
   if (problems.length) process.exit(1)
   if (only.length) {
@@ -164,9 +197,11 @@ if (cmd === 'test') {
   for (const l of long) console.error(`max-words: ${l}`)
   const { startVitest, parseCLI } = await import('vitest/node')
   const { filter, options } = parseCLI(['vitest', ...args])
-  const vitest = await startVitest('test', only.length ? ['tests/e2e/walk.e2e.test.ts'] : filter, {
+  // A cut walks alone: the other e2e tests are klappe's own fixtures and the whole demo.
+  const walkOnly = only.length || cut
+  const vitest = await startVitest('test', walkOnly ? ['tests/e2e/walk.e2e.test.ts'] : filter, {
     ...options,
-    ...(only.length && { testNamePattern: 'walk passes at', silent: false }), // the look report: vitest hides a passing test's log under an agent
+    ...(walkOnly && { testNamePattern: 'walk passes at', silent: false }), // the look report: vitest hides a passing test's log under an agent
     ...(bail && { bail: 1 }),
     root: klappeDir,
     run: true,
@@ -178,10 +213,16 @@ if (cmd === 'test') {
 
 if (cmd === 'outline') {
   const { outline } = await import('./outline.mjs')
-  const r = await outline(klappeDir, deckDir)
+  const r = await outline(klappeDir, deckDir, { story: rest.includes('--story'), cut: cut ?? null })
   for (const p of r.problems) console.warn(`deck problem: ${p}`)
   process.stdout.write(r.text)
   process.exit(0)
+}
+
+// Before a server and a browser start: klappe encodes with the system ffmpeg, not an npm package.
+if (cmd === 'video' && spawnSync('ffmpeg', ['-version']).error) {
+  console.error('klappe video needs ffmpeg on PATH')
+  process.exit(1)
 }
 
 // Imported late: init runs before npm i, when vite is not installed yet.
@@ -197,9 +238,9 @@ if (cmd === 'build') {
   await server.listen()
   // --handout: one A4 page per scene with its speaker notes, to send after the talk.
   const handout = rest.includes('--handout')
-  const out = path.join(process.cwd(), 'dist', `${id}${handout ? '-handout' : ''}.pdf`)
+  const out = path.join(process.cwd(), 'dist', `${id}${cut ? `-${cut}` : ''}${handout ? '-handout' : ''}.pdf`)
   try {
-    const r = await exportPdf(server.resolvedUrls.local[0], out, { handout })
+    const r = await exportPdf(deckUrl(server), out, { handout })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.pages} pages.`)
@@ -241,6 +282,35 @@ if (cmd === 'build') {
     process.exitCode = r.unknown.length || r.errors.length ? 1 : 0
   } finally {
     await server?.close()
+  }
+} else if (cmd === 'video') {
+  // Page errors fail the export, as in pdf. --size is the viewport; a frame other than 16:9 keeps its shape at that width.
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const fps = Number(arg('--fps') ?? 30)
+  const hold = Number(arg('--hold') ?? 3)
+  const m = (arg('--size') ?? '1920x1080').match(/^(\d+)x(\d+)$/)
+  if (!(Number.isInteger(fps) && fps > 0) || !(hold >= 0) || !m) {
+    console.error('--fps needs a whole number above 0, --hold seconds (0 or more), --size <width>x<height>')
+    process.exit(1)
+  }
+  const { exportVideo } = await import('./video.mjs')
+  const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
+  await server.listen()
+  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}${cut ? `-${cut}` : ''}.mp4`))
+  // Ctrl-C stops ffmpeg and the browser and drops the partial file, instead of leaving a short video at out.
+  const stop = new AbortController()
+  process.once('SIGINT', () => stop.abort())
+  try {
+    const r = await exportVideo(deckUrl(server), out, { fps, hold, size: { width: +m[1], height: +m[2] }, signal: stop.signal })
+    for (const p of r.problems) console.warn(`deck problem: ${p}`)
+    for (const e of r.errors) console.error(`page error: ${e}`)
+    console.log(`Wrote ${out}: ${r.frames} frames, ${(r.frames / fps).toFixed(1)} s.`)
+    process.exitCode = r.errors.length ? 1 : 0
+  } catch (e) {
+    console.error(`klappe video: ${e.message.split('\n')[0]}`)
+    process.exitCode = stop.signal.aborted ? 130 : 1
+  } finally {
+    await server.close()
   }
 } else {
   // --port and --strictPort, as Vite's own CLI takes them: several builders run one server each.

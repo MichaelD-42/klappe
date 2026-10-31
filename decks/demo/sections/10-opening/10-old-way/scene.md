@@ -1,3 +1,6 @@
+---
+story: Every update has opened the same way, and this one is about to leave that behind.
+---
 ## The old way
 
 - The usual title slide, the way every update starts.
