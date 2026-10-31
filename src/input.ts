@@ -1,6 +1,7 @@
 import type { Stepper } from "./stepper";
+import type { StepAddr } from "./types";
 
-export type Action = "next" | "prev" | "home" | "end" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "close";
+export type Action = "next" | "prev" | "home" | "end" | "appendix" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "close";
 
 const KEYS: Record<string, Action> = {
   ArrowRight: "next",
@@ -11,6 +12,7 @@ const KEYS: Record<string, Action> = {
   PageUp: "prev",
   Home: "home",
   End: "end",
+  q: "appendix", // Q&A: to the appendix and back
   o: "overview",
   s: "selector",
   n: "speaker",
@@ -46,22 +48,31 @@ export function bindInput(
     timer?: () => void;
   },
   stage: HTMLElement,
-  lastIndex: number,
-): void {
+  steps: StepAddr[],
+): (a: Action) => void {
+  const main = steps.filter((s) => !s.appendix).length; // the appendix steps come after every main step
+  let back = 0; // where the talk was when the appendix key went there
   const toggle = (p: Panel, other: Panel) => {
     other.close();
     if (p.isOpen) p.close();
     else p.open();
   };
   const run = (a: Action) => {
-    const nav = a === "next" || a === "prev" || a === "home" || a === "end";
+    const nav = a === "next" || a === "prev" || a === "home" || a === "end" || a === "appendix";
     if (nav && (ui.overview.isOpen || ui.selector.isOpen)) return; // steps don't move under an open panel
     if (a !== "autoplay" && a !== "timer") ui.autoplay?.stop(); // the timer is not a step: autoplay goes on
     if (a === "overview" || a === "selector") stepper.cancelAuto(); // no step moves under a panel
     if (a === "next") stepper.next();
     else if (a === "prev") stepper.prev();
     else if (a === "home") stepper.goto(0, "cut");
-    else if (a === "end") stepper.goto(lastIndex, "cut");
+    else if (a === "end") stepper.goto(main - 1, "cut");
+    else if (a === "appendix") {
+      if (steps[stepper.index]?.appendix) stepper.goto(back, "cut");
+      else if (main < steps.length) {
+        back = Math.max(0, stepper.index);
+        stepper.goto(main, "cut");
+      }
+    }
     else if (a === "overview") toggle(ui.overview, ui.selector);
     else if (a === "selector") toggle(ui.selector, ui.overview);
     else if (a === "speaker") ui.speaker?.open();
@@ -85,4 +96,5 @@ export function bindInput(
     if (e.target instanceof Element && e.target.closest("[data-no-advance]")) return;
     run("next");
   });
+  return run;
 }

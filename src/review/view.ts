@@ -224,7 +224,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     const a = keyAction(e);
     if (a === "next" || a === "prev") send(a);
     else if (a === "home") send("goto", 0);
-    else if (a === "end") send("goto", steps.length - 1);
+    else if (a === "end") send("goto", steps.filter((s) => !s.appendix).length - 1);
     else return;
     e.preventDefault();
   });

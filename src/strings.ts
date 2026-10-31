@@ -7,6 +7,7 @@ export const strings = {
     close: "Close",
     upNext: "Up next",
     endOfDeck: "End of deck",
+    appendix: "Appendix", // the speaker view's counter in the appendix, the PDF's page before it
     waiting: "Waiting for the main window",
     notes: "Notes",
     elapsed: "Elapsed",
@@ -74,6 +75,7 @@ export const strings = {
     close: "Schließen",
     upNext: "Als Nächstes",
     endOfDeck: "Ende der Präsentation",
+    appendix: "Anhang",
     waiting: "Warte auf das Hauptfenster",
     notes: "Notizen",
     elapsed: "Vergangen",

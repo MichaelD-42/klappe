@@ -40,6 +40,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const sceneOf = (a: StepAddr) => deck.sections.find((s) => s.id === a.section)?.scenes.find((s) => s.id === a.scene);
   let index = -1;
   let started = 0;
+  const main = steps.filter((s) => !s.appendix).length;
 
   const view = el("main", "k-speaker");
   const now = el("section", "k-sp-now");
@@ -53,7 +54,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const time = el("p", "k-sp-time", clock(0));
   const progress = el("p", "k-sp-progress");
   const next = el("p", "k-sp-next");
-  const send = (cmd: "next" | "prev" | "goto" | "timer", i?: number) => channel.send({ t: "cmd", cmd, index: i });
+  const send = (cmd: "next" | "prev" | "goto" | "timer" | "appendix", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
   // Disabled on a scene without a timer, where T does nothing.
   const timerButton = button(t("timer", lang), () => send("timer"));
@@ -112,8 +113,9 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     notes.textContent = [step?.notes, sc?.notes, ...effectNotes(a.scene)].filter(Boolean).join("\n\n");
     notesLabel.hidden = !notes.textContent;
     const b = steps[index + 1];
-    next.textContent = b ? (sceneOf(b)?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);
-    progress.textContent = `${index + 1} / ${steps.length}`;
+    next.textContent = b && !b.appendix === !a.appendix ? (sceneOf(b)?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);
+    // The counter counts the main talk; an appendix step counts in the appendix.
+    progress.textContent = a.appendix ? `${t("appendix", lang)} ${index - main + 1} / ${steps.length - main}` : `${index + 1} / ${main}`;
     rec.enter(`${a.section}/${a.scene}`);
     showPlan();
     if (!started) {
@@ -125,9 +127,9 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "p" && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) return toggleRehearsal();
     const a = keyAction(e);
-    if (a === "next" || a === "prev" || a === "timer") send(a);
+    if (a === "next" || a === "prev" || a === "timer" || a === "appendix") send(a);
     else if (a === "home") send("goto", 0);
-    else if (a === "end") send("goto", steps.length - 1);
+    else if (a === "end") send("goto", main - 1);
     else return;
     e.preventDefault();
   });

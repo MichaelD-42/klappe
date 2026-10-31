@@ -20,11 +20,14 @@ function markdown(deckDir) {
 const quote = (notes, pad) => notes.split('\n').filter((l) => l.trim()).map((l) => `${pad}> ${l}`)
 
 // The deck from its Markdown alone: the steps come from scene.md, and the step count check is the self-test's.
-async function readDeck(klappeDir, deckDir) {
+// cut: the deck.md cut to read, as ?cut= plays it; the appendix sections go last either way.
+async function readDeck(klappeDir, deckDir, cut = null) {
   const load = async (p) => (await runnerImport(path.join(klappeDir, p), { configFile: false, logLevel: 'error' })).module
-  const [{ assembleDeck }, { parseFrontmatter }, plan, { LANGS }] = await Promise.all([load('src/deck/assemble.ts'), load('src/parse/frontmatter.ts'), load('src/plan.ts'), load('src/fx/code.ts')])
+  const [{ assembleDeck }, { cutDeck }, { parseFrontmatter }, plan, { LANGS }] = await Promise.all([load('src/deck/assemble.ts'), load('src/layout.ts'), load('src/parse/frontmatter.ts'), load('src/plan.ts'), load('src/fx/code.ts')])
   const files = markdown(deckDir)
-  return { ...assembleDeck(files, {}), files, parseFrontmatter, plan, LANGS }
+  const whole = assembleDeck(files, {})
+  const { deck, problems } = cutDeck(whole.deck, cut)
+  return { deck, problems: [...whole.problems, ...problems], files, parseFrontmatter, plan, LANGS }
 }
 
 // deck.md max-words: one line per step whose on-screen text has more words, or the problem with the key. No key, no lines.
@@ -50,9 +53,10 @@ export function walkedScenes(deck, targets) {
 }
 
 // Returns the outline as Markdown and the deck problems the parser found.
-// story: only the story view, one line per scene.
-export async function outline(klappeDir, deckDir, { story = false } = {}) {
-  const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, sceneSeconds }, LANGS } = await readDeck(klappeDir, deckDir)
+// story: only the story view, one line per scene. cut: a deck.md cut. The estimate and the step count leave the
+// appendix out: it is not part of the talk.
+export async function outline(klappeDir, deckDir, { story = false, cut = null } = {}) {
+  const { deck, problems, files, parseFrontmatter, plan: { noteSeconds, sceneSeconds }, LANGS } = await readDeck(klappeDir, deckDir, cut)
   const target = parseFrontmatter(files['deck.md'] ?? '').data.duration
   if (target !== undefined && !(typeof target === 'number' && target > 0)) problems.push('deck.md: duration needs a number of minutes, for example 45')
 
@@ -80,11 +84,12 @@ export async function outline(klappeDir, deckDir, { story = false } = {}) {
       })
       n += c.steps.length
     }
-    body.push('', `## ${s.id}: ${s.title} (${n} steps, ${minutes(secs)})`, ...quote(s.notes, ''), ...lines)
+    body.push('', `## ${s.id}: ${s.title} (${s.appendix ? 'appendix, ' : ''}${n} steps, ${minutes(secs)})`, ...quote(s.notes, ''), ...lines)
+    if (s.appendix) continue
     total += secs
     count += n
   }
   const over = typeof target === 'number' && target > 0 ? Math.round(total / 60 - target) : undefined
   const vs = over === undefined ? '' : `; target ${target} min, ${over > 0 ? `${over} min over` : over < 0 ? `${-over} min under` : 'on target'}`
-  return { deck, text: [`# ${deck.meta.title} (${count} steps, ${minutes(total)}${vs})`, ...body, ''].join('\n'), problems }
+  return { deck, text: [`# ${deck.meta.title}${cut === null ? '' : `, cut ${cut}`} (${count} steps, ${minutes(total)}${vs})`, ...body, ''].join('\n'), problems }
 }

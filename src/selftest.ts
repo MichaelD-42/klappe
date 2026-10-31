@@ -233,12 +233,18 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   try {
     for (let i = 0; i < steps.length; i++) {
       if (!picked(i)) continue;
-      // A run of picked steps plays on from a cut to the step before it; the full walk checks that cut.
-      if (i > 0 && !picked(i - 1)) {
+      // next() never enters the appendix: its first step is a jump, a cut, as the appendix key makes it.
+      if (steps[i].appendix && !steps[i - 1]?.appendix) {
         reset();
-        await stepper.goto(i - 1, "cut");
+        await stepper.goto(i, "cut");
+      } else {
+        // A run of picked steps plays on from a cut to the step before it; the full walk checks that cut.
+        if (i > 0 && !picked(i - 1)) {
+          reset();
+          await stepper.goto(i - 1, "cut");
+        }
+        await stepper.next();
       }
-      await stepper.next();
       played[i] = state(i);
     }
   } finally {
@@ -264,7 +270,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
       checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
       // Soft: each finding once, at the first step that shows it.
       for (const w of look(active(i), steps[i].scene, stage, safe)) if (!seen.has(w)) seen.add(w), warnings.push(`step ${hash}: ${w}`);
-      if (i === steps.length - 1) continue; // next() on the last step only ends the deck
+      if (i === steps.length - 1 || steps[i + 1].appendix !== steps[i].appendix) continue; // next() here only ends the talk
       await stepper.next();
       await stepper.prev();
       const back = firstDiff(seek, state(i), ["seek", "back"]);

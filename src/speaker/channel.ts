@@ -1,6 +1,6 @@
 export type Msg =
   | { t: "state"; index: number; timer?: boolean } // timer: the current scene has one
-  | { t: "cmd"; cmd: "next" | "prev" | "goto" | "timer"; index?: number }
+  | { t: "cmd"; cmd: "next" | "prev" | "goto" | "timer" | "appendix"; index?: number }
   | { t: "hello" }
   // A review edit from the deck window: line goes into the Visuals finding of step index, over the line that starts with key.
   | { t: "edit"; index: number; key: string; line: string };
@@ -18,7 +18,7 @@ export function isMsg(x: unknown): x is Msg {
   if (m.t === "hello") return true;
   if (m.t === "state") return isIndex(m.index) && (m.timer === undefined || typeof m.timer === "boolean");
   if (m.t === "edit") return isIndex(m.index) && typeof m.key === "string" && typeof m.line === "string" && m.line.length <= 500 && m.line.startsWith(m.key);
-  if (m.t === "cmd") return m.cmd === "next" || m.cmd === "prev" || m.cmd === "timer" || (m.cmd === "goto" && isIndex(m.index));
+  if (m.t === "cmd") return m.cmd === "next" || m.cmd === "prev" || m.cmd === "timer" || m.cmd === "appendix" || (m.cmd === "goto" && isIndex(m.index));
   return false;
 }
 

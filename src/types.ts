@@ -18,6 +18,7 @@ export interface DeckMeta {
   frame?: { w: number; h: number }; // deck.md frame as the stage size in scene px: 16:9 1920x1080 (default), 4:3, 1:1, 9:16
   duration?: number; // deck.md duration: the planned talk length in minutes
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
+  cuts?: Record<string, string[]>; // deck.md cuts: a shorter talk by name, as the section ids it keeps; ?cut=<name> plays one
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-answer";
@@ -61,6 +62,8 @@ export interface SectionDoc {
   order: number;
   title: string;
   notes: string;
+  // frontmatter appendix: true: outside the main flow, after it; next and previous never enter it, the jump key does.
+  appendix?: boolean;
 }
 export interface Ctx {
   rect: Rect;
@@ -145,7 +148,7 @@ export interface CameraPace {
 // Where the deck is, for an overlay's update.
 export interface OverlayAt {
   index: number; // the step's place in the whole deck, from 0
-  total: number; // the deck's step count
+  total: number; // the main flow's step count; an appendix step's index is total or more
   section: string; // ids
   scene: string;
   step: number; // the step in its scene, from 1
@@ -218,6 +221,7 @@ export interface StepAddr {
   scene: string;
   step: number;
   auto?: number | null; // from SceneModule.auto
+  appendix?: true; // an appendix section's step: after every main step, outside next and previous
 }
 export interface SelftestCheck {
   name: string;

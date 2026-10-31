@@ -64,6 +64,8 @@ export function assembleDeck(
     });
   }
   sections.sort(byOrder);
+  for (const [name, ids] of Object.entries(meta.cuts ?? {}))
+    for (const id of ids) if (!sections.some((s) => s.id === id)) problems.push(`deck.md: cut '${name}' names no section '${id}'`);
 
   for (const [kind, ids] of [
     ["section", sections.map((s) => s.id)],

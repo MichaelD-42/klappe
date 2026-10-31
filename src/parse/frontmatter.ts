@@ -10,8 +10,8 @@ function splitTop(s: string): string[] {
   for (const c of s) {
     if (quote) quote = c === quote ? "" : quote;
     else if (c === '"' || c === "'") quote = c;
-    else if (c === "[") depth++;
-    else if (c === "]") depth--;
+    else if (c === "[" || c === "{") depth++;
+    else if (c === "]" || c === "}") depth--;
     if (c === "," && depth === 0 && !quote) {
       parts.push(cur);
       cur = "";
@@ -24,6 +24,9 @@ function splitTop(s: string): string[] {
 function parseValue(raw: string): unknown {
   const v = raw.trim();
   if (v.startsWith("[") && v.endsWith("]")) return splitTop(v.slice(1, -1)).map(parseValue);
+  // A flow map, { key: value, ... }, as deck.md cuts writes it.
+  if (v.startsWith("{") && v.endsWith("}"))
+    return Object.fromEntries(splitTop(v.slice(1, -1)).map((kv) => [kv.slice(0, kv.indexOf(":")).trim(), parseValue(kv.slice(kv.indexOf(":") + 1))]));
   const q = /^(["'])(.*)\1$/.exec(v);
   if (q) return q[2];
   if (v === "true") return true;
@@ -77,6 +80,11 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   if (tempo === undefined) problems.push("deck.md: tempo is slow, normal or fast");
   const frame = FRAMES[String(data.frame ?? "16:9")];
   if (!frame) problems.push("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
+  const c = data.cuts;
+  const cuts = c && typeof c === "object" && !Array.isArray(c) && Object.values(c).every(Array.isArray)
+    ? Object.fromEntries(Object.entries(c).map(([k, ids]) => [k, (ids as unknown[]).map(String)]))
+    : undefined;
+  if (c !== undefined && !cuts) problems.push("deck.md: cuts needs { <name>: [<section id>, …] }, for example { short: [intro, demo] }");
   return {
     meta: {
       title,
@@ -89,6 +97,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       frame: frame ?? FRAMES["16:9"],
       ...(typeof data.duration === "number" && data.duration > 0 && { duration: data.duration }),
       tempo: tempo ?? 1,
+      ...(cuts && { cuts }),
     },
     problems,
   };
