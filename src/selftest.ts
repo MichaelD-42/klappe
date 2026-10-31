@@ -3,7 +3,7 @@ import type { CanvasRuntime } from "./render/world";
 import { formatHash, resolveHash } from "./router";
 import type { Stepper } from "./stepper";
 import { t } from "./strings";
-import { motion } from "./theme";
+import { motion, stage as size } from "./theme";
 import type { SelftestCheck, SelftestResult, StepAddr } from "./types";
 
 export interface SelftestCtx {
@@ -90,7 +90,7 @@ const unseen = (e: Element) => {
 };
 
 function legibility(c: CanvasRuntime, scene: string, stage: HTMLElement): string[] {
-  const fit = stage.getBoundingClientRect().width / 1920;
+  const fit = stage.getBoundingClientRect().width / size.w;
   const cam = Number(gsap.getProperty(c.world, "scaleX"));
   const box = stage.getBoundingClientRect();
   const bad: string[] = [];
@@ -142,9 +142,10 @@ const boxOf = (r: DOMRect): Box => [r.left, r.top, r.right, r.bottom];
 // Clipped text: a shown text run that an ancestor's overflow hidden or clip cuts (ellipsis and line clamp too).
 function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[]): string[] {
   const box = stage.getBoundingClientRect();
-  const fit = box.width / 1920;
+  const fit = box.width / size.w;
+  const { w: W, h: H } = size;
   const [top, right, bottom, left] = safe;
-  const area = `[${[left, top, 1920 - right, 1080 - bottom]}]`;
+  const area = `[${[left, top, W - right, H - bottom]}]`;
   const bad: string[] = [];
   const skip = (e: Element) => !!e.closest("[data-k-ignore], [data-k-bleed]");
   const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
@@ -165,9 +166,9 @@ function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[
   const units = (r: Box) => [(r[0] - box.left) / fit, (r[1] - box.top) / fit, (r[2] - box.left) / fit, (r[3] - box.top) / fit];
   const ink = (e: Element, r: Box, what: string) => {
     const [x0, y0, x1, y1] = units(r);
-    if (x1 <= Math.max(x0, 0) || y1 <= Math.max(y0, 0) || x0 >= 1920 || y0 >= 1080) return; // cut away or off stage
-    if ((x0 <= 1 && x1 >= 1919) || (y0 <= 1 && y1 >= 1079)) return;
-    if (x0 < left - 1 || y0 < top - 1 || x1 > 1920 - right + 1 || y1 > 1080 - bottom + 1)
+    if (x1 <= Math.max(x0, 0) || y1 <= Math.max(y0, 0) || x0 >= W || y0 >= H) return; // cut away or off stage
+    if ((x0 <= 1 && x1 >= W - 1) || (y0 <= 1 && y1 >= H - 1)) return;
+    if (x0 < left - 1 || y0 < top - 1 || x1 > W - right + 1 || y1 > H - bottom + 1)
       bad.push(`safe area: ${path(e, c.el)} ${what}: ink [${[x0, y0, x1, y1].map(Math.round)}] outside ${area}`);
   };
   const range = document.createRange();

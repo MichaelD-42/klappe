@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { motion } from "../theme";
+import { motion, stage } from "../theme";
 import type { Ctx } from "../types";
 
 export type Mood = "calm" | "curious" | "careful" | "insight" | "celebrating";
@@ -115,7 +115,7 @@ export function mesh3d(ctx: Ctx, opts: Mesh3dOpts): Mesh3dHandle {
     height: `${size}px`,
     pointerEvents: "none",
   });
-  const cam = Math.min(1920 / ctx.rect.w, 1080 / ctx.rect.h);
+  const cam = Math.min(stage.w / ctx.rect.w, stage.h / ctx.rect.h);
   const scale = Math.min((globalThis.devicePixelRatio || 1) * cam, MAX_BACKING / size);
   canvas.width = canvas.height = Math.round(size * scale);
   ctx.html.append(canvas);

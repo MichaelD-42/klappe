@@ -383,3 +383,27 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **The starter deck is a `template/` folder, shaped by the work decks, and sets `max-words: 12`.**
   - Both audited decks grew `data/` and `media/`, the bigger one also `shared/` and `deck.css`; both set the same five `deck.md` keys. The template has those, one scene, and a README with the commands. It has no example `scene.ts` or `overlay.ts`: an agent copies catalog scenes instead.
   - The word cap is on from the first scene, so a long step fails `klappe test` before a deck grows around it; the README says how to raise it.
+
+## 2026-10-31 (backlog top five)
+
+- **Plain text steps replace each other by default; `stack: true` in `scene.md` frontmatter opts into the build-up.**
+  - Why: the bullet build-up slide is what klappe is meant to replace. One large statement at a time is what a talk wants, and an agent writing plain list items now gets it without a `scene.ts`.
+  - Only a scene of plain items replaces. With media, code, a task list, a table or an agenda, the text is a caption column beside the element, and a large centred statement would sit on top of it.
+  - The switch is frontmatter in `scene.md`, the first scene-level key there. Composition presets and the story point are planned as scene frontmatter too, and a plain scene has no `scene.ts` to hold an option.
+- **`frame` in `deck.md` picks one of four shapes (16:9, 4:3, 1:1, 9:16), not any size.**
+  - Why: a free size would be an API to freeze for shapes nobody asked for; these four cover a projector, an old room, a social square and a vertical video. Landscape frames keep 1080 scene px of height and a vertical one 1080 of width, so `--k-size-*` and the 20 px legibility floor mean the same in every frame.
+  - The stage size is one module-level object in `theme.ts`, set once at load like `tempo`. Effects read it when they build, not at import, so nothing else had to pass it around.
+  - Effects and scene code keep their scene-px coordinates: a 16:9 scene is not rescaled into another frame. A deck picks its frame before it is written.
+- **Review edits name an element by its effect and text, not its call site.**
+  - The spike: Vite reprints `scene.ts` before the browser runs it (a `chart()` call on source line 7 runs on line 4), so a stack trace's line does not point at the source. Mapping it back needs the inline source map and a VLQ decoder in the page, for a hint Claude can get from the effect and text in a moment.
+- **A review edit is a line in `review.md` that Claude applies, not a write into `scene.ts`; only `scene.md` text is written straight back.**
+  - A position in `scene.ts` is code (a loop, a helper, `place()`, an earlier tween); only a reader can tell which number to change. A `scene.md` line is the text itself, so it is written when it is on exactly one line, and refused otherwise.
+  - The deck window sends the line over the speaker channel and the review window writes it into its Visuals field, so `review.md` keeps one writer and its save queue.
+  - The preview uses CSS `translate` and `scale`, which compose with GSAP's `transform` and leave the timeline alone; the next step puts back only those properties.
+- **`svg` is a new effect beside `lineArt`, not a mode of it.**
+  - `lineArt` is a line drawing that forces every stroke to `--k-fg`; full-colour art keeps its fills and maps them. Their options and steps differ (layers by id vs one draw), so one function with a mode would carry both sets.
+  - An unmapped colour stays in its own colour and is a deck problem, not a silent `--k-fg`: the author sees which hex value needs a token.
+  - Layers are the top-level ids only, hidden at load, so the hidden state is known in `build` as the timeline rule asks. Exporters give an id to every group; making all of them layers would hide the whole picture.
+- **Camera pacing is a `camera` key on the scene being entered, not on the section or the deck.**
+  - A flight's character belongs to where it goes: a whip into the far scene, a slow push into the one that matters. `tempo` stays the deck-wide knob; an explicit `duration` is not scaled by it, as an effect's own times are not.
+  - The whip's blur is an SVG Gaussian blur along the flight's direction on the world, written from the tween's progress like `follow`, so seek equals play; CSS `blur()` has no direction. It pans straight, without the zoom-out mid-point of a far flight: the zoom-out is what makes a flight slow to read.

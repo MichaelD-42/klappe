@@ -15,7 +15,7 @@ import { mountOverlay } from "./render/overlay";
 import { renderWorld, svgBackgrounds } from "./render/world";
 import { Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
-import { applyTheme, loadFonts, motion, setTempo } from "./theme";
+import { applyTheme, loadFonts, motion, setFrame, setTempo } from "./theme";
 import { bindInput } from "./input";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
@@ -28,6 +28,7 @@ import type { StepAddr } from "./types";
 const errors = installErrorCapture();
 const { deck, problems } = await loadDeck();
 setTempo(deck.meta.tempo ?? 1);
+if (deck.meta.frame) setFrame(deck.meta.frame);
 problems.push(...ownIcons(deck.icons ?? {}));
 const layout = layoutDeck(deck);
 problems.push(...layout.problems);
@@ -99,9 +100,15 @@ async function startDeck(svg: Record<string, string>) {
     },
   };
   // R: the review window, beside the deck like the speaker view. Only on the dev server, which saves its findings.
+  // It also turns on edit mode here: select, move and resize an element to write a Visuals line.
+  let editing = false;
   const review = import.meta.env.KLAPPE_REVIEW
     ? {
         open() {
+          if (!editing) {
+            editing = true;
+            void import("./review/edit").then((m) => m.mountEdit(stage, ui, canvases, stepper, steps, channel, deck));
+          }
           const url = new URL(location.href);
           url.searchParams.set("review", "1");
           url.searchParams.delete("autoplay");

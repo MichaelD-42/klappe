@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import type { TransitionOpts } from "./transitions";
+import { stage } from "../theme";
 
 const CUBE = 1;
 const PAGE = 0.9;
@@ -32,14 +33,16 @@ export function transitionCube(from: CanvasRuntime, to: CanvasRuntime, _opts: Tr
 }
 
 type Pt = [number, number];
-const W = 1920;
-const H = 1080;
-const DIAG = Math.hypot(W, H);
-const U: Pt = [W / DIAG, H / DIAG]; // the page folds across this direction, from the bottom-right corner to the top-left
-const along = (p: Pt) => p[0] * U[0] + p[1] * U[1];
+// The stage's size and diagonal, and U: the page folds across this direction, from the bottom-right corner to the top-left.
+function sheet() {
+  const { w: W, h: H } = stage;
+  const DIAG = Math.hypot(W, H);
+  const U: Pt = [W / DIAG, H / DIAG];
+  return { W, H, DIAG, U, along: (p: Pt) => p[0] * U[0] + p[1] * U[1] };
+}
 
 // The part of polygon P where along(p) - s has the sign `side` (Sutherland-Hodgman, one edge).
-function cut(P: Pt[], s: number, side: 1 | -1): Pt[] {
+function cut(P: Pt[], s: number, side: 1 | -1, along: (p: Pt) => number): Pt[] {
   const out: Pt[] = [];
   P.forEach((a, i) => {
     const b = P[(i + 1) % P.length];
@@ -53,19 +56,21 @@ function cut(P: Pt[], s: number, side: 1 | -1): Pt[] {
 // The peel at progress p (0 to 1): `page`, what still lies flat, and `flap`, the peeled part folded back over it
 // (the peeled corner mirrored across the fold line). The fold runs from the bottom-right corner to the top-left one.
 export function pagePeel(p: number): { page: Pt[]; flap: Pt[] } {
+  const { W, H, DIAG, U, along } = sheet();
   const s = DIAG * (1 - p);
   const rect: Pt[] = [[0, 0], [W, 0], [W, H], [0, H]];
-  const peeled = cut(rect, s, -1);
-  return { page: cut(rect, s, 1), flap: peeled.map((q) => { const d = 2 * (along(q) - s); return [q[0] - d * U[0], q[1] - d * U[1]]; }) };
+  const peeled = cut(rect, s, -1, along);
+  return { page: cut(rect, s, 1, along), flap: peeled.map((q) => { const d = 2 * (along(q) - s); return [q[0] - d * U[0], q[1] - d * U[1]]; }) };
 }
 
 // The gradient line of a box-sized gradient at this angle runs along U, and a stop at n px sits where along() = n.
-const SHADE_ANGLE = 180 - (Math.atan2(W, H) * 180) / Math.PI;
+const shadeAngle = (W: number, H: number) => 180 - (Math.atan2(W, H) * 180) / Math.PI;
 const poly = (P: Pt[]) => (P.length ? `polygon(${P.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(", ")})` : "inset(50%)");
 
 // The old canvas peels off like a page from its bottom-right corner; the back of the page (the surface colour,
 // a shade at the crease and darker toward the corner) folds over it, and the new canvas comes out of its shadow.
 export function transitionPageTurn(from: CanvasRuntime, to: CanvasRuntime, _opts: TransitionOpts): gsap.core.Timeline {
+  const { W, H, DIAG } = sheet();
   const worlds = from.el.parentElement!;
   let flap = worlds.querySelector<HTMLElement>(":scope > [data-k-peel]");
   if (!flap) {
@@ -82,7 +87,7 @@ export function transitionPageTurn(from: CanvasRuntime, to: CanvasRuntime, _opts
     // The shade moves with the fold (along = s); the folded corner lands at along = 2s - DIAG.
     const s = DIAG * (1 - p);
     const mix = (k: number) => `color-mix(in srgb, var(--k-surface) ${k}%, var(--k-blackout))`;
-    f.style.background = `linear-gradient(${SHADE_ANGLE}deg, ${mix(72)} ${2 * s - DIAG}px, var(--k-surface) ${s - 60}px, ${mix(85)} ${s}px)`;
+    f.style.background = `linear-gradient(${shadeAngle(W, H)}deg, ${mix(72)} ${2 * s - DIAG}px, var(--k-surface) ${s - 60}px, ${mix(85)} ${s}px)`;
   };
   return gsap
     .timeline()

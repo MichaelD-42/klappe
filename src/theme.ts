@@ -7,6 +7,15 @@ export const motion = { ...BASE };
 // deck.md tempo, set once at load before anything builds: a factor on all three.
 export const setTempo = (k: number) => void Object.assign(motion, { camera: BASE.camera * k, step: BASE.step * k, autoHoldMs: BASE.autoHoldMs * k });
 
+// The stage in scene px, from deck.md frame. Read it at use, not at import: setFrame sets it once at load, before anything builds.
+export const stage = { w: 1920, h: 1080 };
+export function setFrame(f: { w: number; h: number }): void {
+  Object.assign(stage, f);
+  if (typeof document === "undefined") return;
+  document.documentElement.style.setProperty("--k-frame-w", `${f.w}px`);
+  document.documentElement.style.setProperty("--k-frame-h", `${f.h}px`);
+}
+
 // CSS variables defined in themes/calm.css.
 export const cssVars = { bg: "--k-bg", fg: "--k-fg", accent: "--k-accent", font: "--k-font" };
 

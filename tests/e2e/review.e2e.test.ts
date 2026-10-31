@@ -1,5 +1,6 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test'
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, beforeEach, expect, inject, test } from 'vitest'
 
@@ -310,5 +311,92 @@ test('Reopen needs a note, writes it under the finding and makes the finding edi
   await expect.poll(() => box.isVisible(), { timeout: 10_000 }).toBe(false)
   expect(await field(review, 'content').evaluate((t: HTMLTextAreaElement) => t.readOnly)).toBe(false)
   expect(await deckIndex(deck)).toBe(1)
+  await context.close()
+})
+
+// Edit mode: R turns it on in the deck window. A drag moves the element as a preview and writes a Move line.
+const MOVE = /^Move p "Step 2\." from \[(\d+), (\d+), (\d+), (\d+)\] to \[(\d+), (\d+), (\d+), (\d+)\]$/
+const stepText = (deck: Page) => deck.locator('div[data-scene="first"] p[data-step="2"]')
+
+test('in edit mode a drag moves the element as a preview, writes a Move line to Visuals and never steps', async () => {
+  const { context, deck, review } = await pair()
+  const p = stepText(deck)
+  const b = (await p.boundingBox())!
+  await deck.mouse.move(b.x + 20, b.y + b.height / 2)
+  await deck.mouse.down()
+  await deck.mouse.move(b.x + 120, b.y + b.height / 2 + 50, { steps: 5 })
+  await deck.mouse.up()
+  expect(await deckIndex(deck)).toBe(1)
+  expect(await deck.locator('.k-edit-box').isVisible()).toBe(true)
+  await expect.poll(() => field(review, 'visuals').inputValue(), { timeout: 10_000 }).toMatch(MOVE)
+  const m = MOVE.exec(await field(review, 'visuals').inputValue())!.slice(1).map(Number)
+  const k = 1920 / 1366 // screen px to scene px at this viewport
+  expect(m[4] - m[0]).toBeCloseTo(100 * k, -1)
+  expect(m[5] - m[1]).toBeCloseTo(50 * k, -1)
+  expect(m.slice(6)).toEqual(m.slice(2, 4)) // same size
+  await expect.poll(onDisk, { timeout: 10_000 }).toContain('### Visuals\n\nMove p "Step 2."')
+  // The timeline is untouched: the next step drops the preview.
+  expect(await p.evaluate((e) => e.style.translate)).not.toBe('')
+  await review.keyboard.press('ArrowLeft') // back to step 1, from the review window
+  await expect.poll(() => deckIndex(deck)).toBe(0)
+  expect(await p.evaluate((e) => e.style.translate)).toBe('')
+  expect(await deck.locator('.k-edit-box').isVisible()).toBe(false)
+  await context.close()
+})
+
+test('in edit mode arrows nudge the selection instead of stepping, and the line for it is replaced, not added', async () => {
+  const { context, deck, review } = await pair()
+  const b = (await stepText(deck).boundingBox())!
+  await deck.mouse.click(b.x + 20, b.y + b.height / 2)
+  for (let i = 0; i < 3; i++) await deck.keyboard.press('ArrowRight')
+  await deck.keyboard.press('Shift+ArrowDown')
+  expect(await deckIndex(deck)).toBe(1)
+  await expect.poll(() => field(review, 'visuals').inputValue(), { timeout: 10_000 }).toMatch(MOVE)
+  let m = MOVE.exec(await field(review, 'visuals').inputValue())!.slice(1).map(Number)
+  expect([m[4] - m[0], m[5] - m[1]]).toEqual([3, 10])
+  await deck.keyboard.press('ArrowRight')
+  await expect.poll(async () => MOVE.exec(await field(review, 'visuals').inputValue())?.[5], { timeout: 10_000 }).toBe(String(m[0] + 4))
+  expect((await field(review, 'visuals').inputValue()).split('\n')).toHaveLength(1)
+  await deck.keyboard.press('Escape')
+  await deck.keyboard.press('ArrowRight') // nothing selected: the arrow steps again
+  await expect.poll(() => deckIndex(deck)).toBe(2)
+  await context.close()
+})
+
+test('in edit mode the corner handle resizes from the top-left corner', async () => {
+  const { context, deck, review } = await pair()
+  const b = (await stepText(deck).boundingBox())!
+  await deck.mouse.click(b.x + 20, b.y + b.height / 2)
+  const h = (await deck.locator('.k-edit-handle').boundingBox())!
+  await deck.mouse.move(h.x + h.width / 2, h.y + h.height / 2)
+  await deck.mouse.down()
+  await deck.mouse.move(h.x + h.width / 2 + 60, h.y + h.height / 2 + 30, { steps: 4 })
+  await deck.mouse.up()
+  await expect.poll(() => field(review, 'visuals').inputValue(), { timeout: 10_000 }).toMatch(MOVE)
+  const m = MOVE.exec(await field(review, 'visuals').inputValue())!.slice(1).map(Number)
+  expect(m.slice(4, 6)).toEqual(m.slice(0, 2))
+  expect(m[6]).toBeGreaterThan(m[2])
+  expect(m[7]).toBeGreaterThan(m[3])
+  expect(await deckIndex(deck)).toBe(1)
+  await context.close()
+})
+
+test('in edit mode a double click edits scene.md text in place: Enter writes it back, Escape keeps the old text', async () => {
+  const file = `${inject('TEXT_DIR')}/sections/10-a/10-first/scene.md`
+  mkdirSync(dirname(file), { recursive: true })
+  const md = '## First\n\n- Step 1.\n- Step 2.\n- Step 3.\n- Step 4.\n- Step 5.\n'
+  writeFileSync(file, md)
+  const { context, deck } = await pair()
+  const p = stepText(deck)
+  await p.dblclick()
+  await deck.keyboard.type('Step two, said better.')
+  await deck.keyboard.press('Enter')
+  await expect.poll(() => readFileSync(file, 'utf8'), { timeout: 10_000 }).toBe(md.replace('- Step 2.', '- Step two, said better.'))
+  expect(await deckIndex(deck)).toBe(1) // typing and Enter never stepped
+  await deck.locator('div[data-scene="first"] h2').dblclick()
+  await deck.keyboard.type('Gone')
+  await deck.keyboard.press('Escape')
+  expect(await deck.locator('div[data-scene="first"] h2').textContent()).toBe('First')
+  expect(readFileSync(file, 'utf8')).toContain('## First\n')
   await context.close()
 })

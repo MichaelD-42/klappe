@@ -15,6 +15,7 @@ export interface DeckMeta {
   confidential: boolean;
   sharedCanvas: string[][];
   safeArea?: [number, number, number, number]; // top, right, bottom, left in scene px; the walk warns about ink outside it
+  frame?: { w: number; h: number }; // deck.md frame as the stage size in scene px: 16:9 1920x1080 (default), 4:3, 1:1, 9:16
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
 }
 export type StepKind =
@@ -46,6 +47,8 @@ export interface SceneDoc {
   fence?: { lang: string; src: string; groups: number[][]; avatars?: Record<string, string> }; // avatars: a chat fence's picture lines
   // The scene's one Markdown table, as compareTable reads it: ✓ ✔ true, ✗ ✘ false, ~ partly, other text as written.
   table?: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[] };
+  // frontmatter stack: true: plain text steps build up a list instead of replacing each other.
+  stack?: boolean;
 }
 export interface SectionDoc {
   id: string;
@@ -64,7 +67,7 @@ export interface Ctx {
       target: Rect,
       // tilt: degrees of a 3D lean into the flight's direction, at its peak mid-flight; none by default, none
       // with reduced motion (the flight is a cut).
-      opts?: { duration?: number; at?: number | string; tilt?: number },
+      opts?: CameraPace & { at?: number | string; tilt?: number },
     ): void;
     // Closes in on a moving point and keeps it centred: point(t) is where it is, in canvas units, at time share t
     // (0..1) of the move. zoom: how much closer than the current view; default 1.6. The camera stays there after.
@@ -123,6 +126,13 @@ export interface SceneModule {
   auto?: (number | null)[];
   // The scene's button text in the overview, instead of its title.
   overviewLabel?: string;
+  // How the camera flies into this scene: seconds, a GSAP ease name, or a whip (a fast pan with motion blur).
+  camera?: CameraPace;
+}
+export interface CameraPace {
+  duration?: number;
+  ease?: string;
+  whip?: boolean;
 }
 // Where the deck is, for an overlay's update.
 export interface OverlayAt {

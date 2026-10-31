@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 // @ts-expect-error plain .mjs, no types
-import { FULL_FRAME, writeTodos } from '../../bin/todo.mjs';
-import { embed, FULL_FRAME_PROMPT } from '../../src/fx/media';
+import { fullFrame, writeTodos } from '../../bin/todo.mjs';
+import { embed, fullFramePrompt } from '../../src/fx/media';
 
 const deck = () => {
   const d = mkdtempSync(join(tmpdir(), 'todo-'));
@@ -81,8 +81,18 @@ test('clampPose keeps a Ken Burns drift inside the overscan', async () => {
   expect(pose(0.9, 50, -50)).toEqual([0.9, 0, 0]); // no overscan below scale 1: no drift
 });
 
-test('the full-frame prompt suffix is the same string in bin/todo.mjs and src/fx/media.ts', () => {
-  expect(FULL_FRAME).toBe(FULL_FRAME_PROMPT);
+test('the full-frame prompt suffix is the same string in bin/todo.mjs and src/fx/media.ts, for every frame', () => {
+  expect(fullFrame()).toBe(', 16:9, 1920x1080, no text, no logos');
+  for (const [f, w, h] of [['16:9', 1920, 1080], ['4:3', 1440, 1080], ['1:1', 1080, 1080], ['9:16', 1080, 1920]] as const)
+    expect(fullFrame(f)).toBe(fullFramePrompt({ w, h }));
+});
+
+test('writeTodos sizes a full-frame prompt to the deck.md frame', () => {
+  const d = deck();
+  writeFileSync(join(d, 'deck.md'), '---\ntitle: x\nframe: 9:16\n---\n');
+  writeFileSync(join(d, 'sections/10-a/10-one/scene.ts'), 'export default { background: { href: "media/sky.png", alt: "A sky" } };\n');
+  writeTodos(d);
+  expect(readFileSync(join(d, 'media/TODO.md'), 'utf8')).toContain('A sky for a presentation scene about The engine, 9:16, 1080x1920, no text, no logos');
 });
 
 test('writeTodos lists media named in scene.ts and section.ts, with a 16:9 prompt from alt', () => {

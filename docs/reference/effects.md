@@ -401,6 +401,65 @@ steps: [(tl, a) => a.draw(tl), (tl, a) => a.glow(tl, ".bulb")],
 
 A source that is not an SVG with a viewBox shows `lineArt: the source is not an SVG with a viewBox`. Strokes take `--k-fg`, round caps and joins; an exporter's own fill and stroke colours are replaced.
 
+## `svg`
+
+Catalog: section `120-draw` (`#/draw/svg/1`). Full-colour art from an SVG file (Figma, Illustrator, Inkscape), its fills and strokes kept, painted with the theme's tokens so it follows the theme and its contrast check. Top-level elements with an `id` are layers: they start hidden, and the steps show, draw, light or dim them by id. The same sanitising as `lineArt` applies: no scripts, styles, handlers, animations, images or outside links.
+
+From `decks/demo/sections/120-draw/15-svg/scene.ts`:
+
+```ts
+import { svg, type SvgHandle } from "klappe/fx";
+import plant from "klappe/fx/art/plant.svg?raw";
+
+build: (ctx) => svg(ctx, { src: plant, x: 360, y: 140, w: 1200, colors: { "#2a3342": "surface", "#1f6feb": "accent", "#f0b429": "accent-2", "#e6edf3": "fg" } }),
+steps: [
+  (tl, a: SvgHandle) => a.show()(tl),
+  (tl, a: SvgHandle) => (a.show("tank")(tl), a.show("pump")(tl)),
+  (tl, a: SvgHandle) => (a.draw("pipe")(tl), a.show("out")(tl)),
+  (tl, a: SvgHandle) => a.light("pump")(tl),
+],
+```
+
+### Options
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `src` | string | required | the SVG file's content, imported with `?raw` |
+| `x`, `y` | number | required | top-left corner of the drawing |
+| `w` | number | required | width; the viewBox maps to it and the height follows |
+| `colors` | `{ [colour]: token }` | none | the file's colours to tokens, `{ "#1f6feb": "accent" }` paints it `var(--k-accent)`; `#abc` and `#aabbcc` are the same colour, case does not matter |
+
+An element with a class `k-<token>` (`class="k-accent"`), or inside one, takes that token for its fill, stroke and gradient stops, before `colors`. A shape with no fill takes `--k-fg`. `none`, `currentColor` and `url(#gradient)` stay as they are.
+
+### Step adders
+
+| Handle | Step |
+| --- | --- |
+| `show()` | the drawing fades in without its layers |
+| `show(id)` | that layer fades in, and the drawing with it if it is not shown yet |
+| `draw(id)` | that layer fades in while its strokes draw on (`drawOn`) |
+| `light(id)` | the layer holding `id` stays, every other part dims to 25 %; `light(null)` brings all back |
+| `dim(id)` | that element dims to 25 % |
+
+`el` is the drawing's `g`.
+
+### Problems
+
+- A colour with no class and no `colors` entry: `svg: colour #123456 has no token; add it to colors or give its element a k-<token> class`. It shows in its own colour, which no theme check sees.
+- A `<style>` block: `svg: <style> is dropped; export with presentation attributes`. Its colours are gone, so the shapes fall back to `--k-fg`.
+- A token that the theme lacks: `svg: no token --k-<name>`.
+- A step that names an id the file lacks: `svg: no element with id "<id>"`, and the step does nothing for it.
+- A source that is not an SVG with a viewBox: `svg: the source is not an SVG with a viewBox`.
+
+### Exporting for `svg`
+
+- One layer per step: name the groups you will show (`tank`, `pump`) and keep them at the top level of the file. Nested ids work for `light` and `dim`, not as layers.
+- Figma: name the frames or groups, then Export, SVG, with "Include 'id' attribute" on.
+- Illustrator: Export As, SVG, with Styling "Presentation Attributes" (not "Internal CSS") and Object IDs "Layer Names".
+- Inkscape: set each group's id in Object Properties, then save as Plain SVG.
+- Use a small palette, one colour per role, and map each in `colors`; or give elements a `k-accent`, `k-ok` class in the file. Outline text you want in a brand face; otherwise it takes the deck's font.
+- Embedded pictures are dropped: put a photo behind the art with `image`.
+
 ## `drawOn`
 
 Catalog: section `120-draw` (`#/draw/shapes/1`). Draws any stroked SVG shapes from start to end, one after another, and ends on a plain stroke. It returns a step adder: call it with the timeline; it returns the time the draw starts. A stroke shorter than 0.5 units (an icon's dot) has nothing to draw and fades in at its turn instead. Shapes in `text`, `defs`, `clipPath`, `mask`, `pattern` and `marker` are left out.
@@ -1053,7 +1112,7 @@ const section: SectionModule = { transition: "push" };
 
 ## `irisRadius`
 
-`irisRadius(x, y)` returns the radius in pixels that covers the 1920 x 1080 frame from `(x, y)`: the distance to the farthest corner.
+`irisRadius(x, y)` returns the radius in pixels that covers the frame (1920 x 1080 by default) from `(x, y)`: the distance to the farthest corner.
 
 ## `irisHole`
 
@@ -1105,7 +1164,7 @@ Limits: the copy carries the computed styles of each node inline, which suits a 
 
 ## `magicBox`
 
-`magicBox(rect, stage)` turns a screen rect (`{ left, top, width, height }`) into stage pixels `{ x, y, w, h }`: it removes the stage's offset and undoes the scale that fits the 1920 x 1080 stage to the window.
+`magicBox(rect, stage)` turns a screen rect (`{ left, top, width, height }`) into stage pixels `{ x, y, w, h }`: it removes the stage's offset and undoes the scale that fits the frame (1920 x 1080 by default) stage to the window.
 
 ## `magicFit`
 

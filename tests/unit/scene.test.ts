@@ -127,3 +127,14 @@ describe("notes, edge cases", () => {
     );
   });
 });
+
+describe("scene.md frontmatter", () => {
+  it("stack: true opts the scene's text steps into stacking", () => {
+    const { scene, problems } = parseScene("---\nstack: true\n---\n## Points\n\n- One.\n- Two.\n", "10-points");
+    expect(problems).toEqual([]);
+    expect(scene.stack).toBe(true);
+    expect(scene.title).toBe("Points");
+    expect(scene.steps.map((s) => s.text)).toEqual(["One.", "Two."]);
+    expect(parseScene("## Points\n\n- One.\n", "10-points").scene.stack).toBeUndefined();
+  });
+});

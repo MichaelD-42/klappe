@@ -29,8 +29,14 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 - `show` and `hide` option `at`: a GSAP position, so a fade can start with the tween before it (`"<"`) instead of after it.
 - A section or scene folder named with a leading `_` is left out of the deck while its files stay in `sections/`.
 
+- `deck.md` key `frame`: `16:9` (default), `4:3`, `1:1` or `9:16`. The stage, scene frames, camera, backgrounds, overlay, transitions, overview cards, `shot`, `pdf` and the safe-area check follow it; full-frame picture prompts in `media/TODO.md` name it.
+- Review edit mode: with the review window open (`R`, dev server), select an element on the stage and drag, resize or nudge it; on release a `Move <element> from [x, y, w, h] to [x, y, w, h]` line lands in the step's Visuals finding. A preview only, gone on the next step. A double click on `scene.md` text edits it in place and writes it back.
+- `svg`: full-colour art from an exported SVG, its fills kept and painted with theme tokens (a `k-<token>` class or a `colors` map from the file's hex values); top-level ids are layers that `show`, `draw`, `light` and `dim` per step. An unmapped colour, a `<style>` block and a missing id are deck problems. With an export guide for Figma, Illustrator and Inkscape. Catalog: `#/draw/svg/1`.
+- Camera pacing: `scene.ts` `camera: { duration, ease, whip }` sets how the camera flies into the scene, and `ctx.camera.to` takes the same. `whip: true` is a fast pan with a motion blur along its way; `ease` is any GSAP ease name. Catalog: `#/camera/whip/1`.
+
 ### Changed
 
+- A plain text step in `scene.md` replaces the one before: it gets the stage to itself, set large, and fades out when the next one shows (was: each item faded in and stayed, a bullet build-up). `stack: true` in the scene's frontmatter keeps the old build-up. A scene with media, code, a checklist, a table or an agenda keeps its layout.
 - A Markdown shout-out (`### Question?` and a paragraph) is two steps, the question and then the answer; the fade step between them is gone. A `scene.ts` that lists three step functions for one now reports a step count problem: drop the `fade` step, or keep it in `scene.ts` with a three-step `scene.md`.
 - `likert` takes a `scale` of 4 to 7 point names, and each row then one count per point; a scale of another length reports `likert: scale needs 4 to 7 point names` (was: needs 5).
 

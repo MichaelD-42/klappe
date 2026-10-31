@@ -68,6 +68,15 @@ describe("frontmatter lists, edge cases", () => {
     expect(meta.tempo).toBe(1);
     expect(problems).toContain("deck.md: tempo is slow, normal or fast");
   });
+  it("reads frame as the stage size in scene px and reports an unknown one", () => {
+    expect(toDeckMeta({ title: "x" }).meta.frame).toEqual({ w: 1920, h: 1080 });
+    expect(toDeckMeta({ title: "x", frame: "4:3" }).meta.frame).toEqual({ w: 1440, h: 1080 });
+    expect(toDeckMeta({ title: "x", frame: "1:1" }).meta.frame).toEqual({ w: 1080, h: 1080 });
+    expect(toDeckMeta({ title: "x", frame: "9:16" }).meta.frame).toEqual({ w: 1080, h: 1920 });
+    const { meta, problems } = toDeckMeta({ title: "x", frame: "21:9" });
+    expect(meta.frame).toEqual({ w: 1920, h: 1080 });
+    expect(problems).toContain("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
+  });
   it("reports a shared-canvas list that mixes ids and groups instead of flattening it", () => {
     const { meta, problems } = toDeckMeta({ title: "x", "shared-canvas": ["a", ["b", "c"]] });
     expect(meta.sharedCanvas).toEqual([]);

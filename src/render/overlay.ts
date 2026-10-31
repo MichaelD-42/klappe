@@ -1,8 +1,9 @@
+import { stage as size } from "../theme";
 import type { Ctx, Deck, StepAddr } from "../types";
 
 const SVG = "http://www.w3.org/2000/svg";
 
-// The deck's overlay.ts: a 1920x1080 layer over the canvases and under klappe's UI, which the camera does not move.
+// The deck's overlay.ts: a stage-size layer over the canvases and under klappe's UI, which the camera does not move.
 // Built once; update sets it from the step the deck lands on, so it is a function of the step and a jump shows what
 // a play does. undefined without an overlay.ts, or when its build fails (a deck problem).
 export function mountOverlay(
@@ -16,13 +17,13 @@ export function mountOverlay(
   const layer = document.createElement("div");
   layer.className = "k-deck-overlay";
   const svg = layer.appendChild(document.createElementNS(SVG, "svg"));
-  svg.setAttribute("viewBox", "0 0 1920 1080");
+  svg.setAttribute("viewBox", `0 0 ${size.w} ${size.h}`);
   const g = svg.appendChild(document.createElementNS(SVG, "g"));
   const html = layer.appendChild(document.createElement("div"));
   stage.insertBefore(layer, stage.querySelector(":scope > .k-ui"));
   const still = () => problem("the camera does not move the overlay");
   const ctx: Ctx = {
-    rect: { x: 0, y: 0, w: 1920, h: 1080 },
+    rect: { x: 0, y: 0, ...size },
     svg: g,
     html,
     canvas: { refs: {}, rects: {} },

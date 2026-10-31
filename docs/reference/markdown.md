@@ -4,6 +4,7 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 
 | Trigger | Minimal example | Result | Reference |
 | --- | --- | --- | --- |
+| plain list items | `- Ship small.` and `- Ship often.` | one item at a time, large; the next replaces it. Frontmatter `stack: true` builds them up as a list | [deck format](deck-format.md#scenemd) |
 | image | `- ![An engineer at a desk](media/desk.png "Prompt for the generator")` | the picture in the right-hand slot; the text in a left column | [image](effects.md#image) |
 | video | `- [Intro clip](https://www.youtube.com/watch?v=dQw4w9WgXcQ)` or a link to a `.mp4` or `.webm` | a video box with the title as caption | [video](effects.md#video) |
 | chart | `- [Units by quarter](data/chart-bar.csv)` | a bar chart beside the text. Other types need `scene.ts` | [chart](effects.md#chart) |

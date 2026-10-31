@@ -2,6 +2,7 @@ import { gsap } from "gsap";
 import type { CanvasRuntime } from "../render/world";
 import type { TransitionKind } from "../types";
 import { lazyTable } from "../lazy";
+import { stage as STAGE } from "../theme";
 
 // What a section gives its entry transition: its transitionOptions plus target from zoomTarget.
 export interface TransitionOpts {
@@ -15,14 +16,13 @@ const FADE = 0.4;
 const BLACK_HOLD = 0.3;
 const PUSH = 0.7;
 const IRIS = 0.8;
-const STAGE = { w: 1920, h: 1080 };
 // A canvas is a 0x0 box; its other scenes sit outside the frame. The clip keeps them off the stage while it moves.
-const FRAME = `polygon(0 0, ${STAGE.w}px 0, ${STAGE.w}px ${STAGE.h}px, 0 ${STAGE.h}px)`;
-const PUSH_TO: Record<string, { x: number; y: number }> = {
-  left: { x: -STAGE.w, y: 0 },
-  right: { x: STAGE.w, y: 0 },
-  up: { x: 0, y: -STAGE.h },
-  down: { x: 0, y: STAGE.h },
+const frameClip = () => `polygon(0 0, ${STAGE.w}px 0, ${STAGE.w}px ${STAGE.h}px, 0 ${STAGE.h}px)`;
+const PUSH_TO: Record<string, () => { x: number; y: number }> = {
+  left: () => ({ x: -STAGE.w, y: 0 }),
+  right: () => ({ x: STAGE.w, y: 0 }),
+  up: () => ({ x: 0, y: -STAGE.h }),
+  down: () => ({ x: 0, y: STAGE.h }),
 };
 
 const cut: Transition = (from, to) => {
@@ -53,7 +53,7 @@ const blackout: Transition = (from, to) => {
 export function pushOffset(direction: unknown = "left"): { x: number; y: number } {
   if (typeof direction !== "string" || !Object.hasOwn(PUSH_TO, direction))
     throw new Error(`push: direction "${direction}" is not left, right, up or down`);
-  return PUSH_TO[direction];
+  return PUSH_TO[direction]();
 }
 
 // The iris radius that just covers the frame from (x, y): the distance to the farthest corner.
@@ -63,6 +63,7 @@ export const irisRadius = (x: number, y: number): number => Math.hypot(Math.max(
 // while it moves in, so an empty new canvas does not slide in.
 const push: Transition = (from, to, opts) => {
   const { x, y } = pushOffset(opts.direction ?? "left");
+  const FRAME = frameClip();
   return gsap
     .timeline({ defaults: { duration: PUSH, ease: "power2.inOut" } })
     .addLabel("reveal", 0)

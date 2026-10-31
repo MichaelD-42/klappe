@@ -5,7 +5,7 @@ import { openDeck, showStep } from './pdf.mjs'
 
 // Screenshots of chosen steps at the two sizes the look review checks, each step as it ends with no UI on top.
 export const SIZES = [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]
-const THUMB = { w: 480, h: 270, cols: 4 }
+const THUMB = { w: 480, cols: 4 }
 
 // The steps a target names: "<section>", "<section>/<scene>" or "<section>/<scene>/<step>", as in a deep link
 // ("#/" in front is fine). No targets: every step. last: only the last step of each scene a section or scene target
@@ -33,7 +33,7 @@ async function sheets(browser, outDir, shots) {
     await page.setContent(
       `<style>body { margin: 0; padding: 16px; background: #1b1d22; color: #e6e8ec; font: 16px system-ui, sans-serif; }
       h1 { font-size: 22px; margin: 0 0 12px; } main { display: grid; grid-template-columns: repeat(${THUMB.cols}, ${THUMB.w}px); gap: 16px; }
-      figure { margin: 0; } img { display: block; width: ${THUMB.w}px; height: ${THUMB.h}px; } figcaption { padding-top: 6px; }</style>
+      figure { margin: 0; } img { display: block; width: ${THUMB.w}px; height: auto; } figcaption { padding-top: 6px; }</style>
       <h1>${section}</h1><main>${cells.join('')}</main>`,
     )
     const file = path.join(outDir, `sheet-${section}.png`)
@@ -59,7 +59,8 @@ export async function shoot(url, outDir, { targets = [], last = false, sheet = f
       const steps = await page.evaluate(() => window.klappe.steps)
       ;({ picked, unknown } = pickSteps(steps, targets, last))
       if (unknown.length) return { files, sheets: [], unknown, ...report }
-      const dir = path.join(outDir, `${size.width}x${size.height}`)
+      const vp = page.viewportSize() // the deck's frame at this size
+      const dir = path.join(outDir, `${vp.width}x${vp.height}`)
       fs.mkdirSync(dir, { recursive: true })
       for (const s of picked) {
         await showStep(page, s.index, at)

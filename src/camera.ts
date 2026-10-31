@@ -1,6 +1,6 @@
 import { gsap } from "gsap";
-import type { Rect } from "./types";
-import { motion } from "./theme";
+import type { CameraPace, Rect } from "./types";
+import { motion, stage } from "./theme";
 
 export interface Pose {
   x: number;
@@ -8,10 +8,8 @@ export interface Pose {
   scale: number;
 }
 
-const W = 1920;
-const H = 1080;
-
 export function frame(t: Rect): Pose {
+  const { w: W, h: H } = stage;
   const scale = Math.min(W / t.w, H / t.h);
   return { x: -t.x * scale + (W - t.w * scale) / 2, y: -t.y * scale + (H - t.h * scale) / 2, scale };
 }
@@ -20,7 +18,7 @@ export function frame(t: Rect): Pose {
 // times as far. Each is scaled up enough to hide its edges at its drift (parallaxScale).
 export const PARALLAX = 40;
 export const MAX_DEPTH = 4;
-export const parallaxScale = (depth: number) => 1 + (2 * depth * PARALLAX) / H;
+export const parallaxScale = (depth: number) => 1 + (2 * depth * PARALLAX) / Math.min(stage.w, stage.h);
 
 // A parallax background's offset with the camera on rect `at` of a canvas of `size`: it drifts the way the
 // content moves, PARALLAX at the canvas edges, so it reads as a far layer. Bounded, so it never shows an edge.
@@ -66,24 +64,65 @@ export function addCameraMove(
   world: HTMLElement,
   from: Rect,
   to: Rect,
-  opts: { duration?: number; at?: number | string; instant?: boolean; tilt?: number } = {},
+  opts: CameraPace & { at?: number | string; instant?: boolean; tilt?: number } = {},
 ): void {
-  const poses = flight(from, to).slice(1); // the camera is already at `from`
+  // The camera is already at `from`. A whip pans straight there: no zoom out on the way.
+  const poses = opts.whip ? [frame(to)] : flight(from, to).slice(1);
   // A cut is a set: keyframes of duration 0 make an empty nested timeline that a seek does not render.
   if (opts.instant) return void tl.set(world, frame(to), opts.at);
-  const duration = opts.duration ?? motion.camera;
-  tl.to(
-    world,
-    { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease: "power2.inOut" })) },
-    opts.at,
-  );
+  const duration = flightTime(opts);
+  const ease = flightEase(opts);
+  tl.to(world, { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease })) }, opts.at);
+  if (opts.whip) whipBlur(tl, world, from, to, duration);
   if (opts.tilt) lean(tl, world.parentElement!, from, to, opts.tilt, duration);
+}
+
+const EASE = "power2.inOut";
+const WHIP = { time: 0.3, ease: "expo.inOut", blur: 28 }; // a share of the flight time; the peak blur in screen px
+export const flightTime = (o: CameraPace) => o.duration ?? (o.whip ? motion.camera * WHIP.time : motion.camera);
+export const flightEase = (o: CameraPace) => (o.ease && gsap.parseEase(o.ease) ? o.ease : o.whip ? WHIP.ease : EASE);
+
+// A whip's motion blur: a Gaussian blur along the flight's direction on the world, peaking mid-flight and 0 at
+// both ends. Written from the tween's progress (onUpdate fires on a seek too), so seek equals play.
+function whipBlur(tl: gsap.core.Timeline, world: HTMLElement, from: Rect, to: Rect, duration: number): void {
+  const [dx, dy] = [to.x + to.w / 2 - (from.x + from.w / 2), to.y + to.h / 2 - (from.y + from.h / 2)];
+  const len = Math.hypot(dx, dy);
+  if (!len) return;
+  const blur = blurFilter();
+  tl.to(
+    {},
+    {
+      duration,
+      ease: "none",
+      onUpdate(this: gsap.core.Tween) {
+        const p = this.progress();
+        const k = WHIP.blur * 4 * p * (1 - p);
+        blur.setAttribute("stdDeviation", `${((k * Math.abs(dx)) / len).toFixed(1)} ${((k * Math.abs(dy)) / len).toFixed(1)}`);
+        world.style.filter = k > 0.5 ? "url(#k-whip-blur)" : "";
+      },
+    },
+    "<",
+  );
+}
+// One shared filter: only one flight runs at a time.
+function blurFilter(): SVGFEGaussianBlurElement {
+  const NS = "http://www.w3.org/2000/svg";
+  let f = document.querySelector<SVGFEGaussianBlurElement>("#k-whip-blur feGaussianBlur");
+  if (f) return f;
+  const svg = document.body.appendChild(document.createElementNS(NS, "svg"));
+  Object.assign(svg.style, { position: "absolute", width: "0", height: "0" });
+  svg.setAttribute("aria-hidden", "true");
+  const filter = svg.appendChild(document.createElementNS(NS, "filter"));
+  filter.id = "k-whip-blur";
+  f = filter.appendChild(document.createElementNS(NS, "feGaussianBlur"));
+  f.setAttribute("stdDeviation", "0 0");
+  return f;
 }
 
 const LEAN_PERSPECTIVE = 1600; // px
 
 // A 3D lean of the whole canvas into the flight's direction, peaking mid-flight at `deg` and exactly 0 at both ends.
-// It turns the canvas (always the 1920x1080 stage), about the screen centre: the world's origin may be far off screen.
+// It turns the canvas (always the stage size), about the screen centre: the world's origin may be far off screen.
 // The origin goes back to the canvas's own (0 0) at the end, which the zoom transition expects.
 function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg: number, duration: number): void {
   const [dx, dy] = [to.x + to.w / 2 - (from.x + from.w / 2), to.y + to.h / 2 - (from.y + from.h / 2)];
@@ -91,7 +130,7 @@ function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg
   if (!len) return; // a pure zoom has no direction to lean into
   const at = (tl.recent() as gsap.core.Tween).startTime(); // the flight's start, not "<": a lean must never start before its step
   gsap.set(canvas, { rotationX: 0, rotationY: 0 }); // written at load: a seek back past the lean writes it too
-  tl.set(canvas, { transformOrigin: "960px 540px", transformPerspective: LEAN_PERSPECTIVE }, at);
+  tl.set(canvas, { transformOrigin: `${stage.w / 2}px ${stage.h / 2}px`, transformPerspective: LEAN_PERSPECTIVE }, at);
   tl.set(canvas, { transformOrigin: "0px 0px", transformPerspective: 0 }, at + duration); // flat again, no 3D context
   // Added last, so a caller's "<" (the parallax drift, dollyZoom) still means the flight's start.
   tl.fromTo(

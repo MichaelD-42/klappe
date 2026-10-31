@@ -18,6 +18,7 @@ A theme is a plain CSS file that sets `--k-*` custom properties on `:root` and n
 | `--k-size-title`, `--k-size-body`, `--k-size-label` | the type scale, in px: a scene title, body text, a label. Defaults 88, 44 and 28 px, so a theme sets them only to change them. Every effect's text follows its role in proportion (a 26 px label is 26/28 of `--k-size-label`), never under the 20 px legibility floor; fitted text still shrinks to its box. Set them on `:root`. `crt`, `timer` and `map` size their text from their own geometry and do not follow. |
 | `--k-code-foreground`, `--k-code-background`, `--k-code-token-constant`, `-string`, `-comment`, `-keyword`, `-parameter`, `-function`, `-string-expression`, `-punctuation`, `-link` | syntax colours, mapped from Shiki's `css-variables` theme |
 | `--k-phosphor`, `--k-phosphor-amber`, `--k-blackout` | CRT text and the blackout transition; the CRT screen is always dark, so these stay bright in a light theme too |
+| `--k-frame-w`, `--k-frame-h` | the stage size in px, set by klappe from `deck.md` `frame` (default 1920 and 1080). Read them in `deck.css`; a theme does not set them. |
 | `--k-scrim` | the layer a `scrim` lays over a picture: `#000` under light text, `#fff` in a light theme |
 
 ## Which theme is used

@@ -46,6 +46,13 @@ export function parseFrontmatter(md: string): { data: Record<string, unknown>; b
 
 // deck.md tempo: a factor on the step, camera and auto-hold times.
 const TEMPO: Record<string, number> = { slow: 1.4, normal: 1, fast: 0.75 };
+// deck.md frame: the stage size in scene px. A landscape frame keeps 1080 high, so text sizes mean the same.
+const FRAMES: Record<string, { w: number; h: number }> = {
+  "16:9": { w: 1920, h: 1080 },
+  "4:3": { w: 1440, h: 1080 },
+  "1:1": { w: 1080, h: 1080 },
+  "9:16": { w: 1080, h: 1920 },
+};
 
 export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; problems: string[] } {
   const problems: string[] = [];
@@ -68,6 +75,8 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   if (sa !== undefined && !safeArea) problems.push("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
   const tempo = TEMPO[String(data.tempo ?? "normal")];
   if (tempo === undefined) problems.push("deck.md: tempo is slow, normal or fast");
+  const frame = FRAMES[String(data.frame ?? "16:9")];
+  if (!frame) problems.push("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
   return {
     meta: {
       title,
@@ -77,6 +86,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       confidential: data.confidential === true,
       sharedCanvas,
       ...(safeArea && { safeArea }),
+      frame: frame ?? FRAMES["16:9"],
       tempo: tempo ?? 1,
     },
     problems,

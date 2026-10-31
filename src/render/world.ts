@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { addCameraMove, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
+import { addCameraMove, flightEase, flightTime, followView, frame, MAX_DEPTH, parallaxPose, parallaxScale } from "../camera";
 import { code, LANGS } from "../fx/code";
 import { KEN_BURNS, LOOP_VIDEO, STEP_LABEL, image, loopVideo, scrimFill, video, type ImageHandle } from "../fx/media";
 import type { TransitionOpts } from "../fx/transitions";
@@ -7,7 +7,7 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { part as fxPart } from "./parts";
-import { motion } from "../theme";
+import { motion, stage } from "../theme";
 import type { Background, CanvasLayout, Ctx, Deck, DeckMeta, Rect, Scene, StepAdder, StepDoc, TransitionKind } from "../types";
 
 export interface CanvasRuntime {
@@ -70,7 +70,7 @@ function mediaShow(ctx: Ctx, m: NonNullable<StepDoc["media"]>, rect: Rect): Step
 const TITLE_LEAD = 0.4; // seconds the title starts before the camera lands
 
 // Default renderer: the title and one p[data-step=n] per visible step, all hidden.
-// Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
+// Plain text steps replace each other, set large (unless the scene stacks them). Shout-outs use the shout effect. With media steps or a code fence, the text takes the left column and the
 // media, code or terminal the right. Task-list items build one checklist, a table a comparison, a time-range list an agenda.
 // Returns the title and the steps an effect plays, by step number.
 function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLElement; fx: Map<number, StepAdder> } {
@@ -143,6 +143,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
   const tableN = firstOf("compare");
   const table = tableN && scene.table ? part(tableN, "compareTable", lists, (c) => fxPart("compareTable")(c, { ...scene.table!, ...lists })) : undefined;
   const title = add(col, el("h2", "", scene.title));
+  // A scene of plain text steps gives each one the stage, large, until the next replaces it; stack: true builds a list.
+  const say = !scene.stack && !fence && scene.steps.every((s) => !s.part && !s.media);
+  let said: Element | undefined; // the plain step on screen: it fades out when the next one shows
   let before: Element[] = []; // the previous media step's wrapper: it fades out when the next one shows
 
   scene.steps.forEach((s, i) => {
@@ -177,6 +180,15 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta): { title: HTMLEle
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : "", s.text));
     p.dataset.step = String(n);
+    if (say && s.kind === "step") {
+      p.classList.add("k-say");
+      const prev = said;
+      said = p;
+      return fx.set(n, (tl) => {
+        tl.to(p, { autoAlpha: 1, duration: motion.step });
+        if (prev) tl.to(prev, { autoAlpha: 0, duration: motion.step }, "<");
+      });
+    }
     const fenced = codeFx ?? termFx ?? chatFx;
     if ((pt?.kind === "code" || pt?.kind === "console" || pt?.kind === "chat") && fenced) {
       return fx.set(n, (tl) => {
@@ -302,15 +314,15 @@ function svgLoop(parent: HTMLElement, text: string): Pinned["loop"] | undefined 
 function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: string, id: string, svgText?: string): Pinned {
   const d = pinned.appendChild(el("div", "k-layer"));
   d.dataset.kBackground = id;
-  Object.assign(d.style, { width: "1920px", height: "1080px" });
+  Object.assign(d.style, { width: `${stage.w}px`, height: `${stage.h}px` });
   const problem = (msg: string) => ctx.problem(`${source}: background: ${msg}`);
-  const full = { ...ctx, rect: { x: 0, y: 0, w: 1920, h: 1080 }, html: d, problem };
+  const full = { ...ctx, rect: { x: 0, y: 0, ...stage }, html: d, problem };
   let img: ImageHandle | undefined;
   let loop: Pinned["loop"];
   if (typeof bg.animate === "function") {
     const own = d.appendChild(el("div", "k-layer"));
     own.setAttribute("data-k-ignore", "");
-    Object.assign(own.style, { width: "1920px", height: "1080px", overflow: "hidden" });
+    Object.assign(own.style, { width: `${stage.w}px`, height: `${stage.h}px`, overflow: "hidden" });
     const animate = bg.animate;
     loop = safe(`${source}: background`, () => animate(own));
   } else if (bg.animate !== undefined) {
@@ -342,7 +354,7 @@ function background(ctx: Ctx, pinned: HTMLElement, bg: Background, source: strin
     if (!depthOk(l.parallax)) return problem(`layer ${i + 1}: parallax ${l.parallax} out of range; use a depth above 0, up to ${MAX_DEPTH}`), [];
     const e = d.appendChild(el("div", "k-layer"));
     e.dataset.kLayer = String(i + 1);
-    Object.assign(e.style, { width: "1920px", height: "1080px" });
+    Object.assign(e.style, { width: `${stage.w}px`, height: `${stage.h}px` });
     const pic = safe(`${source}: background`, () => image({ ...full, html: e }, { href: l.href, alt: l.alt ?? "", fit: "cover" }));
     if (pic?.el && pic.el.querySelector("img")) pic.el.style.background = "transparent"; // a picture's frame is --k-bg; a layer shows through
     gsap.set(e.children, { autoAlpha: 1 });
@@ -382,7 +394,7 @@ export function renderWorld(
     // The canvas: backgrounds pinned to the screen, under the world the camera moves.
     const canvas = el("div", "k-canvas");
     const pinned = el("div", "k-layer");
-    for (const e of [canvas, pinned]) Object.assign(e.style, { width: "1920px", height: "1080px" });
+    for (const e of [canvas, pinned]) Object.assign(e.style, { width: `${stage.w}px`, height: `${stage.h}px` });
     canvas.append(pinned, world);
     root.append(canvas);
 
@@ -391,7 +403,7 @@ export function renderWorld(
     const stepListeners: CanvasRuntime["stepListeners"] = [];
     const problems: string[] = [];
     const sections = deck.sections.filter((s) => layout.sectionIds.includes(s.id));
-    const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, w: 1920, h: 1080 };
+    const first: Rect = layout.rects[sections.flatMap((s) => s.scenes)[0]?.id] ?? { x: 0, y: 0, ...stage };
     let cam = first;
     // Parallax backgrounds and layers on this canvas: k is the drift per unit of parallaxPose, in the parent's units.
     const far: { el: HTMLElement; k: number }[] = [];
@@ -404,7 +416,7 @@ export function renderWorld(
         // Parallax backgrounds drift with the flight, from its start; a cut moves them at once.
         const pose = drift(parallaxPose(target, layout.size));
         const els = far.map((f) => f.el);
-        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration: o?.duration ?? motion.camera, ease: "power2.inOut" }, "<");
+        if (far.length) opts.reducedMotion ? t.set(els, pose, "<") : t.to(els, { ...pose, duration: flightTime(o ?? {}), ease: flightEase(o ?? {}) }, "<");
         cam = target;
       },
       follow(t, point, o) {
@@ -453,7 +465,7 @@ export function renderWorld(
     const pins = new Map<Background, Pinned>();
     for (const s of sections)
       for (const sc of s.scenes) {
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, w: 1920, h: 1080 }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
+        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene"), scene: sc.id, doc: sc };
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);
@@ -529,7 +541,10 @@ export function renderWorld(
         const early = appendStep(rt.tl, `e:${index++}`, (tl) => {
           const start = tl.duration();
           if (i === 0) {
-            ctx.camera.to(tl, ctx.rect);
+            const pace = sc.module?.camera;
+            if (pace?.ease && !gsap.parseEase(pace.ease))
+              ctx.problem(`camera: unknown ease "${pace.ease}"; using ${flightEase({ ...pace, ease: undefined })}`);
+            ctx.camera.to(tl, ctx.rect, pace);
             // Over the flight's last 0.4 s, so the frame is never empty after it lands; not before the step (a cut).
             if (title) tl.to(title, { autoAlpha: 1, duration: motion.step }, Math.max(start, tl.duration() - TITLE_LEAD));
           }

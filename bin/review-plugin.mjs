@@ -4,6 +4,7 @@ import { applyEdit, CATEGORIES, STEP_HASH as HASH } from '../src/review/file.ts'
 
 // The review window's route, dev server only: GET returns review.md, POST applies one step's changed findings.
 const ROUTE = '/__klappe/review'
+const TEXT_ROUTE = '/__klappe/text'
 const MAX_TEXT = 20_000 // characters in one finding or quote
 const MAX_STEPS = 10_000
 const MAX_BODY = 2_000_000 // bytes
@@ -39,6 +40,30 @@ export function fresh(seen, from, seq, edit) {
   return { ...edit, set }
 }
 
+// A text edit from a POST body ({ source, from, to }): a scene.md inside sections/, one line of new text. Or null.
+const SOURCE = /^sections\/[^/\\]+\/[^/\\]+\/scene\.md$/
+export function readText(body) {
+  if (!body || typeof body !== 'object') return null
+  const { source, from, to } = body
+  const line = (v) => typeof v === 'string' && v.length <= MAX_TEXT && !/[\r\n]/.test(v)
+  if (typeof source !== 'string' || !SOURCE.test(source) || source.split('/').includes('..') || !line(from) || !line(to)) return null
+  return { source, from, to }
+}
+
+// scene.md with the one line that shows `from` (a list item, a task, the ## title or a ### question) showing `to`,
+// or null: the text is on no line or on several (a step with a link shows its label, not its line), or `to` is empty.
+export function replaceText(md, from, to) {
+  if (!to.trim() || /[\r\n]/.test(to)) return null
+  const lines = md.split('\n')
+  const hit = lines.flatMap((l, i) => {
+    const m = /^(\s*(?:[-*] (?:\[[ xX!]\] )?|#{2,3} ))(.*?)\s*$/.exec(l)
+    return m && m[2] === from ? [{ i, lead: m[1] }] : []
+  })
+  if (hit.length !== 1) return null
+  lines[hit[0].i] = hit[0].lead + to.trim()
+  return lines.join('\n')
+}
+
 // Only the deck's own pages may write: any page the author visits can reach localhost.
 const sameOrigin = (origin, host) => {
   if (!origin) return true // not a browser's cross-origin request
@@ -49,7 +74,8 @@ const sameOrigin = (origin, host) => {
   }
 }
 
-export function klappeReview({ file }) {
+// file: review.md. deckDir: where text edits write scene.md (the e2e tests point it at a temp folder).
+export function klappeReview({ file, deckDir }) {
   const rel = path.relative(process.cwd(), file) || file
   const seen = new Map() // window|step|category → the newest save number applied
   const read = () => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
@@ -64,6 +90,27 @@ export function klappeReview({ file }) {
     // The page asks this, not import.meta.env.DEV: review mode exists exactly where its route does.
     config: () => ({ define: { 'import.meta.env.KLAPPE_REVIEW': 'true' } }),
     configureServer(server) {
+      // The deck window's text edits: one line of a scene.md, written straight back. Vite then reloads the deck.
+      server.middlewares.use(TEXT_ROUTE, (req, res) => {
+        if (!sameOrigin(req.headers.origin, req.headers.host)) return send(res, 403, { error: 'other origin' })
+        if (req.method !== 'POST' || !deckDir) return send(res, 405, { error: 'POST' })
+        const chunks = []
+        let size = 0
+        req.on('data', (c) => ((size += c.length) <= MAX_BODY ? chunks.push(c) : req.destroy()))
+        req.on('end', () => {
+          let t = null
+          try {
+            t = readText(JSON.parse(Buffer.concat(chunks).toString('utf8')))
+          } catch {}
+          if (!t) return send(res, 400, { error: 'not a text edit' })
+          const at = path.join(deckDir, t.source)
+          if (!fs.existsSync(at)) return send(res, 404, { error: `no ${t.source}` })
+          const md = replaceText(fs.readFileSync(at, 'utf8'), t.from, t.to)
+          if (md === null) return send(res, 409, { error: 'the text is not on exactly one line' })
+          fs.writeFileSync(at, md)
+          send(res, 200, { source: t.source })
+        })
+      })
       server.middlewares.use(ROUTE, (req, res) => {
         if (!sameOrigin(req.headers.origin, req.headers.host)) return send(res, 403, { error: 'other origin' })
         if (req.method === 'GET') return send(res, 200, { path: rel, text: read() })

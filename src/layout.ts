@@ -5,6 +5,7 @@ const isRect = (r: unknown): r is Rect =>
 
 export function layoutDeck(deck: Deck): { canvases: CanvasLayout[]; problems: string[] } {
   const problems: string[] = [];
+  const stage = deck.meta.frame ?? { w: 1920, h: 1080 };
   const known = new Set(deck.sections.map((s) => s.id));
   const groupOf = new Map<string, string[]>(); // section id -> its (first) shared group
   for (const group of deck.meta.sharedCanvas) {
@@ -36,7 +37,7 @@ export function layoutDeck(deck: Deck): { canvases: CanvasLayout[]; problems: st
       } catch (e) {
         problems.push(`${sc.source}: place() ${e instanceof Error ? e.message : e}`);
       }
-      rects[sc.id] = rect ?? { x: i * 1920, y: 0, w: 1920, h: 1080 };
+      rects[sc.id] = rect ?? { x: i * stage.w, y: 0, w: stage.w, h: stage.h };
       i++;
     }
     const all = Object.values(rects);

@@ -13,6 +13,8 @@ const linkedModules = fs.existsSync(modules) ? [fs.realpathSync(modules)] : []
 const deckDir = process.env.KLAPPE_DECK_DIR ?? path.join(cwd, 'decks', 'demo')
 // The e2e tests point the review route at a temp file.
 const reviewFile = process.env.KLAPPE_REVIEW_FILE ?? path.join(deckDir, 'review.md')
+// And the deck window's text edits at a temp deck folder.
+const textDir = process.env.KLAPPE_TEXT_DIR ?? deckDir
 
 // A path under <root>/.claude/worktrees: other checkouts of the project, whose edits would reload the page.
 // Relative to root, so a server that runs inside a worktree still watches its own files.
@@ -23,7 +25,7 @@ export const inWorktrees = (root: string) => (file: string) => {
 
 export default defineConfig({
   root: klappeDir,
-  plugins: [klappeScan({ klappeDir, deckDir, extraDirs: [path.join(klappeDir, 'src', 'deck', 'fixtures')] }), klappeReview({ file: reviewFile })],
+  plugins: [klappeScan({ klappeDir, deckDir, extraDirs: [path.join(klappeDir, 'src', 'deck', 'fixtures')] }), klappeReview({ file: reviewFile, deckDir: textDir })],
   base: './', // relative asset URLs, so a build works from any folder (GitHub Pages serves under /klappe/)
   resolve: { alias: { '@deck': deckDir, '@themes': path.join(cwd, 'themes'), 'klappe/fx': path.join(klappeDir, 'src', 'fx') } },
   // Builder worktrees under .claude/worktrees would reload the page mid e2e run.
