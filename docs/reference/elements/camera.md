@@ -147,8 +147,25 @@ export default {
 
 | Name       | Type    | Default                       | Meaning |
 | ---------- | ------- | ----------------------------- | ------- |
-| `duration` | number  | 1.6 s, scaled by `tempo`      | the flight's seconds; a number you give is not scaled by `tempo` |
+| `duration` | number  | 1.6 s, scaled by `tempo`      | the flight's seconds; a number you give is not scaled by `tempo`. `0` is a cut |
 | `ease`     | string  | `"power2.inOut"`              | a GSAP ease name: `"none"` for a steady pan, `"sine.inOut"` for a soft push, `"expo.out"` for a fast start and a hard stop |
 | `whip`     | boolean | false                         | a fast pan straight to the scene (no zoom out on the way) with a motion blur along its direction, peaking mid-flight; 0.3 of the camera time (0.48 s), `"expo.inOut"` unless you give `duration` or `ease` |
+
+## Split screen
+
+Two scenes side by side, the camera cutting between each alone and both together, needs no element of its own: `place()` puts the second scene right of the first, and `ctx.camera.to(tl, both, { duration: 0 })` cuts to the rect round both, where each shows at half size. `camera: { duration: 0 }` in the second scene's `scene.ts` makes its entry a cut too; leave `duration` out for flights instead. Size the text for the half view: at half size a 28 px caption reads as 14 px, and the walk's legibility check fails it. The demo's two halves share one factory, `decks/demo/shared/split.ts`. Catalog: `#/camera/split-before/1` to `#/camera/split-after/2`.
+
+```ts
+// 90-split-after/scene.ts, right of 80-split-before
+export default {
+  place: (rects) => ({ ...rects["split-before"], x: rects["split-before"].x + rects["split-before"].w }),
+  camera: { duration: 0 }, // cut in alone
+  build: (ctx) => {
+    const [a, b] = [ctx.canvas.rects["split-before"], ctx.canvas.rects["split-after"]];
+    return { both: (tl) => ctx.camera.to(tl, { x: a.x, y: a.y, w: b.x + b.w - a.x, h: a.h }, { duration: 0 }) };
+  },
+  steps: [null, (tl, r) => r.both(tl)],
+};
+```
 
 A slow push-in, a whip and a hard stop give a deck a tempo; use the whip for a change of place, not between neighbours. A parallax background drifts with the flight's time and ease. An ease GSAP does not know is a deck problem, `camera: unknown ease "<name>"; using power2.inOut`, and the flight uses the default. With reduced motion every flight is a cut, so there is no blur.

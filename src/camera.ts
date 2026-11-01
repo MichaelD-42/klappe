@@ -69,8 +69,9 @@ export function addCameraMove(
   // The camera is already at `from`. A whip pans straight there: no zoom out on the way.
   const poses = opts.whip ? [frame(to)] : flight(from, to).slice(1);
   // A cut is a set: keyframes of duration 0 make an empty nested timeline that a seek does not render.
-  if (opts.instant) return void tl.set(world, frame(to), opts.at);
+  // duration 0 is the author's cut (a split screen cutting between its views).
   const duration = flightTime(opts);
+  if (opts.instant || duration === 0) return void tl.set(world, frame(to), opts.at);
   const ease = flightEase(opts);
   tl.to(world, { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease })) }, opts.at);
   if (opts.whip) whipBlur(tl, world, from, to, duration);

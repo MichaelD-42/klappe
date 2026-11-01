@@ -486,3 +486,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **Layout grid is a look check on titles, not a column grid scenes place on.**
   - Why: a grid is new layout API that 1.0 would freeze, and the default renderer already puts every title at one place; what drifts is the deck's own code. A check finds the drift without changing how anyone places anything. Titles only: they are the element the room sees jump when the camera flies between scenes, and the one every scene has. Revisit a grid if decks keep repeating their own column maths.
+
+- **Split screen is a recipe, not an element.**
+  - Why: `place()` side by side and `ctx.camera.to` round both already do it; the one gap was a cut, and `duration: 0` now is one. An element would hide only the union rect, and add API that 1.0 freezes.

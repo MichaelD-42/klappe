@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Split screen, as a recipe: two scenes side by side with `place()`, the camera cutting between each alone and both with `ctx.camera.to(tl, both, { duration: 0 })` and `camera: { duration: 0 }`. Catalog: `#/camera/split-before/1`.
 - `image` `duotone`: `true` draws the picture in `--k-bg` (shadows) to `--k-accent` (highlights), or give your own pair of tokens, so photos from different sources read as one set. Catalog: `#/media/duotone/1`.
 - Layout grid look check: the walk warns when a scene's title sits a few px (2 to 16) off where at least two other scenes put theirs, naming the scene, the axis and the shared place. The demo's `speakerProfile` name moved from top 150 to 140 to match.
 - Pictogram: `waffle` takes `units` (cells instead of 100, up to 10 a row) and `icon` (each cell the icon), so "1 in 4 engineers" is four people with one lit; the number counts lit units and `to(value)` fills or empties them. `waffleCells` takes `units` too. Catalog: `#/numbers/pictogram/1`.
@@ -64,6 +65,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- A camera move with `duration: 0` (`ctx.camera.to` or `scene.ts` `camera`) is a cut; it never landed before, in play or seek.
 - The stage covers the window and crops under 1 px, so a near-16:9 window no longer shows a 1 px sliver of the page beside it.
 - `klappe dev` takes `--port <n>` and `--strictPort`; it served on 5173 whatever it was given.
 - `shot --last` shoots a step target as named; it picked nothing for a step that was not its scene's last, and the old PNG stayed on disk.

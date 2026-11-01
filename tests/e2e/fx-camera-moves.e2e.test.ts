@@ -186,3 +186,20 @@ test('with reduced motion, nothing leans, the dolly cuts to its end and the focu
   await dolly.close()
   await rack.close()
 }, 60_000)
+
+// Split screen with place() and the camera: duration 0 is a cut, and a cut lands where a deep link does.
+test('split screen: the camera cuts between one scene alone and both side by side', async () => {
+  const page = await open('#/a/left/1')
+  expect(r2((await state(page)).cam[0])).toBe(1)
+  await next(page)
+  await page.waitForTimeout(50) // a cut: no flight to wait for
+  const both = (await state(page)).cam
+  expect(r2(both[0])).toBe(0.5)
+  await next(page)
+  await page.waitForTimeout(50)
+  expect(r2((await state(page)).cam[0])).toBe(1)
+  const deep = await open('#/a/left/2')
+  expect((await state(deep)).cam.map(r2)).toEqual(both.map(r2))
+  await page.close()
+  await deep.close()
+})

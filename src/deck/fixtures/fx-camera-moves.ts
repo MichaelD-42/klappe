@@ -50,6 +50,20 @@ const wide: SceneModule = {
   steps: [hold, (tl, r: Record<string, StepAdder>) => r.out(tl)],
 };
 
+// Split screen: two scenes side by side. The left cuts to both in one frame, the right cuts in alone, then both again.
+const both = (ctx: Ctx) => ({ ...ctx.canvas.rects.left, w: ctx.canvas.rects.right.x + ctx.canvas.rects.right.w - ctx.canvas.rects.left.x });
+const left: SceneModule = {
+  place: (rects) => ({ x: rects.wide.x, y: rects.wide.y + 2400, w: 1920, h: 1080 }),
+  build: (ctx) => ({ box: boxes(ctx) }),
+  steps: [hold, (tl, _r, ctx) => ctx.camera.to(tl, both(ctx), { duration: 0 })],
+};
+const right: SceneModule = {
+  place: (rects) => ({ ...rects.left, x: rects.left.x + 1920 }),
+  camera: { duration: 0 },
+  build: (ctx) => ({ box: boxes(ctx) }),
+  steps: [hold, (tl, _r, ctx) => ctx.camera.to(tl, both(ctx), { duration: 0 })],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -60,6 +74,8 @@ export default () =>
       "sections/10-a/30-lean/scene.md": "## Lean\n\n- Rest.\n- There.\n- Back.\n",
       "sections/10-a/40-wide/scene.md": "## Wide\n\n- Rest.\n- Out.\n",
       "sections/10-a/50-after/scene.md": "## After\n\n- In.\n",
+      "sections/10-a/60-left/scene.md": "## Left\n\n- Alone.\n- Both.\n",
+      "sections/10-a/70-right/scene.md": "## Right\n\n- Alone.\n- Both.\n",
     },
-    { "sections/10-a/40-wide/scene.ts": wide, "sections/10-a/10-rack/scene.ts": rack, "sections/10-a/20-dolly/scene.ts": vertigo, "sections/10-a/30-lean/scene.ts": lean },
+    { "sections/10-a/40-wide/scene.ts": wide, "sections/10-a/60-left/scene.ts": left, "sections/10-a/70-right/scene.ts": right, "sections/10-a/10-rack/scene.ts": rack, "sections/10-a/20-dolly/scene.ts": vertigo, "sections/10-a/30-lean/scene.ts": lean },
   );
