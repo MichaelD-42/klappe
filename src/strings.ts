@@ -14,6 +14,8 @@ export const strings = {
     problems: "Deck problems",
     timer: "Timer",
     rehearse: "Rehearse",
+    laser: "Laser",
+    pen: "Pen",
     resetTimes: "Reset times",
     plan: "Plan",
     // The review window (?review=1).
@@ -82,6 +84,8 @@ export const strings = {
     problems: "Probleme im Deck",
     timer: "Timer",
     rehearse: "Probelauf",
+    laser: "Laserpointer",
+    pen: "Stift",
     resetTimes: "Zeiten löschen",
     plan: "Plan",
     content: "Inhalt",

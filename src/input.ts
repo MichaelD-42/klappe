@@ -1,7 +1,8 @@
 import type { Stepper } from "./stepper";
 import type { StepAddr } from "./types";
+import type { InkMode } from "./ink";
 
-export type Action = "next" | "prev" | "home" | "end" | "appendix" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "close";
+export type Action = "next" | "prev" | "home" | "end" | "appendix" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "laser" | "pen" | "close";
 
 const KEYS: Record<string, Action> = {
   ArrowRight: "next",
@@ -19,6 +20,8 @@ const KEYS: Record<string, Action> = {
   r: "review",
   a: "autoplay",
   t: "timer",
+  l: "laser", // presenter ink: a laser dot on the mouse
+  d: "pen", // presenter ink: draw with the mouse
   Escape: "close",
 };
 
@@ -46,6 +49,7 @@ export function bindInput(
     review?: { open(): void };
     autoplay?: { stop(): void; toggle(): void };
     timer?: () => void;
+    ink?: { readonly mode: InkMode; set(mode: InkMode): void };
   },
   stage: HTMLElement,
   steps: StepAddr[],
@@ -63,7 +67,7 @@ export function bindInput(
   const run = (a: Action) => {
     const nav = a === "next" || a === "prev" || a === "home" || a === "end" || a === "appendix";
     if (nav && (ui.overview.isOpen || ui.selector.isOpen)) return; // steps don't move under an open panel
-    if (a !== "autoplay" && a !== "timer") ui.autoplay?.stop(); // the timer is not a step: autoplay goes on
+    if (a !== "autoplay" && a !== "timer" && a !== "laser" && a !== "pen") ui.autoplay?.stop(); // the timer and ink are not steps: autoplay goes on
     if (a === "overview" || a === "selector") stepper.cancelAuto(); // no step moves under a panel
     if (a === "next") stepper.next();
     else if (a === "prev") stepper.prev();
@@ -81,6 +85,8 @@ export function bindInput(
     else if (a === "review") ui.review?.open();
     else if (a === "autoplay") ui.autoplay?.toggle();
     else if (a === "timer") ui.timer?.();
+    else if (a === "laser" || a === "pen") ui.ink?.set(ui.ink.mode === a ? null : a);
+    else if (ui.ink?.mode) ui.ink.set(null); // Esc: ink off first
     else if (ui.overview.isOpen) ui.overview.close();
     else ui.selector.close();
   };
@@ -95,7 +101,7 @@ export function bindInput(
     if (document.activeElement instanceof HTMLIFrameElement && stage.contains(document.activeElement)) setTimeout(() => window.focus(), 0);
   });
   stage.addEventListener("click", (e) => {
-    if (e.target instanceof Element && e.target.closest("[data-no-advance]")) return;
+    if (ui.ink?.mode || (e.target instanceof Element && e.target.closest("[data-no-advance]"))) return; // a click with ink on draws
     run("next");
   });
   return run;

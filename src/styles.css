@@ -366,3 +366,34 @@ body {
   background: var(--k-accent);
   white-space: nowrap;
 }
+
+/* Presenter ink (L, D, the speaker view's pad): over the scenes and the overlay, under the UI; the stage takes the pointer. */
+.k-ink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--k-frame-w, 1920px);
+  height: var(--k-frame-h, 1080px);
+  pointer-events: none;
+}
+
+.k-ink polyline {
+  fill: none;
+  stroke: var(--k-accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.k-ink circle {
+  fill: var(--k-accent);
+  filter: drop-shadow(0 0 10px var(--k-accent));
+}
+
+.k-stage[data-ink="laser"] {
+  cursor: none;
+}
+
+.k-stage[data-ink="pen"] {
+  cursor: crosshair;
+}

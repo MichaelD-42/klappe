@@ -18,6 +18,7 @@ import { decode, Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, loadFonts, motion, setFrame, setTempo } from "./theme";
 import { bindInput } from "./input";
+import { applyInk, inkPointer, mountInk, type InkMode } from "./ink";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
 import { t } from "./strings";
@@ -126,7 +127,24 @@ async function startDeck(svg: Record<string, string>) {
     : undefined;
   // Starts or pauses the current scene's timer; a scene without one ignores it.
   const timer = () => document.dispatchEvent(new CustomEvent("klappe:timer"));
-  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer }, stage, steps);
+  // Presenter ink: L and D (or the speaker view's pad); every step clears it.
+  const ink = mountInk(stage, ui);
+  let inkMode: InkMode = null;
+  const inkOn = {
+    get mode() {
+      return inkMode;
+    },
+    set(m: InkMode) {
+      inkMode = m;
+      ink.hide();
+      ink.lift();
+      if (m) stage.dataset.ink = m;
+      else delete stage.dataset.ink;
+    },
+  };
+  inkPointer(stage, ink, () => inkMode);
+  stepper.on("step", ink.clear);
+  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, ink: inkOn }, stage, steps);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   const state = (i: number) =>
@@ -134,6 +152,7 @@ async function startDeck(svg: Record<string, string>) {
   stepper.on("step", (a: StepAddr) => state(a.index));
   channel.on((m) => {
     if (m.t === "hello" && stepper.index >= 0) state(stepper.index);
+    if (m.t === "ink") return applyInk(ink, m);
     if (m.t !== "cmd") return;
     if (m.cmd === "timer") return timer();
     if (m.cmd === "appendix") return run("appendix");

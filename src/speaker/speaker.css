@@ -130,3 +130,25 @@
 .k-sp-next + .k-sp-label {
   margin-top: 24px;
 }
+
+/* The ink pad: the frame's shape, a third of the window high at most; the pointer draws the stage's ink here. */
+.k-sp-pad {
+  position: relative;
+  flex: none;
+  height: 32vh;
+  max-width: 100%;
+  margin-top: 16px;
+  border: 2px solid var(--k-muted);
+  border-radius: var(--k-radius, 8px);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.k-sp-pad[hidden] {
+  display: none;
+}
+
+.k-sp-pad .k-ink {
+  width: 100%;
+  height: 100%;
+}

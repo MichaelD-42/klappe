@@ -467,3 +467,19 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**
   - Why: klappe cannot know how intense a deck's own motion is, so reduced motion treats it like the intense built-ins. A function without `reveal` (or that throws) must not fail the deck mid-talk: the move still lands with a fade, and the problem names the section.
+
+## 2026-11-01 (backlog: ink, icons, establish, monotony, conversion)
+
+- **Presenter ink lives on the stage, outside every timeline, and every step clears it.**
+  - Why: ink is the presenter's live gesture, not deck content; a deep link or the walk must never show it, so it sits under `data-k-ignore` in its own layer over the overlay and under the UI. Points travel as shares of the frame, so the speaker view's pad and a scaled stage agree.
+  - Keys `L` (laser) and `D` (draw): free in the deck and the speaker view, where `P` is already the rehearsal. With ink on, a click on the stage draws instead of advancing; the keys still step. `Esc` turns ink off before it closes a panel.
+  - The speaker view gets a blank pad, not a copy of the stage: a live mirror of the scene would be a second render of the deck. The pad shows its own ink, so the presenter sees what they draw.
+
+- **Icons in Markdown are a leading `:icon-name:` on plain, media and agenda items, not a deck component.**
+  - Why not a component: a component draws the whole scene, and an icon is a mark on one step of the default renderer. Task-list items keep `:name:` as text: they draw their own box, and dropping the name silently would hide the mistake.
+
+- **`establish` pulls out to the union of the canvas's scene rects and leaves the push-in to the next scene's flight.**
+  - Why: the camera tracks its last view, so the engine's own flight into the next scene already starts from the wide view; a second authored push would fight it. It belongs on a scene's last step.
+
+- **The monotony check judges a scene by what shows at its last step, plus its `layout` for the default renderer.**
+  - Why: the walk sees `scene.ts` scenes only as DOM. "Text only" is what it can tell for every scene (no picture, shape or filled box); a named layout or text beside media it can tell only for scenes it drew itself, and other `scene.ts` scenes break a run. Three in a row, and a warning, not a failure: a run can be a deliberate rhythm.

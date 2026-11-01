@@ -18,6 +18,12 @@ describe("isMsg", () => {
     expect(isMsg({ t: "edit", index: 1, key, line: `${key}${"x".repeat(500)}` })).toBe(false);
     expect(isMsg({ t: "edit", index: -1, key, line: key })).toBe(false);
   });
+  it("accepts presenter ink only with a point on the stage, from 0 to 1", () => {
+    for (const m of [{ t: "ink", ink: "laser", x: 0.5, y: 0 }, { t: "ink", ink: "pen", x: 1, y: 0.2, start: true }, { t: "ink", ink: "lift" }, { t: "ink", ink: "hide" }])
+      expect(isMsg(m)).toBe(true);
+    for (const m of [{ t: "ink", ink: "laser" }, { t: "ink", ink: "pen", x: 1.5, y: 0 }, { t: "ink", ink: "laser", x: NaN, y: 0 }, { t: "ink", ink: "pen", x: 0, y: 0, start: 1 }, { t: "ink", ink: "spray", x: 0, y: 0 }])
+      expect(isMsg(m)).toBe(false);
+  });
   it("rejects a negative or non-integer index", () => {
     for (const index of [-1, 1.5, NaN, "2"]) {
       expect(isMsg({ t: "state", index })).toBe(false);

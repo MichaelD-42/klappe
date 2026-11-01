@@ -347,7 +347,8 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
 - `Q`: to the appendix and back to where the talk was, also from the speaker view.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: turn ink off, else close a panel.
+- `L`: laser dot on the mouse. `D`: draw with the mouse; a stroke holds 2 s, then fades. The same key again turns it off. With ink on, a click on the stage draws instead of stepping; the keys still step, and every step clears the ink. Ink is never part of a step: deep links, `pdf`, `shot` and the walk never show it. The speaker view has the same keys and Laser and Pen buttons: they open a pad in the frame's shape that drives the ink on the stage.
 - In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it (under a [deck cut](#cuts-and-the-appendix), the cut's `duration` if it has one; time in the appendix is not counted). Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck and per deck cut, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
 
 While the deck window shows, it keeps the screen awake: no screensaver or sleep mid-talk. The browser allows this on `localhost` and `https`, not on a built deck served over plain `http` from another machine.
@@ -415,6 +416,7 @@ Review mode exists only on the dev server, which saves the file: a built deck ha
 
 - Safe area: ink that crosses the deck's `safe-area` inset (default 48 px top and bottom, 64 px left and right, in the frame, 1920x1080 by default). Ink is each line of text (the text itself, not its box), each picture and SVG shape, and each HTML box with a fill or a border. Ink is cut to its parents' `overflow: hidden` first.
 - Clipped text: shown text that a parent's `overflow: hidden` or `clip` cuts off, which includes `text-overflow: ellipsis` and line clamps. Text that a mask hides completely is not counted.
+- Monotony: three or more scenes in a row that look alike, judged at each scene's last step: text only (no picture, video, SVG shape or box with a fill or border shows, and no `background` behind the scene), the same named `layout`, or text beside media from the default renderer. A `scene.ts` scene with more than text has its own look and breaks a run. The appendix is a run of its own. One warning per run, naming its scenes; break it with a picture, a diagram or another layout.
 
 These are not checked:
 

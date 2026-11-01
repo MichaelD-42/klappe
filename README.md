@@ -105,7 +105,8 @@ Open the deck full screen (F11) and press `N` for the speaker view in a second w
 | `R` | review window (dev server only) |
 | `A` | autoplay; any step key stops it |
 | `T` | start or pause the scene's timer |
-| `Esc` | close a panel |
+| `L` / `D` | laser dot / draw on the stage; again to turn off. Each step clears it |
+| `Esc` | ink off, else close a panel |
 
 The deck window keeps the screen awake while it shows, and a video starts on its step, so a clicker is all you need.
 
