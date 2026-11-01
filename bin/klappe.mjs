@@ -24,7 +24,7 @@ const usage =
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
-  '       klappe video [--deck <id>] [--out <file.mp4>] [--fps <n>] [--hold <s>] [--size <w>x<h>]   needs ffmpeg on PATH\n' +
+  '       klappe video [--deck <id>] [--out <file.mp4>] [--fps <n>] [--hold <s>] [--size <w>x<h>] [--only <section>[/<scene>]]   needs ffmpeg on PATH\n' +
   '       klappe --version'
 // --help on a command too: shot took it for nothing and rendered the whole deck.
 if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
@@ -293,15 +293,29 @@ if (cmd === 'build') {
     console.error('--fps needs a whole number above 0, --hold seconds (0 or more), --size <width>x<height>')
     process.exit(1)
   }
+  // --only <section>[/<scene>], as for test: those scenes alone, checked against the deck before a browser starts. The
+  // default file is named after them, so it never overwrites the whole talk's.
+  const only = rest.flatMap((a, k) => (rest[k - 1] === '--only' ? a.split(',') : [])).filter(Boolean)
+  if (rest.includes('--only') && !only.length) {
+    console.error('--only needs <section>[/<scene>], as in a deep link')
+    process.exit(1)
+  }
+  if (only.length) {
+    const { outline, walkedScenes } = await import('./outline.mjs')
+    const { unknown } = walkedScenes((await outline(klappeDir, deckDir, { cut: cut ?? null })).deck, only)
+    for (const u of unknown) console.error(`--only ${u}: no scene matches; a target is <section> or <section>/<scene>`)
+    if (unknown.length) process.exit(1)
+  }
   const { exportVideo } = await import('./video.mjs')
   const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server.listen()
-  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}${cut ? `-${cut}` : ''}.mp4`))
+  const part = only.length ? `-${only.map((t) => t.replace(/^#?\/?/, '').replace(/\//g, '-')).join('_')}` : ''
+  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}${cut ? `-${cut}` : ''}${part}.mp4`))
   // Ctrl-C stops ffmpeg and the browser and drops the partial file, instead of leaving a short video at out.
   const stop = new AbortController()
   process.once('SIGINT', () => stop.abort())
   try {
-    const r = await exportVideo(deckUrl(server), out, { fps, hold, size: { width: +m[1], height: +m[2] }, signal: stop.signal })
+    const r = await exportVideo(deckUrl(server), out, { fps, hold, size: { width: +m[1], height: +m[2] }, signal: stop.signal, only: only.length ? only : undefined })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.frames} frames, ${(r.frames / fps).toFixed(1)} s.`)

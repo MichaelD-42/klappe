@@ -67,3 +67,19 @@ test.skipIf(missing.length)('a cut renders its own steps', async () => {
     fs.rmSync(path.dirname(out), { recursive: true })
   }
 })
+
+// only: the steps of those scenes or sections, each run entered as it plays live (c through its blackout).
+test.skipIf(missing.length)('only renders the steps of the scenes and sections it names', async () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-video-')), 'deck.mp4')
+  try {
+    const opts = { fps: 10, hold: 0.2, size: { width: 320, height: 180 } }
+    const c = await exportVideo(`${inject('BASE_URL')}/?fixture=cuts`, out, { ...opts, only: ['c'] })
+    const two = await exportVideo(`${inject('BASE_URL')}/?fixture=cuts`, out, { ...opts, only: ['a/one', 'c'] })
+    expect([c.errors, two.errors]).toEqual([[], []])
+    expect([c.steps, two.steps]).toEqual([[3], [0, 1, 3]])
+    expect(c.frames).toBeGreaterThan(opts.hold * opts.fps) // the blackout into c plays before its hold
+    expect(two.frames).toBeGreaterThan(c.frames)
+  } finally {
+    fs.rmSync(path.dirname(out), { recursive: true })
+  }
+})
