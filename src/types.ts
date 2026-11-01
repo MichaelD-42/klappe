@@ -20,7 +20,8 @@ export interface DeckMeta {
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
   // deck.md cuts: a shorter talk by name, the section ids it keeps and its own duration; ?cut=<name> plays one.
   cuts?: Record<string, { sections: string[]; duration?: number }>;
-  handheld?: boolean; // deck.md handheld: true: a barely visible wall-clock wander of the stage, as a camera held by hand
+  handheld?: boolean;
+  sound?: boolean; // deck.md sound: true: cue() and section music play; off, a deck with them is silent // deck.md handheld: true: a barely visible wall-clock wander of the stage, as a camera held by hand
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-answer";
@@ -186,6 +187,8 @@ export interface SectionModule {
   transition?: TransitionKind | OwnTransition;
   // For transition 'zoom': the ref on the old canvas the camera dives into.
   zoomTarget?: string;
+  // A music bed under the section's scenes, looping from a forward step into it until a step leaves it (deck.md sound: true).
+  music?: { href: string; volume?: number };
   // Extra options for the transition, for example { shards: 20 } for shatter.
   transitionOptions?: Record<string, unknown>;
   build?(ctx: Omit<Ctx, "rect"> & { rect: Rect }): Record<string, any>;

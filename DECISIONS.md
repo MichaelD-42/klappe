@@ -493,3 +493,8 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **Handheld drift is opt-in per deck, and not tied to `intensity`.**
   - Why: the backlog asked whether it suits `calm` at all. A calm deck promises a still stage, and a wander under text at rest reads as nervous there; on a bold, filmic deck it adds life. But intensity also sets shout-outs and other choices, and a bold deck may still want a still stage, so `handheld` is its own `deck.md` key, off by default, rather than part of `bold`.
   - It moves `.k-worlds`, which no timeline touches: the camera's pose stays the timeline's, so seek still equals play. It runs from GSAP's ticker and only when wall-clock motion is allowed, the same condition as the backgrounds.
+
+- **Sound keeps the timeline rule by never being on the timeline.**
+  - Why: a sound cannot be seeked to (half a whoosh at a deep link is noise), so it is treated like video: a cue starts on its step's forward play, when the canvas timeline passes the cue's place (a ticker wait, as `video`), and a seek, jump or step back plays nothing. Nothing on screen depends on it, so the walk compares the same frames with or without it, and the walk and `klappe video` run silent (the same condition that holds wall-clock motion still).
+  - A music bed starts on any forward step in its section, not only on the step that enters it: a presenter who jumps into a section and goes on expects to hear it. It fades out when a step leaves the section, a jump too.
+  - Opt-in twice: `sound: true` per deck, and the browser's own rule that a page plays sound only after a gesture. `M` mutes, and is forwarded from the speaker view like `T` and `Q`. The 2026-10-30 entry that reversed the v1 non-goal stands; this is how it was built.

@@ -686,6 +686,23 @@ Limits: the picture has no Ken Burns push (the enlarged copy would not follow it
 
 `loupeOffset({ x, y }, rect, r, zoom)` gives where the enlarged copy sits in a `loupe` lens (from the lens's top-left), so the scene point `(x, y)` shows at the lens centre.
 
+## `cue`
+
+Catalog: section `233-sound` (`#/sound/cues/1`). `cue(ctx, { href, volume?, at? })` returns a step adder: a short sound from `media/` that plays once when a forward play of its step reaches the point where it was added. A seek, a jump and a step back are silent, as for video. It plays only in a deck with `sound: true` in `deck.md`, never in the walk or `klappe video`, and `M` mutes it. A missing file is a deck problem.
+
+```ts
+build: (ctx) => ({ whoosh: cue(ctx, { href: "media/whoosh.mp3", at: "step" }), hit: cue(ctx, { href: "media/hit.mp3" }), land: impactShake(ctx) }),
+steps: [(tl, r) => r.whoosh(tl), (tl, r) => (r.hit(tl), r.land(tl))], // the hit as the shake starts
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `href` | string | required | a sound file in `media/`, as the Markdown link: `"media/hit.mp3"` |
+| `volume` | number | 1 | 0 to 1 |
+| `at` | `"step"` | where it is added | `"step"`: with the step's start, so a whoosh plays with the camera flight into the scene |
+
+A music bed under a section is `section.ts` `music` ([deck format](deck-format.md#sectionts)).
+
 ## `qr`
 
 Catalog: section `190-media` (`#/media/qr/1`). A QR code the room can scan, usually for a link.

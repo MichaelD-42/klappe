@@ -10,6 +10,8 @@ export { burst, type BurstHandle, type BurstOpts } from "./burst";
 export * from "./calendar";
 export * from "./callout";
 export * from "./camera";
+// Not allowSound, toggleMute or musicBeds: the engine's side of sound.
+export { cue, type CueOpts } from "./sound";
 export * from "./cardstack";
 export * from "./chart";
 export * from "./chat";

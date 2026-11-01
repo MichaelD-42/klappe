@@ -18,6 +18,7 @@ import { decode, Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, loadFonts, motion, setFrame, setTempo } from "./theme";
 import { handheld } from "./camera";
+import { allowSound, musicBeds, toggleMute } from "./fx/sound";
 import { bindInput } from "./input";
 import { applyInk, inkPointer, mountInk, type InkMode } from "./ink";
 import { openChannel } from "./speaker/channel";
@@ -85,6 +86,11 @@ async function startDeck(svg: Record<string, string>) {
   const still = reducedMotion || query.has("selftest");
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still, svg, onProblem });
   if (deck.meta.handheld && !still) handheld(worlds);
+  // Sound starts only on a forward play; the beds hear every move through the first canvas's step listeners.
+  allowSound(!!deck.meta.sound && !still);
+  const beds = musicBeds(deck);
+  problems.push(...beds.problems);
+  canvases[0]?.stepListeners.push(beds.onStep);
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
   const overlay = mountOverlay(stage, deck, { total: steps.filter((s) => !s.appendix).length, reducedMotion, problem: (msg) => (late ? late(msg) : problems.push(msg)) });
@@ -148,7 +154,7 @@ async function startDeck(svg: Record<string, string>) {
   };
   inkPointer(stage, ink, () => inkMode);
   stepper.on("step", ink.clear);
-  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, ink: inkOn }, stage, steps);
+  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, ink: inkOn, mute: toggleMute }, stage, steps);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   const state = (i: number) =>
@@ -160,6 +166,7 @@ async function startDeck(svg: Record<string, string>) {
     if (m.t !== "cmd") return;
     if (m.cmd === "timer") return timer();
     if (m.cmd === "appendix") return run("appendix");
+    if (m.cmd === "mute") return toggleMute();
     autoplay.stop();
     if (m.cmd === "next") stepper.next();
     else if (m.cmd === "prev") stepper.prev();
