@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- Pictogram: `waffle` takes `units` (cells instead of 100, up to 10 a row) and `icon` (each cell the icon), so "1 in 4 engineers" is four people with one lit; the number counts lit units and `to(value)` fills or empties them. `waffleCells` takes `units` too. Catalog: `#/numbers/pictogram/1`.
 - Deck conversion: the `klappe` skill's new reference `converting-a-deck.md` turns a PPTX or PDF into a draft deck folder with the system tools (`unzip`, `soffice`, `pdftotext`, `pdftoppm`): a slide-to-scene map, `scene.md` steps with the notes, chart numbers in `data/` with a `# source:` line, picture links for `media/TODO.md`, and the open questions in `CONVERSION.md`.
 - Presenter ink: `L` shows a laser dot on the mouse, `D` draws strokes that hold 2 s and fade, in `--k-accent`; the same key again (or `Esc`) turns it off, and every step clears it. With ink on, a click draws instead of stepping. In the speaker view, `L`, `D` or the Laser and Pen buttons open a pad in the frame's shape that drives the ink on the stage. Ink is live, never part of a step, so deep links, `pdf`, `shot` and the walk never show it.
 - Monotony look check: the walk warns when three or more scenes in a row are text only, share one named `layout`, or all set text beside media, one warning per run naming its scenes. A warning, so it fails only `klappe test --strict`.

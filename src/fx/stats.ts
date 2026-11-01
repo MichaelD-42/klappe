@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
 import { typeSize } from "./draw";
+import { iconGlyph, type IconName } from "./icons";
 import { addSource } from "./sources";
 import { radius } from "./layout";
 import { counterText } from "./motion";
@@ -31,6 +32,10 @@ export interface WaffleOpts {
   of?: number; // the whole; default 100
   label?: string;
   source?: string;
+  // A pictogram: units cells instead of 100 (up to 10 in a row), each the icon, so "1 in 4" is four people with one lit.
+  // The number then counts lit units, not percent.
+  units?: number;
+  icon?: IconName;
 }
 export interface ProgressOpts {
   x: number;
@@ -59,7 +64,7 @@ export function kpiDelta(value: number, previous: number, better: "up" | "down" 
 }
 
 // A waffle's filled cells out of 100: one per percent of the whole.
-export const waffleCells = (value: number, of: number): number => Math.max(0, Math.min(100, Math.round((value / of) * 100)));
+export const waffleCells = (value: number, of: number, units = 100): number => Math.max(0, Math.min(units, Math.round((value / of) * units)));
 
 const decimals = (n: number) => (String(n).split(".")[1] ?? "").length;
 const el = <K extends keyof HTMLElementTagNameMap>(parent: Element, tag: K, css: Partial<CSSStyleDeclaration>, text = "") => {
@@ -164,28 +169,45 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
 }
 
 // A share as a 10x10 grid: one cell per percent of the whole fills in --k-accent, row by row from the top
-// left; the rest stay --k-line. The number counts up beside the label under it.
+// left; the rest stay --k-line. The number counts up beside the label under it. With units and icon, a pictogram.
 export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
   const of = opts.of ?? 100;
+  const units = opts.units ?? 100;
   const root = block(ctx, "waffle", opts.x, opts.y, opts.size, opts.source);
-  const gap = opts.size / 60;
-  const cell = (opts.size - 9 * gap) / 10;
-  const svg = svgEl(root, "svg", { width: opts.size, height: opts.size, viewBox: `0 0 ${opts.size} ${opts.size}` });
-  const n = waffleCells(opts.value, of);
+  const cols = Math.min(10, units);
+  const rows = Math.ceil(units / cols);
+  const gap = opts.size / (cols > 4 ? 60 : 20);
+  const cell = (opts.size - (cols - 1) * gap) / cols;
+  const h = rows * cell + (rows - 1) * gap;
+  const svg = svgEl(root, "svg", { width: opts.size, height: h, viewBox: `0 0 ${opts.size} ${h}` });
+  const n = waffleCells(opts.value, of, units);
+  const glyph = opts.icon === undefined ? "" : iconGlyph(opts.icon, (msg) => ctx.problem(`waffle: ${msg}`));
+  // One cell: a rounded square, or the icon on its 24 grid scaled to the cell, in the given token.
+  const draw = (x: number, y: number, tone: string) => {
+    if (!glyph) {
+      const r = svgEl(svg, "rect", { x, y, width: cell, height: cell, rx: cell / 6 });
+      r.style.fill = tone;
+      return r;
+    }
+    const g = svgEl(svg, "g", { transform: `translate(${x} ${y}) scale(${cell / 24})`, fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" });
+    g.innerHTML = glyph;
+    g.style.color = tone;
+    return g;
+  };
   // A lit cell over every track cell, all hidden: to() may light any of them.
   const on: SVGElement[] = [];
-  for (let i = 0; i < 100; i++) {
-    const box = { x: (i % 10) * (cell + gap), y: Math.floor(i / 10) * (cell + gap), width: cell, height: cell, rx: cell / 6 };
-    svgEl(svg, "rect", box).style.fill = "var(--k-line)";
-    const lit = svgEl(svg, "rect", box);
-    lit.style.fill = "var(--k-accent)";
-    on.push(lit);
+  for (let i = 0; i < units; i++) {
+    const [x, y] = [(i % cols) * (cell + gap), Math.floor(i / cols) * (cell + gap)];
+    draw(x, y, "var(--k-line)");
+    on.push(draw(x, y, "var(--k-accent)"));
   }
   gsap.set(on, { autoAlpha: 0 });
   const text = el(root, "div", { marginTop: "20px", display: "flex", gap: "16px", alignItems: "baseline" });
   const num = el(text, "span", { font: `700 ${typeSize("title", 64)}px/1 var(--k-font)`, color: "var(--k-accent)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flexShrink: "0" });
   if (opts.label) el(text, "span", {}, opts.label);
-  const show = (v: number) => `${Math.round(v)} %`;
+  // The number: percent, or lit units for a pictogram.
+  const show = (v: number) => (units === 100 ? `${Math.round(v)} %` : `${Math.round(v)}`);
+  const count = (v: number) => (units === 100 ? (v / of) * 100 : waffleCells(v, of, units));
   num.textContent = show(0);
   let [at, lit] = [opts.value, n]; // the value and the lit cells the steps added so far leave
   return {
@@ -193,16 +215,16 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
       // The cells fill over the same 1.2 s whatever their number.
       if (n) tl.to(on.slice(0, n), { autoAlpha: 1, duration: 0.15, stagger: 1.05 / n }, ">");
-      counting(tl, num, 0, (opts.value / of) * 100, show);
+      counting(tl, num, 0, count(opts.value), show);
     },
     // Cells fill on in reading order, or empty from the last lit one back, over the same 1.2 s.
     to: (value) => (tl) => {
-      const m = waffleCells(value, of);
+      const m = waffleCells(value, of, units);
       const t0 = tl.duration();
       const d = { duration: 0.15, stagger: 1.05 / Math.max(1, Math.abs(m - lit)), immediateRender: false };
       if (m > lit) tl.fromTo(on.slice(lit, m), { autoAlpha: 0 }, { autoAlpha: 1, ...d }, t0);
       if (m < lit) tl.fromTo(on.slice(m, lit).reverse(), { autoAlpha: 1 }, { autoAlpha: 0, ...d }, t0);
-      counting(tl, num, (at / of) * 100, (value / of) * 100, show, t0);
+      counting(tl, num, count(at), count(value), show, t0);
       [at, lit] = [value, m];
     },
   };

@@ -367,3 +367,23 @@ test('show and hide with at: "<" start with the tween before, so a step fades tw
   expect(r.hidden).toEqual(['hidden', 'hidden'])
   await page.close()
 }, 60_000)
+
+test('waffle units and icon: a pictogram, one icon per unit, lit in the accent, the number counts units', async () => {
+  const lit = (page: Page) =>
+    page.evaluate(() => {
+      const root = document.querySelector('[data-scene="picto"] [data-k-waffle]')!
+      const glyphs = [...root.querySelectorAll('svg > g')]
+      return {
+        glyphs: glyphs.length,
+        on: glyphs.filter((g) => getComputedStyle(g).visibility === 'visible' && getComputedStyle(g).color !== getComputedStyle(glyphs[0]).color).length,
+        shapes: glyphs[0].querySelectorAll('path, circle').length,
+        number: root.querySelector('[data-k-text]')!.textContent,
+      }
+    })
+  const page = await open('#/a/picto/1')
+  expect(await lit(page)).toEqual({ glyphs: 8, on: 1, shapes: 2, number: '1' }) // a track glyph and a lit one per unit
+  await page.evaluate(() => window.klappe.stepper.next())
+  await settle(page)
+  expect(await lit(page)).toMatchObject({ on: 2, number: '2' })
+  await page.close()
+}, 60_000)

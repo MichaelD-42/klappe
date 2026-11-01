@@ -68,18 +68,19 @@ For a chart `chart` lacks, draw it yourself in `scene.ts` with d3. Catalog: `#/c
 
 ## `kpi`, `waffle`, `progress`
 
-Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`, the pictogram `#/numbers/pictogram/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
 
 ```ts
 kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
 waffle(ctx, { x: 200, y: 160, size: 520, value: 37, label: "of releases needed a rollback" })
+waffle(ctx, { x: 260, y: 300, size: 1400, value: 25, units: 8, icon: "user", label: "of 8 engineers on call" }) // a pictogram
 progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Services moved" })
 ```
 
 | Element | Options | Shows |
 | --- | --- | --- |
 | `kpi` | `x`, `y`, `w` (480), `value`, `label`, `unit?`, `previous?`, `better?` (`"up"`), `spark?`, `source?` | a `--k-surface` tile: the label, the number (112 px, its unit smaller on the same line), the change against `previous` (`▲ 12 %`, in `--k-ok` when it goes the `better` way, else `--k-bad`; against 0 it is in units), and a sparkline of `spark` (oldest first) that draws on, its last point in `--k-accent` |
-| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label |
+| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?`, `units?` (100), `icon?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label. A pictogram: `units` cells instead (up to 10 a row, `size` is the width), each drawn as `icon` (a Lucide name or the deck's own, as for [`icon`](#icon)) when given; "1 in 4" is `units: 4, value: 25`. The number then counts lit units, so the label carries the rest ("of 8 engineers") |
 | `progress` | `x`, `y`, `size`, `value`, `target`, `label?`, `source?` | a ring that closes to `value / target` in `--k-accent` (full and `--k-ok` at or past the target); the share in % and "of <target>" in its centre, the label under it |
 
 ## `gauge`
@@ -148,7 +149,7 @@ A row whose counts are not one number of 0 or more per point reports a message s
 
 ## `waffleCells`
 
-`waffleCells(value, of)` gives the waffle's filled cells: one per percent of `of`, rounded, 0 to 100.
+`waffleCells(value, of, units = 100)` gives the waffle's filled cells: `value / of` of `units`, rounded, 0 to `units`.
 
 ## `barRace`
 

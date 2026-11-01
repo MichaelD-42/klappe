@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { arrow, chart, hide, show, compareTable, counter, formula, gauge, likert, worldMap, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
+import { arrow, chart, waffle, type StatHandle, hide, show, compareTable, counter, formula, gauge, likert, worldMap, mindMap, roadmap, sequence, swimlanes, video, loupe, matrix, pulse, shape, spotlight, stickyNotes, wipe, type CompareTableHandle, type LoupeHandle, type MatrixHandle, type ShapeHandle, type SpotlightHandle, type StickyNotesHandle, type WipeHandle } from "klappe/fx";
 import { gsap } from "gsap";
 import type { SceneModule, StepAdder } from "../../types";
 
@@ -177,6 +177,12 @@ const chartTo = (type: "bar" | "donut"): SceneModule => ({
   ],
 });
 
+// A pictogram: four people, one in four lit, then two.
+const picto: SceneModule = {
+  build: (ctx) => waffle(ctx, { x: 160, y: 200, size: 800, value: 25, units: 4, icon: "user", label: "in 4 engineers" }),
+  steps: [(tl, w: StatHandle) => w.show(tl), (tl, w: StatHandle) => w.to(50)(tl)],
+};
+
 export default () => {
   const r = assembleDeck(
     {
@@ -205,6 +211,7 @@ export default () => {
       "sections/10-a/85-bars-to/scene.md": "## Bars to\n\n- 2024.\n- 2025.\n- A column that is not there.\n",
       "sections/10-a/86-donut-to/scene.md": "## Donut to\n\n- 2024.\n- 2025.\n- A column that is not there.\n",
       "sections/10-a/92-clip-vimeo/scene.md": "## Clip Vimeo\n\n- From 42 s; Vimeo has no end.\n",
+      "sections/10-a/83-picto/scene.md": "## Picto\n\n- One in four.\n- Two in four.\n",
       "sections/10-a/84-together/scene.md": "## Together\n\n- Both boxes fade in at once.\n- Both leave at once.\n",
     },
     {
@@ -231,6 +238,7 @@ export default () => {
       "sections/10-a/85-bars-to/scene.ts": chartTo("bar"),
       "sections/10-a/86-donut-to/scene.ts": chartTo("donut"),
       "sections/10-a/84-together/scene.ts": together,
+      "sections/10-a/83-picto/scene.ts": picto,
       "sections/10-a/92-clip-vimeo/scene.ts": clip("https://vimeo.com/76979871", "A Vimeo talk", 42, 50),
     },
   );
