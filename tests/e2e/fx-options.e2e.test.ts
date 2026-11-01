@@ -17,6 +17,7 @@ for (const vp of [
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
     expect(r.problems).toEqual([
       'sections/10-a/40-lines/scene.ts: shape: width 1 is under the 2 px floor',
+      "sections/10-a/82-duo/scene.ts: image: duotone: no theme token '--k-no-such'",
       'sections/10-a/88-four-points/scene.ts: likert: row 2 needs 4 counts of 0 or more, got [1, 1, 1, 1, 1]',
       'sections/10-a/92-clip-vimeo/scene.ts: video: a Vimeo player cannot stop at end; it plays on from start',
       'sections/10-a/85-bars-to/scene.ts step 3: chart: no column "1999" in columns; they are 2024, 2025',
@@ -365,5 +366,43 @@ test('show and hide with at: "<" start with the tween before, so a step fades tw
   expect(r.b).toEqual(r.a)
   expect(r.a).toHaveLength(2)
   expect(r.hidden).toEqual(['hidden', 'hidden'])
+  await page.close()
+}, 60_000)
+
+test('waffle units and icon: a pictogram, one icon per unit, lit in the accent, the number counts units', async () => {
+  const lit = (page: Page) =>
+    page.evaluate(() => {
+      const root = document.querySelector('[data-scene="picto"] [data-k-waffle]')!
+      const glyphs = [...root.querySelectorAll('svg > g')]
+      return {
+        glyphs: glyphs.length,
+        on: glyphs.filter((g) => getComputedStyle(g).visibility === 'visible' && getComputedStyle(g).color !== getComputedStyle(glyphs[0]).color).length,
+        shapes: glyphs[0].querySelectorAll('path, circle').length,
+        number: root.querySelector('[data-k-text]')!.textContent,
+      }
+    })
+  const page = await open('#/a/picto/1')
+  expect(await lit(page)).toEqual({ glyphs: 8, on: 1, shapes: 2, number: '1' }) // a track glyph and a lit one per unit
+  await page.evaluate(() => window.klappe.stepper.next())
+  await settle(page)
+  expect(await lit(page)).toMatchObject({ on: 2, number: '2' })
+  await page.close()
+}, 60_000)
+
+test('image duotone: the picture in grey under a dark and a light token layer, blended so black takes one and white the other', async () => {
+  const page = await open('#/a/duo/1')
+  const r = await page.evaluate(() => {
+    const color = (token: string) => {
+      const p = document.querySelector('[data-scene="duo"]')!.appendChild(document.createElement('i'))
+      p.style.color = `var(${token})`
+      return getComputedStyle(p).color
+    }
+    return [...document.querySelectorAll('[data-scene="duo"] img')].slice(0, 2).map((img) => {
+      const layers = [...img.parentElement!.querySelectorAll<HTMLElement>('[data-k-duotone]')].map((l) => [getComputedStyle(l).backgroundColor, getComputedStyle(l).mixBlendMode])
+      return { grey: /grayscale\(1\)/.test(getComputedStyle(img).filter), layers, isolated: getComputedStyle(img.parentElement!).isolation }
+    }).concat([{ grey: true, layers: [[color('--k-bg'), 'lighten'], [color('--k-accent'), 'multiply']], isolated: 'isolate' }, { grey: true, layers: [[color('--k-fg'), 'lighten'], [color('--k-ok'), 'multiply']], isolated: 'isolate' }] as any)
+  })
+  expect(r[0]).toEqual(r[2])
+  expect(r[1]).toEqual(r[3])
   await page.close()
 }, 60_000)

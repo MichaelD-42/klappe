@@ -68,18 +68,19 @@ For a chart `chart` lacks, draw it yourself in `scene.ts` with d3. Catalog: `#/c
 
 ## `kpi`, `waffle`, `progress`
 
-Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
+Catalog: section `115-numbers` (`#/numbers/kpis/1`, `#/numbers/shares/1`, the pictogram `#/numbers/pictogram/1`). Single numbers for a board slide. Each takes its numbers directly; `source` goes to the speaker notes ("origin not stated" without it), as a chart's does. Each returns `{ show, to }`. `show` fades it in and its number counts up from 0, written from `onUpdate` as a pure function of progress. `to(value)` gives a step that moves it on from where the steps before left it, for a before and after on one tile: the KPI's number counts there and its change against `previous` switches halfway; the waffle's cells fill on, or empty from the last one back; the ring closes or opens, turning `--k-ok` as it reaches the target and back to the accent as it leaves it. Several `to` calls in one step play one after another. Catalog: `#/numbers/shares/2`.
 
 ```ts
 kpi(ctx, { x: 710, y: 200, w: 500, value: 9.5, unit: "days", label: "Lead time", previous: 12.5, better: "down", spark: [14, 13, 12.5, 11, 10, 9.5], source: "…" })
 waffle(ctx, { x: 200, y: 160, size: 520, value: 37, label: "of releases needed a rollback" })
+waffle(ctx, { x: 260, y: 300, size: 1400, value: 25, units: 8, icon: "user", label: "of 8 engineers on call" }) // a pictogram
 progress(ctx, { x: 1100, y: 160, size: 520, value: 72, target: 100, label: "Services moved" })
 ```
 
 | Element | Options | Shows |
 | --- | --- | --- |
 | `kpi` | `x`, `y`, `w` (480), `value`, `label`, `unit?`, `previous?`, `better?` (`"up"`), `spark?`, `source?` | a `--k-surface` tile: the label, the number (112 px, its unit smaller on the same line), the change against `previous` (`▲ 12 %`, in `--k-ok` when it goes the `better` way, else `--k-bad`; against 0 it is in units), and a sparkline of `spark` (oldest first) that draws on, its last point in `--k-accent` |
-| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label |
+| `waffle` | `x`, `y`, `size`, `value`, `of?` (100), `label?`, `source?`, `units?` (100), `icon?` | a 10x10 grid, one cell per percent of `of`, filling in `--k-accent` row by row; the share in % beside the label. A pictogram: `units` cells instead (up to 10 a row, `size` is the width), each drawn as `icon` (a Lucide name or the deck's own, as for [`icon`](#icon)) when given; "1 in 4" is `units: 4, value: 25`. The number then counts lit units, so the label carries the rest ("of 8 engineers") |
 | `progress` | `x`, `y`, `size`, `value`, `target`, `label?`, `source?` | a ring that closes to `value / target` in `--k-accent` (full and `--k-ok` at or past the target); the share in % and "of <target>" in its centre, the label under it |
 
 ## `gauge`
@@ -148,7 +149,7 @@ A row whose counts are not one number of 0 or more per point reports a message s
 
 ## `waffleCells`
 
-`waffleCells(value, of)` gives the waffle's filled cells: one per percent of `of`, rounded, 0 to 100.
+`waffleCells(value, of, units = 100)` gives the waffle's filled cells: `value / of` of `units`, rounded, 0 to `units`.
 
 ## `barRace`
 
@@ -574,6 +575,7 @@ steps: [(tl, img) => img.show(tl)],
 | `scrim` | number 0 to 1 | none | a `--k-scrim` layer over the picture (black, white in a light theme); use 0.6 or more for text on top |
 | `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none (flat) | the scrim covers only that side: full over the 45% of the frame there, clear by 85%. Keep the text inside that 45%; the rest of the picture keeps its light |
 | `credit` | string | none | a credit line, `"Photo: …"`, 20 px in `--k-fg` on a 75 % `--k-bg` patch, 12 px in from the picture's bottom-right corner, so it reads on any photo. It stays put while Ken Burns pushes. It sits outside the safe area on a full frame on purpose (`data-k-bleed`); move a footer logo if they meet. Catalog: `#/fullscreen/cover/1` |
+| `duotone` | `true` or `[dark, light]` | none | the picture in two theme tokens: its shadows take the first, its highlights the second, so photos from different sources read as one set. `true` is `--k-bg` to `--k-accent`; a token is `"accent"` or `"--k-accent"`, and an unknown one is a deck problem. Pure CSS (greyscale, then a `lighten` and a `multiply` layer), so a section's `tokens` apply. Catalog: `#/media/duotone/1` |
 
 ### Step adders
 
@@ -683,6 +685,41 @@ Limits: the picture has no Ken Burns push (the enlarged copy would not follow it
 ## `loupeOffset`
 
 `loupeOffset({ x, y }, rect, r, zoom)` gives where the enlarged copy sits in a `loupe` lens (from the lens's top-left), so the scene point `(x, y)` shows at the lens centre.
+
+## `cue`
+
+Catalog: section `233-sound` (`#/sound/cues/1`). `cue(ctx, { href, volume?, at? })` returns a step adder: a short sound from `media/` that plays once when a forward play of its step reaches the point where it was added. A seek, a jump and a step back are silent, as for video. It plays only in a deck with `sound: true` in `deck.md`, never in the walk or `klappe video`, and `M` mutes it. A missing file is a deck problem.
+
+```ts
+build: (ctx) => ({ whoosh: cue(ctx, { href: "whoosh", at: "step" }), hit: cue(ctx, { href: "hit" }), land: impactShake(ctx) }),
+steps: [(tl, r) => r.whoosh(tl), (tl, r) => (r.hit(tl), r.land(tl))], // the hit as the shake starts
+```
+
+| Name | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `href` | string | required | one of klappe's sounds by name (below), or the deck's own file in `media/` by its link: `"media/our-jingle.mp3"`. An unknown name is a deck problem that lists them |
+| `volume` | number | 1 | 0 to 1 |
+| `at` | `"step"` | where it is added | `"step"`: with the step's start, so a whoosh plays with the camera flight into the scene |
+
+klappe's own sounds, short and quiet enough to sit under a voice. Listen to each at `#/sound/sounds/1` and on; they are made from scratch with ffmpeg, so there is no one else's licence to follow, and `src/sounds/README.md` gives each command.
+
+| Name | For |
+| --- | --- |
+| `whoosh` | a camera flight in, with `at: "step"` |
+| `whip` | a whip pan between far scenes |
+| `hit` | a landing, with `impactShake` |
+| `pop` | something appears |
+| `click` | a small step |
+| `tick` | a checklist item ticks |
+| `chime` | success, a target reached |
+| `fail` | a miss, a check that fails |
+| `rise` | the build-up before a reveal |
+| `shimmer` | a reveal lands |
+| `bed-calm`, `bed-pulse` | music beds for `section.ts` `music`: a quiet pad (12 s) and a tense pulse (8 s), looping |
+
+One sound now and then marks a moment; one on every step is noise. A music bed under a voice wants `volume` 0.2 to 0.3.
+
+A music bed under a section is `section.ts` `music` ([deck format](deck-format.md#sectionts)).
 
 ## `qr`
 

@@ -5,6 +5,7 @@ What `scene.md` turns into an effect without a `scene.ts`. The folder and key ru
 | Trigger | Minimal example | Result | Reference |
 | --- | --- | --- | --- |
 | plain list items | `- Ship small.` and `- Ship often.` | one item at a time, large; the next replaces it. Frontmatter `stack: true` builds them up as a list | [deck format](deck-format.md#scenemd) |
+| icon | `- :rocket: Ship small.` | the icon before the item's text, in `--k-accent`, sized with the text; it shows with its step. A Lucide name or the deck's own `icons/<name>.svg`; an unknown name is a deck problem. Works on plain, media and agenda items (`- 09:00–09:45 :coffee: Basics`); a task-list item keeps it as text | [icon](effects.md#icon) |
 | image | `- ![An engineer at a desk](media/desk.png "Prompt for the generator")` | the picture in the right-hand slot; the text in a left column | [image](effects.md#image) |
 | video | `- [Intro clip](https://www.youtube.com/watch?v=dQw4w9WgXcQ)` or a link to a `.mp4` or `.webm` | a video box with the title as caption | [video](effects.md#video) |
 | chart | `- [Units by quarter](data/chart-bar.csv)` | a bar chart beside the text. Other types need `scene.ts` | [chart](effects.md#chart) |
@@ -25,7 +26,7 @@ Notes:
 - A missing image, video or data file shows a placeholder and a deck problem; `klappe test` and `klappe build` list it in `media/TODO.md` or `data/TODO.md`.
 - A full-frame picture, a background, a flow, a sequence, swimlanes, a decision tree, a callout and a timer have no Markdown form: use `scene.ts`.
 
-Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `217-chat/30-chat-md`, `298-table-card/15-compare-md`, `310-checklist-agenda`, `109-speaker`.
+Examples to copy are in the demo deck's catalog: `110-chart/60-markdown`, `190-media`, `210-shout`, `240-code/10-walkthrough`, `250-terminal/10-replay`, `217-chat/30-chat-md`, `298-table-card/15-compare-md`, `310-checklist-agenda`, `109-speaker`, `140-icons/40-icons-md`.
 
 ## Deck components
 

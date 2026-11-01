@@ -46,3 +46,23 @@ test('stack: true keeps every step on screen at body size', async () => {
   expect(s.map((x) => x.on)).toEqual([true, true])
   await page.close()
 })
+
+test('a leading :icon-name: shows that icon before the step text, in the accent colour; an unknown name is a problem', async () => {
+  const page = await open()
+  await page.evaluate(() => window.klappe.stepper.goto(5, 'cut'))
+  const icons = await page.evaluate(() => {
+    const probe = document.querySelector('[data-scene="icons"]')!.appendChild(document.createElement('i'))
+    probe.style.color = 'var(--k-accent)'
+    const accent = getComputedStyle(probe).color
+    return [...document.querySelectorAll<HTMLElement>('[data-scene="icons"] p[data-step]')].map((p) => {
+      const svg = p.querySelector('svg')
+      return { text: p.textContent, shapes: svg?.querySelectorAll('path').length ?? 0, first: p.firstChild === svg, accent: !!svg && getComputedStyle(svg).color === accent }
+    })
+  })
+  expect(icons.map((i) => i.text)).toEqual(['Ship small.', 'Plain.', 'Odd.'])
+  expect(icons[0]).toMatchObject({ first: true, accent: true })
+  expect(icons[0].shapes).toBeGreaterThan(0)
+  expect(icons[1].shapes).toBe(0)
+  expect(await page.evaluate(() => window.klappe.problems)).toEqual(["sections/10-a/30-icons/scene.md step 3: icon: unknown Lucide name 'no-such-icon'"])
+  await page.close()
+})

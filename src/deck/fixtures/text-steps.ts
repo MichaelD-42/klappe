@@ -1,6 +1,7 @@
 import { assembleDeck } from "../assemble";
 
 // Plain text steps: 'say' replaces each one with the next (the default), 'stack' keeps them (stack: true).
+// 'icons': a leading :icon-name: sets an icon before the step's text; an unknown name is a problem.
 export default () =>
   assembleDeck(
     {
@@ -8,6 +9,7 @@ export default () =>
       "sections/10-a/section.md": "# A\n",
       "sections/10-a/10-say/scene.md": "## Say\n\n- One.\n- Two.\n- Three.\n",
       "sections/10-a/20-stack/scene.md": "---\nstack: true\n---\n## Stack\n\n- One.\n- Two.\n",
+      "sections/10-a/30-icons/scene.md": "## Icons\n\n- :rocket: Ship small.\n- Plain.\n- :no-such-icon: Odd.\n",
     },
     {},
   );

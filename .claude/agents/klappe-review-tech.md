@@ -11,7 +11,7 @@ Element choice, the timeline rule and the design rules are in the `klappe` skill
 Inputs: the task brief, the builder report and the diff. Judge from the brief and the diff; the builder report is a claim, not proof.
 
 Check:
-- The tests are real (they assert behavior) and green. Run the tests for what changed: a deck scene, `npm test -- --only <section>/<scene>`; engine code, `npx vitest run --project unit` and the e2e files of the parts changed. The orchestrator runs the full `npm test` once per wave, so do not run it.
+- The tests are real (they assert behavior) and green. Run the tests for what changed: a deck scene, `npm run walk -- --only <section>/<scene>`; engine code, `npx vitest run --project unit` and the e2e files of the parts changed. The orchestrator runs the full `npm test` once per wave, so do not run it.
 - The API contract and the timeline rule are kept: one master GSAP timeline per canvas, and effects are seekable.
 - No edits to shared files outside the task's file list.
 - Swarm sizes and node counts stay within the performance limits in the design spec `docs/superpowers/specs/2026-10-16-klappe-design.md` (under `klappe/` in a deck repo).

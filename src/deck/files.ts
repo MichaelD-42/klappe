@@ -14,6 +14,8 @@ export const media = import.meta.glob<string>(["@deck/media/*", "!@deck/media/TO
 export const overlay = import.meta.glob("@deck/overlay.ts", { import: "default", eager: true });
 // components.ts at the deck root: the deck's own Markdown fences, by name.
 export const components = import.meta.glob("@deck/components.ts", { import: "default", eager: true });
+// strings.json at the deck root: the deck's own words for klappe's UI, by key (src/strings.ts).
+export const strings = import.meta.glob<string>("@deck/strings.json", { query: "?raw", import: "default", eager: true });
 // icons/*.svg: the deck's own icons on Lucide's 24 grid, used by name in icon() and iconTile().
 export const icons = import.meta.glob<string>("@deck/icons/*.svg", { query: "?raw", import: "default", eager: true });
 // icons/*.svg at the deck repo root, shared by its decks; a deck's own icon of the same name wins.

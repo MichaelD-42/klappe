@@ -60,7 +60,7 @@ const deg = (a: number) => Math.round(a * 100) / 100 || 0;
 // A front-facing figure about 230 units tall, feet at (x, y). Coordinates are scene-local.
 export function figure(ctx: Ctx, opts: FigureOpts): FigureHandle {
   const root = shape(ctx.svg, "g", { "data-k-figure": "" }) as SVGGElement;
-  Object.assign(root.style, { stroke: opts.color, fill: "none", strokeWidth: String(opts.strokeWidth ?? 4), strokeLinecap: "round", strokeLinejoin: "round" });
+  Object.assign(root.style, { stroke: opts.color, fill: "none", strokeWidth: String(opts.strokeWidth ?? 4), strokeLinecap: "round", strokeLinejoin: "round" }); // shape: an author option in figure units, scaled with the figure
 
   // A joint is a group at a pivot; the pose rewrites its transform attribute, so it is in the snapshot.
   const joint = (parent: SVGGElement, px: number, py: number, d: string) => {

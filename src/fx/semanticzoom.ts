@@ -89,7 +89,7 @@ export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHand
     const line = (3 * c.font) / typeSize("label", FONT); // 3 px on screen at its level
     Object.assign(el.style, {
       position: "absolute", left: `${c.x}px`, top: `${c.y}px`, width: `${c.w}px`, height: `${c.h}px`, boxSizing: "border-box",
-      border: `${line}px solid var(--k-line)`, borderRadius: `${c.font * 0.4}px`, background: "var(--k-surface)", color: "var(--k-fg)",
+      border: `${line}px solid var(--k-line)`, borderRadius: `${c.font * 0.4}px`, background: "var(--k-surface)", color: "var(--k-fg)", // shape: sized with the zoom level, from the font
       font: `600 ${c.font}px/1.2 var(--k-font)`, padding: `${c.font * 0.4}px ${c.w * PAD}px`, display: "flex",
       alignItems: c.leaf ? "center" : "flex-start", justifyContent: c.leaf ? "center" : "flex-start", textAlign: "center",
     });
@@ -124,7 +124,7 @@ export function semanticZoom(ctx: Ctx, opts: SemanticZoomOpts): SemanticZoomHand
     Object.assign(svg.style, { position: "absolute", left: "0", top: "0", overflow: "visible", pointerEvents: "none" });
     const line = svg.appendChild(document.createElementNS(SVG, "path"));
     line.setAttribute("d", `M ${p(s0)} L ${p(s1 - head)}`);
-    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: String((3 * a.font) / typeSize("label", FONT)) });
+    Object.assign(line.style, { fill: "none", stroke: "var(--k-line)", strokeWidth: String((3 * a.font) / typeSize("label", FONT)) }); // shape: sized with the zoom level, from the font
     const tip = svg.appendChild(document.createElementNS(SVG, "path"));
     tip.setAttribute("d", `M ${p(s1)} L ${p(s1 - head, head / 2)} L ${p(s1 - head, -head / 2)} Z`);
     tip.style.fill = "var(--k-line)";

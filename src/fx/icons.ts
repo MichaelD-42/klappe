@@ -105,7 +105,7 @@ function glyph(ctx: Ctx, parent: Element, name: IconName, x: number, y: number, 
   const tinted: Element[] = [];
   for (const s of inner.querySelectorAll(SHAPES)) {
     s.setAttribute("vector-effect", "non-scaling-stroke");
-    s.setAttribute("stroke-width", "2");
+    s.setAttribute("stroke-width", "2"); // shape: the icon set's own stroke weight
     if (closed(s)) s.setAttribute("fill", "currentColor"), tinted.push(s);
   }
   let drawn = false;
@@ -164,7 +164,7 @@ export function iconTile(ctx: Ctx, name: IconName, opts: IconTileOpts): IconHand
   const well = el("rect", { x: x0, y: y0, width: s, height: s, rx: r, fill: `url(#${id})` }, g);
   const edge = el("rect", {
     x: x0 + 0.5, y: y0 + 0.5, width: s - 1, height: s - 1, rx: r,
-    fill: "none", "stroke-opacity": 0.35, "stroke-width": 1, "vector-effect": "non-scaling-stroke",
+    fill: "none", "stroke-opacity": 0.35, "stroke-width": 1, "vector-effect": "non-scaling-stroke", // shape: the icon set's own stroke weight
   }, g);
   (edge as SVGElement).style.stroke = "var(--k-fg)";
   const icon = glyph(ctx, g, name, opts.x, opts.y, s * 0.6, "var(--k-fg)");

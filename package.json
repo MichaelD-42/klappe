@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "test": "vitest run",
+    "walk": "node bin/klappe.mjs test --deck demo",
     "dev": "node bin/klappe.mjs dev --deck demo",
     "build": "node bin/klappe.mjs build --deck demo",
     "pdf": "node bin/klappe.mjs pdf --deck demo",

@@ -20,7 +20,7 @@ const read = (page: Page) =>
     const logo = layer.querySelector<HTMLElement>('[data-logo]')!
     const label = layer.querySelector<HTMLElement>('[data-label]')!
     const r = logo.getBoundingClientRect()
-    const kids = [...layer.parentElement!.children].map((e) => e.className)
+    const kids = [...layer.parentElement!.children].map((e) => e.getAttribute('class'))
     const clear = [layer, ...layer.children].every((e) => getComputedStyle(e).backgroundColor === 'rgba(0, 0, 0, 0)')
     return { label: label.textContent, logo: getComputedStyle(logo).visibility, at: [Math.round(r.x), Math.round(r.y)], order: kids, clear }
   })
@@ -35,7 +35,7 @@ test('walk: the overlay is the same after a play and a jump', async () => {
 test('the overlay sits between the canvases and the UI, follows the step, and stays put while the camera moves', async () => {
   const page = await open('#/intro/hello/1')
   const intro = await read(page)
-  expect(intro.order).toEqual(['k-worlds', 'k-deck-overlay', 'k-ui'])
+  expect(intro.order).toEqual(['k-worlds', 'k-deck-overlay', 'k-ink', 'k-ui']) // presenter ink over the overlay, under the UI
   expect(intro.clear).toBe(true) // the scenes show through
   expect(intro.label).toBe('Intro')
   expect(intro.logo).toBe('hidden')

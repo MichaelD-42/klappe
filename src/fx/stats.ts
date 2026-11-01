@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { gsap } from "gsap";
 import { t } from "../strings";
 import { typeSize } from "./draw";
+import { iconGlyph, type IconName } from "./icons";
 import { addSource } from "./sources";
 import { radius } from "./layout";
 import { counterText } from "./motion";
@@ -31,6 +32,10 @@ export interface WaffleOpts {
   of?: number; // the whole; default 100
   label?: string;
   source?: string;
+  // A pictogram: units cells instead of 100 (up to 10 in a row), each the icon, so "1 in 4" is four people with one lit.
+  // The number then counts lit units, not percent.
+  units?: number;
+  icon?: IconName;
 }
 export interface ProgressOpts {
   x: number;
@@ -59,7 +64,7 @@ export function kpiDelta(value: number, previous: number, better: "up" | "down" 
 }
 
 // A waffle's filled cells out of 100: one per percent of the whole.
-export const waffleCells = (value: number, of: number): number => Math.max(0, Math.min(100, Math.round((value / of) * 100)));
+export const waffleCells = (value: number, of: number, units = 100): number => Math.max(0, Math.min(units, Math.round((value / of) * units)));
 
 const decimals = (n: number) => (String(n).split(".")[1] ?? "").length;
 const el = <K extends keyof HTMLElementTagNameMap>(parent: Element, tag: K, css: Partial<CSSStyleDeclaration>, text = "") => {
@@ -134,7 +139,7 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
     // 12 units in from every edge, so the end dot (r 8) is never clipped.
     const x = d3.scaleLinear().domain([0, opts.spark.length - 1]).range([12, sw - 12]);
     const y = d3.scaleLinear().domain(d3.extent(opts.spark) as [number, number]).range([sh - 12, 12]);
-    line = svgEl(svg, "path", { d: d3.line<number>((_, i) => x(i), (v) => y(v))(opts.spark) ?? "", fill: "none", "stroke-width": 4, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
+    line = svgEl(svg, "path", { d: d3.line<number>((_, i) => x(i), (v) => y(v))(opts.spark) ?? "", fill: "none", "stroke-width": 4, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 }); // shape: rings, dials and sparklines follow their own thickness
     Object.assign(line.style, { stroke: "var(--k-line)", strokeDasharray: "1 2" });
     const last = opts.spark.length - 1;
     dot = svgEl(svg, "circle", { cx: x(last), cy: y(opts.spark[last]), r: 8 });
@@ -164,28 +169,45 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
 }
 
 // A share as a 10x10 grid: one cell per percent of the whole fills in --k-accent, row by row from the top
-// left; the rest stay --k-line. The number counts up beside the label under it.
+// left; the rest stay --k-line. The number counts up beside the label under it. With units and icon, a pictogram.
 export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
   const of = opts.of ?? 100;
+  const units = opts.units ?? 100;
   const root = block(ctx, "waffle", opts.x, opts.y, opts.size, opts.source);
-  const gap = opts.size / 60;
-  const cell = (opts.size - 9 * gap) / 10;
-  const svg = svgEl(root, "svg", { width: opts.size, height: opts.size, viewBox: `0 0 ${opts.size} ${opts.size}` });
-  const n = waffleCells(opts.value, of);
+  const cols = Math.min(10, units);
+  const rows = Math.ceil(units / cols);
+  const gap = opts.size / (cols > 4 ? 60 : 20);
+  const cell = (opts.size - (cols - 1) * gap) / cols;
+  const h = rows * cell + (rows - 1) * gap;
+  const svg = svgEl(root, "svg", { width: opts.size, height: h, viewBox: `0 0 ${opts.size} ${h}` });
+  const n = waffleCells(opts.value, of, units);
+  const glyph = opts.icon === undefined ? "" : iconGlyph(opts.icon, (msg) => ctx.problem(`waffle: ${msg}`));
+  // One cell: a rounded square, or the icon on its 24 grid scaled to the cell, in the given token.
+  const draw = (x: number, y: number, tone: string) => {
+    if (!glyph) {
+      const r = svgEl(svg, "rect", { x, y, width: cell, height: cell, rx: cell / 6 });
+      r.style.fill = tone;
+      return r;
+    }
+    const g = svgEl(svg, "g", { transform: `translate(${x} ${y}) scale(${cell / 24})`, fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" }); // shape: a pictogram glyph's stroke, on the icon's 24 grid
+    g.innerHTML = glyph;
+    g.style.color = tone;
+    return g;
+  };
   // A lit cell over every track cell, all hidden: to() may light any of them.
   const on: SVGElement[] = [];
-  for (let i = 0; i < 100; i++) {
-    const box = { x: (i % 10) * (cell + gap), y: Math.floor(i / 10) * (cell + gap), width: cell, height: cell, rx: cell / 6 };
-    svgEl(svg, "rect", box).style.fill = "var(--k-line)";
-    const lit = svgEl(svg, "rect", box);
-    lit.style.fill = "var(--k-accent)";
-    on.push(lit);
+  for (let i = 0; i < units; i++) {
+    const [x, y] = [(i % cols) * (cell + gap), Math.floor(i / cols) * (cell + gap)];
+    draw(x, y, "var(--k-line)");
+    on.push(draw(x, y, "var(--k-accent)"));
   }
   gsap.set(on, { autoAlpha: 0 });
   const text = el(root, "div", { marginTop: "20px", display: "flex", gap: "16px", alignItems: "baseline" });
   const num = el(text, "span", { font: `700 ${typeSize("title", 64)}px/1 var(--k-font)`, color: "var(--k-accent)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flexShrink: "0" });
   if (opts.label) el(text, "span", {}, opts.label);
-  const show = (v: number) => `${Math.round(v)} %`;
+  // The number: percent, or lit units for a pictogram.
+  const show = (v: number) => (units === 100 ? `${Math.round(v)} %` : `${Math.round(v)}`);
+  const count = (v: number) => (units === 100 ? (v / of) * 100 : waffleCells(v, of, units));
   num.textContent = show(0);
   let [at, lit] = [opts.value, n]; // the value and the lit cells the steps added so far leave
   return {
@@ -193,16 +215,16 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
       tl.to(root, { autoAlpha: 1, duration: motion.step });
       // The cells fill over the same 1.2 s whatever their number.
       if (n) tl.to(on.slice(0, n), { autoAlpha: 1, duration: 0.15, stagger: 1.05 / n }, ">");
-      counting(tl, num, 0, (opts.value / of) * 100, show);
+      counting(tl, num, 0, count(opts.value), show);
     },
     // Cells fill on in reading order, or empty from the last lit one back, over the same 1.2 s.
     to: (value) => (tl) => {
-      const m = waffleCells(value, of);
+      const m = waffleCells(value, of, units);
       const t0 = tl.duration();
       const d = { duration: 0.15, stagger: 1.05 / Math.max(1, Math.abs(m - lit)), immediateRender: false };
       if (m > lit) tl.fromTo(on.slice(lit, m), { autoAlpha: 0 }, { autoAlpha: 1, ...d }, t0);
       if (m < lit) tl.fromTo(on.slice(m, lit).reverse(), { autoAlpha: 1 }, { autoAlpha: 0, ...d }, t0);
-      counting(tl, num, (at / of) * 100, (value / of) * 100, show, t0);
+      counting(tl, num, count(at), count(value), show, t0);
       [at, lit] = [value, m];
     },
   };
@@ -216,7 +238,7 @@ export function progress(ctx: Ctx, opts: ProgressOpts): StatHandle {
   const thick = s * 0.1;
   const box = el(root, "div", { position: "relative", width: `${s}px`, height: `${s}px` });
   const svg = svgEl(box, "svg", { width: s, height: s, viewBox: `0 0 ${s} ${s}` });
-  const ring = { cx: s / 2, cy: s / 2, r: s / 2 - thick / 2, fill: "none", "stroke-width": thick };
+  const ring = { cx: s / 2, cy: s / 2, r: s / 2 - thick / 2, fill: "none", "stroke-width": thick }; // shape: rings, dials and sparklines follow their own thickness
   svgEl(svg, "circle", ring).style.stroke = "var(--k-line)";
   const frac = (v: number) => Math.max(0, Math.min(1, v / opts.target));
   const tone = (v: number) => (frac(v) >= 1 ? "var(--k-ok)" : "var(--k-accent)");
@@ -284,7 +306,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const [cx, cy, r] = [s / 2, s / 2, s / 2 - thick / 2];
   const root = block(ctx, "gauge", opts.x, opts.y, s, opts.source);
   const svg = svgEl(root, "svg", { width: s, height: s / 2 + thick, viewBox: `0 0 ${s} ${s / 2 + thick}` });
-  const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 };
+  const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 }; // shape: rings, dials and sparklines follow their own thickness
   svgEl(svg, "path", dial).style.stroke = "var(--k-line)";
   // Bands: a thin ring inside the track, each zone from where the one before ended, in its tone toned down
   // toward --k-bg so the accent arc and needle stay the strongest marks.
@@ -296,7 +318,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
       continue;
     }
     const ri = r - thick * 0.85;
-    const band = svgEl(svg, "path", { d: `M${cx - ri} ${cy}A${ri} ${ri} 0 0 1 ${cx + ri} ${cy}`, fill: "none", "stroke-width": thick * 0.35, pathLength: 1 });
+    const band = svgEl(svg, "path", { d: `M${cx - ri} ${cy}A${ri} ${ri} 0 0 1 ${cx + ri} ${cy}`, fill: "none", "stroke-width": thick * 0.35, pathLength: 1 }); // shape: rings, dials and sparklines follow their own thickness
     band.dataset.kGaugeBand = b.tone;
     const w = Math.round((f - edge) * 1e6) / 1e6;
     Object.assign(band.style, { stroke: `color-mix(in srgb, var(--k-${b.tone}) 60%, var(--k-bg))`, strokeDasharray: `${w} 2`, strokeDashoffset: `${-edge}` });
@@ -305,7 +327,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const arc = svgEl(svg, "path", dial);
   // Dash 1, gap 1: an offset of 1 - f shows the first f of the dial, so a swing is one offset tween.
   Object.assign(arc.style, { stroke: "var(--k-accent)", strokeDasharray: "1 1" });
-  const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" });
+  const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" }); // shape: rings, dials and sparklines follow their own thickness
   needle.style.stroke = "var(--k-accent)";
   svgEl(svg, "circle", { cx, cy, r: thick * 0.5 }).style.fill = "var(--k-accent)";
   const frac = (v: number) => (gaugeAngle(v, min, max) + 90) / 180;
@@ -397,7 +419,7 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
   const fill = likertFill(n);
   names.forEach((name, i) => {
     const item = el(legend, "span", { display: "flex", alignItems: "center", gap: "10px" });
-    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: fill[i] });
+    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: fill[i] }); // shape: rings, dials and sparklines follow their own thickness
     el(item, "span", {}, name);
   });
   const rows = opts.rows.map((row, i) => {

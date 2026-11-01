@@ -613,7 +613,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   const valueAt = (attrs: Record<string, string | number>, from: number, to: number, show: (n: number) => string) => {
     const el = text(root, "", attrs);
     // A dark halo keeps the number readable where it crosses a line or a bar.
-    Object.assign(el.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+    Object.assign(el.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" }); // shape: a data mark, sized for the data, not themed chrome
     values.push({ el, from, to, show, part: cur });
     return el;
   };
@@ -648,7 +648,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     shares.forEach((s, i) => {
       const len = Math.max(0.001, s.share - GAP);
       const arc = svg(marks, "circle", {
-        cx, cy, r: d / 2 - thick / 2, fill: "none", "stroke-width": thick, pathLength: 1,
+        cx, cy, r: d / 2 - thick / 2, fill: "none", "stroke-width": thick, pathLength: 1, // shape: a data mark, sized for the data, not themed chrome
         transform: `rotate(${-90 + (s.start + GAP / 2) * 360} ${cx} ${cy})`,
       });
       Object.assign(arc.style, { stroke: SLICES[i], strokeDasharray: `${len} 1` });
@@ -693,7 +693,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const [va, vb] = [num(r, a), num(r, b)];
       const fill = vb > va ? UP : DOWN;
       cur = i;
-      const line = svg(marks, "path", { d: `M${xL} ${v(va)}L${xR} ${v(vb)}`, fill: "none", "stroke-width": 5, "stroke-linecap": "round" });
+      const line = svg(marks, "path", { d: `M${xL} ${v(va)}L${xR} ${v(vb)}`, fill: "none", "stroke-width": 5, "stroke-linecap": "round" }); // shape: a data mark, sized for the data, not themed chrome
       line.style.stroke = fill;
       strokes.push({ el: line, part: i });
       for (const [x, n] of [[xL, va], [xR, vb]]) {
@@ -729,7 +729,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       labels.push(text(root, names[i], { x: P.x - 16, y: yc, "text-anchor": "end" }));
       const inside = w >= charW() * fmt(num(r, k)).length + 48; // about 13 px per character at FONT
       const val = valueAt({ x: inside ? cx + w / 2 - 16 : cx + w / 2 + 16, y: yc, "text-anchor": inside ? "end" : "start" }, 0, num(r, k), fmt);
-      if (inside) Object.assign(val.style, on ? { fill: on, stroke: "none" } : { strokeWidth: "4px" }); // a thinner halo reads cleaner on a bar
+      if (inside) Object.assign(val.style, on ? { fill: on, stroke: "none" } : { strokeWidth: "4px" }); // a thinner halo reads cleaner on a bar // shape: a data mark, sized for the data, not themed chrome
       const c = stages[i].conversion;
       if (i)
         valueAt({ x: cx, y: P.y + i * rowH + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, (c ?? 0) * 100, (n) =>
@@ -753,7 +753,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const [xm, s0, t0, h] = [(x0 + x1) / 2, Y(l.sy), Y(l.ty), l.w * P.h];
       const p = svg(flows, "path", { d: `M${x0} ${s0}C${xm} ${s0} ${xm} ${t0} ${x1} ${t0}V${t0 + h}C${xm} ${t0 + h} ${xm} ${s0 + h} ${x0} ${s0 + h}Z` });
       // A hairline of background keeps bands of one colour apart.
-      Object.assign(p.style, { fill, stroke: "var(--k-bg)", strokeWidth: "2px" });
+      Object.assign(p.style, { fill, stroke: "var(--k-bg)", strokeWidth: "2px" }); // shape: a data mark, sized for the data, not themed chrome
       return p;
     };
     for (const l of lay.links) band(l, "var(--k-line)");
@@ -767,7 +767,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const at = { x: last ? x - 12 : x + NW + 12, "text-anchor": last ? "end" : "start" };
       const yc = Y((n.y0 + n.y1) / 2);
       const name = text(root, n.name, { ...at, y: yc - 4, "font-weight": 700 });
-      Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "3px", strokeLinejoin: "round", paintOrder: "stroke" });
+      Object.assign(name.style, { stroke: "var(--k-bg)", strokeWidth: "3px", strokeLinejoin: "round", paintOrder: "stroke" }); // shape: a data mark, sized for the data, not themed chrome
       grow({ el: rect, origin: "50% 50%", scale: "scaleY", label: name });
       valueAt({ ...at, y: yc + typeSize("label", FONT) }, 0, n.value, fmt);
     });
@@ -789,7 +789,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const x = d3.scaleLinear().domain(ext(0)).nice().range([P.x + inset, P.x + P.w - inset]);
     const y = d3.scaleLinear().domain(ext(1)).nice().range([P.y + P.h - inset, P.y + inset]);
     // One frame for both axes, the full plot's height and width: their own lines stop at the inset ranges.
-    const frame = svg(root, "path", { d: `M${P.x} ${P.y}V${P.y + P.h}H${P.x + P.w}`, fill: "none", "stroke-width": 2 });
+    const frame = svg(root, "path", { d: `M${P.x} ${P.y}V${P.y + P.h}H${P.x + P.w}`, fill: "none", "stroke-width": 2 }); // shape: a data mark, sized for the data, not themed chrome
     frame.style.stroke = "var(--k-line)";
     labels.push(frame);
     const pose = (p: number) => tr.at[p].map((q) => ({ cx: x(q[0]), cy: y(q[1]), r: rOf(q) }));
@@ -815,7 +815,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       cur = i;
       const q = poses[0][i];
       const c = svg(marks, "circle", { cx: q.cx, cy: q.cy, r: q.r });
-      Object.assign(c.style, { fill: groupOf ? groupFill(name) : color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" });
+      Object.assign(c.style, { fill: groupOf ? groupFill(name) : color(0), fillOpacity: type === "bubble" ? "0.75" : "1", stroke: "var(--k-bg)", strokeWidth: "2" }); // shape: a data mark, sized for the data, not themed chrome
       grow({ el: c, origin: "50% 50%", scale: "scale" });
       const tag = valueAt({ ...tagPoses[0][i], "text-anchor": lefts[i] ? "end" : "start" }, 0, 0, () => name);
       cur = -1;
@@ -862,7 +862,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     const top = rv.domain()[1];
     const ring = (value: number) => data.map((_, i) => at(i, value).join(" ")).join("L");
     for (const tick of rv.ticks(4).filter((x) => x > 0)) {
-      const g = svg(root, "path", { d: `M${ring(tick)}Z`, fill: "none", "stroke-width": 2 });
+      const g = svg(root, "path", { d: `M${ring(tick)}Z`, fill: "none", "stroke-width": 2 }); // shape: a data mark, sized for the data, not themed chrome
       g.style.stroke = "var(--k-line)";
       labels.push(g);
       if (keys.length === 1) continue; // one series shows its values, which say more than the rings
@@ -872,7 +872,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     }
     data.forEach((_, i) => {
       const [x, y] = at(i, top);
-      const spoke = svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y, "stroke-width": 2 });
+      const spoke = svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y, "stroke-width": 2 }); // shape: a data mark, sized for the data, not themed chrome
       spoke.style.stroke = "var(--k-line)";
       const [nx, ny] = at(i, top, 20);
       const c = (nx - cx) / (r0 + 20);
@@ -881,7 +881,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     });
     keys.forEach((k, si) => {
       cur = si;
-      const shape = svg(marks, "path", { d: `M${data.map((r, i) => at(i, num(r, k)).join(" ")).join("L")}Z`, "stroke-width": 4, "stroke-linejoin": "round" });
+      const shape = svg(marks, "path", { d: `M${data.map((r, i) => at(i, num(r, k)).join(" ")).join("L")}Z`, "stroke-width": 4, "stroke-linejoin": "round" }); // shape: a data mark, sized for the data, not themed chrome
       Object.assign(shape.style, { fill: color(si), fillOpacity: "0.25", stroke: color(si) });
       grow({ el: shape, origin: "50% 50%", svgOrigin: `${cx} ${cy}`, scale: "scale" });
       data.forEach((r, i) => {
@@ -915,7 +915,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         bars.push(c);
         grow({ el: c, origin: "50% 50%", scale: "scale" });
         if (charW() * fmt(n).length + 16 > cw || ch < typeSize("label", FONT) + 8) return;
-        valueAt({ x: P.x + (j + 0.5) * cw, y: P.y + (i + 0.5) * ch + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, n, fmt).style.strokeWidth = "4px";
+        valueAt({ x: P.x + (j + 0.5) * cw, y: P.y + (i + 0.5) * ch + typeSize("label", FONT) * 0.35, "text-anchor": "middle" }, 0, n, fmt).style.strokeWidth = "4px"; // shape: a data mark, sized for the data, not themed chrome
       });
     });
     cur = -1;
@@ -927,7 +927,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
     text(ramp, fmt(hi), { x: x0 + 5 * 30 + 8, y: R.y + 79 });
     head.push(ramp);
     cellAt = (row, col) => ({ x: P.x + col * cw, y: P.y + row * ch });
-    outline = svg(root, "rect", { x: P.x, y: P.y, width: cw, height: ch, rx: 6, fill: "none", "stroke-width": 5, "data-k-cell": "" });
+    outline = svg(root, "rect", { x: P.x, y: P.y, width: cw, height: ch, rx: 6, fill: "none", "stroke-width": 5, "data-k-cell": "" }); // shape: a data mark, sized for the data, not themed chrome
     outline.style.stroke = "var(--k-fg)";
   } else if (type === "treemap") {
     // Tiles by value, largest first (squarified); with groups, each group a block under its name, tiles in its colour.
@@ -954,7 +954,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
       const nm = leaf ? String(data[i][leaf]) : names[i];
       const fits = w >= charW() * Math.max(nm.length, fmt(num(data[i], k)).length + 6) + 24 && hh >= typeSize("label", FONT) * 2 + 28;
       const on = barInk(token(ctx.html, fill.slice(4, -1)), token(ctx.html, "--k-bg"), token(ctx.html, "--k-fg"));
-      const ink = (el: SVGElement) => Object.assign(el.style, on ? { fill: on, stroke: "none" } : { stroke: "var(--k-bg)", strokeWidth: "4px", strokeLinejoin: "round", paintOrder: "stroke" });
+      const ink = (el: SVGElement) => Object.assign(el.style, on ? { fill: on, stroke: "none" } : { stroke: "var(--k-bg)", strokeWidth: "4px", strokeLinejoin: "round", paintOrder: "stroke" }); // shape: a data mark, sized for the data, not themed chrome
       const name = fits ? text(root, nm, { x: x + 12, y: y + typeSize("label", FONT) + 8, "font-weight": 700 }) : undefined;
       if (name) ink(name);
       grow({ el: tile, origin: "50% 50%", scale: "scale", label: name });
@@ -1000,7 +1000,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
         const path = svg(marks, "path", {
           d: d3.line<Row>((_, j) => x(band[j])!, (r) => v(num(r, k)))(data) ?? "",
           fill: "none",
-          "stroke-width": 5,
+          "stroke-width": 5, // shape: a data mark, sized for the data, not themed chrome
           "stroke-linejoin": "round",
           "clip-path": `url(#${ids[i]})`,
         });
@@ -1079,7 +1079,7 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   if (scatterAxes) axesEls.slice(0, 2).forEach((g) => g.querySelector(".domain")?.remove());
   if (!["timeline", "donut", "slope", "funnel", "sankey", "scatter", "bubble", "radar", "heatmap", "treemap"].includes(type)) {
     axesEls[0].querySelector(".domain")?.remove();
-    const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 });
+    const z = svg(root, "line", { x1: P.x, x2: P.x + P.w, y1: v(0), y2: v(0), "stroke-width": 2 }); // shape: a data mark, sized for the data, not themed chrome
     z.style.stroke = "var(--k-fg)";
     axesEls.push(z);
   }
@@ -1087,11 +1087,11 @@ export function chart(ctx: Ctx, opts: ChartOpts): ChartHandle {
   // Reference lines over the marks; a label above the line at its right end, or right of a timeline's at its top.
   for (const { value, label } of refs) {
     const at = refAt!(value);
-    const ref = svg(root, "line", { ...at, "stroke-width": 2, "stroke-dasharray": "10 8", "data-k-ref": label });
+    const ref = svg(root, "line", { ...at, "stroke-width": 2, "stroke-dasharray": "10 8", "data-k-ref": label }); // shape: a data mark, sized for the data, not themed chrome
     ref.style.stroke = "var(--k-fg)";
     const across = at.y1 === at.y2;
     const tag = text(root, label, across ? { x: at.x2, y: at.y1 - 10, "text-anchor": "end", "font-weight": 700 } : { x: at.x1 + 10, y: at.y1 + typeSize("label", FONT), "font-weight": 700 });
-    Object.assign(tag.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" });
+    Object.assign(tag.style, { stroke: "var(--k-bg)", strokeWidth: "6px", strokeLinejoin: "round", paintOrder: "stroke" }); // shape: a data mark, sized for the data, not themed chrome
     axesEls.push(ref, tag);
   }
   for (const { el, from, show } of values) el.textContent = show(from);

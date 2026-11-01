@@ -69,8 +69,9 @@ export function addCameraMove(
   // The camera is already at `from`. A whip pans straight there: no zoom out on the way.
   const poses = opts.whip ? [frame(to)] : flight(from, to).slice(1);
   // A cut is a set: keyframes of duration 0 make an empty nested timeline that a seek does not render.
-  if (opts.instant) return void tl.set(world, frame(to), opts.at);
+  // duration 0 is the author's cut (a split screen cutting between its views).
   const duration = flightTime(opts);
+  if (opts.instant || duration === 0) return void tl.set(world, frame(to), opts.at);
   const ease = flightEase(opts);
   tl.to(world, { keyframes: poses.map((p) => ({ ...p, duration: duration / poses.length, ease })) }, opts.at);
   if (opts.whip) whipBlur(tl, world, from, to, duration);
@@ -140,4 +141,27 @@ function lean(tl: gsap.core.Timeline, canvas: Element, from: Rect, to: Rect, deg
     { rotationX: (-deg * dy) / len, rotationY: (deg * dx) / len, duration, ease: (p) => 4 * p * (1 - p), immediateRender: false },
     at,
   );
+}
+
+// deck.md handheld: true. A slow wander of everything on stage on the wall clock, as a camera held by hand: up to px
+// screen px and deg degrees, the sum of two slow sines per axis, so it never repeats visibly and never jerks.
+export const HANDHELD = { px: 3, deg: 0.1 };
+const wave = (t: number, a: number, b: number, phase: number) => 0.6 * Math.sin((2 * Math.PI * t) / a + phase) + 0.4 * Math.sin((2 * Math.PI * t) / b);
+
+export function handheldPose(t: number): { x: number; y: number; rotation: number; scale: number } {
+  const { w, h } = stage;
+  // Scaled about the centre just enough that the shift plus the rotation's reach at a corner never shows an edge.
+  const reach = HANDHELD.px + Math.sin((HANDHELD.deg * Math.PI) / 180) * Math.hypot(w / 2, h / 2);
+  return {
+    x: HANDHELD.px * wave(t, 11, 17, 1),
+    y: HANDHELD.px * wave(t, 13, 19, 2),
+    rotation: HANDHELD.deg * wave(t, 23, 29, 3),
+    scale: 1 + (2.2 * reach) / Math.min(w, h),
+  };
+}
+
+// Runs the handheld wander on el (the stage's worlds, which no timeline moves) from GSAP's ticker.
+export function handheld(el: HTMLElement): void {
+  gsap.set(el, { transformOrigin: "50% 50%" });
+  gsap.ticker.add((time) => void gsap.set(el, handheldPose(time)));
 }

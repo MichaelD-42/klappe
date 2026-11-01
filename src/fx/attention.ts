@@ -38,7 +38,7 @@ function shapeCopy(el: Element, color: string): SVGElement {
     Object.assign(e.style, { strokeDasharray: "", strokeDashoffset: "", strokeOpacity: "" });
   }
   // Thicker than the original, so the blur reads as light around the line, not a faint copy.
-  Object.assign(c.style, { color, stroke: color, strokeWidth: String(3 * (parseFloat(getComputedStyle(el).strokeWidth) || 1)), filter: "blur(6px)" });
+  Object.assign(c.style, { color, stroke: color, strokeWidth: String(3 * (parseFloat(getComputedStyle(el).strokeWidth) || 1)), filter: "blur(6px)" }); // shape: the halo and ring are sized from the target and its own stroke
   return c;
 }
 
@@ -67,7 +67,7 @@ export function glow(ctx: Ctx, target: Element | ArrayLike<Element>, opts: GlowO
       Object.assign(box.style, { position: "absolute", pointerEvents: "none" });
       const layer = (p: Element) => {
         const d = p.appendChild(document.createElement("div"));
-        Object.assign(d.style, { position: "absolute", inset: "0", borderRadius: `${PAD}px`, background: color, filter: `blur(${PAD}px)` });
+        Object.assign(d.style, { position: "absolute", inset: "0", borderRadius: `${PAD}px`, background: color, filter: `blur(${PAD}px)` }); // shape: the halo and ring are sized from the target and its own stroke
         return d;
       };
       wrap = box;
@@ -135,7 +135,7 @@ export function pulse(ctx: Ctx, target: Element, opts: { color?: string } = {}):
   const ring = ctx.html.appendChild(document.createElement("div"));
   ring.setAttribute("data-k-pulse", "");
   Object.assign(ring.style, {
-    position: "absolute", boxSizing: "border-box", border: "4px solid", borderColor: `var(${opts.color ?? "--k-accent"})`, borderRadius: `${PAD}px`, pointerEvents: "none", zIndex: "3",
+    position: "absolute", boxSizing: "border-box", border: "4px solid", borderColor: `var(${opts.color ?? "--k-accent"})`, borderRadius: `${PAD}px`, pointerEvents: "none", zIndex: "3", // shape: the halo and ring are sized from the target and its own stroke
   });
   gsap.set(ring, { autoAlpha: 0, scale: 1 });
   return (tl) => {

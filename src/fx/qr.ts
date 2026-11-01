@@ -36,7 +36,7 @@ export function qr(ctx: Ctx, opts: QrOpts): QrHandle {
   const svg = root.appendChild(document.createElementNS(SVG, "svg"));
   for (const [k, v] of Object.entries({ width: size, height: size, viewBox: `0 0 ${m.size} ${m.size}`, "shape-rendering": "crispEdges" }))
     svg.setAttribute(k, String(v));
-  Object.assign(svg.style, { display: "block", background: "var(--k-fg)", borderRadius: `${size / m.size}px` });
+  Object.assign(svg.style, { display: "block", background: "var(--k-fg)", borderRadius: `${size / m.size}px` }); // shape: a quiet-zone radius from the module size
   const dark = m.data.flatMap((row, j) => row.flatMap((on, i) => (on ? [`M${i} ${j}h1v1h-1z`] : [])));
   const path = svg.appendChild(document.createElementNS(SVG, "path"));
   path.setAttribute("d", dark.join(""));

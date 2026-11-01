@@ -8,6 +8,7 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { measure } from "../fx/measure";
+import { iconGlyph } from "../fx/icons";
 import { builtInFence, part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
 import { motion, safeRect, stage, withTokenRoot } from "../theme";
@@ -88,14 +89,21 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Comp
   const { layout } = scene;
   const full = layout === "full-bleed";
   const big = layout === "big-number";
+  // thirds: the left third for text on a 16:9 frame. On a narrower one that third is too thin for text (under 400 px),
+  // so the text goes above and the media below, full width: from a third of the frame down, or from 520 px on a frame
+  // 1080 high, which leaves the title and two lines 380 px. 160, 140: the scene's padding.
+  const third = rect.w / 3 - 160 - gapPx(48);
+  const stacked = layout === "thirds" && third < 400;
   const col = hasMedia || big ? html.appendChild(el("div", "")) : html;
-  if (hasMedia) col.style.width = layout === "thirds" ? `${rect.w / 3 - 160 - gapPx(48)}px` : "45%"; // 160: the scene's side padding
+  if (hasMedia) col.style.width = layout === "thirds" ? (stacked ? "auto" : `${third}px`) : "45%";
   // full-bleed: the caption sits at the bottom, over the picture's scrim. big-number: the number and its footnote, centred.
   if (full) Object.assign(col.style, { position: "absolute", left: "160px", right: "160px", bottom: "140px", width: "auto" });
   if (big) Object.assign(col.style, { position: "absolute", inset: "140px 160px", display: "flex", flexDirection: "column", justifyContent: "center" });
   const slot: Rect = full
     ? { x: 0, y: 0, w: rect.w, h: rect.h }
-    : layout === "thirds"
+    : stacked
+      ? { x: 160, y: Math.max(rect.h / 3, 520), w: rect.w - 320, h: rect.h - Math.max(rect.h / 3, 520) - 140 }
+      : layout === "thirds"
       ? { x: rect.w / 3, y: rect.h * 0.13, w: rect.w * 2 / 3 - 160, h: rect.h * 0.74 }
       : { x: rect.w * 0.5, y: rect.h * 0.13, w: rect.w * 0.42, h: rect.h * 0.74 };
   // An effect that throws (a stub: not built yet) leaves a dashed EFFECT MISSING box in its place and a problem.
@@ -208,6 +216,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Comp
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
+    // :icon-name: in scene.md: em-sized, so it scales with the text, in the accent colour; it shows with the step.
+    if (s.icon)
+      p.insertAdjacentHTML("afterbegin", `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.12em;margin-right:0.35em;color:var(--k-accent)">${iconGlyph(s.icon, (msg) => ctx.problem(`${scene.source} step ${n}: ${msg}`))}</svg>`);
     if (big && n === 1) {
       // The number is set at 100 px, measured, and scaled to the width inside the side padding; the height caps it.
       const num = BIG_NUMBER.exec(s.text)![0];

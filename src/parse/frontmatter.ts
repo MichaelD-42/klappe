@@ -78,6 +78,7 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   if (sa !== undefined && !safeArea) problems.push("deck.md: safe-area needs 1 to 4 numbers of 0 or more, for example [48, 64]");
   const tempo = TEMPO[String(data.tempo ?? "normal")];
   if (tempo === undefined) problems.push("deck.md: tempo is slow, normal or fast");
+  for (const k of ["handheld", "sound"]) if (data[k] !== undefined && typeof data[k] !== "boolean") problems.push(`deck.md: ${k} is true or false`);
   const frame = FRAMES[String(data.frame ?? "16:9")];
   if (!frame) problems.push("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
   // A cut is its list of section ids, or { sections, duration } for its own target length.
@@ -104,6 +105,8 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
       ...(typeof data.duration === "number" && data.duration > 0 && { duration: data.duration }),
       tempo: tempo ?? 1,
       ...(cuts && { cuts }),
+      ...(data.handheld === true && { handheld: true }),
+      ...(data.sound === true && { sound: true }),
     },
     problems,
   };

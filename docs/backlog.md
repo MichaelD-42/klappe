@@ -2,20 +2,4 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Presenter ink: draw on the stage during the talk (a laser dot, and a pen that marks and fades), from the mouse or the speaker view. Live, so it sits under `data-k-ignore` and never on a timeline; clear it on the next step.
-- Icons in Markdown: `:icon-name:` on a list item in `scene.md` sets an icon with the step. Pairs with Text steps replace, not stack. Check first whether `image` already shows a `.svg` as a plain picture.
-- Establishing shot: a step that pulls the camera out to the whole canvas, then pushes into the next scene. An authored move on the timeline, not the `O` overview.
-- Monotony check: a look warning when several scenes in a row are text only or share one layout. The walk knows each scene's parts.
-- Deck conversion: turn a PPTX or PDF into a draft deck folder (sections, `scene.md` steps, notes, `data/` for chart numbers with their source, `media/TODO.md` for the pictures). Probably a skill workflow over the `klappe` skill, not engine code; the storyteller prompt's "Convert deck" step is the spec.
-- Pictogram chart: units drawn as icons ("1 in 4 engineers") that fill step by step, from `waffle` and `icon`.
-- Layout grid: a column grid that scenes place on, or a look check that flags near-misses across scenes (a title a few px off where the other scenes put it). The `shot --sheet` contact sheet shows drift; nothing checks it.
-- Image treatment: a duotone or tint on `image` from the theme's tokens, so photos from different sources read as one set.
-- Split screen: two scenes side by side, the camera cutting between each alone and both together. Check first whether `place()` and a camera frame round both already do it.
-- Handheld drift: a barely visible wall-clock drift of the camera while a step holds, under `data-k-ignore` like the backgrounds. Off with reduced motion; check whether it suits `calm` at all.
-- Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.
-- klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
-- Named layouts on non-landscape frames: `thirds`, `full-bleed` and `big-number` assume a landscape frame with hard-coded 160 and 140 padding; derive it from the frame, or report a deck problem on a portrait one.
-- Video export scene filter: `klappe video --only <section>[/<scene>]`, as `test` has.
-- Shape-token lint by use, not by file: the allow list exempts whole files, and `setAttribute("stroke-width")` is not linted.
-- Agent instructions say `npm test -- --only <section>/<scene>`, which fails in the klappe repo (`npm test` is plain `vitest run`); `node bin/klappe.mjs test --only …` works. Make the agent files (`.claude/agents/klappe-builder.md`, `klappe-review-tech.md`, `klappe-review-look.md`) give a command that works in both the klappe repo and deck repos.
 - Release 1.0.0 once every entry above is done: the deck format, the `scene.ts` API and the CLI are then stable.

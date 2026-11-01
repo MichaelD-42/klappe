@@ -6,6 +6,8 @@ import type { Deck, StepAddr } from "../types";
 import { button } from "../ui/panel";
 import { channelName, type Channel } from "./channel";
 import { rehearsal } from "./rehearsal";
+import { inkPointer, mountInk, type InkMode } from "../ink";
+import { stage as size } from "../theme";
 
 function el(tag: string, cls: string, text = ""): HTMLElement {
   const e = document.createElement(tag);
@@ -48,17 +50,39 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const text = el("p", "k-sp-text");
   const notes = el("div", "k-sp-notes");
   const notesLabel = el("h2", "k-sp-label", t("notes", lang));
-  now.append(scene, text, notesLabel, notes);
+  // Presenter ink: a pad in the frame's shape, shown while Laser or Pen is on, drives the ink on the stage; its own
+  // copy of the ink shows what the room sees.
+  const pad = el("div", "k-sp-pad");
+  pad.style.aspectRatio = `${size.w} / ${size.h}`;
+  pad.hidden = true;
+  const padInk = mountInk(pad);
+  let inkMode: InkMode = null;
+  inkPointer(pad, padInk, () => inkMode, (m) => channel.send({ t: "ink", ...m }));
+  now.append(scene, text, notesLabel, notes, pad);
 
   const side = el("aside", "k-sp-side");
   const time = el("p", "k-sp-time", clock(0));
   const progress = el("p", "k-sp-progress");
   const next = el("p", "k-sp-next");
-  const send = (cmd: "next" | "prev" | "goto" | "timer" | "appendix", i?: number) => channel.send({ t: "cmd", cmd, index: i });
+  const send = (cmd: "next" | "prev" | "goto" | "timer" | "appendix" | "mute", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
   // Disabled on a scene without a timer, where T does nothing.
   const timerButton = button(t("timer", lang), () => send("timer"));
   buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), timerButton);
+  const laserButton = button(t("laser", lang), () => setInk("laser"));
+  const penButton = button(t("pen", lang), () => setInk("pen"));
+  const inkRow = el("div", "k-sp-buttons");
+  inkRow.append(laserButton, penButton);
+  // The same button or key again turns ink off.
+  const setInk = (m: InkMode) => {
+    inkMode = inkMode === m ? null : m;
+    for (const [b, k] of [[laserButton, "laser"], [penButton, "pen"]] as const) {
+      b.setAttribute("aria-pressed", String(inkMode === k));
+      b.classList.toggle("k-on", inkMode === k);
+    }
+    pad.hidden = !inkMode;
+    for (const m of ["hide", "lift"] as const) padInk[m](), channel.send({ t: "ink", ink: m });
+  };
 
   // Rehearsal: the time per scene against the plan, kept in localStorage per deck (the channel name has the path and title)
   // and per deck cut, so the runs of a short and a long cut do not overwrite each other.
@@ -100,7 +124,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     plan.replaceChildren(...rows);
   };
   showPlan();
-  side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, progress, el("h2", "k-sp-label", t("upNext", lang)), next, planLabel, plan, rehearseRow, buttons);
+  side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, progress, el("h2", "k-sp-label", t("upNext", lang)), next, planLabel, plan, rehearseRow, inkRow, buttons);
   view.append(now, side);
   root.append(view);
 
@@ -119,6 +143,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     next.textContent = b && !b.appendix === !a.appendix ? (sceneOf(b)?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);
     // The counter counts the main talk; an appendix step counts in the appendix.
     progress.textContent = a.appendix ? `${t("appendix", lang)} ${index - main + 1} / ${steps.length - main}` : `${index + 1} / ${main}`;
+    padInk.clear(); // the stage clears its ink on every step
     rec.enter(`${a.section}/${a.scene}`);
     showPlan();
     if (!started) {
@@ -130,7 +155,8 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "p" && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) return toggleRehearsal();
     const a = keyAction(e);
-    if (a === "next" || a === "prev" || a === "timer" || a === "appendix") send(a);
+    if (a === "next" || a === "prev" || a === "timer" || a === "appendix" || a === "mute") send(a);
+    else if (a === "laser" || a === "pen") setInk(a);
     else if (a === "home") send("goto", 0);
     else if (a === "end") send("goto", main - 1);
     else return;

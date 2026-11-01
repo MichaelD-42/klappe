@@ -467,3 +467,40 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **Own transitions: reduced motion maps a function to fade without calling it; a bad function falls back to fade with a problem.**
   - Why: klappe cannot know how intense a deck's own motion is, so reduced motion treats it like the intense built-ins. A function without `reveal` (or that throws) must not fail the deck mid-talk: the move still lands with a fade, and the problem names the section.
+
+## 2026-11-01 (backlog: ink, icons, establish, monotony, conversion)
+
+- **Presenter ink lives on the stage, outside every timeline, and every step clears it.**
+  - Why: ink is the presenter's live gesture, not deck content; a deep link or the walk must never show it, so it sits under `data-k-ignore` in its own layer over the overlay and under the UI. Points travel as shares of the frame, so the speaker view's pad and a scaled stage agree.
+  - Keys `L` (laser) and `D` (draw): free in the deck and the speaker view, where `P` is already the rehearsal. With ink on, a click on the stage draws instead of advancing; the keys still step. `Esc` turns ink off before it closes a panel.
+  - The speaker view gets a blank pad, not a copy of the stage: a live mirror of the scene would be a second render of the deck. The pad shows its own ink, so the presenter sees what they draw.
+
+- **Icons in Markdown are a leading `:icon-name:` on plain, media and agenda items, not a deck component.**
+  - Why not a component: a component draws the whole scene, and an icon is a mark on one step of the default renderer. Task-list items keep `:name:` as text: they draw their own box, and dropping the name silently would hide the mistake.
+
+- **`establish` pulls out to the union of the canvas's scene rects and leaves the push-in to the next scene's flight.**
+  - Why: the camera tracks its last view, so the engine's own flight into the next scene already starts from the wide view; a second authored push would fight it. It belongs on a scene's last step.
+
+- **The monotony check judges a scene by what shows at its last step, plus its `layout` for the default renderer.**
+  - Why: the walk sees `scene.ts` scenes only as DOM. "Text only" is what it can tell for every scene (no picture, shape or filled box); a named layout or text beside media it can tell only for scenes it drew itself, and other `scene.ts` scenes break a run. Three in a row, and a warning, not a failure: a run can be a deliberate rhythm.
+
+- **Layout grid is a look check on titles, not a column grid scenes place on.**
+  - Why: a grid is new layout API that 1.0 would freeze, and the default renderer already puts every title at one place; what drifts is the deck's own code. A check finds the drift without changing how anyone places anything. Titles only: they are the element the room sees jump when the camera flies between scenes, and the one every scene has. Revisit a grid if decks keep repeating their own column maths.
+
+- **Split screen is a recipe, not an element.**
+  - Why: `place()` side by side and `ctx.camera.to` round both already do it; the one gap was a cut, and `duration: 0` now is one. An element would hide only the union rect, and add API that 1.0 freezes.
+
+- **Handheld drift is opt-in per deck, and not tied to `intensity`.**
+  - Why: the backlog asked whether it suits `calm` at all. A calm deck promises a still stage, and a wander under text at rest reads as nervous there; on a bold, filmic deck it adds life. But intensity also sets shout-outs and other choices, and a bold deck may still want a still stage, so `handheld` is its own `deck.md` key, off by default, rather than part of `bold`.
+  - It moves `.k-worlds`, which no timeline touches: the camera's pose stays the timeline's, so seek still equals play. It runs from GSAP's ticker and only when wall-clock motion is allowed, the same condition as the backgrounds.
+
+- **Sound keeps the timeline rule by never being on the timeline.**
+  - Why: a sound cannot be seeked to (half a whoosh at a deep link is noise), so it is treated like video: a cue starts on its step's forward play, when the canvas timeline passes the cue's place (a ticker wait, as `video`), and a seek, jump or step back plays nothing. Nothing on screen depends on it, so the walk compares the same frames with or without it, and the walk and `klappe video` run silent (the same condition that holds wall-clock motion still).
+  - A music bed starts on any forward step in its section, not only on the step that enters it: a presenter who jumps into a section and goes on expects to hear it. It fades out when a step leaves the section, a jump too.
+  - Opt-in twice: `sound: true` per deck, and the browser's own rule that a page plays sound only after a gesture. `M` mutes, and is forwarded from the speaker view like `T` and `Q`. The 2026-10-30 entry that reversed the v1 non-goal stands; this is how it was built.
+
+- **The shape-token lint exempts a line, not a file: `// shape: <reason>` (or `/* shape: … */` inside CSS) at its end.**
+  - Why: the file allow list let any new literal into 17 files unseen, and the regex missed `setAttribute("stroke-width", …)`; switching both showed an unlisted default in `lineArt` and a glyph stroke added to `stats.ts` the same day. A reason on the line is read where the literal is, and a new literal next to it still fails.
+
+- **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
+  - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.

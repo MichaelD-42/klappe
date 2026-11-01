@@ -77,7 +77,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
     node(g, "path", {
       d: path({ type: "MultiLineString", coordinates }) ?? "",
       ...hiddenStroke,
-      style: `stroke: color-mix(in srgb, var(--k-fg) 75%, transparent); stroke-width: ${STROKE.world.land}; stroke-linejoin: round`,
+      style: `stroke: color-mix(in srgb, var(--k-fg) 75%, transparent); stroke-width: ${STROKE.world.land}; stroke-linejoin: round`, // shape: land and arc widths follow the camera zoom
     }),
   );
   const arcLayer = node(g, "g", {});
@@ -98,7 +98,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
       gsap.set(label, { autoAlpha: 0 });
     }
     const major = s.label && s.major
-      ? node(g, "text", { x: at[0] + 10, y: at[1] + MAJOR_SIZE * 0.35, "data-k-map-major": "", style: `fill: var(--k-fg); font-family: var(--k-font); font-weight: 600; font-size: ${MAJOR_SIZE}px; paint-order: stroke; stroke: var(--k-bg); stroke-width: 4` })
+      ? node(g, "text", { x: at[0] + 10, y: at[1] + MAJOR_SIZE * 0.35, "data-k-map-major": "", style: `fill: var(--k-fg); font-family: var(--k-font); font-weight: 600; font-size: ${MAJOR_SIZE}px; paint-order: stroke; stroke: var(--k-bg); stroke-width: 4` }) // shape: the major label's halo, for its fixed type size
       : undefined;
     if (major) {
       major.textContent = s.label!;
@@ -122,7 +122,7 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
     const [a, b] = [get(fromId), get(toId)];
     if (!a || !b) return;
     const width = (zoomed ? STROKE.zoom : STROKE.world).arc;
-    const p = node(arcLayer, "path", { d: arcPath(a.at, b.at), ...hiddenStroke, style: `stroke: var(--k-accent); stroke-width: ${width}` });
+    const p = node(arcLayer, "path", { d: arcPath(a.at, b.at), ...hiddenStroke, style: `stroke: var(--k-accent); stroke-width: ${width}` }); // shape: land and arc widths follow the camera zoom
     arcs.set(`${fromId}>${toId}`, p);
     return p;
   };
@@ -130,8 +130,8 @@ export function worldMap(ctx: Ctx, opts: WorldMapOpts): WorldMapHandle {
 
   // Strokes follow the camera so lines keep about the same rendered weight.
   const strokes = (tl: gsap.core.Timeline, w: { land: number; arc: number }) => {
-    tl.to(land, { strokeWidth: w.land, duration: motion.camera }, "<");
-    if (arcs.size) tl.to([...arcs.values()], { strokeWidth: w.arc, duration: motion.camera }, "<");
+    tl.to(land, { strokeWidth: w.land, duration: motion.camera }, "<"); // shape: land and arc widths follow the camera zoom
+    if (arcs.size) tl.to([...arcs.values()], { strokeWidth: w.arc, duration: motion.camera }, "<"); // shape: land and arc widths follow the camera zoom
   };
 
   const regions = new Map<string, { p: SVGPathElement; mix: number }>(); // mix: the fill the steps added so far leave

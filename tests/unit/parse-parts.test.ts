@@ -123,6 +123,14 @@ describe("parseScene parts", () => {
     });
   });
 
+  it("takes a leading :icon-name: off a plain, media or agenda item as its icon; a task-list item keeps it as text", () => {
+    const { scene } = parse("- :rocket: Ship small.\n- :file-text: ![Doc](media/d.png)\n- No icon: here.\n");
+    expect(scene.steps.map((s) => [s.text, s.icon])).toEqual([["Ship small.", "rocket"], ["Doc", "file-text"], ["No icon: here.", undefined]]);
+    expect(parse("- [x] :shield-check: Backup\n").scene.steps.map((s) => [s.text, s.icon])).toEqual([[":shield-check: Backup", undefined]]);
+    const rows = parse("- 09:00–09:45 :coffee: Basics\n- 09:45-10:30 Practice\n").scene.steps[0].part;
+    expect(rows?.kind === "agenda" && rows.rows.map((r) => [r.title, r.icon])).toEqual([["Basics", "coffee"], ["Practice", undefined]]);
+  });
+
   it("turns a table into a comparison: one step per row, marks from ✓ ✗ ~", () => {
     const { scene, problems } = parse("| | Basic | Team |\n| --- | --- | --- |\n| SSO | ✗ | ✓ |\n| Audit log | ~ | 30 days |\n\n> The note.\n");
     expect(problems).toEqual([]);

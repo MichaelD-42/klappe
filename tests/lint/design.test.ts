@@ -29,26 +29,6 @@ const mdBody = (md: string) => md.replace(/^---\n[\s\S]*?\n---\n?/, '').replace(
 // User-visible label text in code: the strings table and UI code.
 const isLabelCode = (p: string) => p === 'src/strings.ts' || /^src\/(ui|speaker)\//.test(p) || /^decks\/.*\.ts$/.test(p)
 
-// Effects that keep a radius or stroke literal in src/fx, with the reason. Anything else reads the tokens.
-const SHAPE_OK: Record<string, string> = {
-  'annotate.ts': 'marker and pen strokes are sized from the text they mark',
-  'attention.ts': 'the halo and ring are sized from the target and its own stroke',
-  'chart.ts': 'data marks, grid, axes and label halos are sized for legibility of the data, not themed chrome',
-  'crt.ts': 'the bezel of a fixed CRT screen',
-  'figure.ts': 'an author option in figure units, scaled with the figure',
-  'icons.ts': 'the icon set\'s own stroke weight',
-  'map.ts': 'land and arc widths animate with the camera zoom',
-  'media.ts': 'a small caption chip on a picture',
-  'pointer.ts': 'the cursor drawing and its click chip',
-  'qr.ts': 'a quiet-zone radius from the module size',
-  'semanticzoom.ts': 'sizes scale with the zoom level, derived from the font',
-  'shape.ts': 'an author option (width, default 4)',
-  'shatter.ts': 'crack lines scale with the shard size',
-  'splitflap.ts': 'a tile radius in proportion to the tile size',
-  'spotlight.ts': 'the hole is sized to the target plus padding',
-  'timer.ts': 'the ring width follows the timer size',
-  'stats.ts': 'chart-like rings, dials and sparklines follow their own thickness; the legend swatch is 4 px',
-}
 
 export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   const hits: { rule: Rule; at: string }[] = []
@@ -56,7 +36,9 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
   const ext = path.extname(file)
   const text = ext === '.md' ? raw : stripComments(raw)
   // A Lucide glyph keeps the icon set's own stroke: its svg is the 24 x 24 viewBox with stroke-width on the tag.
-  const shapes = text.replace(/<svg viewBox="0 0 24 24"[^>]*>/g, '')
+  // A line that keeps a radius or stroke literal on purpose says why at its end: `// shape: <reason>`.
+  const shapes = (ext === '.md' ? raw : stripComments(raw.split('\n').map((l) => (/(?:\/\/|\/\*).*\bshape: \S/.test(l) ? '' : l)).join('\n')))
+    .replace(/<svg viewBox="0 0 24 24"[^>]*>/g, '')
 
   for (const m of text.matchAll(/font-?style["']?\s*[:=]\s*["']?(?:italic|oblique)/gi)) hit('italic', m[0])
   for (const m of text.matchAll(/\bfont["']?\s*:\s*["']?[^;\n{}]*\b(?:italic|oblique)\b/gi)) hit('italic', m[0])
@@ -101,9 +83,9 @@ export function lint(file: string, raw: string): { rule: Rule; at: string }[] {
     for (const m of text.matchAll(/\bfont(?:Size|-size)?["']?\s*[:=]\s*["'`]?(?:\d{3} )?\d+(?:\.\d+)?px|"font-size":\s*\d/g)) hit('size-literal', m[0])
   // Corner radius and stroke weight come from --k-radius and --k-stroke (radius(), strokeW() in fx/layout.ts), so a theme
   // can square the corners or thicken the lines. A circle (50 %) is no literal.
-  if (/^src\/fx\/.*\.ts$/.test(file) && !SHAPE_OK[file.slice('src/fx/'.length)])
-    for (const m of shapes.matchAll(/(?:border-?radius|stroke-?width)["']?\s*[:=]\s*["'`]?([^,;\n"'`]*)/gi))
-      if (!/--k-(?:radius|stroke)|^\s*(?:50%|inherit|none)(?![\w%])|^\s*(?:\$\{)?(?:radius|strokeW)\(/i.test(m[1])) hit('shape-literal', m[0])
+  if (/^src\/fx\/.*\.ts$/.test(file))
+    for (const m of shapes.matchAll(/(?:border-?radius|stroke-?width)["']?\s*[:=]\s*["'`]?([^,;\n"'`]*)|setAttribute\(\s*["']stroke-width["']\s*,\s*["'`]?([^)"'`]*)/gi))
+      if (!/--k-(?:radius|stroke)|^\s*(?:50%|inherit|none)(?![\w%])|^\s*(?:\$\{)?(?:radius|strokeW)\(/i.test(m[1] ?? m[2])) hit('shape-literal', m[0])
   return hits
 }
 
@@ -152,6 +134,8 @@ describe('design lint catches each rule', () => {
     ['shape-literal', 'src/fx/x.ts', 'const CSS = `.k-x { border-radius: 8px; }`'],
     ['shape-literal', 'src/fx/x.ts', 'Object.assign(l.style, { strokeWidth: "4" })'],
     ['shape-literal', 'src/fx/x.ts', 'el(g, "line", { "stroke-width": 4 })'],
+    ['shape-literal', 'src/fx/x.ts', 'g.setAttribute("stroke-width", "4")'],
+    ['shape-literal', 'src/fx/chart.ts', 'const a = { strokeWidth: "2" } // shape: data marks\nconst b = { strokeWidth: "3" }'], // the mark covers its own line only
   ])('%s in %s', (rule, file, text) => {
     expect(rulesOf(file, text)).toContain(rule)
   })
@@ -175,6 +159,7 @@ describe('design lint catches each rule', () => {
       ['src/fx/x.ts', 'Object.assign(e.style, { font: `600 ${typeSize("label", 28)}px/1.2 var(--k-font)`, fontSize: `${size}px` })'],
       ['src/fx/x.ts', 'Object.assign(e.style, { borderRadius: radius(12), strokeWidth: strokeW(4) })\nconst c = { borderRadius: "50%", strokeWidth: "var(--k-stroke)" }'],
       ['src/fx/crt.ts', 'const CSS = `.k-retro .k-crt { font: 500 46px/1.5 monospace; }`'],
+      ['src/fx/x.ts', 'g.setAttribute("stroke-width", strokeW(2)); e.style.strokeWidth = "2" // shape: the data mark\'s own weight'],
     ]
     for (const [file, text] of ok) expect(lint(file, text), file).toEqual([])
   })

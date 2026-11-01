@@ -11,6 +11,9 @@ const FX = 'virtual:klappe-fx'
 const LANGS = 'virtual:klappe-langs'
 const CODE = /\.(?:[cm]?[jt]sx?)$/
 const LITERAL = /["'`]([A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*)["'`]/g
+// scene.md: a list item (or an agenda row after its time range) that starts with :icon-name:, as src/parse/scene.ts reads it.
+const MD = /\.md$/
+const MD_ICON = /^[ \t]*[-*+][ \t]+(?:\d{1,2}:\d{2}\s*[–-]\s*\d{1,2}:\d{2}[ \t]+)?:([a-z][a-z0-9]*(?:-[a-z0-9]+)*):\s/gm
 
 // grid-2x2 -> Grid2x2: the same key icons.ts looks up.
 export const iconKey = (name) => name.replace(/(^|-)(\w)/g, (_, _dash, c) => c.toUpperCase())
@@ -38,7 +41,7 @@ const read = (f) => {
   }
 }
 
-function codeFiles(dir, out = []) {
+function codeFiles(dir, out = [], match = CODE) {
   let entries
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -48,8 +51,8 @@ function codeFiles(dir, out = []) {
   for (const e of entries) {
     if (e.name === 'node_modules' || e.name.startsWith('.')) continue
     const p = path.join(dir, e.name)
-    if (e.isDirectory()) codeFiles(p, out)
-    else if (CODE.test(e.name)) out.push(p)
+    if (e.isDirectory()) codeFiles(p, out, match)
+    else if (match.test(e.name)) out.push(p)
   }
   return out
 }
@@ -62,6 +65,8 @@ export function namedIcons(dirs, files) {
       const k = iconKey(s)
       if (files.has(k)) keys.add(k)
     }
+  for (const f of dirs.flatMap((d) => codeFiles(d, [], MD)))
+    for (const [, s] of read(f).matchAll(MD_ICON)) if (files.has(iconKey(s))) keys.add(iconKey(s))
   return [...keys].sort()
 }
 
@@ -118,7 +123,7 @@ export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
       // folder stays out of the deck's globs until a restart.
       server.watcher.add(deckDir)
       const update = (file) => {
-        if (!CODE.test(file) || !all.some((d) => !path.relative(d, file).startsWith('..'))) return
+        if (!(CODE.test(file) || MD.test(file)) || !all.some((d) => !path.relative(d, file).startsWith('..'))) return
         let changed = false
         for (const [key, source] of Object.entries(sources)) {
           if (!(key in last)) continue

@@ -1,10 +1,11 @@
 import { gsap } from "gsap";
 import type { CanvasRuntime } from "./render/world";
+import { builtInFence } from "./render/parts";
 import { formatHash, resolveHash } from "./router";
 import type { Stepper } from "./stepper";
 import { t } from "./strings";
 import { motion, SAFE_AREA, stage as size } from "./theme";
-import type { SelftestCheck, SelftestResult, StepAddr } from "./types";
+import type { Deck, SelftestCheck, SelftestResult, StepAddr } from "./types";
 
 export interface SelftestCtx {
   stepper: Stepper;
@@ -132,6 +133,72 @@ const NONE: Box = [-Infinity, -Infinity, Infinity, Infinity];
 const cut = (a: Box, b: Box): Box => [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])];
 const boxOf = (r: DOMRect): Box => [r.left, r.top, r.right, r.bottom];
 
+// An HTML box with a fill or a border: ink, and more than words on the stage.
+function boxed(e: HTMLElement): boolean {
+  const k = getComputedStyle(e);
+  const filled = !/^(transparent|rgba\(.*, 0\))$/.test(k.backgroundColor) || k.backgroundImage !== "none";
+  return filled || (["Top", "Right", "Bottom", "Left"] as const).some((s) => parseFloat(k[`border${s}Width`]) > 0 && k[`border${s}Style`] !== "none");
+}
+
+const MONOTONY = 3; // scenes in a row with one look
+
+// The look of a scene at its last step, for the monotony check: a default-rendered scene's named layout, "text only"
+// when nothing but words shows (no picture, shape, box or background), text beside media, or null when the walk cannot tell.
+function sceneLook(c: CanvasRuntime, a: StepAddr): string | null {
+  const deck: Deck = window.klappe.deck;
+  const section = deck.sections.find((s) => s.id === a.section);
+  const sc = section?.scenes.find((s) => s.id === a.scene);
+  const plain = !!sc && !sc.module?.build && !(sc.fence && !builtInFence(sc.fence.lang)); // the default renderer draws it
+  if (plain && sc.layout) return `layout ${sc.layout}`;
+  if (sc?.module?.background || section?.module?.background) return null; // a picture or a loop behind the words
+  // Wall-clock content under data-k-ignore (a timer, a video) counts: the snapshot leaves it out, the room sees it.
+  const shows = (e: Element) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+  const roots = [...c.el.querySelectorAll(`[data-scene="${CSS.escape(a.scene)}"]`)];
+  const more = roots.some((r) => [...r.querySelectorAll(GRAPHICS)].some(shows) || [...r.querySelectorAll("*")].some((e) => e instanceof HTMLElement && boxed(e) && shows(e)));
+  if (!more) return "text only";
+  return plain && (sc.fence || sc.steps.some((s) => s.media)) ? "text beside media" : null;
+}
+
+// The top-left of the scene's first shown h1 or h2, in scene px from the scene's box, or null.
+function titleAt(c: CanvasRuntime, scene: string): { x: number; y: number } | null {
+  const root = c.el.querySelector<HTMLElement>(`div[data-scene="${CSS.escape(scene)}"]`);
+  const h = root && [...root.querySelectorAll("h1, h2")].find((e) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true }));
+  if (!root || !h) return null;
+  const [r, b] = [root.getBoundingClientRect(), h.getBoundingClientRect()];
+  const k = r.width / root.offsetWidth; // screen px per scene px
+  return { x: (b.left - r.left) / k, y: (b.top - r.top) / k };
+}
+
+// One warning per run of MONOTONY or more scenes in a row with the same look.
+export function monotony(scenes: { id: string; look: string | null }[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < scenes.length; ) {
+    let j = i + 1;
+    while (j < scenes.length && scenes[j].look === scenes[i].look) j++;
+    if (scenes[i].look && j - i >= MONOTONY) out.push(`monotony: ${j - i} scenes in a row are ${scenes[i].look}: ${scenes.slice(i, j).map((s) => s.id).join(", ")}`);
+    i = j;
+  }
+  return out;
+}
+
+const NEAR = 16; // scene px: a title closer than this to where other scenes put theirs, but not on it, is a near-miss
+
+// Titles a few px off a place at least two other scenes share, per axis. x, y: the title's top-left, scene px.
+export function nearMisses(titles: { id: string; x: number; y: number }[]): string[] {
+  const out: string[] = [];
+  for (const axis of ["x", "y"] as const) {
+    const at = titles.map((t) => Math.round(t[axis]));
+    const count = (v: number) => at.filter((w) => w === v).length;
+    titles.forEach((t, i) => {
+      const v = at[i];
+      const near = [...new Set(at)].filter((w) => Math.abs(w - v) >= 2 && Math.abs(w - v) <= NEAR && count(w) >= 2 && count(w) > count(v));
+      const w = near.sort((a, b) => count(b) - count(a))[0];
+      if (w !== undefined) out.push(`layout grid: the title of ${t.id} sits at ${axis} ${v}, ${Math.abs(w - v)} px off the ${w} that ${count(w)} scenes use`);
+    });
+  }
+  return out;
+}
+
 // Soft look checks of the current scene at a settled step.
 // Ink: each text run (not its element's box), picture and SVG shape, and each HTML box with a fill or a
 // border, cut to its ancestors' overflow. Not ink: anything off stage, anything that spans the whole frame
@@ -193,10 +260,7 @@ function look(c: CanvasRuntime, scene: string, stage: HTMLElement, safe: number[
     }
     for (const e of root.querySelectorAll("*")) {
       if (!(e instanceof HTMLElement) || skip(e)) continue;
-      const k = getComputedStyle(e);
-      const filled = !/^(transparent|rgba\(.*, 0\))$/.test(k.backgroundColor) || k.backgroundImage !== "none";
-      const bordered = (["Top", "Right", "Bottom", "Left"] as const).some((s) => parseFloat(k[`border${s}Width`]) > 0 && k[`border${s}Style`] !== "none");
-      if ((filled || bordered) && shows(e)) ink(e, cut(boxOf(e.getBoundingClientRect()), clipOf(e.parentElement)), e.localName);
+      if (boxed(e) && shows(e)) ink(e, cut(boxOf(e.getBoundingClientRect()), clipOf(e.parentElement)), e.localName);
     }
   }
   return bad;
@@ -255,6 +319,8 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   // tweens that rewind to a wrong start value.
   const safe = window.klappe.deck.meta.safeArea ?? SAFE_AREA;
   const seen = new Set<string>();
+  const looks: { id: string; look: string | null; appendix?: true }[] = [];
+  const titles: { id: string; x: number; y: number }[] = [];
   gsap.globalTimeline.timeScale(PLAY_SPEED);
   try {
     for (let i = 0; i < steps.length; i++) {
@@ -270,6 +336,13 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
       checks.push({ name: `step ${hash}: legible`, ok: !bad.length, detail: bad.join("; ") || undefined });
       // Soft: each finding once, at the first step that shows it.
       for (const w of look(active(i), steps[i].scene, stage, safe)) if (!seen.has(w)) seen.add(w), warnings.push(`step ${hash}: ${w}`);
+      // A scene's last step: its look, for the monotony check. The appendix is a run of its own.
+      if (steps[i + 1]?.scene !== steps[i].scene) {
+        if (steps[i].appendix && !looks.at(-1)?.appendix) warnings.push(...monotony(looks.splice(0)));
+        looks.push({ id: `${steps[i].section}/${steps[i].scene}`, look: sceneLook(active(i), steps[i]), appendix: steps[i].appendix });
+        const title = titleAt(active(i), steps[i].scene);
+        if (title) titles.push({ id: `${steps[i].section}/${steps[i].scene}`, ...title });
+      }
       if (i === steps.length - 1 || steps[i + 1].appendix !== steps[i].appendix) continue; // next() here only ends the talk
       await stepper.next();
       await stepper.prev();
@@ -279,6 +352,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   } finally {
     gsap.globalTimeline.timeScale(1);
   }
+  warnings.push(...monotony(looks), ...nearMisses(titles));
 }
 
 // The demo steps the acceptance checks stand on. Moving one of these scenes means editing this list:

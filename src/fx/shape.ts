@@ -53,7 +53,7 @@ function group(ctx: Ctx, kind: string, o: Line, parts: [string, Record<string, n
     width = 2;
   }
   Object.assign(g.style, {
-    fill: "none", stroke: o.accent ? "var(--k-accent)" : "var(--k-line)", strokeWidth: String(width), strokeLinecap: "round", strokeLinejoin: "round",
+    fill: "none", stroke: o.accent ? "var(--k-accent)" : "var(--k-line)", strokeWidth: String(width), strokeLinecap: "round", strokeLinejoin: "round", // shape: an author option (width, default 4)
     ...(o.dash ? { strokeDasharray: `${3 * width} ${3 * width}` } : {}),
   });
   const els = parts.map(([tag, attrs]) => {
