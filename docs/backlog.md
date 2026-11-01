@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- klappe's own words per deck: a strings override in the deck for a language `src/strings.ts` lacks (it has `en` and `de`).
 - Named layouts on non-landscape frames: `thirds`, `full-bleed` and `big-number` assume a landscape frame with hard-coded 160 and 140 padding; derive it from the frame, or report a deck problem on a portrait one.
 - Video export scene filter: `klappe video --only <section>[/<scene>]`, as `test` has.
 - Shape-token lint by use, not by file: the allow list exempts whole files, and `setAttribute("stroke-width")` is not linted.

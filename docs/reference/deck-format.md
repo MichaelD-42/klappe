@@ -20,6 +20,7 @@ decks/<id>/
         scene.md
         scene.ts          # optional
   components.ts           # optional: the deck's own scene.md fences, see markdown.md#deck-components
+  strings.json            # optional: the deck's own words for klappe's UI, by key; see lang below
   shared/                 # optional: helpers and scene factories, not loaded as scenes
   icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon(); <repo>/icons/ is shared by all decks
 ```
@@ -29,7 +30,7 @@ decks/<id>/
 Frontmatter keys:
 
 - `title`: required. It is also the page title in the browser tab.
-- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English. Numbers and dates follow `lang` in every language.
+- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.

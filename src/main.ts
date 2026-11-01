@@ -23,7 +23,7 @@ import { bindInput } from "./input";
 import { applyInk, inkPointer, mountInk, type InkMode } from "./ink";
 import { openChannel } from "./speaker/channel";
 import { mountSpeaker } from "./speaker/view";
-import { t } from "./strings";
+import { ownWords, t } from "./strings";
 import { Overview } from "./ui/overview";
 import { showProblems } from "./ui/problems";
 import { Selector } from "./ui/selector";
@@ -37,6 +37,7 @@ setTempo(loaded.deck.meta.tempo ?? 1);
 if (loaded.deck.meta.frame) setFrame(loaded.deck.meta.frame);
 problems.push(...ownIcons(loaded.deck.icons ?? {}));
 problems.push(...componentProblems(loaded.deck));
+problems.push(...ownWords(loaded.deck.strings)); // before any view builds its words
 // Laid out whole, then cut (?cut=) and the appendix moved last: a cut moves no scene on its canvas.
 const whole = layoutDeck(loaded.deck);
 problems.push(...whole.problems);

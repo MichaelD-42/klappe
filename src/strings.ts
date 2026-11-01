@@ -140,7 +140,32 @@ export const strings = {
 
 export type StringKey = keyof (typeof strings)["en"];
 
+// The deck's strings.json, by key: its own words win in every language (a language klappe lacks, or a word it wants said
+// differently).
+let own: Partial<Record<StringKey, string>> = {};
+
 export function t(key: StringKey, lang: string): string {
   // The language's primary subtag (de-DE reads de); an unknown language falls back to en.
-  return strings[lang.split("-")[0] as keyof typeof strings]?.[key] ?? strings.en[key];
+  return own[key] ?? strings[lang.split("-")[0] as keyof typeof strings]?.[key] ?? strings.en[key];
+}
+
+// Takes the text of the deck's strings.json (undefined: none) and returns its problems. Keys klappe has and text values
+// count; the rest is reported and left out. A file that is not a JSON object overrides nothing.
+export function ownWords(text: string | undefined): string[] {
+  own = {};
+  if (text === undefined) return [];
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = null;
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return ["strings.json: not JSON with text values by key"];
+  const problems: string[] = [];
+  for (const [k, v] of Object.entries(data)) {
+    if (!Object.hasOwn(strings.en, k)) problems.push(`strings.json: unknown key '${k}'`);
+    else if (typeof v !== "string") problems.push(`strings.json: '${k}' must be text`);
+    else own[k as StringKey] = v;
+  }
+  return problems;
 }

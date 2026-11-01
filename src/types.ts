@@ -210,6 +210,7 @@ export interface Deck {
   overlay?: OverlayModule; // the deck's overlay.ts
   components?: Components; // the deck's components.ts
   icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
+  strings?: string; // the deck's strings.json as text: its own words for klappe's UI
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
   themes?: Record<string, string>;

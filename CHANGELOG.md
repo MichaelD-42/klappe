@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `strings.json` at the deck root gives klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) in the deck's words, for a language klappe lacks or a word said differently; any key it sets wins in every view. Unknown keys are deck problems.
 - Sound, opt-in with `sound: true` in `deck.md`: `cue(ctx, { href })` plays a short sound when a forward step reaches it (`at: "step"` with the camera flight in), and `section.ts` `music: { href, volume }` loops a bed under a section from a forward step into it until a step leaves it. A seek, jump or step back is silent, and so are the walk, `pdf`, `shot` and `video`. `M` mutes, also from the speaker view. The demo turns it on: `#/sound/cues/1`.
 - `handheld: true` in `deck.md`: a barely visible wall-clock wander of the stage (3 px, 0.1° at most), as a camera held by hand. Off by default; holds still with reduced motion, in the walk, `pdf`, `shot` and `video`.
 - Split screen, as a recipe: two scenes side by side with `place()`, the camera cutting between each alone and both with `ctx.camera.to(tl, both, { duration: 0 })` and `camera: { duration: 0 }`. Catalog: `#/camera/split-before/1`.
