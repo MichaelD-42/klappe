@@ -489,3 +489,7 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **Split screen is a recipe, not an element.**
   - Why: `place()` side by side and `ctx.camera.to` round both already do it; the one gap was a cut, and `duration: 0` now is one. An element would hide only the union rect, and add API that 1.0 freezes.
+
+- **Handheld drift is opt-in per deck, and not tied to `intensity`.**
+  - Why: the backlog asked whether it suits `calm` at all. A calm deck promises a still stage, and a wander under text at rest reads as nervous there; on a bold, filmic deck it adds life. But intensity also sets shout-outs and other choices, and a bold deck may still want a still stage, so `handheld` is its own `deck.md` key, off by default, rather than part of `bold`.
+  - It moves `.k-worlds`, which no timeline touches: the camera's pose stays the timeline's, so seek still equals play. It runs from GSAP's ticker and only when wall-clock motion is allowed, the same condition as the backgrounds.

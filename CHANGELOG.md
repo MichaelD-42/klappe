@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `handheld: true` in `deck.md`: a barely visible wall-clock wander of the stage (3 px, 0.1° at most), as a camera held by hand. Off by default; holds still with reduced motion, in the walk, `pdf`, `shot` and `video`.
 - Split screen, as a recipe: two scenes side by side with `place()`, the camera cutting between each alone and both with `ctx.camera.to(tl, both, { duration: 0 })` and `camera: { duration: 0 }`. Catalog: `#/camera/split-before/1`.
 - `image` `duotone`: `true` draws the picture in `--k-bg` (shadows) to `--k-accent` (highlights), or give your own pair of tokens, so photos from different sources read as one set. Catalog: `#/media/duotone/1`.
 - Layout grid look check: the walk warns when a scene's title sits a few px (2 to 16) off where at least two other scenes put theirs, naming the scene, the axis and the shared place. The demo's `speakerProfile` name moved from top 150 to 140 to match.

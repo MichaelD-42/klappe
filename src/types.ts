@@ -20,6 +20,7 @@ export interface DeckMeta {
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
   // deck.md cuts: a shorter talk by name, the section ids it keeps and its own duration; ?cut=<name> plays one.
   cuts?: Record<string, { sections: string[]; duration?: number }>;
+  handheld?: boolean; // deck.md handheld: true: a barely visible wall-clock wander of the stage, as a camera held by hand
 }
 export type StepKind =
   "step" | "shout-enter" | "shout-answer";

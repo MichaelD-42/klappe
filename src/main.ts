@@ -17,6 +17,7 @@ import { renderWorld, svgBackgrounds } from "./render/world";
 import { decode, Router } from "./router";
 import { autoDelay, Stepper } from "./stepper";
 import { applyTheme, loadFonts, motion, setFrame, setTempo } from "./theme";
+import { handheld } from "./camera";
 import { bindInput } from "./input";
 import { applyInk, inkPointer, mountInk, type InkMode } from "./ink";
 import { openChannel } from "./speaker/channel";
@@ -80,7 +81,10 @@ async function startDeck(svg: Record<string, string>) {
   // A problem raised after this start (a web font loads, a step plays) goes to the list and the panel too.
   let late: ((msg: string) => void) | undefined;
   const onProblem = (msg: string) => late?.(msg);
-  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still: reducedMotion || query.has("selftest"), svg, onProblem });
+  // Wall-clock motion holds still with reduced motion, in the self-test and in klappe video (?selftest=).
+  const still = reducedMotion || query.has("selftest");
+  const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still, svg, onProblem });
+  if (deck.meta.handheld && !still) handheld(worlds);
   problems.push(...canvases.flatMap((c) => c.problems)); // from effects, through ctx.problem
   const stepper = new Stepper(steps, canvases, { instant: query.get("instant") === "1" });
   const overlay = mountOverlay(stage, deck, { total: steps.filter((s) => !s.appendix).length, reducedMotion, problem: (msg) => (late ? late(msg) : problems.push(msg)) });
