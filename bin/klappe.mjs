@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
-import { syncClaude } from './sync-claude.mjs'
+import { syncClaude, WALK } from './sync-claude.mjs'
 
 const klappeDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const [cmd, ...rest] = process.argv.slice(2)
@@ -76,6 +76,7 @@ if (cmd === 'init') {
     dev: 'node klappe/bin/klappe.mjs dev',
     build: 'node klappe/bin/klappe.mjs build',
     test: 'node klappe/bin/klappe.mjs test',
+    walk: WALK, // the agents' scene walk; the klappe repo has it too, where test is vitest
     pdf: 'node klappe/bin/klappe.mjs pdf',
     shot: 'node klappe/bin/klappe.mjs shot',
     video: 'node klappe/bin/klappe.mjs video',
