@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Deck conversion: turn a PPTX or PDF into a draft deck folder (sections, `scene.md` steps, notes, `data/` for chart numbers with their source, `media/TODO.md` for the pictures). Probably a skill workflow over the `klappe` skill, not engine code; the storyteller prompt's "Convert deck" step is the spec.
 - Pictogram chart: units drawn as icons ("1 in 4 engineers") that fill step by step, from `waffle` and `icon`.
 - Layout grid: a column grid that scenes place on, or a look check that flags near-misses across scenes (a title a few px off where the other scenes put it). The `shot --sheet` contact sheet shows drift; nothing checks it.
 - Image treatment: a duotone or tint on `image` from the theme's tokens, so photos from different sources read as one set.

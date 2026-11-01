@@ -1,6 +1,6 @@
 ---
 name: klappe
-description: Use when creating, editing, reviewing or debugging a klappe slide deck (decks/<id>/, deck.md, scene.md, scene.ts, section.ts, catalog scenes, themes) or when asked to explain, show or animate something in a presentation built with klappe.
+description: Use when creating, converting (from PPTX or PDF), editing, reviewing or debugging a klappe slide deck (decks/<id>/, deck.md, scene.md, scene.ts, section.ts, catalog scenes, themes) or when asked to explain, show or animate something in a presentation built with klappe.
 ---
 
 # klappe
@@ -165,3 +165,5 @@ Work fast:
 - Edit files with the Edit and Write tools, not `sed -i`, heredocs or scripts: shell writes ask for permission and skip the edit checks.
 
 Building a whole deck from a storyboard: read [building a deck](.claude/skills/klappe/references/building-a-deck.md).
+
+Turning an old PPTX or PDF into a draft deck: read [converting a deck](.claude/skills/klappe/references/converting-a-deck.md).
