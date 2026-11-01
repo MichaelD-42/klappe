@@ -575,6 +575,7 @@ steps: [(tl, img) => img.show(tl)],
 | `scrim` | number 0 to 1 | none | a `--k-scrim` layer over the picture (black, white in a light theme); use 0.6 or more for text on top |
 | `scrimSide` | `"left" \| "right" \| "top" \| "bottom"` | none (flat) | the scrim covers only that side: full over the 45% of the frame there, clear by 85%. Keep the text inside that 45%; the rest of the picture keeps its light |
 | `credit` | string | none | a credit line, `"Photo: …"`, 20 px in `--k-fg` on a 75 % `--k-bg` patch, 12 px in from the picture's bottom-right corner, so it reads on any photo. It stays put while Ken Burns pushes. It sits outside the safe area on a full frame on purpose (`data-k-bleed`); move a footer logo if they meet. Catalog: `#/fullscreen/cover/1` |
+| `duotone` | `true` or `[dark, light]` | none | the picture in two theme tokens: its shadows take the first, its highlights the second, so photos from different sources read as one set. `true` is `--k-bg` to `--k-accent`; a token is `"accent"` or `"--k-accent"`, and an unknown one is a deck problem. Pure CSS (greyscale, then a `lighten` and a `multiply` layer), so a section's `tokens` apply. Catalog: `#/media/duotone/1` |
 
 ### Step adders
 

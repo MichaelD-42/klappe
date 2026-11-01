@@ -2,7 +2,6 @@
 
 Open work only, ranked, most important first. All of it is in scope for 1.0.0, which is the last entry; the first entries change the deck format, the API or the look, so they come before anything builds on them. CHANGELOG.md lists what is done and git history has the old lists. A defect is fixed test-first: if its test already passes, the entry was stale and is dropped.
 
-- Image treatment: a duotone or tint on `image` from the theme's tokens, so photos from different sources read as one set.
 - Split screen: two scenes side by side, the camera cutting between each alone and both together. Check first whether `place()` and a camera frame round both already do it.
 - Handheld drift: a barely visible wall-clock drift of the camera while a step holds, under `data-k-ignore` like the backgrounds. Off with reduced motion; check whether it suits `calm` at all.
 - Sound: a short cue on a step (a whoosh on a flight, a hit on `impactShake`) and a music bed under a section. Plays on a forward step only, silent on seek, jump and back, like video; opt-in per deck and muted by a key. Reverses a v1 non-goal in the design spec (decided 2026-10-30, see DECISIONS.md); the build adds its own DECISIONS entry on how it keeps the timeline rule.

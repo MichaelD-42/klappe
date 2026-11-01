@@ -2,7 +2,7 @@ import { gsap } from "gsap";
 import { t } from "../strings";
 import { motion, stage } from "../theme";
 import type { Ctx, Rect, StepAdder } from "../types";
-import { typeSize } from "./draw";
+import { token, typeSize } from "./draw";
 
 // A Ken Burns pose: scale, and a drift in scene px.
 export interface KenBurnsPose {
@@ -20,6 +20,9 @@ export interface ImageOpts {
   scrim?: number; // 0..1: a --k-scrim layer over the picture, for text on top
   scrimSide?: ScrimSide; // the scrim is full on this side only and clears past the middle; default: flat
   credit?: string; // "Photo: …": small, in the bottom-right corner, on its own --k-bg patch
+  // The picture in two theme tokens, shadows to the first and highlights to the second, so photos from different
+  // sources read as one set. true: --k-bg to --k-accent. A token as "accent" or "--k-accent".
+  duotone?: true | [string, string];
 }
 export type ScrimSide = "left" | "right" | "top" | "bottom";
 // The scrim layer's background: flat, or full over the 45% of the frame on `side` and clear by 85%.
@@ -177,6 +180,22 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
   img.alt = alt;
   Object.assign(img.style, { width: "100%", height: "100%", objectFit: cover ? "cover" : "contain" });
   b.append(img);
+  if (opts.duotone) {
+    // Grey, then lighten with the dark token (black takes it) and multiply with the light one (white takes it).
+    const pair = opts.duotone === true ? ["--k-bg", "--k-accent"] : opts.duotone;
+    img.style.filter = "grayscale(1)";
+    b.style.isolation = "isolate";
+    pair.forEach((name, i) => {
+      let tok = name.startsWith("--") ? name : `--k-${name}`;
+      if (!token(ctx.html, tok)) {
+        ctx.problem(`image: duotone: no theme token '${tok}'`);
+        tok = i ? "--k-accent" : "--k-bg";
+      }
+      const l = b.appendChild(document.createElement("div"));
+      l.dataset.kDuotone = "";
+      Object.assign(l.style, { position: "absolute", inset: "0", background: `var(${tok})`, mixBlendMode: i ? "multiply" : "lighten" });
+    });
+  }
   if (scrim) {
     const s = document.createElement("div");
     Object.assign(s.style, { position: "absolute", inset: "0", background: scrimFill(scrimSide), opacity: String(scrim) });

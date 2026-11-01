@@ -6,6 +6,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Added
 
+- `image` `duotone`: `true` draws the picture in `--k-bg` (shadows) to `--k-accent` (highlights), or give your own pair of tokens, so photos from different sources read as one set. Catalog: `#/media/duotone/1`.
 - Layout grid look check: the walk warns when a scene's title sits a few px (2 to 16) off where at least two other scenes put theirs, naming the scene, the axis and the shared place. The demo's `speakerProfile` name moved from top 150 to 140 to match.
 - Pictogram: `waffle` takes `units` (cells instead of 100, up to 10 a row) and `icon` (each cell the icon), so "1 in 4 engineers" is four people with one lit; the number counts lit units and `to(value)` fills or empties them. `waffleCells` takes `units` too. Catalog: `#/numbers/pictogram/1`.
 - Deck conversion: the `klappe` skill's new reference `converting-a-deck.md` turns a PPTX or PDF into a draft deck folder with the system tools (`unzip`, `soffice`, `pdftotext`, `pdftoppm`): a slide-to-scene map, `scene.md` steps with the notes, chart numbers in `data/` with a `# source:` line, picture links for `media/TODO.md`, and the open questions in `CONVERSION.md`.
