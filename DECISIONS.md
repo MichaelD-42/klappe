@@ -501,3 +501,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **The shape-token lint exempts a line, not a file: `// shape: <reason>` (or `/* shape: … */` inside CSS) at its end.**
   - Why: the file allow list let any new literal into 17 files unseen, and the regex missed `setAttribute("stroke-width", …)`; switching both showed an unlisted default in `lineArt` and a glyph stroke added to `stats.ts` the same day. A reason on the line is read where the literal is, and a new literal next to it still fails.
+
+- **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
+  - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.

@@ -12,7 +12,18 @@ let bed: HTMLAudioElement | undefined; // the music bed of the section on screen
 const audible = () => allowed && !muted;
 const audio = (url: string, volume = 1, loop = false) =>
   Object.assign(new Audio(url), { preload: "auto", loop, volume: Math.max(0, Math.min(1, volume)) });
-const media = (files: Ctx["files"] | undefined, href: string) => files?.media[href.replace(/^\.\//, "")];
+// klappe's own sounds (src/sounds/README.md says what each is for and how it was made), by name. Only the ones a deck
+// plays are fetched: the glob gives URLs.
+const BUILT_IN = Object.fromEntries(
+  Object.entries(import.meta.glob<string>("../sounds/*.mp3", { query: "?url", import: "default", eager: true })).map(([k, v]) => [/([\w-]+)\.mp3$/.exec(k)![1], v]),
+);
+export const SOUNDS = Object.keys(BUILT_IN).sort();
+
+// A built-in sound by name ("whoosh"), or the deck's file by its link ("media/x.mp3"); undefined when there is none.
+export function soundUrl(href: string, files: Ctx["files"] | undefined): string | undefined {
+  return href.includes("/") ? files?.media[href.replace(/^\.\//, "")] : BUILT_IN[href];
+}
+const missing = (href: string) => (href.includes("/") ? `no file ${href}` : `no sound '${href}'; klappe has ${SOUNDS.join(", ")}`);
 
 // main.ts: on for a deck with sound: true, unless wall-clock motion holds still.
 export function allowSound(on: boolean): void {
@@ -27,7 +38,7 @@ export function toggleMute(): void {
 }
 
 export interface CueOpts {
-  href: string; // a sound file in media/: "media/whoosh.mp3"
+  href: string; // klappe's own sound by name ("whoosh", see SOUNDS), or the deck's file: "media/my-sound.mp3"
   volume?: number; // 0..1, default 1
   at?: "step"; // with the step's start (a whoosh with the camera flight in); default: where the cue is added
 }
@@ -35,8 +46,8 @@ export interface CueOpts {
 // A short sound on a step: it plays once when a forward play of its step reaches the point where it was added.
 // Add it before impactShake in the same step for a hit as the shake starts.
 export function cue(ctx: Ctx, opts: CueOpts): StepAdder {
-  const url = media(ctx.files, opts.href);
-  if (url === undefined) ctx.problem(`cue: no file ${opts.href}`);
+  const url = soundUrl(opts.href, ctx.files);
+  if (url === undefined) ctx.problem(`cue: ${missing(opts.href)}`);
   const a = url === undefined ? undefined : audio(url, opts.volume);
   return (tl) => {
     const at = opts.at === "step" ? (tl.labels[STEP_LABEL] ?? tl.duration()) : tl.duration();
@@ -67,9 +78,9 @@ export function musicBeds(deck: Deck): { problems: string[]; onStep: (e: { play:
   for (const s of deck.sections) {
     const m = s.module?.music;
     if (!m) continue;
-    const url = media(deck.files, m.href);
+    const url = soundUrl(m.href, deck.files);
     if (url === undefined) {
-      problems.push(`section ${s.id}: music: no file ${m.href}`);
+      problems.push(`section ${s.id}: music: ${missing(m.href)}`);
       continue;
     }
     const a = audio(url, m.volume, true);

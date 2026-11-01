@@ -4,9 +4,10 @@ import type { SceneModule, SectionModule, StepAdder } from "../../types";
 
 // deck.md sound: true. Section a has a music bed; its scene's step 2 has a cue. Section b is quiet.
 // ?fixture=sound&off=1 leaves sound off in deck.md.
+// Step 3 has klappe's own "chime", by name.
 const hit: SceneModule = {
-  build: (ctx) => cue(ctx, { href: "media/hit.mp3", volume: 0.5 }),
-  steps: [null, (tl, c: StepAdder) => (tl.to({}, { duration: 0.2 }), c(tl)), null],
+  build: (ctx) => ({ hit: cue(ctx, { href: "media/hit.mp3", volume: 0.5 }), chime: cue(ctx, { href: "chime" }) }),
+  steps: [null, (tl, c: Record<string, StepAdder>) => (tl.to({}, { duration: 0.2 }), c.hit(tl)), (tl, c: Record<string, StepAdder>) => c.chime(tl)],
 };
 const bed: SectionModule = { music: { href: "media/bed.mp3", volume: 0.3 } };
 export default () => {

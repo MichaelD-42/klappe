@@ -691,15 +691,33 @@ Limits: the picture has no Ken Burns push (the enlarged copy would not follow it
 Catalog: section `233-sound` (`#/sound/cues/1`). `cue(ctx, { href, volume?, at? })` returns a step adder: a short sound from `media/` that plays once when a forward play of its step reaches the point where it was added. A seek, a jump and a step back are silent, as for video. It plays only in a deck with `sound: true` in `deck.md`, never in the walk or `klappe video`, and `M` mutes it. A missing file is a deck problem.
 
 ```ts
-build: (ctx) => ({ whoosh: cue(ctx, { href: "media/whoosh.mp3", at: "step" }), hit: cue(ctx, { href: "media/hit.mp3" }), land: impactShake(ctx) }),
+build: (ctx) => ({ whoosh: cue(ctx, { href: "whoosh", at: "step" }), hit: cue(ctx, { href: "hit" }), land: impactShake(ctx) }),
 steps: [(tl, r) => r.whoosh(tl), (tl, r) => (r.hit(tl), r.land(tl))], // the hit as the shake starts
 ```
 
 | Name | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `href` | string | required | a sound file in `media/`, as the Markdown link: `"media/hit.mp3"` |
+| `href` | string | required | one of klappe's sounds by name (below), or the deck's own file in `media/` by its link: `"media/our-jingle.mp3"`. An unknown name is a deck problem that lists them |
 | `volume` | number | 1 | 0 to 1 |
 | `at` | `"step"` | where it is added | `"step"`: with the step's start, so a whoosh plays with the camera flight into the scene |
+
+klappe's own sounds, short and quiet enough to sit under a voice. Listen to each at `#/sound/sounds/1` and on; they are made from scratch with ffmpeg, so there is no one else's licence to follow, and `src/sounds/README.md` gives each command.
+
+| Name | For |
+| --- | --- |
+| `whoosh` | a camera flight in, with `at: "step"` |
+| `whip` | a whip pan between far scenes |
+| `hit` | a landing, with `impactShake` |
+| `pop` | something appears |
+| `click` | a small step |
+| `tick` | a checklist item ticks |
+| `chime` | success, a target reached |
+| `fail` | a miss, a check that fails |
+| `rise` | the build-up before a reveal |
+| `shimmer` | a reveal lands |
+| `bed-calm`, `bed-pulse` | music beds for `section.ts` `music`: a quiet pad (12 s) and a tense pulse (8 s), looping |
+
+One sound now and then marks a moment; one on every step is noise. A music bed under a voice wants `volume` 0.2 to 0.3.
 
 A music bed under a section is `section.ts` `music` ([deck format](deck-format.md#sectionts)).
 

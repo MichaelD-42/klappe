@@ -6,13 +6,14 @@ let browser: Browser
 beforeAll(async () => void (browser = await chromium.launch()))
 afterAll(() => browser?.close())
 
-// play() and pause() are recorded, never heard: "play hit" or "pause bed" by the file's base64 text.
+// play() and pause() are recorded, never heard: "play hit" or "pause bed" by a data URL's base64 text, or a built-in
+// sound by its file name.
 async function open(query = ''): Promise<Page> {
   const page = await browser.newPage()
   await page.addInitScript(() => {
     const w = window as any
     w.sounds = []
-    const name = (el: HTMLMediaElement) => atob(el.src.split(',')[1] ?? '')
+    const name = (el: HTMLMediaElement) => (el.src.startsWith('data:') ? atob(el.src.split(',')[1] ?? '') : /([\w-]+)\.mp3/.exec(el.src)?.[1])
     HTMLMediaElement.prototype.play = function () {
       w.sounds.push(`play ${name(this)}`)
       Object.defineProperty(this, 'paused', { value: false, configurable: true })
@@ -41,9 +42,10 @@ test('a forward step into a section starts its music bed; the cue plays on its s
   expect(await sounds(page)).toEqual(['play bed'])
   await step(page, 'next') // the hit
   expect(await sounds(page)).toEqual(['play bed', 'play hit'])
-  await step(page, 'next')
+  await step(page, 'next') // klappe's own chime, by name
+  expect(await sounds(page)).toEqual(['play bed', 'play hit', 'play chime'])
   await step(page, 'next') // into section b
-  await expect.poll(() => sounds(page)).toEqual(['play bed', 'play hit', 'pause bed'])
+  await expect.poll(() => sounds(page)).toEqual(['play bed', 'play hit', 'play chime', 'pause bed'])
   await page.close()
 })
 
