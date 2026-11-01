@@ -152,7 +152,7 @@ When the user asks you to work on their review, read `decks/<id>/review.md`. The
 
 While you work, check only the scenes you touched:
 
-- `npm test -- --only <section>/<scene>` walks those scenes at the three sizes in seconds and prints their look warnings (safe area, clipped text, monotony: three scenes in a row that look alike). Repeat `--only` or join targets with commas; `--bail` stops at the first failing step; `--strict` makes a look warning fail. It also catches a `scene.ts` whose step count differs from `scene.md`, and, with `max-words` in deck.md, a step with too many words on screen.
+- `npm test -- --only <section>/<scene>` walks those scenes at the three sizes in seconds and prints their look warnings (safe area, clipped text, monotony: three scenes in a row that look alike, layout grid: a title a few px off where the other scenes put it). Repeat `--only` or join targets with commas; `--bail` stops at the first failing step; `--strict` makes a look warning fail. It also catches a `scene.ts` whose step count differs from `scene.md`, and, with `max-words` in deck.md, a step with too many words on screen.
 - After the reviews, `node klappe/bin/verdict.mjs` checks their format and says where the work goes; see [building a deck](.claude/skills/klappe/references/building-a-deck.md) step 7.
 - `npm run shot -- <section>/<scene> --last --size 1366x768` shoots one size. `--at <ms>` shoots a step that far into its play, to check motion. `--url http://localhost:<port>/` reuses a running `npm run dev` of the same deck, so each shot skips the server start.
 

@@ -483,3 +483,6 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **The monotony check judges a scene by what shows at its last step, plus its `layout` for the default renderer.**
   - Why: the walk sees `scene.ts` scenes only as DOM. "Text only" is what it can tell for every scene (no picture, shape or filled box); a named layout or text beside media it can tell only for scenes it drew itself, and other `scene.ts` scenes break a run. Three in a row, and a warning, not a failure: a run can be a deliberate rhythm.
+
+- **Layout grid is a look check on titles, not a column grid scenes place on.**
+  - Why: a grid is new layout API that 1.0 would freeze, and the default renderer already puts every title at one place; what drifts is the deck's own code. A check finds the drift without changing how anyone places anything. Titles only: they are the element the room sees jump when the camera flies between scenes, and the one every scene has. Revisit a grid if decks keep repeating their own column maths.

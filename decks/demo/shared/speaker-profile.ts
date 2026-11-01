@@ -38,7 +38,7 @@ export function speakerProfile(opts: SpeakerProfileOpts): SceneModule {
       photos.forEach((p) => (p.el.style.borderRadius = "24px"));
       const name = ctx.html.appendChild(document.createElement("h2"));
       name.textContent = doc.title;
-      Object.assign(name.style, { position: "absolute", left: `${X}px`, top: "150px", width: "720px", margin: "0", font: "700 84px/1.1 var(--k-font-heading)", color: "var(--k-fg)" });
+      Object.assign(name.style, { position: "absolute", left: `${X}px`, top: "140px", width: "720px", margin: "0", font: "700 84px/1.1 var(--k-font-heading)", color: "var(--k-fg)" });
       gsap.set(name, { autoAlpha: 0 });
       const quotes = said.map((s) => {
         const q = ctx.html.appendChild(document.createElement("blockquote"));

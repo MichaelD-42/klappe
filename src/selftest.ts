@@ -159,6 +159,16 @@ function sceneLook(c: CanvasRuntime, a: StepAddr): string | null {
   return plain && (sc.fence || sc.steps.some((s) => s.media)) ? "text beside media" : null;
 }
 
+// The top-left of the scene's first shown h1 or h2, in scene px from the scene's box, or null.
+function titleAt(c: CanvasRuntime, scene: string): { x: number; y: number } | null {
+  const root = c.el.querySelector<HTMLElement>(`div[data-scene="${CSS.escape(scene)}"]`);
+  const h = root && [...root.querySelectorAll("h1, h2")].find((e) => e.checkVisibility({ opacityProperty: true, visibilityProperty: true }));
+  if (!root || !h) return null;
+  const [r, b] = [root.getBoundingClientRect(), h.getBoundingClientRect()];
+  const k = r.width / root.offsetWidth; // screen px per scene px
+  return { x: (b.left - r.left) / k, y: (b.top - r.top) / k };
+}
+
 // One warning per run of MONOTONY or more scenes in a row with the same look.
 export function monotony(scenes: { id: string; look: string | null }[]): string[] {
   const out: string[] = [];
@@ -167,6 +177,24 @@ export function monotony(scenes: { id: string; look: string | null }[]): string[
     while (j < scenes.length && scenes[j].look === scenes[i].look) j++;
     if (scenes[i].look && j - i >= MONOTONY) out.push(`monotony: ${j - i} scenes in a row are ${scenes[i].look}: ${scenes.slice(i, j).map((s) => s.id).join(", ")}`);
     i = j;
+  }
+  return out;
+}
+
+const NEAR = 16; // scene px: a title closer than this to where other scenes put theirs, but not on it, is a near-miss
+
+// Titles a few px off a place at least two other scenes share, per axis. x, y: the title's top-left, scene px.
+export function nearMisses(titles: { id: string; x: number; y: number }[]): string[] {
+  const out: string[] = [];
+  for (const axis of ["x", "y"] as const) {
+    const at = titles.map((t) => Math.round(t[axis]));
+    const count = (v: number) => at.filter((w) => w === v).length;
+    titles.forEach((t, i) => {
+      const v = at[i];
+      const near = [...new Set(at)].filter((w) => Math.abs(w - v) >= 2 && Math.abs(w - v) <= NEAR && count(w) >= 2 && count(w) > count(v));
+      const w = near.sort((a, b) => count(b) - count(a))[0];
+      if (w !== undefined) out.push(`layout grid: the title of ${t.id} sits at ${axis} ${v}, ${Math.abs(w - v)} px off the ${w} that ${count(w)} scenes use`);
+    });
   }
   return out;
 }
@@ -292,6 +320,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   const safe = window.klappe.deck.meta.safeArea ?? SAFE_AREA;
   const seen = new Set<string>();
   const looks: { id: string; look: string | null; appendix?: true }[] = [];
+  const titles: { id: string; x: number; y: number }[] = [];
   gsap.globalTimeline.timeScale(PLAY_SPEED);
   try {
     for (let i = 0; i < steps.length; i++) {
@@ -311,6 +340,8 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
       if (steps[i + 1]?.scene !== steps[i].scene) {
         if (steps[i].appendix && !looks.at(-1)?.appendix) warnings.push(...monotony(looks.splice(0)));
         looks.push({ id: `${steps[i].section}/${steps[i].scene}`, look: sceneLook(active(i), steps[i]), appendix: steps[i].appendix });
+        const title = titleAt(active(i), steps[i].scene);
+        if (title) titles.push({ id: `${steps[i].section}/${steps[i].scene}`, ...title });
       }
       if (i === steps.length - 1 || steps[i + 1].appendix !== steps[i].appendix) continue; // next() here only ends the talk
       await stepper.next();
@@ -321,7 +352,7 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
   } finally {
     gsap.globalTimeline.timeScale(1);
   }
-  warnings.push(...monotony(looks));
+  warnings.push(...monotony(looks), ...nearMisses(titles));
 }
 
 // The demo steps the acceptance checks stand on. Moving one of these scenes means editing this list:
