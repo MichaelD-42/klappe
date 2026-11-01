@@ -8,10 +8,10 @@ beforeAll(async () => {
 })
 afterAll(() => browser?.close())
 
-async function open(css = ''): Promise<Page> {
+async function open(css = '', frame = ''): Promise<Page> {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
   if (css) await page.addInitScript((c) => document.addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: c }))), css)
-  await page.goto(`${inject('BASE_URL')}/?fixture=layouts&instant=1`)
+  await page.goto(`${inject('BASE_URL')}/?fixture=layouts&instant=1${frame ? `&frame=${frame}` : ''}`)
   await page.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
   return page
 }
@@ -33,6 +33,18 @@ test('thirds: the media is the right two thirds, the text the left third', async
   expect((await frac(page, 'thirds', 'h2')).r).toBeLessThan(img.l)
   await page.close()
 })
+
+// A third of a narrower frame is too thin for text: the text takes the top third and the media the rest, full width.
+for (const frame of ['9:16', '1:1', '4:3'])
+  test(`thirds on a ${frame} frame: the text above, the media in the bottom two thirds`, async () => {
+    const page = await open('', frame)
+    const img = await frac(page, 'thirds', '[data-k-media] img')
+    const [title, text] = [await frac(page, 'thirds', 'h2'), await frac(page, 'thirds', 'p[data-step]')]
+    expect(img.t).toBeGreaterThanOrEqual(1 / 3 - 0.01)
+    expect(Math.max(title.b, text.b)).toBeLessThanOrEqual(img.t)
+    expect(img.r - img.l).toBeGreaterThan(0.6) // full width but the padding (contain: the picture keeps its shape)
+    await page.close()
+  })
 
 test('full-bleed: the picture covers the frame under a caption on a scrim of at least 0.6', async () => {
   const page = await open()

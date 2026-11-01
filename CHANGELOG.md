@@ -68,6 +68,7 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Fixed
 
+- `layout: thirds` on a `4:3`, `1:1` or `9:16` frame squeezed the text into a column under 300 px, or ran the title under the picture; it now stacks the text above the media.
 - A camera move with `duration: 0` (`ctx.camera.to` or `scene.ts` `camera`) is a cut; it never landed before, in play or seek.
 - The stage covers the window and crops under 1 px, so a near-16:9 window no longer shows a 1 px sliver of the page beside it.
 - `klappe dev` takes `--port <n>` and `--strictPort`; it served on 5173 whatever it was given.

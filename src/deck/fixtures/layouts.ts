@@ -1,6 +1,7 @@
 import { assembleDeck } from "../assemble";
 
 // One scene per named layout: thirds, full-bleed and big-number (a short number and a longer one).
+// ?frame=9:16 (or 1:1, 4:3) lays them out on that frame.
 const PNG =
   "data:image/svg+xml," +
   encodeURIComponent(
@@ -8,9 +9,10 @@ const PNG =
   );
 
 export default () => {
+  const frame = new URLSearchParams(location.search).get("frame");
   const r = assembleDeck(
     {
-      "deck.md": "---\ntitle: Fixture\n---\n",
+      "deck.md": `---\ntitle: Fixture\n${frame ? `frame: "${frame}"\n` : ""}---\n`,
       "sections/10-a/section.md": "# A\n",
       "sections/10-a/10-thirds/scene.md": '---\nlayout: thirds\n---\n## Thirds\n\n- ![A red dot](media/dot.png "A red dot")\n',
       "sections/10-a/20-full/scene.md": '---\nlayout: full-bleed\n---\n## Full\n\n- ![A red dot](media/dot.png "A red dot")\n',
