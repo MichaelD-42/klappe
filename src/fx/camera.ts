@@ -107,3 +107,18 @@ export function dollyZoom(ctx: Ctx, opts: DollyZoomOpts): StepAdder {
     tl.fromTo(pinned, { ...pin, scale: a }, { ...pin, scale: b, duration, ease: EASE, immediateRender: false }, "<");
   };
 }
+
+export interface EstablishOpts {
+  duration?: number; // seconds of the pull-out; default the theme's camera time
+}
+
+// The establishing shot: the camera pulls out until every scene on the canvas is in view, and stays there. The next
+// scene's flight starts from that view, so it pushes in. Use it on a scene's last step. Reduced motion: a cut.
+export function establish(ctx: Ctx, opts: EstablishOpts = {}): StepAdder {
+  return (tl) => {
+    const rs = Object.values(ctx.canvas.rects);
+    const [x, y] = [Math.min(...rs.map((r) => r.x)), Math.min(...rs.map((r) => r.y))];
+    const [r, b] = [Math.max(...rs.map((q) => q.x + q.w)), Math.max(...rs.map((q) => q.y + q.h))];
+    ctx.camera.to(tl, { x, y, w: r - x, h: b - y }, { duration: opts.duration });
+  };
+}

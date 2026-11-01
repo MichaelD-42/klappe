@@ -1,8 +1,8 @@
-# Camera: `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom`
+# Camera: `follow`, `impactShake`, `rackFocus`, `tilt`, `dollyZoom`, `establish`
 
-Camera moves inside a scene. `follow` closes in on an element that `travel` moves and keeps it in the middle of the screen until it arrives. `impactShake` jolts everything the camera shows once, for "this landed"; it is the camera-level twin of `shake`. `rackFocus` keeps one item sharp while the others blur. `tilt` leans a long camera flight into its direction. `dollyZoom` pulls the camera back while the target holds its size.
+Camera moves inside a scene. `follow` closes in on an element that `travel` moves and keeps it in the middle of the screen until it arrives. `impactShake` jolts everything the camera shows once, for "this landed"; it is the camera-level twin of `shake`. `rackFocus` keeps one item sharp while the others blur. `tilt` leans a long camera flight into its direction. `dollyZoom` pulls the camera back while the target holds its size. `establish` pulls out to the whole canvas before the next scene.
 
-Catalog: section `237-camera`: `follow` and `impactShake` at `#/camera/follow/2`, `rackFocus` at `#/camera/rack-focus/2`, `tilt` at `#/camera/tilt/2`, `dollyZoom` at `#/camera/dolly/2`.
+Catalog: section `237-camera`: `follow` and `impactShake` at `#/camera/follow/2`, `rackFocus` at `#/camera/rack-focus/2`, `tilt` at `#/camera/tilt/2`, `dollyZoom` at `#/camera/dolly/2`, `establish` at `#/camera/establish/2`.
 
 Only in `scene.ts`. Shortened from `decks/demo/sections/237-camera/10-follow/scene.ts` (the scene also draws the tiles in a first step):
 
@@ -116,6 +116,23 @@ Limits:
 - It assumes the camera is on the scene's frame when the first dolly starts, and that nothing else moves the camera between two dollies.
 - It scales the target and the canvas's whole pinned layer. A later scene on the same canvas sees the background still grown: go back with `amount: 1` before the scene ends.
 - A target with no size gives `dollyZoom: the target has no size to measure`.
+
+## `establish`
+
+`establish(ctx, opts)` returns a step adder: the establishing shot. The camera pulls out until every scene on the canvas is in view, and stays there. The next scene's flight starts from that view, so it pushes in: the room sees the whole map, then where the talk goes next. Catalog: `#/camera/establish/2`, then `#/camera/arrive/1`.
+
+```ts
+import { establish } from "klappe/fx";
+
+build: (ctx) => ({ out: establish(ctx) }),
+steps: [null, (tl, r) => r.out(tl)],
+```
+
+| Name       | Type   | Default         | Meaning                 |
+| ---------- | ------ | --------------- | ----------------------- |
+| `duration` | number | the camera time | seconds of the pull-out |
+
+Put it on a scene's last step: the camera stays out until a move, so a later step of the same scene would play out of view. It is an authored move on the timeline, so a deep link, a step back and the walk land on the same view; the `O` overview is not a step. On a canvas with one scene it pulls out to that scene, which is no move. With reduced motion it is a cut, and so is the push in.
 
 ## Pacing: ease, duration, whip
 

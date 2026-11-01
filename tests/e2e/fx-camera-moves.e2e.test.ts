@@ -142,6 +142,32 @@ test('a tilt paused mid-flight can be seeked with time() without hanging', async
   await page.close()
 })
 
+// The view that frames every scene rect on the canvas: its scale and offset, as camera.ts frame() computes them.
+const whole = (page: Page) =>
+  page.evaluate(() => {
+    const rs = Object.values(window.klappe.canvases[0].layout.rects) as { x: number; y: number; w: number; h: number }[]
+    const [x, y] = [Math.min(...rs.map((r) => r.x)), Math.min(...rs.map((r) => r.y))]
+    const [w, h] = [Math.max(...rs.map((r) => r.x + r.w)) - x, Math.max(...rs.map((r) => r.y + r.h)) - y]
+    const s = Math.min(1920 / w, 1080 / h)
+    return [s, -x * s + (1920 - w * s) / 2, -y * s + (1080 - h * s) / 2]
+  })
+const near = (a: number[], b: number[]) => a.every((v, i) => Math.abs(v - b[i]) < 0.5 + 1e-3 * Math.abs(b[i]))
+
+test('establish: the camera pulls out to the whole canvas, and the next scene pushes in from there', async () => {
+  const page = await open('#/a/wide/1')
+  await next(page)
+  await settle(page)
+  const out = (await state(page)).cam
+  expect(near(out, await whole(page))).toBe(true)
+  const deep = await open('#/a/wide/2')
+  expect(near((await state(deep)).cam, out)).toBe(true)
+  await next(page)
+  await settle(page)
+  expect(r2((await state(page)).cam[0])).toBe(1) // landed on the next scene's frame
+  await page.close()
+  await deep.close()
+})
+
 test('with reduced motion, nothing leans, the dolly cuts to its end and the focus still blurs', async () => {
   const page = await open('#/a/lean/1', '&reducedmotion=1', true)
   await next(page)

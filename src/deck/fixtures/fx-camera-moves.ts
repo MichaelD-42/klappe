@@ -1,5 +1,5 @@
 import { assembleDeck } from "../assemble";
-import { dollyZoom, rackFocus, tilt } from "klappe/fx";
+import { dollyZoom, establish, rackFocus, tilt } from "klappe/fx";
 import type { Ctx, SceneModule, StepAdder } from "../../types";
 
 // Three boxes in a row, 300 px wide, with data-box="0..2".
@@ -44,6 +44,12 @@ const vertigo: SceneModule = {
   steps: [hold, (tl, r: Record<string, StepAdder>) => r.out(tl), (tl, r) => r.back(tl)],
 };
 
+// The establishing shot: the camera pulls out to every scene on the canvas; the next scene's flight pushes in from there.
+const wide: SceneModule = {
+  build: (ctx) => ({ out: establish(ctx) }),
+  steps: [hold, (tl, r: Record<string, StepAdder>) => r.out(tl)],
+};
+
 export default () =>
   assembleDeck(
     {
@@ -52,6 +58,8 @@ export default () =>
       "sections/10-a/10-rack/scene.md": "## Rack\n\n- Sharp.\n- Box 0.\n- Box 2.\n- Clear.\n",
       "sections/10-a/20-dolly/scene.md": "## Dolly\n\n- Rest.\n- Out.\n- Back.\n",
       "sections/10-a/30-lean/scene.md": "## Lean\n\n- Rest.\n- There.\n- Back.\n",
+      "sections/10-a/40-wide/scene.md": "## Wide\n\n- Rest.\n- Out.\n",
+      "sections/10-a/50-after/scene.md": "## After\n\n- In.\n",
     },
-    { "sections/10-a/10-rack/scene.ts": rack, "sections/10-a/20-dolly/scene.ts": vertigo, "sections/10-a/30-lean/scene.ts": lean },
+    { "sections/10-a/40-wide/scene.ts": wide, "sections/10-a/10-rack/scene.ts": rack, "sections/10-a/20-dolly/scene.ts": vertigo, "sections/10-a/30-lean/scene.ts": lean },
   );
