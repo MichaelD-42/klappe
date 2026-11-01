@@ -8,6 +8,7 @@ import { t } from "../strings";
 import { cleanSvg } from "../fx/draw";
 import { aurora } from "./aurora";
 import { measure } from "../fx/measure";
+import { iconGlyph } from "../fx/icons";
 import { builtInFence, part as fxPart } from "./parts";
 import { BIG_NUMBER } from "../parse/scene";
 import { motion, safeRect, stage, withTokenRoot } from "../theme";
@@ -208,6 +209,9 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Comp
     }
     const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
+    // :icon-name: in scene.md: em-sized, so it scales with the text, in the accent colour; it shows with the step.
+    if (s.icon)
+      p.insertAdjacentHTML("afterbegin", `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.12em;margin-right:0.35em;color:var(--k-accent)">${iconGlyph(s.icon, (msg) => ctx.problem(`${scene.source} step ${n}: ${msg}`))}</svg>`);
     if (big && n === 1) {
       // The number is set at 100 px, measured, and scaled to the width inside the side padding; the height caps it.
       const num = BIG_NUMBER.exec(s.text)![0];

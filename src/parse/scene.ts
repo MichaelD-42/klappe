@@ -12,6 +12,8 @@ const GROUPS = /^\{([\d,\- |]+)\}$/;
 const AGENDA = /^(\d{1,2}:\d{2})\s*[–-]\s*(\d{1,2}:\d{2})\s+(.+?)\s*(←)?$/;
 const CHECK = /^\[([ xX!])\]\s+/;
 const AVATAR = /^!\[([^\]]+)\]\(\s*(\S+?)\s*\)$/;
+// A leading :icon-name: on a list item: a Lucide name or the deck's own icons/<name>.svg. A task-list item has its box instead.
+export const ICON = /^:([a-z][a-z0-9]*(?:-[a-z0-9]+)*):\s+/;
 const LAYOUTS = ["thirds", "full-bleed", "big-number"] as const;
 // The number a big-number scene sets large: the first word, with an optional sign or currency before it and any unit after.
 export const BIG_NUMBER = /^[+\-−]?[$€£¥]?\d\S*/;
@@ -19,7 +21,9 @@ const MARKS: Record<string, boolean> = { "✓": true, "✔": true, "✗": false,
 
 // The first image, video or chart link in a step. Its link shows as its label; other links stay as written.
 // An image after a video link is the video's offline fallback and does not show in the text.
-function withMedia(text: string): StepDoc {
+function withMedia(item: string, icons = true): StepDoc {
+  const icon = icons ? ICON.exec(item) : null;
+  const text = icon ? item.slice(icon[0].length) : item;
   let media: StepDoc["media"];
   const shown = text.replace(LINK, (all, bang: string, alt: string, href: string, title?: string) => {
     if (bang && media?.kind === "video" && !media.fallback) return (media.fallback = href), "";
@@ -28,7 +32,7 @@ function withMedia(text: string): StepDoc {
     media = { kind, href, alt, ...(title === undefined ? {} : { title }) };
     return alt;
   });
-  return { text: shown.trim(), notes: "", kind: "step", ...(media ? { media } : {}) };
+  return { text: shown.trim(), notes: "", kind: "step", ...(media ? { media } : {}), ...(icon ? { icon: icon[1] } : {}) };
 }
 
 export function parseScene(md: string, folder: string): { scene: SceneDoc; problems: string[] } {
@@ -87,14 +91,17 @@ export function parseScene(md: string, folder: string): { scene: SceneDoc; probl
       table.rows.forEach((r, row) => steps.push({ text: r.label, notes: "", kind: "step", part: { kind: "compare", row } }));
     } else if (b.type === "item" && agenda) {
       if (b !== items[0]) continue;
-      const all = rows.map((r) => ({ from: r![1], to: r![2], title: r![3], current: !!r![4] }));
+      const all = rows.map((r) => {
+        const icon = ICON.exec(r![3]);
+        return { from: r![1], to: r![2], title: icon ? r![3].slice(icon[0].length) : r![3], current: !!r![4], ...(icon ? { icon: icon[1] } : {}) };
+      });
       steps.push({ text: all.map((r) => r.title).join(", "), notes: "", kind: "step", part: { kind: "agenda", rows: all } });
     } else if (b.type === "item" && parts.length) {
       steps.push({ ...withMedia(b.text), part: parts.shift() });
       fenceAt = steps.length;
     } else if (b.type === "item") {
       const box = CHECK.exec(b.text);
-      if (box) steps.push({ ...withMedia(b.text.slice(box[0].length)), part: { kind: "check", done: /x/i.test(box[1]), ...(box[1] === "!" && { fail: true }) } });
+      if (box) steps.push({ ...withMedia(b.text.slice(box[0].length), false), part: { kind: "check", done: /x/i.test(box[1]), ...(box[1] === "!" && { fail: true }) } });
       else steps.push(withMedia(b.text));
     }
     else if (b.type === "h3" && b.text.endsWith("?")) {

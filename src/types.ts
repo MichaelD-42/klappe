@@ -38,6 +38,7 @@ export interface StepDoc {
   kind: StepKind;
   // A media link in the step's list item; the link shows as its label in text.
   media?: { kind: "image" | "video" | "chart"; href: string; alt: string; title?: string; fallback?: string };
+  icon?: string; // a leading :icon-name: on the list item, shown before its text
   part?: Part;
 }
 export interface SceneDoc {

@@ -47,6 +47,17 @@ describe("the scan plugin", () => {
       fs.rmSync(dir, { recursive: true });
     }
   });
+  it("bundles the :icon-name: a scene.md list item starts with, and no other name in Markdown", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-md-icons-"));
+    try {
+      fs.writeFileSync(path.join(dir, "scene.md"), "## T\n\n- :rocket: Ship\n- [x] :shield-check: Safe\n- :shield-check: Safe\n- 09:00–09:30 :coffee: Hi\n\nA :bug: in prose.\n");
+      const plugin = klappeScan({ klappeDir: process.cwd(), deckDir: dir });
+      const src = (plugin.load as (id: string) => string).call({}, "\0virtual:klappe-icons");
+      expect(src.match(/"\w+": i\d+/g)).toEqual(['"Coffee": i0', '"Rocket": i1', '"ShieldCheck": i2']);
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
   it("lists the effects deck code imports from klappe/fx, by name", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-fx-"));
     try {
