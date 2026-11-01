@@ -136,7 +136,7 @@ export function lineArt(ctx: Ctx, opts: LineArtOpts): LineArtHandle {
   else {
     const k = opts.w / vb[2];
     g.setAttribute("transform", `translate(${opts.x - vb[0] * k} ${opts.y - vb[1] * k}) scale(${k})`);
-    g.setAttribute("stroke-width", svg.getAttribute("stroke-width") ?? "4");
+    g.setAttribute("stroke-width", svg.getAttribute("stroke-width") ?? "4"); // shape: the drawing's own stroke, in its viewBox units
     cleanSvg(svg, false);
     g.append(...[...svg.childNodes].map((n) => document.importNode(n, true)));
   }

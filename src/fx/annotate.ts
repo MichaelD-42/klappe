@@ -221,7 +221,7 @@ export function annotate(ctx: Ctx, target: Element | Rect, opts: AnnotateOpts): 
         p.setAttribute("d", pts.map((q, i) => `${i ? "L" : "M"}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join(" "));
         // A highlight band is most of its line's height, with butt ends (a round cap would reach into the next
         // word) that a skew about its middle leans like a chisel marker's, a little more or less on each line.
-        const stroke = hl ? { stroke: `color-mix(in srgb, var(${color}) ${MARKER_MIX * 100}%, transparent)`, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: `var(${color})`, strokeWidth: "4", strokeLinecap: "round" };
+        const stroke = hl ? { stroke: `color-mix(in srgb, var(${color}) ${MARKER_MIX * 100}%, transparent)`, strokeWidth: String(Math.round(b.h * BAND)), strokeLinecap: "butt" } : { stroke: `var(${color})`, strokeWidth: "4", strokeLinecap: "round" }; // shape: marker and pen strokes are sized from the text they mark
         Object.assign(p.style, { fill: "none", strokeLinejoin: "round", ...stroke });
         if (hl) {
           const t = lean(seed + i);

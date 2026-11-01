@@ -198,7 +198,7 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     const el = document.createElementNS(SVG, "polyline");
     el.setAttribute("points", pts(c.pts));
     el.setAttribute("pathLength", "1");
-    el.setAttribute("stroke-width", String(c.r < 300 * k ? 3.4 : c.r < 700 * k ? 2.4 : 1.6));
+    el.setAttribute("stroke-width", String(c.r < 300 * k ? 3.4 : c.r < 700 * k ? 2.4 : 1.6)); // shape: crack lines scale with the shard size
     Object.assign(el.style, { fill: "none", stroke: "var(--k-fg)", strokeLinecap: "round", strokeLinejoin: "round", strokeDasharray: "1", strokeDashoffset: "1" });
     svg.append(el);
     return { el, r: c.r / k, len: c.pts.reduce((s, v, i) => (i ? s + dist(c.pts[i - 1], v) : 0), 0) };
@@ -243,7 +243,7 @@ function build(host: HTMLElement, box: Rect, hide: HTMLElement[], o: Core, fill 
     abs(edge as unknown as HTMLElement, { left: `${-bx}px`, top: `${-by}px`, overflow: "visible" });
     const poly = document.createElementNS(SVG, "polygon");
     poly.setAttribute("points", pts(P));
-    Object.assign(poly.style, { fill: "none", stroke: "color-mix(in srgb, var(--k-fg) 55%, transparent)", strokeWidth: "1.5" });
+    Object.assign(poly.style, { fill: "none", stroke: "color-mix(in srgb, var(--k-fg) 55%, transparent)", strokeWidth: "1.5" }); // shape: crack lines scale with the shard size
     edge.append(poly);
     wrap.append(inner, edge);
     field.append(wrap);

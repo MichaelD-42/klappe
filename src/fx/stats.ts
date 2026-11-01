@@ -139,7 +139,7 @@ export function kpi(ctx: Ctx, opts: KpiOpts): StatHandle {
     // 12 units in from every edge, so the end dot (r 8) is never clipped.
     const x = d3.scaleLinear().domain([0, opts.spark.length - 1]).range([12, sw - 12]);
     const y = d3.scaleLinear().domain(d3.extent(opts.spark) as [number, number]).range([sh - 12, 12]);
-    line = svgEl(svg, "path", { d: d3.line<number>((_, i) => x(i), (v) => y(v))(opts.spark) ?? "", fill: "none", "stroke-width": 4, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
+    line = svgEl(svg, "path", { d: d3.line<number>((_, i) => x(i), (v) => y(v))(opts.spark) ?? "", fill: "none", "stroke-width": 4, "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 }); // shape: rings, dials and sparklines follow their own thickness
     Object.assign(line.style, { stroke: "var(--k-line)", strokeDasharray: "1 2" });
     const last = opts.spark.length - 1;
     dot = svgEl(svg, "circle", { cx: x(last), cy: y(opts.spark[last]), r: 8 });
@@ -189,7 +189,7 @@ export function waffle(ctx: Ctx, opts: WaffleOpts): StatHandle {
       r.style.fill = tone;
       return r;
     }
-    const g = svgEl(svg, "g", { transform: `translate(${x} ${y}) scale(${cell / 24})`, fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" });
+    const g = svgEl(svg, "g", { transform: `translate(${x} ${y}) scale(${cell / 24})`, fill: "none", stroke: "currentColor", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" }); // shape: a pictogram glyph's stroke, on the icon's 24 grid
     g.innerHTML = glyph;
     g.style.color = tone;
     return g;
@@ -238,7 +238,7 @@ export function progress(ctx: Ctx, opts: ProgressOpts): StatHandle {
   const thick = s * 0.1;
   const box = el(root, "div", { position: "relative", width: `${s}px`, height: `${s}px` });
   const svg = svgEl(box, "svg", { width: s, height: s, viewBox: `0 0 ${s} ${s}` });
-  const ring = { cx: s / 2, cy: s / 2, r: s / 2 - thick / 2, fill: "none", "stroke-width": thick };
+  const ring = { cx: s / 2, cy: s / 2, r: s / 2 - thick / 2, fill: "none", "stroke-width": thick }; // shape: rings, dials and sparklines follow their own thickness
   svgEl(svg, "circle", ring).style.stroke = "var(--k-line)";
   const frac = (v: number) => Math.max(0, Math.min(1, v / opts.target));
   const tone = (v: number) => (frac(v) >= 1 ? "var(--k-ok)" : "var(--k-accent)");
@@ -306,7 +306,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const [cx, cy, r] = [s / 2, s / 2, s / 2 - thick / 2];
   const root = block(ctx, "gauge", opts.x, opts.y, s, opts.source);
   const svg = svgEl(root, "svg", { width: s, height: s / 2 + thick, viewBox: `0 0 ${s} ${s / 2 + thick}` });
-  const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 };
+  const dial = { d: `M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}`, fill: "none", "stroke-width": thick, pathLength: 1 }; // shape: rings, dials and sparklines follow their own thickness
   svgEl(svg, "path", dial).style.stroke = "var(--k-line)";
   // Bands: a thin ring inside the track, each zone from where the one before ended, in its tone toned down
   // toward --k-bg so the accent arc and needle stay the strongest marks.
@@ -318,7 +318,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
       continue;
     }
     const ri = r - thick * 0.85;
-    const band = svgEl(svg, "path", { d: `M${cx - ri} ${cy}A${ri} ${ri} 0 0 1 ${cx + ri} ${cy}`, fill: "none", "stroke-width": thick * 0.35, pathLength: 1 });
+    const band = svgEl(svg, "path", { d: `M${cx - ri} ${cy}A${ri} ${ri} 0 0 1 ${cx + ri} ${cy}`, fill: "none", "stroke-width": thick * 0.35, pathLength: 1 }); // shape: rings, dials and sparklines follow their own thickness
     band.dataset.kGaugeBand = b.tone;
     const w = Math.round((f - edge) * 1e6) / 1e6;
     Object.assign(band.style, { stroke: `color-mix(in srgb, var(--k-${b.tone}) 60%, var(--k-bg))`, strokeDasharray: `${w} 2`, strokeDashoffset: `${-edge}` });
@@ -327,7 +327,7 @@ export function gauge(ctx: Ctx, opts: GaugeOpts): GaugeHandle {
   const arc = svgEl(svg, "path", dial);
   // Dash 1, gap 1: an offset of 1 - f shows the first f of the dial, so a swing is one offset tween.
   Object.assign(arc.style, { stroke: "var(--k-accent)", strokeDasharray: "1 1" });
-  const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" });
+  const needle = svgEl(svg, "line", { x1: cx, y1: cy, x2: cx, y2: cy - r, "stroke-width": thick * 0.3, "stroke-linecap": "round" }); // shape: rings, dials and sparklines follow their own thickness
   needle.style.stroke = "var(--k-accent)";
   svgEl(svg, "circle", { cx, cy, r: thick * 0.5 }).style.fill = "var(--k-accent)";
   const frac = (v: number) => (gaugeAngle(v, min, max) + 90) / 180;
@@ -419,7 +419,7 @@ export function likert(ctx: Ctx, opts: LikertOpts): LikertHandle {
   const fill = likertFill(n);
   names.forEach((name, i) => {
     const item = el(legend, "span", { display: "flex", alignItems: "center", gap: "10px" });
-    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: fill[i] });
+    el(item, "span", { width: "20px", height: "20px", borderRadius: "4px", background: fill[i] }); // shape: rings, dials and sparklines follow their own thickness
     el(item, "span", {}, name);
   });
   const rows = opts.rows.map((row, i) => {

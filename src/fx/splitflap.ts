@@ -54,7 +54,7 @@ export function splitFlap(ctx: Ctx, opts: SplitFlapOpts): SplitFlapHandle {
     const cell = root.appendChild(document.createElement("div"));
     Object.assign(cell.style, {
       position: "relative", width: `${size * 1.05}px`, height: `${size * 1.3}px`, display: "flex", alignItems: "center", justifyContent: "center",
-      background: "var(--k-surface)", border: "2px solid var(--k-line)", borderRadius: `${size * 0.08}px`, overflow: "hidden", // 1.05 em holds the widest advance (W, M) of every theme font; clip the rest
+      background: "var(--k-surface)", border: "2px solid var(--k-line)", borderRadius: `${size * 0.08}px`, overflow: "hidden", // 1.05 em holds the widest advance (W, M) of every theme font; clip the rest // shape: a tile radius in proportion to the tile size
       font: `700 ${size}px/1 var(--k-font)`, color: "var(--k-fg)",
     });
     const g = cell.appendChild(document.createElement("span"));

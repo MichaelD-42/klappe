@@ -38,7 +38,7 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
   const el = ctx.html.appendChild(document.createElement("div"));
   el.dataset.kPointer = "";
   Object.assign(el.style, { position: "absolute", left: "0", top: "0", width: "0", height: "0", zIndex: "7", pointerEvents: "none" });
-  el.innerHTML = `<svg width="${42 * SCALE}" height="${42 * SCALE}" viewBox="-2 -2 42 42" style="overflow:visible;display:block"><path d="${ARROW}" style="fill:var(--k-fg);stroke:var(--k-bg);stroke-width:2.5;stroke-linejoin:round"/></svg>`;
+  el.innerHTML = `<svg width="${42 * SCALE}" height="${42 * SCALE}" viewBox="-2 -2 42 42" style="overflow:visible;display:block"><path d="${ARROW}" style="fill:var(--k-fg);stroke:var(--k-bg);stroke-width:2.5;stroke-linejoin:round"/></svg>`; // shape: the cursor drawing and its click chip
   gsap.set(el, { x: opts.at.x, y: opts.at.y, scale: 1, transformOrigin: "0 0", autoAlpha: 0 });
   let pos = opts.at; // where the pointer is at the end of the steps added so far
   let focused: HTMLElement | undefined; // the field typed into last: it loses its accent border when the next one gets it
@@ -113,7 +113,7 @@ export function pointer(ctx: Ctx, opts: PointerOpts): PointerHandle {
         box.dataset.kText = "";
         Object.assign(box.style, {
           position: "absolute", left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px`, boxSizing: "border-box",
-          padding: `0 ${Math.round(r.h * 0.3)}px`, border: "3px solid var(--k-accent)", borderRadius: "8px", background: "var(--k-surface)",
+          padding: `0 ${Math.round(r.h * 0.3)}px`, border: "3px solid var(--k-accent)", borderRadius: "8px", background: "var(--k-surface)", // shape: the cursor drawing and its click chip
           color: "var(--k-fg)", font: `500 ${size}px/${r.h - 6}px var(--k-font)`, whiteSpace: "pre", overflow: "hidden", zIndex: "5",
         });
         if (size > r.h - 6) ctx.problem(`pointer: field ${Math.round(r.h)} px high is too low for ${FLOOR} px text`);

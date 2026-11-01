@@ -34,7 +34,7 @@ export function spotlight(ctx: Ctx, opts: SpotlightOpts = {}): SpotlightHandle {
     const hole = root.appendChild(document.createElement("div"));
     hole.setAttribute("data-k-spotlight-hole", "");
     Object.assign(hole.style, {
-      position: "absolute", left: "0", top: "0", boxSizing: "border-box", borderRadius: shape === "circle" ? "50%" : `${RADIUS}px`,
+      position: "absolute", left: "0", top: "0", boxSizing: "border-box", borderRadius: shape === "circle" ? "50%" : `${RADIUS}px`, // shape: the hole is sized to the target plus padding
       border: "3px solid var(--k-accent)",
     });
     gsap.set(hole, { autoAlpha: 0 });

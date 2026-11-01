@@ -86,7 +86,7 @@ export function timer(ctx: Ctx, opts: TimerOpts): TimerHandle {
     const sw = style === "donut" ? size * 0.14 : Math.max(6, size * 0.03);
     const c = size / 2;
     const svg = svgEl(box, "svg", { width: size, height: size, viewBox: `0 0 ${size} ${size}` });
-    const circle = { cx: c, cy: c, r: c - sw / 2, fill: "none", "stroke-width": sw };
+    const circle = { cx: c, cy: c, r: c - sw / 2, fill: "none", "stroke-width": sw }; // shape: the ring width follows the timer size
     svgEl(svg, "circle", circle).style.stroke = "var(--k-line)";
     // pathLength 1: the dash length is the fraction left; starts at 12 o'clock and empties clockwise from there.
     fill = svgEl(svg, "circle", { ...circle, pathLength: 1, transform: `rotate(-90 ${c} ${c})` });

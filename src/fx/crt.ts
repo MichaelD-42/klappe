@@ -81,7 +81,7 @@ export const cursorCentre = (row: number, size: number) => ({ x: TERM.x + 0.3 * 
 // Colours come from tokens; the raw rgba and #fff values are light and shadow layers, not theme colours.
 const CSS = `
 .k-retro { position: absolute; inset: 0; background: color-mix(in srgb, var(--k-bg) 40%, var(--k-blackout)); --k-crt: var(--k-phosphor); }
-.k-retro .k-crt-screen { position: absolute; inset: 40px; border-radius: 60px / 50px; overflow: hidden;
+.k-retro .k-crt-screen { position: absolute; inset: 40px; border-radius: 60px / 50px; overflow: hidden; /* shape: the bezel of a fixed CRT screen */
   background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--k-crt) 11%, var(--k-blackout)) 0%, color-mix(in srgb, var(--k-crt) 5%, var(--k-blackout)) 60%, var(--k-blackout) 100%); }
 .k-retro .k-crt-term { position: absolute; left: 170px; top: 140px; right: 170px; font: 500 46px/1.5 "Cascadia Mono", Consolas, "Courier New", monospace;
   color: var(--k-crt); white-space: pre;
@@ -96,7 +96,7 @@ const CSS = `
   box-shadow: inset 0 0 120px 30px rgba(0,0,0,.85); }
 .k-retro .k-crt-flicker { position: absolute; inset: 0; pointer-events: none; background: var(--k-blackout); opacity: 0;
   animation: k-crt-flicker 3.2s infinite steps(1); }
-.k-retro .k-crt-beam { position: absolute; inset: 40px; border-radius: 60px / 50px; background: color-mix(in srgb, var(--k-crt) 35%, #fff);
+.k-retro .k-crt-beam { position: absolute; inset: 40px; border-radius: 60px / 50px; background: color-mix(in srgb, var(--k-crt) 35%, #fff); /* shape: the bezel of a fixed CRT screen */
   box-shadow: 0 0 60px 20px color-mix(in srgb, var(--k-crt) 70%, transparent); }
 .k-retro.k-crt-soft .k-crt-beam { background: color-mix(in srgb, var(--k-crt) 70%, #fff); }
 @keyframes k-crt-blink { 50% { opacity: 0; } }

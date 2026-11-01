@@ -208,7 +208,7 @@ export function image(ctx: Ctx, opts: ImageOpts): ImageHandle {
     c.setAttribute("data-k-bleed", ""); // in the picture's corner on purpose, past the safe area on a full frame
     c.textContent = opts.credit;
     Object.assign(c.style, {
-      position: "absolute", right: "12px", bottom: "12px", maxWidth: "calc(100% - 24px)", padding: "2px 10px", borderRadius: "4px",
+      position: "absolute", right: "12px", bottom: "12px", maxWidth: "calc(100% - 24px)", padding: "2px 10px", borderRadius: "4px", // shape: a small caption chip on a picture
       background: "color-mix(in srgb, var(--k-bg) 75%, transparent)", color: "var(--k-fg)", font: `500 ${typeSize("label", 20)}px/1.3 var(--k-font)`,
       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     });
