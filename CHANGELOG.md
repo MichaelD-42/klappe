@@ -2,7 +2,7 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes once the backlog (`docs/backlog.md`) is done, the deck template (M4) with it.
 
-## 0.7.0 (unreleased)
+## 0.7.0 (2026-11-05)
 
 ### Added
 
