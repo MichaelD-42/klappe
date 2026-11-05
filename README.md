@@ -23,7 +23,7 @@ Every step is a label on a GSAP timeline, and an effect only adds tweens to it. 
 
 A deck is a folder of Markdown and TypeScript in git, so it diffs, reviews and merges like code. It is also easy for an AI agent to write: klappe ships a Claude Code skill and builder and reviewer agents that know the deck format and its rules.
 
-It is not a WYSIWYG editor, and it does not export PowerPoint files. It does export a PDF, one page per step.
+It is not a WYSIWYG editor, and it does not export PowerPoint files. It does export a PDF, one page per scene with its links clickable, and an MP4 video.
 
 ## What you write
 
@@ -64,13 +64,13 @@ export default scene;
 
 ## What's in the box
 
-- **Markdown that animates:** bullets that step in, code walkthroughs, console sessions that type themselves, checklists, agendas, shout-outs (`### Question?`), pictures, video and charts from a CSV link.
+- **Markdown that animates:** bullets that step in, code walkthroughs, console sessions that type themselves, checklists, agendas, comparison tables, icons (`:rocket:`), shout-outs (`### Question?`), links, pictures, video and charts from a CSV link.
 - **Charts and numbers:** bar, stacked, line, waterfall, timeline, donut, slope and bar race; KPI tiles with a sparkline, waffle, progress ring. Each reads a `data/` file and puts its source in the speaker notes.
 - **Diagrams:** flow with travelling packets, a dependency graph laid out for you, sequence, swimlanes, decision tree, git history, mind map, fishbone, layer stack, a month calendar, world map with arcs, line art that draws itself, Lucide icons.
 - **Pointing:** callout, numbered hotspots on a picture, spotlight, focus, a mouse pointer that clicks, types, drags and scrolls, hand-drawn marks (ring, underline, frame, strike, arrow).
 - **Effects:** shatter, CRT, zoom and blackout transitions; shout-out, swarm, morph, counters, a decoding line, before/after wipe, people figures, a QR code.
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
-- **Presenting:** speaker view, overview, section list, autoplay, exercise timers, deep links, and reduced motion respected (with a `?reducedmotion=0` override).
+- **Presenting:** speaker view with rehearsal timing, overview, section list, autoplay, exercise timers, laser and pen, deep links, shorter cuts of one deck and an appendix for Q&A, opt-in sound, and reduced motion respected (with a `?reducedmotion=0` override).
 - **Checks:** a missing picture or data file shows a placeholder on stage and a line in `media/TODO.md`; the self-test and a design lint run in CI.
 - **Themes:** seven built in (`calm`, `bold`, `sorbet`, `lavender`, `daylight`, `forest`, `ink`; dark, light and pastel), built from `--k-*` tokens with bundled fonts; a deck can bring its own.
 
@@ -89,11 +89,11 @@ npx playwright install chromium                    # once per machine, for the t
 npm run dev                                        # http://localhost:5173
 ```
 
-`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/` with relative asset paths, so it works from any folder of a web server (not from `file://`, where browsers block its modules); `npm run pdf` writes `dist/my-talk.pdf`, one page per step at 1920x1080, each step as it ends (`-- --handout` writes `dist/my-talk-handout.pdf` instead: one A4 page per scene, its last step with the speaker notes under it, to send after the talk); `npm test` runs the checks, and `npm test -- --only <section>[/<scene>]` walks only those scenes, in seconds, and prints their look warnings (`--bail` stops at the first failing step). `npm run shot -- <section>[/<scene>[/<step>]]` writes PNGs of those steps at 1920x1080 and 1366x768 to `dist/shots/my-talk/` (`--last` for each scene's last step only, `--sheet` for a contact sheet per section, `--theme <name>`, `--size 1366x768` for one size, `--at <ms>` for a step that far into its play, `--url <dev server>` to reuse a running `npm run dev`); with no target it shoots every step. `npm run video` writes `dist/my-talk.mp4`, the deck played in full motion with each step held for its `auto` time or 3 s (`-- --out <file.mp4>`, `--fps`, `--hold <s>`, `--size <w>x<h>`, `--only <section>[/<scene>]` for a clip of those scenes); it needs `ffmpeg` on `PATH`. `npm run outline` prints the deck as text, every step with its note and deep-link ids, and a timing estimate against `duration` in `deck.md`. `outline`, `pdf`, `video` and `test` take `-- --cut <name>` for a cut from `deck.md` `cuts` (see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)). With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`npm run build -- --deck my-talk` writes a static site to `dist/my-talk/` with relative asset paths, so it works from any folder of a web server (not from `file://`, where browsers block its modules); `npm run pdf` writes `dist/my-talk.pdf`, one page per scene at its last step, with links, web and mail addresses, QR codes of links and online videos clickable, and a YouTube or Vimeo player printed as its still (`-- --width <px>` sets the pictures' pixels across, 1920 by default, and `--quality <1-100>` their JPEG quality, 90 by default: `--width 1280 --quality 75` makes a file about a third the size; `-- --handout` writes `dist/my-talk-handout.pdf` instead: one A4 page per scene, its last step with the speaker notes under it, to send after the talk); `npm test` runs the checks, and `npm test -- --only <section>[/<scene>]` walks only those scenes, in seconds, and prints their look warnings (`--bail` stops at the first failing step). `npm run shot -- <section>[/<scene>[/<step>]]` writes PNGs of those steps at 1920x1080 and 1366x768 to `dist/shots/my-talk/` (`--last` for each scene's last step only, `--sheet` for a contact sheet per section, `--theme <name>`, `--size 1366x768` for one size, `--at <ms>` for a step that far into its play, `--url <dev server>` to reuse a running `npm run dev`); with no target it shoots every step. `npm run video` writes `dist/my-talk.mp4`, the deck played in full motion with each step held for its `auto` time or 3 s (`-- --out <file.mp4>`, `--fps`, `--hold <s>`, `--size <w>x<h>`, `--only <section>[/<scene>]` for a clip of those scenes); it needs `ffmpeg` on `PATH`. `npm run outline` prints the deck as text, every step with its note and deep-link ids, and a timing estimate against `duration` in `deck.md`. `outline`, `pdf`, `video` and `test` take `-- --cut <name>` for a cut from `deck.md` `cuts` (see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)). With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 
-Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step in large type, its notes, the next step, a clock and where you are (`12 / 40`).
+Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step in large type, its notes, the next step, a clock and where you are (`12 / 40`). `P` there starts a rehearsal that times each scene.
 
 | Key | Action |
 | --- | --- |
@@ -106,6 +106,7 @@ Open the deck full screen (F11) and press `N` for the speaker view in a second w
 | `A` | autoplay; any step key stops it |
 | `T` | start or pause the scene's timer |
 | `L` / `D` | laser dot / draw on the stage; again to turn off. Each step clears it |
+| `Q` | to the appendix, and again back to where you were |
 | `M` | mute or unmute the deck's sound |
 | `Esc` | ink off, else close a panel |
 

@@ -20,7 +20,7 @@ const usage =
   '       klappe build|outline|init [--deck <id>]\n' +
   '       klappe outline --story   one line per scene: its link and story point\n' +
   '       klappe outline|pdf|video|test --cut <name>   a deck.md cut instead of the whole deck\n' +
-  '       klappe pdf [--deck <id>] [--handout]\n' +
+  '       klappe pdf [--deck <id>] [--handout] [--width <px>] [--quality <1-100>]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
@@ -234,6 +234,14 @@ if (cmd === 'build') {
   await build({ configFile })
 } else if (cmd === 'pdf') {
   // Deck problems do not stop the export, as with build; page errors fail it, as the pages may be wrong.
+  // --width: the pictures' pixels across (default 1920, 960 for a small file, 3840 for print); --quality: JPEG, default 90.
+  const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
+  const width = Number(arg('--width') ?? 1920)
+  const quality = Number(arg('--quality') ?? 90)
+  if (!(Number.isInteger(width) && width >= 320 && width <= 7680) || !(Number.isInteger(quality) && quality >= 1 && quality <= 100)) {
+    console.error('--width needs whole pixels from 320 to 7680, --quality a whole number from 1 to 100')
+    process.exit(1)
+  }
   const { exportPdf } = await import('./pdf.mjs')
   const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server.listen()
@@ -241,7 +249,7 @@ if (cmd === 'build') {
   const handout = rest.includes('--handout')
   const out = path.join(process.cwd(), 'dist', `${id}${cut ? `-${cut}` : ''}${handout ? '-handout' : ''}.pdf`)
   try {
-    const r = await exportPdf(deckUrl(server), out, { handout })
+    const r = await exportPdf(deckUrl(server), out, { handout, width, quality })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
     for (const e of r.errors) console.error(`page error: ${e}`)
     console.log(`Wrote ${out}: ${r.pages} pages.`)

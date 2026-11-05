@@ -1,9 +1,7 @@
 import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
 import { chromium, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
-import { exportPdf } from '../../bin/pdf.mjs'
+import { openDeck, showStep } from '../../bin/pdf.mjs'
 import { runSelftest, settle } from './driver'
 
 let browser: Awaited<ReturnType<typeof chromium.launch>>
@@ -66,51 +64,30 @@ test('with reduced motion the faces crossfade and the card never turns', async (
   }
 }, 60_000)
 
-// The JPEG each PDF page shows. Skia writes one image per distinct screenshot and lets identical pages
-// share it, so each page is followed from /Pages /Kids to its /XObject.
-function pageImages(pdf: Buffer): Buffer[] {
-  const s = pdf.toString('latin1')
-  const obj = (n: string) => {
-    const m = new RegExp(String.raw`(?:^|\s)${n} 0 obj\s*`).exec(s)!
-    return { at: m.index + m[0].length, body: s.slice(m.index + m[0].length, s.indexOf('endobj', m.index)) }
+// The print path (openDeck and showStep, as klappe pdf and shot use them) shows the side each step leaves.
+test('a printed step shows the side it leaves: front, back, front', async () => {
+  const page = await openDeck(browser, `${inject('BASE_URL')}/?fixture=fx-flipcard`)
+  // The mean colour of the 40x40 square at the stage centre, where the fixture puts an --k-accent block on the back.
+  const centre = async () =>
+    page.evaluate(async (src) => {
+      const img = new Image()
+      img.src = src
+      await img.decode()
+      const c = new OffscreenCanvas(img.width, img.height).getContext('2d')!
+      c.drawImage(img, 0, 0)
+      const d = c.getImageData(img.width / 2 - 20, img.height / 2 - 20, 40, 40).data
+      const sum = [0, 0, 0]
+      for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) sum[k] += d[i + k]
+      return sum.map((v) => v / (d.length / 4))
+    }, `data:image/jpeg;base64,${(await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64')}`)
+  // calm's --k-accent: fixtures keep the klappe look.
+  const hex = /--k-accent:\s*#([0-9a-f]{6})/i.exec(fs.readFileSync(new URL('../../src/themes/calm.css', import.meta.url), 'utf8'))![1]
+  const accent = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  const shows = []
+  for (const i of [0, 1, 2]) {
+    await showStep(page, i)
+    shows.push((await centre()).every((v, k) => Math.abs(v - accent[k]) < 12))
   }
-  const kids = [.../\/Kids\s*\[([^\]]*)\]/.exec(s)![1].matchAll(/(\d+) 0 R/g)].map((m) => m[1])
-  return kids.map((k) => {
-    const img = obj(/\/XObject\s*<<\s*\/\w+\s+(\d+) 0 R/.exec(obj(k).body)![1])
-    const len = Number(/\/Length (\d+)/.exec(img.body)![1])
-    const start = s.indexOf('stream', img.at) + 'stream'.length
-    const from = start + (s[start] === '\r' ? 2 : 1)
-    return pdf.subarray(from, from + len)
-  })
-}
-
-test('the PDF export shows the side each step leaves: front, back, front', async () => {
-  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'klappe-pdf-')), 'deck.pdf')
-  try {
-    const r = await exportPdf(`${inject('BASE_URL')}/?fixture=fx-flipcard`, out)
-    expect(r).toEqual({ pages: 3, problems: [], errors: [] })
-    const page = await browser.newPage()
-    // The mean colour of the 40x40 square at the stage centre, where the fixture puts an --k-accent block on the back.
-    const centre = (jpeg: Buffer) =>
-      page.evaluate(async (src) => {
-        const img = new Image()
-        img.src = src
-        await img.decode()
-        const c = new OffscreenCanvas(img.width, img.height).getContext('2d')!
-        c.drawImage(img, 0, 0)
-        const d = c.getImageData(img.width / 2 - 20, img.height / 2 - 20, 40, 40).data
-        const sum = [0, 0, 0]
-        for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) sum[k] += d[i + k]
-        return sum.map((v) => v / (d.length / 4))
-      }, `data:image/jpeg;base64,${jpeg.toString('base64')}`)
-    // calm's --k-accent: fixtures keep the klappe look.
-    const hex = /--k-accent:\s*#([0-9a-f]{6})/i.exec(fs.readFileSync(new URL('../../src/themes/calm.css', import.meta.url), 'utf8'))![1]
-    const accent = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
-    const isAccent = async (jpeg: Buffer) => (await centre(jpeg)).every((v, k) => Math.abs(v - accent[k]) < 12)
-    const shows = await Promise.all(pageImages(fs.readFileSync(out)).map(isAccent))
-    expect(shows).toEqual([false, true, false])
-    await page.close()
-  } finally {
-    fs.rmSync(path.dirname(out), { recursive: true })
-  }
+  expect(shows).toEqual([false, true, false])
+  await page.close()
 }, 120_000)

@@ -111,6 +111,18 @@ test('--cut picks a deck.md cut, and an unknown one stops the command', () => {
   expect(bad.stderr).toContain('--cut needs a cut from deck.md cuts: short');
 }, 30_000);
 
+// pdf --width and --quality: a value out of range stops before a server starts.
+test('pdf refuses a width or quality out of range', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  mkdirSync(join(cwd, 'decks/x'), { recursive: true });
+  writeFileSync(join(cwd, 'decks/x/deck.md'), '---\ntitle: T\n---\n');
+  for (const args of [['--quality', '0'], ['--quality', '101'], ['--width', '100'], ['--width', 'big']]) {
+    const r = cli(cwd, 'pdf', '--deck', 'x', ...args);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('--width needs whole pixels from 320 to 7680, --quality a whole number from 1 to 100');
+  }
+}, 30_000);
+
 // shot --help rendered every scene of the deck (about 9 min): --help or -h on any command prints the usage and stops.
 test('--help after a command prints the usage, before it picks a deck or starts anything', () => {
   for (const args of [['shot', '--help'], ['test', '-h'], ['--help']]) {

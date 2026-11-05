@@ -298,6 +298,7 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     textOverflow: "ellipsis",
   });
   if (online) b.dataset.kNote = `${t("video", ctx.deck.lang)} "${title}" ${t("needsInternet", ctx.deck.lang)}`;
+  if (online) b.dataset.kHref = href; // klappe pdf makes the box a link to the video
   // Read here, not at module load: unit tests import this file in node. No load timeout for embeds:
   // a cross-origin iframe fires load for the browser's own error page too, so "not loaded" cannot be seen.
   const offline = online && (!navigator.onLine || new URLSearchParams(location.search).get("offline") === "1");
@@ -334,6 +335,7 @@ export function video(ctx: Ctx, opts: VideoOpts): VideoHandle {
     el.allow = autoplay ? "autoplay; fullscreen; picture-in-picture" : "fullscreen; picture-in-picture";
     el.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation");
     el.setAttribute("data-k-video", "embed");
+    if (still !== undefined) el.dataset.kPoster = still; // klappe pdf prints it in the player's place
     // The fallback still (or an empty box) holds the player's place; the player replaces it, so the caption
     // keeps its index and the self-test's element paths match before and after.
     const poster = document.createElement(still !== undefined ? "img" : "div");
