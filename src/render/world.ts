@@ -50,6 +50,22 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
   return e;
 }
 
+// A step's text with each Markdown link to the web or a mail address as a link showing its label: it opens in a new
+// tab, and a click on it does not step. Any other link (javascript:, a file) stays as written.
+const LINK = /\[([^\]]*)\]\(\s*((?:https?:\/\/|mailto:)[^\s)]+)\s*\)/g;
+function linked(e: HTMLElement, text: string) {
+  let at = 0;
+  for (const m of text.matchAll(LINK)) {
+    const a = el("a", "", m[1]);
+    Object.assign(a, { href: m[2], target: "_blank", rel: "noopener" });
+    a.setAttribute("data-no-advance", "");
+    e.append(text.slice(at, m.index), a);
+    at = m.index + m[0].length;
+  }
+  e.append(text.slice(at));
+  return e;
+}
+
 // A stub in src/fx throws this until its effect is built; the engine then falls back.
 const notBuilt = (e: unknown) => e instanceof Error && e.message.endsWith(": not built yet");
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -214,7 +230,7 @@ function renderDefault(scene: Scene, ctx: Ctx, meta: DeckMeta, components?: Comp
       const a = part(n, "agenda", lists, (c) => fxPart("agenda")(c, { rows: pt.rows, ...lists, ...(current ? { current } : {}) }));
       return fx.set(n, (a.h?.show ?? a.miss)!);
     }
-    const p = add(col, el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : "", big && n === 1 ? "" : s.text));
+    const p = add(col, linked(el("p", s.kind === "shout-enter" ? "k-shout" : big && n > 1 ? "k-note" : ""), big && n === 1 ? "" : s.text));
     p.dataset.step = String(n);
     // :icon-name: in scene.md: em-sized, so it scales with the text, in the accent colour; it shows with the step.
     if (s.icon)

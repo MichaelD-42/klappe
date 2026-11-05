@@ -64,6 +64,8 @@ klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck f
 
 ### Changed
 
+- A Markdown link to the web or a mail address in a `scene.md` step is a link on stage, showing its label in the accent colour; a click opens it in a new tab and does not step (was: the raw `[label](url)` text).
+- `klappe pdf` prints one page per scene, at its last step, instead of one per step (the demo: 196 pages, was 581). Links in it are clickable: an `<a href>`, a web or mail address in the text (`https://…`, `www.…`, `name@host`), a QR code of a link, and an online video's box. A YouTube or Vimeo player prints as the video's offline still, or else the host's thumbnail, instead of a black box. `--width <px>` (320 to 7680, default 1920) and `--quality <1-100>` (default 90) set the pictures' pixels and JPEG quality; the page keeps its size. They apply to `--handout` too.
 - A plain text step in `scene.md` replaces the one before: it gets the stage to itself, set large, and fades out when the next one shows (was: each item faded in and stayed, a bullet build-up). `stack: true` in the scene's frontmatter keeps the old build-up. A scene with media, code, a checklist, a table or an agenda keeps its layout.
 - A Markdown shout-out (`### Question?` and a paragraph) is two steps, the question and then the answer; the fade step between them is gone. A `scene.ts` that lists three step functions for one now reports a step count problem: drop the `fade` step, or keep it in `scene.ts` with a three-step `scene.md`.
 - `likert` takes a `scale` of 4 to 7 point names, and each row then one count per point; a scale of another length reports `likert: scale needs 4 to 7 point names` (was: needs 5).

@@ -504,3 +504,10 @@ Source: an analysis of the session logs of the training deck build: full test ru
 
 - **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
   - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.
+
+## 2026-11-05 (pdf export)
+
+- **`klappe pdf` prints a scene's last step, not every step.**
+  - Why: the PDF is read after the talk or sent ahead, where a build-up is a stack of near-duplicate pages (the demo: 581 pages and 46 MB, now 196 and 17 MB). The cost: a scene whose steps replace each other (plain text steps, a `say` scene) prints only its last one. Such a scene's message belongs in its last step or its notes; `--handout` prints the notes.
+  - Links come from the rendered page, not the source: whatever is visible and is an `<a href>`, carries `data-k-href` (a QR code of a link, an online video's box) or reads as a web or mail address. A bare `example.com/path` is not linked: telling it from a file name like `deck.md` is guesswork.
+  - Size is set by pixels and JPEG quality, not by "dpi": the page is the frame at 1920 scene px, so `--width` is the dpi (1920 px over a 20 in page is 96 dpi).

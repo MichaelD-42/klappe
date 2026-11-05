@@ -31,6 +31,7 @@ export function qr(ctx: Ctx, opts: QrOpts): QrHandle {
   }
   const root = ctx.html.appendChild(document.createElement("div"));
   root.setAttribute("data-k-qr", "");
+  if (/^(?:https?|mailto|tel):/i.test(opts.text)) root.dataset.kHref = opts.text; // klappe pdf makes the code a link
   Object.assign(root.style, { position: "absolute", left: `${x}px`, top: `${y}px`, width: `${size}px` });
   gsap.set(root, { autoAlpha: 0 });
   const svg = root.appendChild(document.createElementNS(SVG, "svg"));

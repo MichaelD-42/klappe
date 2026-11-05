@@ -91,6 +91,10 @@ body {
   max-width: 1500px;
 }
 
+.k-scene p a {
+  color: var(--k-accent);
+}
+
 .k-scene p.k-say {
   position: absolute;
   left: 160px;

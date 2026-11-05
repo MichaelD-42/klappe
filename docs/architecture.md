@@ -110,7 +110,7 @@ Some things move on the wall clock, not with the steps: video and aurora backgro
 |---|---|
 | `dev`, `build` | Vite with `vite.config.ts`; `build` writes `dist/<id>/` with relative paths. |
 | `test` | Vitest's `e2e` project against a Vite server of the deck: the walk, the acceptance checks and the effect tests, in Playwright's Chromium. |
-| `pdf`, `shot` | A Vite server on a free port and Playwright: `openDeck` loads the deck with `?instant=1&reducedmotion=1` and no UI; `showStep` cuts to a step and waits for fonts and a painted frame. |
+| `pdf`, `shot` | A Vite server on a free port and Playwright: `openDeck` loads the deck with `?instant=1&reducedmotion=1` and no UI; `showStep` cuts to a step and waits for fonts and a painted frame; for `pdf`, `printable` puts a still over each video player and returns the step's links. |
 | `video` | `bin/video.mjs`: `openDeck` with `?instant=0&reducedmotion=0&selftest=` (full motion, the backgrounds still, no self-test). GSAP's root timeline is paused and the ticker's clock frozen; each frame sets the root's time, so the stepper's own play (transition and flight) is seeked, not played. Wall-clock loops are held at their start each frame. JPEG frames go to the system `ffmpeg` on stdin (`image2pipe`). |
 | `outline` | No browser: Vite's `runnerImport` loads `src/deck/assemble.ts`, which parses the deck's Markdown, and `src/plan.ts`, the timing estimate it shares with the speaker view. Scene modules are not loaded. |
 | `theme` | No browser: Vite's `runnerImport` loads `src/brand-theme.ts`, a pure derivation of every colour token from two brand colours (the contrast maths are `src/contrast.ts`, shared with the runtime check). `bin/theme.mjs` writes the file and the optional `overlay.ts`. |
