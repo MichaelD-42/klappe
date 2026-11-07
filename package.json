@@ -1,7 +1,7 @@
 {
   "name": "klappe",
   "version": "0.7.0",
-  "description": "",
+  "description": "Animated presentations as code: scenes in Markdown, motion in TypeScript, one canvas the camera flies across. Exports PDF and MP4.",
   "scripts": {
     "test": "vitest run",
     "walk": "node bin/klappe.mjs test --deck demo",
@@ -20,7 +20,20 @@
     "type": "git",
     "url": "https://github.com/MichaelD-42/klappe.git"
   },
-  "keywords": [],
+  "keywords": [
+    "presentation",
+    "slides",
+    "slide-deck",
+    "presentation-framework",
+    "markdown",
+    "typescript",
+    "gsap",
+    "animation",
+    "vite",
+    "d3",
+    "data-visualization",
+    "claude-code"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",
