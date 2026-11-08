@@ -505,6 +505,13 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
   - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.
 
+## 2026-11-08 (1.0.0)
+
+- **1.0.0 ships: the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable. A change that breaks a deck now needs a major version.**
+  - Why: every `docs/backlog.md` entry is built (the 2026-10-30 scope), so nothing planned still changes the three. Additions and fixes go into 1.x minors and patches.
+- **The six effects no work deck used (`lineArt`, `shatter`, `worldMap`, `callout`, `checklist`, `swimlanes`) stay in 1.0.**
+  - Why: two decks are a small sample (the API audit says so), and a training deck has no use for a world map. Each is documented, in the catalog and tested, so keeping it costs little; dropping one after 1.0 needs a 2.0, so revisit them with the effects judged after a third deck, before any 2.0.
+
 ## 2026-11-05 (pdf export)
 
 - **`klappe pdf` prints a scene's last step, not every step.**

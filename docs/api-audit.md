@@ -93,4 +93,4 @@ These are proposals. The owner decides.
 7. **Word cap by default stands.** Neither deck set `max-words`.
 8. **`template/`:** take `data/`, `media/`, a `deck.css` slot, a `shared/` helpers folder and the five common `deck.md` keys from these decks.
 9. **Small additions:** a typewriter for HTML text; a two-frame `shout`; a way to read an edge's position from a `flow` handle, so `flowRoutes` can stay internal.
-10. **Effects:** review the six that went unused all build long before 1.0 freezes them. Judge the other 32 after a third deck, or after Deck A's next round.
+10. **Effects:** review the six that went unused all build long before 1.0 freezes them (decided 2026-11-08: all six kept, see `DECISIONS.md`). Judge the other 32 after a third deck, or after Deck A's next round.

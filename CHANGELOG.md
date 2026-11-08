@@ -1,6 +1,19 @@
 # Changelog
 
-klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes once the backlog (`docs/backlog.md`) is done, the deck template (M4) with it.
+klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable: a change that breaks a deck comes only in a major version, listed under **Changed**. Before 1.0.0 a minor version could break, and said so under **Changed**.
+
+## 1.0.0 (2026-11-08)
+
+The deck format, the `scene.ts` API and the CLI are now stable; 1.x adds to them and fixes them, and breaks no deck.
+
+### Fixed
+
+- `klappe theme --logo` no longer replaces a file of the same name in the deck's `media/` without `--force`; it stops before writing anything.
+- Frontmatter: a `# comment` after a number, `true`/`false` or a list is dropped, so `duration: 45  # minutes` is 45 instead of being ignored; in text a `#` stays (`title: Talk #1`). `title: 1984` is a title, not "missing title".
+- A text edit from the deck window keeps a CRLF `scene.md` CRLF on the line it changes.
+- `media/TODO.md` prompts follow a quoted or commented `frame:` (`frame: "9:16"` asked for 16:9 pictures), and parked `_` folders add no missing files to the TODO lists.
+- The deck window keeps only the newest 1000 message ids from the speaker view, not every one of a talk's laser moves.
+- `klappe dev` reads each deck file once per save for its icon, effect and language scan, not three times.
 
 ## 0.7.0 (2026-11-05)
 

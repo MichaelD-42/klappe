@@ -41,7 +41,7 @@ const read = (f) => {
   }
 }
 
-function codeFiles(dir, out = [], match = CODE) {
+function codeFiles(dir, out = []) {
   let entries
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -51,30 +51,36 @@ function codeFiles(dir, out = [], match = CODE) {
   for (const e of entries) {
     if (e.name === 'node_modules' || e.name.startsWith('.')) continue
     const p = path.join(dir, e.name)
-    if (e.isDirectory()) codeFiles(p, out, match)
-    else if (match.test(e.name)) out.push(p)
+    if (e.isDirectory()) codeFiles(p, out)
+    else if (CODE.test(e.name) || MD.test(e.name)) out.push(p)
   }
   return out
 }
 
+// The code and the Markdown under dirs, each file listed and read once: { code: [text], md: [text] }.
+function deckTexts(dirs) {
+  const files = dirs.flatMap((d) => codeFiles(d))
+  const texts = (match) => files.filter((f) => match.test(f)).map(read)
+  return { code: texts(CODE), md: texts(MD) }
+}
+
 // The Lucide keys named in the code under dirs, sorted.
-export function namedIcons(dirs, files) {
+export function namedIcons(dirs, files, t = deckTexts(dirs)) {
   const keys = new Set()
-  for (const f of dirs.flatMap((d) => codeFiles(d)))
-    for (const [, s] of read(f).matchAll(LITERAL)) {
+  for (const text of t.code)
+    for (const [, s] of text.matchAll(LITERAL)) {
       const k = iconKey(s)
       if (files.has(k)) keys.add(k)
     }
-  for (const f of dirs.flatMap((d) => codeFiles(d, [], MD)))
-    for (const [, s] of read(f).matchAll(MD_ICON)) if (files.has(iconKey(s))) keys.add(iconKey(s))
+  for (const text of t.md)
+    for (const [, s] of text.matchAll(MD_ICON)) if (files.has(iconKey(s))) keys.add(iconKey(s))
   return [...keys].sort()
 }
 
 // The names deck code imports from "klappe/fx" ("*" for a namespace import), sorted.
-export function importedFx(dirs) {
+export function importedFx(dirs, t = deckTexts(dirs)) {
   const names = new Set()
-  for (const f of dirs.flatMap((d) => codeFiles(d))) {
-    const text = read(f)
+  for (const text of t.code) {
     for (const [, type, list] of text.matchAll(/import\s*(type\s+)?\{([^}]*)\}\s*from\s*["']klappe\/fx["']/g))
       for (const n of type ? [] : list.split(',')) {
         const m = /^\s*(?:type\s+)?(\w+)/.exec(n)
@@ -86,10 +92,9 @@ export function importedFx(dirs) {
 }
 
 // The languages deck code names as a literal lang value (code(ctx, { lang: "ts" })), sorted.
-export function usedLangs(dirs) {
+export function usedLangs(dirs, t = deckTexts(dirs)) {
   const langs = new Set()
-  for (const f of dirs.flatMap((d) => codeFiles(d)))
-    for (const [, l] of read(f).matchAll(/\blang\s*:\s*["'`]([\w+#-]+)["'`]/g)) langs.add(l)
+  for (const text of t.code) for (const [, l] of text.matchAll(/\blang\s*:\s*["'`]([\w+#-]+)["'`]/g)) langs.add(l)
   return [...langs].sort()
 }
 
@@ -100,14 +105,20 @@ export function usedLangs(dirs) {
 export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
   const files = lucideFiles(klappeDir)
   const all = [deckDir, ...extraDirs]
+  // scan: the deck's texts and all of them (the fixtures too), read once for the three modules.
+  const scanAll = () => {
+    const deck = deckTexts([deckDir])
+    const extra = deckTexts(extraDirs)
+    return { deck, all: { code: [...deck.code, ...extra.code], md: [...deck.md, ...extra.md] } }
+  }
   const sources = {
-    [ICONS]: () => {
-      const keys = namedIcons(all, files)
+    [ICONS]: (scan) => {
+      const keys = namedIcons(all, files, scan.all)
       const imports = keys.map((k, i) => `import i${i} from ${JSON.stringify(files.get(k).split(path.sep).join('/'))};`)
       return `${imports.join('\n')}\nexport default { ${keys.map((k, i) => `${JSON.stringify(k)}: i${i}`).join(', ')} };\n`
     },
-    [FX]: () => `export default ${JSON.stringify(importedFx([deckDir]))};\n`,
-    [LANGS]: () => `export default ${JSON.stringify(usedLangs([deckDir]))};\n`,
+    [FX]: (scan) => `export default ${JSON.stringify(importedFx([deckDir], scan.deck))};\n`,
+    [LANGS]: (scan) => `export default ${JSON.stringify(usedLangs([deckDir], scan.deck))};\n`,
   }
   const last = {}
   return {
@@ -115,7 +126,7 @@ export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
     resolveId: (id) => (id in sources ? '\0' + id : undefined),
     load(id) {
       const key = id.slice(1)
-      if (id.startsWith('\0') && key in sources) return (last[key] = sources[key]())
+      if (id.startsWith('\0') && key in sources) return (last[key] = sources[key](scanAll()))
     },
     // In dev, a new icon name or effect import in a scene reloads the page with it in.
     configureServer(server) {
@@ -125,9 +136,10 @@ export function klappeScan({ klappeDir, deckDir, extraDirs = [] }) {
       const update = (file) => {
         if (!(CODE.test(file) || MD.test(file)) || !all.some((d) => !path.relative(d, file).startsWith('..'))) return
         let changed = false
+        const scan = scanAll()
         for (const [key, source] of Object.entries(sources)) {
           if (!(key in last)) continue
-          const next = source()
+          const next = source(scan)
           if (next === last[key]) continue
           last[key] = next
           changed = true

@@ -120,7 +120,7 @@ Run the deck with `npm run dev` and press `R`: a review window opens beside it a
 
 ## Keeping klappe up to date
 
-klappe follows semantic versioning; before 1.0.0 a minor version may change the deck format, so read the [changelog](CHANGELOG.md) first. Releases are `vX.Y.Z` tags on `main`.
+klappe follows semantic versioning: from 1.0.0 only a major version changes the deck format, the `scene.ts` API or the CLI in a way that breaks a deck, and the [changelog](CHANGELOG.md) lists each such change under **Changed**. Releases are `vX.Y.Z` tags on `main`.
 
 ```sh
 git subtree pull --prefix klappe https://github.com/MichaelD-42/klappe.git main --squash

@@ -60,7 +60,7 @@ export function replaceText(md, from, to) {
     return m && m[2] === from ? [{ i, lead: m[1] }] : []
   })
   if (hit.length !== 1) return null
-  lines[hit[0].i] = hit[0].lead + to.trim()
+  lines[hit[0].i] = hit[0].lead + to.trim() + (lines[hit[0].i].endsWith('\r') ? '\r' : '') // a CRLF file stays CRLF
   return lines.join('\n')
 }
 

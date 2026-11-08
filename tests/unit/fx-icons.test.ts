@@ -93,6 +93,36 @@ describe("the scan plugin", () => {
   });
 });
 
+// A saved file rescans the deck: one walk and one read of each file, for all three modules.
+describe("the scan plugin in dev", () => {
+  it("reads each deck file once per change", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "klappe-once-"));
+    try {
+      const a = path.join(dir, "a.ts");
+      fs.writeFileSync(a, `icon(ctx, "rocket", o);`);
+      fs.writeFileSync(path.join(dir, "scene.md"), "- :coffee: Hi\n");
+      const plugin = klappeScan({ klappeDir: process.cwd(), deckDir: dir }) as any;
+      const on: Record<string, (f: string) => void> = {};
+      plugin.configureServer({ watcher: { add() {}, on: (ev: string, fn: (f: string) => void) => (on[ev] = fn) }, moduleGraph: { getModuleById() {}, invalidateModule() {} }, ws: { send() {} } });
+      for (const id of ["virtual:klappe-icons", "virtual:klappe-fx", "virtual:klappe-langs"]) plugin.load("\0" + id);
+      fs.writeFileSync(a, `icon(ctx, "bug", o); code(ctx, { lang: "ts" });`);
+      const read = vi.spyOn(fs, "readFileSync");
+      const list = vi.spyOn(fs, "readdirSync");
+      try {
+        on.change(a);
+        expect(read.mock.calls.filter(([f]) => f === a)).toHaveLength(1);
+        expect(list.mock.calls.filter(([d]) => d === dir)).toHaveLength(1);
+      } finally {
+        read.mockRestore();
+        list.mockRestore();
+      }
+      expect(plugin.load("\0virtual:klappe-icons")).toContain('"Bug"');
+    } finally {
+      fs.rmSync(dir, { recursive: true });
+    }
+  });
+});
+
 // A scene folder renamed while `klappe dev` runs: the scan can list a file that is gone by the time it reads it.
 describe("the scan plugin, with a file gone between listing and reading", () => {
   it("skips the missing file instead of throwing ENOENT", () => {

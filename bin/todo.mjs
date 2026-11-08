@@ -16,8 +16,9 @@ const SOURCES = ['scene.md', 'scene.ts', 'section.ts'];
 function sources(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const p = join(dir, e.name);
-    if (e.isDirectory()) sources(p, out);
-    else if (SOURCES.includes(e.name)) out.push(p);
+    if (e.isDirectory()) {
+      if (!e.name.startsWith('_')) sources(p, out); // a parked folder is out of the deck
+    } else if (SOURCES.includes(e.name)) out.push(p);
   }
   return out;
 }
@@ -45,7 +46,7 @@ export function writeTodos(deckDir) {
   const seen = new Set();
   const root = join(deckDir, 'sections');
   const deckMd = join(deckDir, 'deck.md');
-  const frame = /^frame:\s*(\S+)\s*$/m.exec(existsSync(deckMd) ? readFileSync(deckMd, 'utf8') : '')?.[1];
+  const frame = /^frame:\s*["']?([\d:]+)/m.exec(existsSync(deckMd) ? readFileSync(deckMd, 'utf8') : '')?.[1];
   const full = fullFrame(frame in FRAMES ? frame : undefined);
   for (const file of existsSync(root) ? sources(root) : []) {
     const text = readFileSync(file, 'utf8');

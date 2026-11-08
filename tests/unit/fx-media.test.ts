@@ -68,6 +68,20 @@ test('writeTodos removes a TODO file when nothing is missing', () => {
   expect(existsSync(join(d, 'data/TODO.md'))).toBe(false);
 });
 
+test('writeTodos reads a quoted or commented frame as the deck does, and skips parked folders', () => {
+  const d = deck();
+  writeFileSync(join(d, 'sections/10-a/10-one/scene.ts'), 'export default { build: (ctx) => image(ctx, { href: "media/bg.png", alt: "A city" }) }\n');
+  mkdirSync(join(d, 'sections/_20-parked/10-old'), { recursive: true });
+  writeFileSync(join(d, 'sections/_20-parked/10-old/scene.md'), '## Old\n\n- ![Old](media/old.png)\n');
+  for (const frame of ['"9:16"', '9:16  # phone']) {
+    writeFileSync(join(d, 'deck.md'), `---\ntitle: T\nframe: ${frame}\n---\n`);
+    writeTodos(d);
+    const todo = readFileSync(join(d, 'media/TODO.md'), 'utf8');
+    expect(todo).toContain('- [ ] media/bg.png — prompt: A city for a presentation scene about The engine, 9:16, 1080x1920');
+    expect(todo).not.toContain('old.png');
+  }
+});
+
 test('clampPose keeps a Ken Burns drift inside the overscan', async () => {
   const { clampPose } = await import('../../src/fx/media');
   const rect = { x: 0, y: 0, w: 1920, h: 1080 };

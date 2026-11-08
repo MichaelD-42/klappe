@@ -14,6 +14,9 @@ export async function writeTheme(klappeDir, deckDir, { name, colors, logo, light
   if (logo && !fs.existsSync(logo)) throw new Error(`Logo not found: ${logo}`)
   const file = path.join(deckDir, 'themes', `${name}.css`)
   if (fs.existsSync(file) && !force) throw new Error(`${file} exists. Use --force to overwrite it.`)
+  const media = logo && `media/${path.basename(logo)}`
+  const logoAt = logo && path.join(deckDir, media)
+  if (logo && fs.existsSync(logoAt) && !force) throw new Error(`${logoAt} exists. Use --force to overwrite it.`)
 
   const { themeCss } = (await runnerImport(path.join(klappeDir, 'src/brand-theme.ts'), { configFile: false, logLevel: 'error' })).module
   fs.mkdirSync(path.dirname(file), { recursive: true })
@@ -22,8 +25,7 @@ export async function writeTheme(klappeDir, deckDir, { name, colors, logo, light
   if (!logo) return out
 
   fs.mkdirSync(path.join(deckDir, 'media'), { recursive: true })
-  const media = `media/${path.basename(logo)}`
-  fs.copyFileSync(logo, path.join(deckDir, media))
+  fs.copyFileSync(logo, logoAt)
   const title = /^title:\s*(.+?)\s*$/m.exec(fs.readFileSync(path.join(deckDir, 'deck.md'), 'utf8'))?.[1]?.replace(/^["']|["']$/g, '') ?? ''
   // Effects start hidden: update shows them, as the documented example does.
   const overlay = `import { gsap } from "gsap";
@@ -40,10 +42,10 @@ export default {
 `
   const target = path.join(deckDir, 'overlay.ts')
   if (fs.existsSync(target)) {
-    out.push(`Copied the logo to ${path.relative(process.cwd(), path.join(deckDir, media))}. ${path.relative(process.cwd(), target)} exists and was kept; use this build():\n\n${overlay}`)
+    out.push(`Copied the logo to ${path.relative(process.cwd(), logoAt)}. ${path.relative(process.cwd(), target)} exists and was kept; use this build():\n\n${overlay}`)
   } else {
     fs.writeFileSync(target, overlay)
-    out.push(`Copied the logo to ${path.relative(process.cwd(), path.join(deckDir, media))} and wrote ${path.relative(process.cwd(), target)}. Raise \`safe-area\` in deck.md to keep scenes clear of it.`)
+    out.push(`Copied the logo to ${path.relative(process.cwd(), logoAt)} and wrote ${path.relative(process.cwd(), target)}. Raise \`safe-area\` in deck.md to keep scenes clear of it.`)
   }
   return out
 }

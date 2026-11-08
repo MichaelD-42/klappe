@@ -27,9 +27,9 @@ decks/<id>/
 
 ## deck.md
 
-Frontmatter keys:
+Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true`/`false` or a list is dropped (`duration: 45  # minutes`); in text it stays part of the text (`title: Talk #1`).
 
-- `title`: required. It is also the page title in the browser tab.
+- `title`: required. It is also the page title in the browser tab. A title that reads as a number (`1984`) is text.
 - `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language.
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.

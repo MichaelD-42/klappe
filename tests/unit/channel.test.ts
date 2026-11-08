@@ -42,6 +42,12 @@ describe("parseWire", () => {
     parseWire(wire(), "klappe:T", seen);
     expect(parseWire(wire(), "klappe:T", seen)).toBeNull();
   });
+  it("keeps only the newest ids, so a long talk does not fill memory", () => {
+    const seen = new Set<string>();
+    for (let n = 0; n < 5000; n++) parseWire(wire({ id: `a:${n}` }), "klappe:T", seen);
+    expect(seen.size).toBeLessThanOrEqual(1000);
+    expect(parseWire(wire({ id: "a:4999" }), "klappe:T", seen)).toBeNull(); // a late copy of a recent one
+  });
   it("drops a wrong shape", () => {
     for (const w of [null, 1, wire({ k: "klappe:other" }), wire({ id: 7 }), wire({ msg: { t: "state" } }), wire({ msg: { t: "state", index: -1 } }), wire({ msg: { t: "cmd", cmd: "goto", index: 1.5 } })])
       expect(parseWire(w, "klappe:T", new Set())).toBeNull();

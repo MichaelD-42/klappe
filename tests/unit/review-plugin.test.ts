@@ -43,6 +43,11 @@ test('replaceText changes the one scene.md line that holds the text: a list item
   expect(replaceText(md, 'Why?', 'Why not?')).toBe(md.replace('### Why?', '### Why not?'))
 })
 
+test('replaceText keeps the line ending of the line it changes', () => {
+  const md = '## T\r\n\r\n- First step.\r\n- Next.\r\n'
+  expect(replaceText(md, 'First step.', 'First, a step.')).toBe(md.replace('First step.', 'First, a step.'))
+})
+
 test('replaceText refuses text that is not on exactly one line, and a replacement that is not one line', () => {
   expect(replaceText('- Same.\n- Same.\n', 'Same.', 'Other.')).toBeNull()
   expect(replaceText('- A [link](media/x.png).\n', 'A link.', 'B.')).toBeNull()
