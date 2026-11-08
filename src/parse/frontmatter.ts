@@ -35,6 +35,13 @@ function parseValue(raw: string): unknown {
   return v;
 }
 
+// A # comment after a number, true/false or a list is cut; in text it stays part of the text ("Talk #1").
+function parseLine(raw: string): unknown {
+  const c = /^(.*?)\s+#/.exec(raw);
+  const v = c && parseValue(c[1]);
+  return c && typeof v !== "string" ? v : parseValue(raw);
+}
+
 export function parseFrontmatter(md: string): { data: Record<string, unknown>; body: string } {
   md = md.replace(/^\uFEFF/, "");
   const m = /^---\r?\n(?:([\s\S]*?)\r?\n)?---\r?\n?([\s\S]*)$/.exec(md);
@@ -42,7 +49,7 @@ export function parseFrontmatter(md: string): { data: Record<string, unknown>; b
   const data: Record<string, unknown> = {};
   for (const line of (m[1] ?? "").split(/\r?\n/)) {
     const i = line.indexOf(":");
-    if (i > 0) data[line.slice(0, i).trim()] = parseValue(line.slice(i + 1));
+    if (i > 0) data[line.slice(0, i).trim()] = parseLine(line.slice(i + 1));
   }
   return { data, body: m[2] };
 }
@@ -59,7 +66,7 @@ const FRAMES: Record<string, { w: number; h: number }> = {
 
 export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; problems: string[] } {
   const problems: string[] = [];
-  const title = typeof data.title === "string" ? data.title : "";
+  const title = typeof data.title === "string" || typeof data.title === "number" ? String(data.title) : ""; // title: 1984
   if (!title) problems.push("deck.md: missing title");
   const theme = typeof data.theme === "string" && data.theme ? data.theme : "calm";
   const intensity = data.intensity === "bold" || data.intensity === "calm" ? data.intensity : theme === "bold" ? "bold" : "calm";

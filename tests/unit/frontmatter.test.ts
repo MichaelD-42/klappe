@@ -20,6 +20,16 @@ describe("frontmatter", () => {
       parseFrontmatter("---\nn: 3\nl: [[a, b], [c]]\n---\n").data,
     ).toEqual({ n: 3, l: [["a", "b"], ["c"]] });
   });
+  it("cuts a # comment after a number, true/false or a list, and keeps a # in text", () => {
+    const { data } = parseFrontmatter("---\nduration: 20  # minutes\nsound: true # demo\nl: [a, b] # x\ntitle: Talk #1\n---\n");
+    expect(data).toEqual({ duration: 20, sound: true, l: ["a", "b"], title: "Talk #1" });
+    expect(toDeckMeta(data).problems).toEqual([]);
+  });
+  it("takes a title that reads as a number as text", () => {
+    const { meta, problems } = toDeckMeta(parseFrontmatter("---\ntitle: 1984\n---\n").data);
+    expect(meta.title).toBe("1984");
+    expect(problems).toEqual([]);
+  });
   it("handles no frontmatter", () => {
     expect(parseFrontmatter("no frontmatter")).toEqual({ data: {}, body: "no frontmatter" });
   });

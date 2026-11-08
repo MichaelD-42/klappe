@@ -2,6 +2,15 @@
 
 klappe follows [semantic versioning](https://semver.org). Until 1.0.0 the deck format, the `scene.ts` API and the CLI may still change in a minor version; every such change is listed here under **Changed**. 1.0.0 comes once the backlog (`docs/backlog.md`) is done, the deck template (M4) with it.
 
+## 1.0.0 (unreleased)
+
+### Fixed
+
+- `klappe theme --logo` no longer replaces a file of the same name in the deck's `media/` without `--force`; it stops before writing anything.
+- Frontmatter: a `# comment` after a number, `true`/`false` or a list is dropped, so `duration: 45  # minutes` is 45 instead of being ignored; in text a `#` stays (`title: Talk #1`). `title: 1984` is a title, not "missing title".
+- A text edit from the deck window keeps a CRLF `scene.md` CRLF on the line it changes.
+- `klappe dev` reads each deck file once per save for its icon, effect and language scan, not three times.
+
 ## 0.7.0 (2026-11-05)
 
 ### Added

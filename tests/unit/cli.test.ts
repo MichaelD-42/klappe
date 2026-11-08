@@ -204,6 +204,21 @@ test('theme rejects bad colours and logos', () => {
   expect(cli(cwd, 'theme', '--deck', 'talk', '--name', 'a', '--colors', '#fff,#000', '--logo', 'x.gif').stderr).toContain('.svg or .png');
 });
 
+test('theme --logo never replaces another picture of the same name in media/ without --force', () => {
+  const cwd = themeRepo();
+  const media = join(cwd, 'decks', 'talk', 'media');
+  mkdirSync(media);
+  writeFileSync(join(media, 'logo.svg'), 'a photo');
+  const run = (...more: string[]) => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', '--logo', 'logo.svg', ...more);
+  const r = run();
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain('--force');
+  expect(readFileSync(join(media, 'logo.svg'), 'utf8')).toBe('a photo');
+  expect(existsSync(join(cwd, 'decks', 'talk', 'themes', 'acme.css'))).toBe(false); // nothing half-made
+  expect(run('--force').status).toBe(0);
+  expect(readFileSync(join(media, 'logo.svg'), 'utf8')).toContain('<svg');
+});
+
 test('theme --logo copies the logo and writes overlay.ts, but never overwrites one', () => {
   const cwd = themeRepo();
   const run = () => cli(cwd, 'theme', '--deck', 'talk', '--name', 'acme', '--colors', '#3366ff,#ff6633', '--logo', 'logo.svg', '--force');
