@@ -29,12 +29,15 @@ export function isMsg(x: unknown): x is Msg {
   return false;
 }
 
-// One wire message for channel `name`, or null. Remembers ids in `seen` so a repeat is dropped.
+// One wire message for channel `name`, or null. Remembers ids in `seen` so a repeat is dropped: the newest SEEN of
+// them, as a copy lands within milliseconds and the laser sends one message a frame.
+const SEEN = 1000;
 export function parseWire(wire: unknown, name: string, seen: Set<string>): Msg | null {
   if (!wire || typeof wire !== "object") return null;
   const { k, id, msg } = wire as Record<string, unknown>;
   if (k !== name || typeof id !== "string" || seen.has(id) || !isMsg(msg)) return null;
   seen.add(id);
+  if (seen.size > SEEN) seen.delete(seen.values().next().value!); // a Set iterates oldest first
   return msg;
 }
 
