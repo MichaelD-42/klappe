@@ -2,7 +2,7 @@
 
 klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable: a change that breaks a deck comes only in a major version, listed under **Changed**. Before 1.0.0 a minor version could break, and said so under **Changed**.
 
-## 1.1.0 (unreleased)
+## 1.1.0 (2026-11-13)
 
 ### Added
 

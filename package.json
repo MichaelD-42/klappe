@@ -1,6 +1,6 @@
 {
   "name": "klappe",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Animated presentations as code: scenes in Markdown, motion in TypeScript, one canvas the camera flies across. Exports PDF and MP4.",
   "scripts": {
     "test": "vitest run",
