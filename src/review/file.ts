@@ -1,7 +1,8 @@
 // review.md: the findings of a review, one entry per step, written by the review window through the dev server
 // and worked off by Claude Code. Hand edits are kept: text before the first entry, a ## that is not a deep link,
-// and an unknown ### heading in an entry. Claude marks a finding fixed with a #### Fixed note under it; the owner
-// approves it (it goes) or reopens it, which adds a #### Reopened note. The last of these notes is its state.
+// and an unknown ### heading in an entry. The owner sends a draft to Claude, which adds an empty #### Sent note;
+// Claude marks a finding fixed with a #### Fixed note under it; the owner approves it (it goes) or reopens it, which
+// adds a #### Reopened note. The last of these notes is its state: Sent and Reopened are ready for Claude.
 
 export type Category = "content" | "storytelling" | "visuals";
 export const CATEGORIES: Category[] = ["content", "storytelling", "visuals"];
@@ -12,6 +13,7 @@ export interface Entry {
   quote: string;
   findings: Partial<Record<Category, string>>;
   fixed?: Partial<Record<Category, string>>; // Claude's note on each finding waiting for approval
+  sent?: Category[]; // drafts the owner sent to Claude
 }
 export interface Edit {
   hash: string;
@@ -19,9 +21,10 @@ export interface Edit {
   set: Partial<Record<Category, string>>;
   approve?: Category[]; // fixed findings the owner takes as done
   reopen?: Partial<Record<Category, string>>; // fixed findings sent back, with the owner's note
+  send?: Category[]; // drafts the owner hands to Claude
 }
 
-type Log = { kind: "Fixed" | "Reopened"; body: string }[];
+type Log = { kind: "Sent" | "Fixed" | "Reopened"; body: string }[];
 // note: hand-written text between the quote and the first ###; extra: ### sections that are not a category;
 // log: each finding's Fixed and Reopened notes, oldest first.
 type Full = Entry & { note: string[]; extra: { heading: string; body: string }[]; log: Partial<Record<Category, Log>> };
@@ -37,8 +40,9 @@ const trimLines = (lines: string[]) => lines.join("\n").replace(/^\s*\n|\s+$/g, 
 // A finding line that could read as a heading (or as an escape) gets a backslash in front; reading drops only that.
 const escape = (text: string) => text.replace(/^(?=[#\\])/gm, "\\");
 const unescape = (text: string) => text.replace(/^\\(?=[#\\])/gm, "");
-const LOG = /^#### (Fixed|Reopened)\s*$/;
+const LOG = /^#### (Sent|Fixed|Reopened)\s*$/;
 const isFixed = (log: Log | undefined) => log?.at(-1)?.kind === "Fixed";
+const isSent = (log: Log | undefined) => log?.at(-1)?.kind === "Sent";
 
 function parse(text: string): Doc {
   const doc: Doc = { head: "", entries: [] };
@@ -117,7 +121,8 @@ function write(doc: Doc): string {
 const plain = (e: Full): Entry => {
   const fixed: Entry["fixed"] = {};
   for (const k of CATEGORIES) if (isFixed(e.log[k])) fixed[k] = e.log[k]!.at(-1)!.body;
-  return { hash: e.hash, quote: e.quote, findings: e.findings, ...(Object.keys(fixed).length && { fixed }) };
+  const sent = CATEGORIES.filter((k) => isSent(e.log[k]));
+  return { hash: e.hash, quote: e.quote, findings: e.findings, ...(Object.keys(fixed).length && { fixed }), ...(sent.length && { sent }) };
 };
 
 export function parseReview(text: string): Entry[] {
@@ -137,13 +142,17 @@ export function applyEdit(text: string, edit: Edit, order: string[]): string {
   for (const k of CATEGORIES) {
     if (!(k in edit.set)) continue;
     const v = (edit.set[k] ?? "").replace(/^(\s*\n)+/, "").trimEnd(); // the first line's indent is part of it
-    if (v.trim()) e.findings[k] = v;
-    else drop(k);
+    if (!v.trim()) drop(k);
+    else {
+      if (v !== e.findings[k] && isSent(e.log[k])) e.log[k]!.pop(); // changed after sending: a draft again
+      e.findings[k] = v;
+    }
   }
   // Only a finding still fixed on disk is approved or reopened: Claude may have touched it since the window read it.
   for (const k of edit.approve ?? []) if (isFixed(e.log[k])) drop(k);
   for (const [k, note] of Object.entries(edit.reopen ?? {}) as [Category, string][])
     if (isFixed(e.log[k])) e.log[k]!.push({ kind: "Reopened", body: note.trim() });
+  for (const k of edit.send ?? []) if (e.findings[k] && !e.log[k]?.length) e.log[k] = [{ kind: "Sent", body: "" }];
   doc.entries = doc.entries.filter((x) => Object.keys(x.findings).length || x.extra.length || trimLines(x.note));
   const at = (h: string) => (order.includes(h) ? order.indexOf(h) : Infinity);
   doc.entries.sort((a, b) => at(a.hash) - at(b.hash));
@@ -153,6 +162,15 @@ export function applyEdit(text: string, edit: Edit, order: string[]): string {
 // Steps with a finding still open, and findings fixed and waiting for the owner's approval.
 export function stepsWithFindings(text: string): number {
   return parseReview(text).filter((e) => Object.keys(e.findings).some((k) => !e.fixed?.[k as Category])).length;
+}
+// Steps with a finding ready for Claude (sent, or reopened), in the file's order; and the sent findings.
+export function readyFindings(text: string): string[] {
+  return parse(text)
+    .entries.filter((e) => CATEGORIES.some((k) => e.findings[k] && (isSent(e.log[k]) || e.log[k]?.at(-1)?.kind === "Reopened")))
+    .map((e) => e.hash);
+}
+export function sentToClaude(text: string): number {
+  return parseReview(text).reduce((n, e) => n + (e.sent?.length ?? 0), 0);
 }
 export function waitingForApproval(text: string): number {
   return parseReview(text).reduce((n, e) => n + Object.keys(e.fixed ?? {}).length, 0);

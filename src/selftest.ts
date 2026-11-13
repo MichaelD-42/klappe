@@ -14,6 +14,7 @@ export interface SelftestCtx {
   stage: HTMLElement;
   problems: string[];
   errors: string[];
+  langWarnings?: string[]; // missing and stale translations in a deck shown in another language (deck.langWarnings)
 }
 
 const PLAY_SPEED = 50; // as the ac self-test; play time is the deck's animation time over this
@@ -353,6 +354,11 @@ async function walk(ctx: SelftestCtx, checks: SelftestCheck[], warnings: string[
     gsap.globalTimeline.timeScale(1);
   }
   warnings.push(...monotony(looks), ...nearMisses(titles));
+  // Translations, for the walked scenes and their sections; the deck's own (its title) in a whole walk's first part.
+  const walked = new Set(steps.flatMap((s, i) => (picked(i) ? [`#/${s.section}/${s.scene}`, `#/${s.section}`] : [])));
+  if (!only && k === 1) walked.add("deck.md");
+  // ctx.t adds to the list as scenes build, so read it now, after the walk.
+  warnings.push(...(ctx.langWarnings ?? []).filter((w) => walked.has(w.slice(0, w.indexOf(": ")))));
 }
 
 // The demo steps the acceptance checks stand on. Moving one of these scenes means editing this list:
@@ -569,7 +575,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     await stepper.goto(steps.length - 1, "cut"); // so each jump moves
     key("s");
     if (!selector.isOpen) return ["S did not open the selector"];
-    const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector button")];
+    const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector > button")]; // the sections, not the language row
     const titles = labels().map((b) => b.textContent);
     // The appendix carries klappe's word before its title.
     const want = deck.sections.map((s: any) => (s.appendix ? `${t("appendix", deck.meta.lang)} · ${s.title}` : s.title));

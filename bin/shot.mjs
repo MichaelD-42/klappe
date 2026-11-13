@@ -46,7 +46,7 @@ async function sheets(browser, outDir, shots) {
 // Writes <outDir>/<w>x<h>/<section>.<scene>.<step>.png for each picked step at both sizes, and with sheet,
 // <outDir>/sheet-<section>.png from the 1920x1080 shots of each scene's last step.
 // sizes: a subset of SIZES for a quick check. at: shoot each step that many ms into its play, not as it ends.
-export async function shoot(url, outDir, { targets = [], last = false, sheet = false, theme, sizes = SIZES, at } = {}) {
+export async function shoot(url, outDir, { targets = [], last = false, sheet = false, theme, lang, sizes = SIZES, at } = {}) {
   const browser = await chromium.launch()
   try {
     const files = []
@@ -55,7 +55,7 @@ export async function shoot(url, outDir, { targets = [], last = false, sheet = f
     let report = { problems: [], errors: [] }
     const lastShots = []
     for (const size of sizes) {
-      const page = await openDeck(browser, url, size, theme ? { theme } : {})
+      const page = await openDeck(browser, url, size, { ...(theme && { theme }), ...(lang && { lang }) })
       const steps = await page.evaluate(() => window.klappe.steps)
       ;({ picked, unknown } = pickSteps(steps, targets, last))
       if (unknown.length) return { files, sheets: [], unknown, ...report }

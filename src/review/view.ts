@@ -5,7 +5,7 @@ import type { Channel } from "../speaker/channel";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
 import { button } from "../ui/panel";
-import { CATEGORIES, parseReview, stepsWithFindings, waitingForApproval, type Category, type Edit } from "./file";
+import { CATEGORIES, parseReview, sentToClaude, stepsWithFindings, waitingForApproval, type Category, type Edit, type Entry } from "./file";
 
 const ROUTE = "/__klappe/review";
 const SAVE_AFTER_MS = 500; // after the last key
@@ -60,8 +60,17 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   const status = el("p", "k-rv-status");
   const send = (cmd: "next" | "prev" | "goto" | "appendix", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-rv-buttons");
-  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")));
+  // The step's drafts to Claude, which a session waiting on `klappe review-wait` then works off.
+  const toClaude = button(t("sendToClaude", lang), () => {
+    const ks = drafts();
+    take(); // text still unsent goes first
+    queue.push({ hash: order[index], quote: stepText(steps[index]), set: {}, send: ks, seq: seq++ });
+    show();
+    void flush().then(show);
+  });
+  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), toClaude);
   view.append(place, said, moved, form, buttons, status);
+  if (deck.meta.source && lang !== deck.meta.source) status.before(el("p", "k-rv-moved", t("editOffInTranslation", lang)));
   root.append(view);
 
   let refused = 0; // findings the server would not take: not in the file, so the status keeps saying so
@@ -72,6 +81,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
       : [
           path && `${t("savedTo", lang)} ${path}`,
           `${t("stepsWithFindings", lang)}: ${stepsWithFindings(text)}`,
+          sentToClaude(text) && `${t("sentToClaude", lang)}: ${sentToClaude(text)}`,
           waitingForApproval(text) && `${t("waitingForApproval", lang)}: ${waitingForApproval(text)}`,
           lost && `${t("notInDeck", lang)}: ${lost}`,
           refused && `${t("saveRefused", lang)}: ${refused}`,
@@ -125,6 +135,12 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   const save = () => {
     if (take() || queue.length) void flush();
   };
+  // Findings with text that are not fixed, nor sent as they read now (the server sends only drafts in any case).
+  let entry: Entry | undefined; // the step's entry as last shown
+  const queuedSend = (k: Category) => queue.some((e) => e.hash === order[index] && e.send?.includes(k));
+  const drafts = () =>
+    CATEGORIES.filter((k) => fields[k].value.trim() && !fields[k].readOnly && !queuedSend(k) && !(entry?.sent?.includes(k) && fields[k].value === entry.findings[k]));
+  const showSend = () => (toClaude.disabled = index < 0 || !drafts().length);
   // Approve or reopen goes through the queue too, behind any text still unsent.
   const act = (k: Category, change: Pick<Edit, "approve" | "reopen">) => {
     take();
@@ -136,6 +152,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   for (const k of CATEGORIES) {
     fields[k].addEventListener("input", () => {
       dirty.add(k);
+      showSend();
       clearTimeout(timer);
       timer = window.setTimeout(save, SAVE_AFTER_MS);
     });
@@ -150,6 +167,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   // Showing: the step's findings from the file, or from a save still queued, except in a field with unsent text. Not "the focused field":
   // a window that loses focus keeps its focused field, and typing there would replace the next step's finding.
   const show = () => {
+    showSend();
     if (index < 0) return;
     const a = steps[index];
     const scene = sceneOf(a);
@@ -157,7 +175,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
       .filter(Boolean)
       .join(" · ");
     said.textContent = stepText(a);
-    const entry = parseReview(text).find((e) => e.hash === order[index]);
+    entry = parseReview(text).find((e) => e.hash === order[index]);
     // A queued save is newer than the file: its latest value for the category shows.
     const queued = (k: Category) => [...queue].reverse().find((e) => e.hash === order[index] && k in e.set)?.set[k];
     // An approve or reopen still queued: the finding shows as it will be once saved.
@@ -175,6 +193,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
     const written = entry?.quote && entry.quote !== stepText(a) ? entry.quote : "";
     moved.textContent = written && `${t("writtenFor", lang)}: “${written}”`;
     moved.hidden = !written;
+    showSend();
   };
   // Reads can land out of order: only the latest one asked for is shown, or an old file would replace a newer one.
   let reads = 0;

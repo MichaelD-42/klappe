@@ -64,11 +64,11 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const time = el("p", "k-sp-time", clock(0));
   const progress = el("p", "k-sp-progress");
   const next = el("p", "k-sp-next");
-  const send = (cmd: "next" | "prev" | "goto" | "timer" | "appendix" | "mute", i?: number) => channel.send({ t: "cmd", cmd, index: i });
+  const send = (cmd: "next" | "prev" | "goto" | "timer" | "clock" | "appendix" | "mute", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
   // Disabled on a scene without a timer, where T does nothing.
   const timerButton = button(t("timer", lang), () => send("timer"));
-  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), timerButton);
+  buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), timerButton, button(t("clock", lang), () => send("clock")));
   const laserButton = button(t("laser", lang), () => setInk("laser"));
   const penButton = button(t("pen", lang), () => setInk("pen"));
   const inkRow = el("div", "k-sp-buttons");
@@ -155,7 +155,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "p" && !e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey) return toggleRehearsal();
     const a = keyAction(e);
-    if (a === "next" || a === "prev" || a === "timer" || a === "appendix" || a === "mute") send(a);
+    if (a === "next" || a === "prev" || a === "timer" || a === "clock" || a === "appendix" || a === "mute") send(a);
     else if (a === "laser" || a === "pen") setInk(a);
     else if (a === "home") send("goto", 0);
     else if (a === "end") send("goto", main - 1);

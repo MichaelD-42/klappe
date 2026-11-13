@@ -21,6 +21,7 @@ decks/<id>/
         scene.ts          # optional
   components.ts           # optional: the deck's own scene.md fences, see markdown.md#deck-components
   strings.json            # optional: the deck's own words for klappe's UI, by key; see lang below
+  lang/de.md              # optional: the deck in another language, one file per language; see languages below
   shared/                 # optional: helpers and scene factories, not loaded as scenes
   icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon(); <repo>/icons/ is shared by all decks
 ```
@@ -30,7 +31,7 @@ decks/<id>/
 Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true`/`false` or a list is dropped (`duration: 45  # minutes`); in text it stays part of the text (`title: Talk #1`).
 
 - `title`: required. It is also the page title in the browser tab. A title that reads as a number (`1984`) is text.
-- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language.
+- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language. `lang` is also the language the deck is written in; a translation into another one is a `lang/<code>.md` file, see [languages](#languages).
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
@@ -43,6 +44,36 @@ Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true
 - `sound`: `true` or `false` (default). Turns on [`cue`](effects.md#cue) and `section.ts` `music`; without it a deck with them is silent. Sound plays only on a forward step, never on a seek, jump or step back, and never in the walk, `pdf`, `shot` or `video` (the MP4 has no sound track). `M` mutes and unmutes, also from the speaker view. A browser plays sound only after the first key or click on the page.
 - `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
 - `cuts`: shorter talks from the same deck, by name, each the section ids it keeps, or the ids and its own `duration`: `cuts: { short: { sections: [opening, results], duration: 20 }, long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
+
+## Languages
+
+One deck can be given in several languages: German one week, English the next. The deck is written in one, its `lang` in `deck.md`, and each other language is a file `lang/<code>.md` that translates the deck's texts. The scenes, their steps and their code are the same in every language; only the words change.
+
+```markdown
+# de
+
+## deck
+
+> klappe demo
+
+klappe-Demo
+
+## basics/translated
+
+> One deck, two languages
+
+Ein Deck, zwei Sprachen
+```
+
+A `##` heading names where the texts below it are: `deck` (the title in `deck.md`), a section id (its title and notes) or `<section>/<scene>`. Under it each source text is a `>` quote, as it stands in the deck, and its translation is the text below the quote, until the next quote. A note over several paragraphs is a quote over several lines. Runs of spaces and line breaks compare as one space. What is translated: titles, step text, notes, `###` questions and their answers, list and task items, agenda rows, table cells, chat messages, picture alt text, and each string a `scene.ts` passes through `ctx.t()`. Code and console blocks, data files, pictures and videos stay as they are.
+
+In `scene.ts`, `ctx.t("This is how work flows today.")` gives the string in the language shown. It looks in the scene's own heading, then its section's, then `deck`, so a helper in `section.ts` or `shared/` that many scenes call can have one translation under the section or `deck`. Pass a string literal: `klappe lang` finds the strings to translate by reading the code. A string not passed through `ctx.t()` stays as written, so an existing deck translates its code strings by wrapping the ones it shows. A `components.ts` fence takes its text from `scene.md` and needs nothing.
+
+`npm run lang -- de` (`klappe lang de`) writes `lang/de.md` from the deck: every text in deck order, an empty translation under each new one. Run it again after editing the deck. It keeps every translation, drops the texts that left the deck, and when a text changed it keeps the old translation under the new text, marked `<!-- was: <old text> -->`. Delete that line once the translation is updated. Claude can fill the empty translations; the klappe skill says how.
+
+The deck shows in its own language. `?lang=de` shows it in German, at the same deep link, and so does picking Deutsch in the section list (`S`), which lists the deck's languages when it has more than one. The language is set when the deck loads: picking one reloads the page at the step you were on. klappe's own words and number formats follow the language shown. `outline`, `pdf`, `shot`, `video` and `test` take `--lang <code>`, and the files they write carry it in their name (`dist/<id>-de.pdf`). `build` writes one site with every language.
+
+A text with no translation shows in the source language. The walk names it as a look warning, as does a stale translation: `klappe test --lang de` walks the deck in German, which also checks that the longer German lines still fit (`--strict` fails on them). A `lang/` file for the deck's own language, a heading that names no section or scene, and a `?lang=` the deck has no file for are deck problems. In review mode the in-place text edit writes `scene.md`, so it is off in a translation; write a fix for the German text as a Content finding.
 
 ## Cuts and the appendix
 
@@ -351,7 +382,8 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
 - `Q`: to the appendix and back to where the talk was, also from the speaker view.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `Esc`: turn ink off, else close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `C`: blend the talk clock in or out. `Esc`: turn ink off, else close a panel.
+- The talk clock is a small box at the bottom right of the audience screen: the time of day, in the deck language's format, and the talk time. With `duration` in `deck.md` (or the cut's) it counts down, `23:10 left`; it turns `--k-warn` in the last 5 minutes (the last fifth of a talk under 25 minutes), and past the end counts up, `+2:15 over`, in `--k-bad`. Without `duration` it shows the time since the start. The talk time starts when the deck first leaves the step it opened on, so opening the deck early costs nothing. `C` in the speaker view, or its Clock button, blends it on the audience screen. It is part of klappe's controls, not of a step: `pdf`, `shot`, `video` and the walk never show it.
 - `M`: mute or unmute the deck's sound, also from the speaker view.
 - `L`: laser dot on the mouse. `D`: draw with the mouse; a stroke holds 2 s, then fades. The same key again turns it off. With ink on, a click on the stage draws instead of stepping; the keys still step, and every step clears the ink. Ink is never part of a step: deep links, `pdf`, `shot` and the walk never show it. The speaker view has the same keys and Laser and Pen buttons: they open a pad in the frame's shape that drives the ink on the stage.
 - In the speaker view, `P` (or the Rehearse button) starts a rehearsal run: it records the wall-clock seconds on each scene, adding up when you return to one, and lists them against the plan, the `outline` estimate per scene (notes at 130 words a minute, at least 15 s a step). A scene over its estimate shows in `--k-warn`, one over by half again in `--k-bad`; with `duration` set in `deck.md`, the run total shows against it (under a [deck cut](#cuts-and-the-appendix), the cut's `duration` if it has one; time in the appendix is not counted). Press `P` again to stop; the last run stays in the browser's `localStorage`, per deck and per deck cut, until the next run or Reset times. Nothing is written to the deck, and a browser that blocks storage still rehearses for the session.
@@ -368,6 +400,7 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 - `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?cut=<name>`: play a cut from `deck.md` `cuts`; see [cuts and the appendix](#cuts-and-the-appendix).
+- `?lang=<code>`: show the deck in a language it has a `lang/<code>.md` for; see [languages](#languages).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
 
@@ -407,7 +440,9 @@ One entry per step with findings, in deck order, each with the step's text as a 
 Caption reads "value stream" (a1b2c3d).
 ```
 
-In the window a fixed finding is read-only, with Claude's line under it. **Approve** removes it from the file. **Reopen** takes a note on what is still wrong and adds it as `#### Reopened`, and the finding is open again. The status line counts the fixed findings waiting for your approval. When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
+To have Claude fix findings while you go on reviewing, press **Send to Claude** in the window when a step's findings are written. It marks each draft finding on the step with an empty `#### Sent`, and the status line counts them. In a Claude Code session, say "watch my review": Claude runs `npm run review:wait` in the background, which ends as soon as `review.md` has a sent or reopened finding and lists its steps. Claude works those findings, marks them fixed and waits again, until you tell it to stop. A finding you change after sending is a draft again, to send once more, so Claude never works a sentence you are still writing. Each fix commits and reloads the deck. A plain "work through my review" works every open finding, drafts included.
+
+In the window a fixed finding is read-only, with Claude's line under it. **Approve** removes it from the file. **Reopen** takes a note on what is still wrong and adds it as `#### Reopened`, and the finding is open again, and ready for a watching Claude without another Send. The status line counts the fixed findings waiting for your approval. When the window shows "Written for: …" over a finding, its step's text has changed since: check it is still on the right step.
 
 `R` also turns on edit mode in the deck window, for findings that are easier to show than to say. A click selects what an effect built in the scene on screen (a dashed box and its scene rect show over it); a drag moves it, the square at its corner resizes it from its top-left corner, and the arrow keys nudge it by 1 px (10 with Shift) instead of stepping. Escape lets it go. It is a preview: the timeline never changes, and the next step puts the element back. Each move writes one line into the step's **Visuals** finding, `Move chart "Units by quarter" from [160, 100, 1600, 820] to [200, 140, 1600, 820]` (the drawn box in scene px, x, y, w, h; it can sit a little inside the code's `rect`); moving the same element again on that step updates its line. Claude finds the position in the code and changes it, as for any finding. In edit mode a click on the stage selects instead of stepping; the keys still step.
 

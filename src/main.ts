@@ -27,6 +27,7 @@ import { ownWords, t } from "./strings";
 import { Overview } from "./ui/overview";
 import { showProblems } from "./ui/problems";
 import { Selector } from "./ui/selector";
+import { mountClock } from "./ui/clock";
 import type { StepAddr } from "./types";
 
 const errors = installErrorCapture();
@@ -138,6 +139,10 @@ async function startDeck(svg: Record<string, string>) {
     : undefined;
   // Starts or pauses the current scene's timer; a scene without one ignores it.
   const timer = () => document.dispatchEvent(new CustomEvent("klappe:timer"));
+  // The talk clock (C, or the speaker view): its talk time starts when the deck first leaves the step it opened on.
+  const talkClock = mountClock(ui, deck, reducedMotion);
+  let opened: number | undefined; // the first step event is the deck landing where it opened
+  stepper.on("step", (a: StepAddr) => (opened ??= a.index) !== a.index && talkClock.started());
   // Presenter ink: L and D (or the speaker view's pad); every step clears it.
   const ink = mountInk(stage, ui);
   let inkMode: InkMode = null;
@@ -155,7 +160,7 @@ async function startDeck(svg: Record<string, string>) {
   };
   inkPointer(stage, ink, () => inkMode);
   stepper.on("step", ink.clear);
-  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, ink: inkOn, mute: toggleMute }, stage, steps);
+  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, clock: talkClock.toggle, ink: inkOn, mute: toggleMute }, stage, steps);
 
   // The main window is authoritative: it reports every step and runs the speaker's commands.
   const state = (i: number) =>
@@ -168,6 +173,7 @@ async function startDeck(svg: Record<string, string>) {
     if (m.cmd === "timer") return timer();
     if (m.cmd === "appendix") return run("appendix");
     if (m.cmd === "mute") return toggleMute();
+    if (m.cmd === "clock") return talkClock.toggle();
     autoplay.stop();
     if (m.cmd === "next") stepper.next();
     else if (m.cmd === "prev") stepper.prev();
@@ -191,6 +197,6 @@ async function startDeck(svg: Record<string, string>) {
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
   // The self-test loads only when asked.
   if (query.get("selftest")) import("./selftest")
-      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors }))
+      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors, langWarnings: deck.langWarnings }))
       .catch((e) => console.error(`selftest: ${e instanceof Error ? e.message : e}`));
 }

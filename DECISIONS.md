@@ -505,6 +505,31 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
   - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.
 
+## 2026-11-13 (1.1.0: Send to Claude)
+
+- **Send to Claude marks findings in `review.md`; a Claude Code session the author keeps open waits on `klappe review-wait`. The dev server does not run `claude -p` itself.**
+  - Why: a spawned headless Claude needs the CLI installed and logged in, its permissions settled and a rule for two sends at once, and it commits from a process the author cannot talk to, so an unclear finding cannot be asked about. A session the author started already has all of that, and the wait costs it nothing while it waits.
+  - Why an explicit Send and not a watcher on the file: the window saves as the author types, so a watcher would work half-written sentences. A sent finding that changes is a draft again for the same reason.
+  - The cost: each fix commits and reloads the deck while the author reviews.
+
+## 2026-11-13 (1.1.0: languages)
+
+- **A translation is a `lang/<code>.md` file that maps the source deck's texts; there is no `scene.de.md` and no copy of the deck.**
+  - Why: the structure (scenes, steps, code) then comes from the source alone, so a language cannot get its own steps, and a fix to the deck is made once. Parallel files per scene would spread a translation over every scene folder and let step counts drift.
+  - Texts are found by their source text, scoped by scene, not by position: inserting a step does not shift every translation after it. The cost is that editing a source text orphans its translation; `klappe lang` pairs it with the changed text and marks it `<!-- was: … -->` rather than losing it.
+  - The marker is an HTML comment, not a quoted `> was:` line, so it cannot be read as part of a quoted note.
+- **The language is chosen when the deck loads (`?lang=`, a reload from the section list), never swapped on a running deck.**
+  - Why: every effect builds its DOM and measures its text once, at load; swapping words afterwards would leave fitted text at the wrong size and break seek = play. A talk switches language once a week, not mid-sentence.
+- **A missing translation shows the source text and is a walk warning, not a deck problem.**
+  - Why: a deck being translated is shown half-done many times before it is finished; failing it would block every check until the last line is in. `--strict` makes them fail for a final check.
+
+## 2026-11-13 (1.1.0: talk clock)
+
+- **The talk clock is klappe UI on one key (`C`), not an `overlay.ts` helper, and shows the time of day and the talk time in one box.**
+  - Why: every talk can use it, so no deck should need code for it; one box on one key is less to remember than a clock and a countdown apart. In `.k-ui` it is hidden in every export, like the overview.
+  - The talk time starts at the first move off the step the deck opened on, not at load: a deck opened ten minutes before the talk would otherwise start ten minutes late.
+  - The time of day follows the deck language's own format (12-hour for `en`, 24-hour for `de`), as numbers and dates do everywhere else in klappe.
+
 ## 2026-11-08 (1.0.0)
 
 - **1.0.0 ships: the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable. A change that breaks a deck now needs a major version.**

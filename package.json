@@ -1,6 +1,6 @@
 {
   "name": "klappe",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Animated presentations as code: scenes in Markdown, motion in TypeScript, one canvas the camera flies across. Exports PDF and MP4.",
   "scripts": {
     "test": "vitest run",
@@ -11,6 +11,8 @@
     "shot": "node bin/klappe.mjs shot --deck demo",
     "video": "node bin/klappe.mjs video --deck demo",
     "outline": "node bin/klappe.mjs outline --deck demo",
+    "review:wait": "node bin/klappe.mjs review-wait --deck demo",
+    "lang": "node bin/klappe.mjs lang --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e",
     "eval:reviewers": "node bin/eval.mjs reviewers",

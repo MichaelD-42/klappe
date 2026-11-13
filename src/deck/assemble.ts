@@ -2,6 +2,7 @@ import type { Deck, Scene, Section, SceneModule, SectionModule } from "../types"
 import { parseFrontmatter, toDeckMeta } from "../parse/frontmatter";
 import { parseScene } from "../parse/scene";
 import { parseSection } from "../parse/section";
+import { translateDeck } from "./lang";
 
 const byOrder = (a: { order: number; folder: string }, b: { order: number; folder: string }) =>
   (a.order === b.order ? 0 : a.order < b.order ? -1 : 1) || (a.folder < b.folder ? -1 : a.folder > b.folder ? 1 : 0);
@@ -16,9 +17,11 @@ export function toDeckRelative(key: string, root?: string): string {
   return m ? m[1] : key;
 }
 
+// lang: show the deck in that language, from its lang/<code>.md; none or the source language shows it as written.
 export function assembleDeck(
   files: Record<string, string>,
   modules: Record<string, unknown>,
+  lang?: string | null,
 ): { deck: Deck; problems: string[] } {
   const { data } = parseFrontmatter(files["deck.md"] ?? "");
   const { meta, problems } = toDeckMeta(data);
@@ -79,5 +82,14 @@ export function assembleDeck(
       seen.add(id);
     }
   }
-  return { deck: { meta, sections }, problems };
+  const deck: Deck = { meta, sections };
+  const langs = Object.keys(files).flatMap((k) => /^lang\/([^/]+)\.md$/.exec(k)?.[1] ?? []);
+  meta.source = meta.lang;
+  meta.languages = [meta.lang, ...langs.filter((l) => l !== meta.lang)];
+  if (langs.includes(meta.lang)) problems.push(`lang/${meta.lang}.md: ${meta.lang} is the source language (deck.md lang); its text is the deck itself`);
+  if (lang && lang !== meta.lang) {
+    if (langs.includes(lang)) problems.push(...translateDeck(deck, lang, files[`lang/${lang}.md`]));
+    else problems.push(`lang '${lang}': the deck has no lang/${lang}.md`);
+  }
+  return { deck, problems };
 }

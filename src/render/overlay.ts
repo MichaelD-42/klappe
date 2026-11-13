@@ -34,6 +34,7 @@ export function mountOverlay(
     problem,
     reducedMotion: opts.reducedMotion,
     deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources: [] },
+    t: (s) => deck.translate?.(["deck"], s) ?? s,
   };
   const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
   let refs: unknown;

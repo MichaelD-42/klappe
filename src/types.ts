@@ -9,7 +9,9 @@ export interface Rect extends Point {
 }
 export interface DeckMeta {
   title: string;
-  lang: string;
+  lang: string; // the language shown: deck.md lang, or a translation's
+  source?: string; // deck.md lang: the language the deck is written in
+  languages?: string[]; // the source, then each lang/<code>.md
   theme: string;
   intensity: "calm" | "bold";
   confidential: boolean;
@@ -110,6 +112,9 @@ export interface Ctx {
   // From deck.md: the language for effect words and number formats, and the shout-out intensity.
   // sources: the origins charts and stats record, deduplicated, in deck order (endRoll lists them); complete once every scene has built.
   deck: { lang: string; intensity: "calm" | "bold"; sources: string[] };
+  // The text in the language shown, from the deck's lang/<code>.md: looked up in this scene, then its section,
+  // then the deck. Pass a string literal, so `klappe lang` finds it. Without a translation, the text as given.
+  t(text: string): string;
 }
 // A helper's named step: adds tweens to the canvas timeline.
 export type StepAdder = (tl: gsap.core.Timeline) => void;
@@ -211,6 +216,10 @@ export interface Deck {
   components?: Components; // the deck's components.ts
   icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
   strings?: string; // the deck's strings.json as text: its own words for klappe's UI
+  // In a translation (lang/<code>.md): a text's translation from the first scope in chain that has it, and the
+  // missing and stale translations, as walk warnings.
+  translate?: (chain: string[], text: string) => string;
+  langWarnings?: string[];
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
   themes?: Record<string, string>;
