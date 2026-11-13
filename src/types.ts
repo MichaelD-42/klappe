@@ -9,7 +9,9 @@ export interface Rect extends Point {
 }
 export interface DeckMeta {
   title: string;
-  lang: string;
+  lang: string; // the language shown: deck.md lang, or a translation's
+  source?: string; // deck.md lang: the language the deck is written in
+  languages?: string[]; // the source, then each lang/<code>.md
   theme: string;
   intensity: "calm" | "bold";
   confidential: boolean;
@@ -211,6 +213,10 @@ export interface Deck {
   components?: Components; // the deck's components.ts
   icons?: Record<string, string>; // icons/<name>.svg as text, keyed "icons/<name>.svg"
   strings?: string; // the deck's strings.json as text: its own words for klappe's UI
+  // In a translation (lang/<code>.md): a text's translation from the first scope in chain that has it, and the
+  // missing and stale translations, as walk warnings.
+  translate?: (chain: string[], text: string) => string | undefined;
+  langWarnings?: string[];
   files?: Ctx["files"];
   // CSS by key: deck:<name>, repo:<name>, builtin:<name>.
   themes?: Record<string, string>;

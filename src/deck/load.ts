@@ -38,7 +38,7 @@ export async function loadDeck() {
     .filter((k) => /(?:^|\/)deck\.md$/.test(k))
     .sort((a, b) => a.length - b.length)[0];
   const root = deckMd?.slice(0, -"deck.md".length);
-  const r = assembleDeck(rekey(files as Record<string, string>, root), rekey(modules, root));
+  const r = assembleDeck(rekey(files as Record<string, string>, root), rekey(modules, root), new URLSearchParams(location.search).get("lang"));
   r.deck.themes = themesOf();
   r.deck.files = { data: byLink(data), media: byLink(media) };
   r.deck.overlay = Object.values(overlay)[0] as OverlayModule | undefined;
