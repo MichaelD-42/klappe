@@ -505,6 +505,13 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **klappe's own sounds are synthesised, by name, and a path is the deck's file.**
   - Why synthesised: a sample library brings someone else's licence into every deck; twelve short sounds made from noise and sine waves with ffmpeg are klappe's own, and `src/sounds/README.md` keeps each command, so they can be remade or tuned. Why by name: `"hit"` reads in a scene, and a name without a slash cannot be a deck file, so one `href` takes both. The set is small on purpose: a sound marks a moment, and a deck that needs more brings its own.
 
+## 2026-11-13 (1.1.0: Send to Claude)
+
+- **Send to Claude marks findings in `review.md`; a Claude Code session the author keeps open waits on `klappe review-wait`. The dev server does not run `claude -p` itself.**
+  - Why: a spawned headless Claude needs the CLI installed and logged in, its permissions settled and a rule for two sends at once, and it commits from a process the author cannot talk to, so an unclear finding cannot be asked about. A session the author started already has all of that, and the wait costs it nothing while it waits.
+  - Why an explicit Send and not a watcher on the file: the window saves as the author types, so a watcher would work half-written sentences. A sent finding that changes is a draft again for the same reason.
+  - The cost: each fix commits and reloads the deck while the author reviews.
+
 ## 2026-11-08 (1.0.0)
 
 - **1.0.0 ships: the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable. A change that breaks a deck now needs a major version.**

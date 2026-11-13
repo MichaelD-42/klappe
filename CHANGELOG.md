@@ -2,6 +2,12 @@
 
 klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable: a change that breaks a deck comes only in a major version, listed under **Changed**. Before 1.0.0 a minor version could break, and said so under **Changed**.
 
+## 1.1.0 (unreleased)
+
+### Added
+
+- Review mode: **Send to Claude** in the review window marks the step's findings `#### Sent` in `review.md`. `klappe review-wait` (`npm run review:wait`) waits until a finding is sent or reopened and lists the steps, so a Claude Code session told to "watch my review" fixes findings while you go on reviewing. A sent finding you change is a draft again. `init` and `klappe:sync` add the script to a deck repo.
+
 ## 1.0.0 (2026-11-08)
 
 The deck format, the `scene.ts` API and the CLI are now stable; 1.x adds to them and fixes them, and breaks no deck.

@@ -239,7 +239,9 @@ test('review-wait prints the steps ready for Claude and exits; init adds the rev
   expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
   expect(JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).scripts['review:wait']).toBe('node klappe/bin/klappe.mjs review-wait');
   writeFileSync(join(cwd, 'decks/talk/review.md'), '# Review\n\n## #/intro/hello/1\n\n> Welcome.\n\n### Content\n\nWarmer.\n\n#### Sent\n');
-  const r = spawnSync(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'review-wait'], { cwd, encoding: 'utf8', timeout: 30_000 });
+  // Not the e2e run's KLAPPE_REVIEW_FILE, which points the wait at another file.
+  const env = { ...process.env, KLAPPE_REVIEW_FILE: undefined };
+  const r = spawnSync(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'review-wait'], { cwd, env, encoding: 'utf8', timeout: 30_000 });
   expect(r.status).toBe(0);
   expect(r.stdout).toContain('#/intro/hello/1');
 });
