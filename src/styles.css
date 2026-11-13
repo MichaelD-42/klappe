@@ -239,11 +239,11 @@ body {
   padding-left: 26px; /* the thicker edge keeps the text where the others have it */
 }
 
-/* The deck's languages, under the sections: a row, the one shown marked like the current section. */
+/* The deck's languages, above the sections: a row, the one shown marked like the current section. */
 .k-selector-langs {
   display: flex;
   gap: 16px;
-  margin-top: 16px;
+  margin-bottom: 16px;
 }
 .k-selector-langs .k-btn {
   flex: 1;

@@ -23,11 +23,12 @@ export class Selector extends OverlayPanel {
       if (s.id === here) b.setAttribute("aria-current", "true");
       body.append(b);
     }
-    // A deck with translations (lang/<code>.md): each language, by its own name. Picking one reloads the deck in it
+    // A deck with translations (lang/<code>.md): each language, by its own name, above the sections. Picking one reloads the deck in it
     // at the same step: the language is set before the deck builds, never swapped on a running timeline.
     const { languages = [], source, lang } = this.deck.meta;
     if (languages.length > 1) {
-      const row = body.appendChild(document.createElement("div"));
+      const row = document.createElement("div");
+      body.prepend(row); // on top: a long deck's section list scrolls
       row.className = "k-selector-langs";
       for (const code of languages) {
         const name = new Intl.DisplayNames([code], { type: "language" }).of(code) ?? code;

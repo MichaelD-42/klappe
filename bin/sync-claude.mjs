@@ -19,12 +19,13 @@ export function syncClaude(srcRoot, destRoot) {
       copied.push(`${kind}/${name}`);
     }
   }
-  // The agents walk scenes with `npm run walk -- --only …` and wait on a review with `npm run review:wait`, which
-  // the klappe repo has too; a deck repo made before those scripts gets them here. A script the author wrote stays.
+  // The agents walk scenes with `npm run walk -- --only …`, wait on a review with `npm run review:wait` and write a
+  // translation file with `npm run lang -- <code>`, which the klappe repo has too; a deck repo made before those
+  // scripts gets them here. A script the author wrote stays.
   const pkgFile = join(destRoot, 'package.json');
   if (existsSync(pkgFile)) {
     const pkg = JSON.parse(readFileSync(pkgFile, 'utf8'));
-    const missing = Object.entries({ walk: WALK, 'review:wait': REVIEW_WAIT }).filter(([k]) => pkg.scripts?.[k] === undefined);
+    const missing = Object.entries({ walk: WALK, 'review:wait': REVIEW_WAIT, lang: LANG }).filter(([k]) => pkg.scripts?.[k] === undefined);
     if (missing.length) {
       pkg.scripts = { ...pkg.scripts, ...Object.fromEntries(missing) };
       writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
@@ -36,6 +37,7 @@ export function syncClaude(srcRoot, destRoot) {
 
 export const WALK = 'node klappe/bin/klappe.mjs test';
 export const REVIEW_WAIT = 'node klappe/bin/klappe.mjs review-wait';
+export const LANG = 'node klappe/bin/klappe.mjs lang';
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Run from the deck repo root; the framework sits in ./klappe/.

@@ -575,7 +575,7 @@ async function acceptance(ctx: SelftestCtx, checks: SelftestCheck[]): Promise<vo
     await stepper.goto(steps.length - 1, "cut"); // so each jump moves
     key("s");
     if (!selector.isOpen) return ["S did not open the selector"];
-    const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector button")];
+    const labels = () => [...document.querySelectorAll<HTMLElement>(".k-selector > button")]; // the sections, not the language row
     const titles = labels().map((b) => b.textContent);
     // The appendix carries klappe's word before its title.
     const want = deck.sections.map((s: any) => (s.appendix ? `${t("appendix", deck.meta.lang)} · ${s.title}` : s.title));

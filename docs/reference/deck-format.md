@@ -21,6 +21,7 @@ decks/<id>/
         scene.ts          # optional
   components.ts           # optional: the deck's own scene.md fences, see markdown.md#deck-components
   strings.json            # optional: the deck's own words for klappe's UI, by key; see lang below
+  lang/de.md              # optional: the deck in another language, one file per language; see languages below
   shared/                 # optional: helpers and scene factories, not loaded as scenes
   icons/                  # optional: own icons, <name>.svg on Lucide's 24 grid, used by name in icon(); <repo>/icons/ is shared by all decks
 ```
@@ -30,7 +31,7 @@ decks/<id>/
 Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true`/`false` or a list is dropped (`duration: 45  # minutes`); in text it stays part of the text (`title: Talk #1`).
 
 - `title`: required. It is also the page title in the browser tab. A title that reads as a number (`1984`) is text.
-- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language.
+- `lang`: default `en`. klappe's own words (the speaker view, "Sample data", "Time's up", the likert scale) come in English and German (`de`, also `de-DE`); any other language shows English, unless the deck gives its own: `strings.json` at the deck root maps klappe's word keys to text, `{ "next": "Suivant", "timesUp": "Temps écoulé" }`, and those win in every view (the deck, the speaker view, the review window, the PDF). The keys are the ones in `klappe/src/strings.ts`; a key it gives no text for stays as before. An unknown key, a value that is not text and a file that is not a JSON object are deck problems. Numbers and dates follow `lang` in every language. `lang` is also the language the deck is written in; a translation into another one is a `lang/<code>.md` file, see [languages](#languages).
 - `theme`: a theme name: `calm` (default), `bold`, or your own. See [themes](themes.md).
 - `intensity`: `calm` or `bold`. Default is the theme.
 - `confidential`: `true` or `false`. Default `false`.
@@ -43,6 +44,36 @@ Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true
 - `sound`: `true` or `false` (default). Turns on [`cue`](effects.md#cue) and `section.ts` `music`; without it a deck with them is silent. Sound plays only on a forward step, never on a seek, jump or step back, and never in the walk, `pdf`, `shot` or `video` (the MP4 has no sound track). `M` mutes and unmutes, also from the speaker view. A browser plays sound only after the first key or click on the page.
 - `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
 - `cuts`: shorter talks from the same deck, by name, each the section ids it keeps, or the ids and its own `duration`: `cuts: { short: { sections: [opening, results], duration: 20 }, long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
+
+## Languages
+
+One deck can be given in several languages: German one week, English the next. The deck is written in one, its `lang` in `deck.md`, and each other language is a file `lang/<code>.md` that translates the deck's texts. The scenes, their steps and their code are the same in every language; only the words change.
+
+```markdown
+# de
+
+## deck
+
+> klappe demo
+
+klappe-Demo
+
+## basics/translated
+
+> One deck, two languages
+
+Ein Deck, zwei Sprachen
+```
+
+A `##` heading names where the texts below it are: `deck` (the title in `deck.md`), a section id (its title and notes) or `<section>/<scene>`. Under it each source text is a `>` quote, as it stands in the deck, and its translation is the text below the quote, until the next quote. A note over several paragraphs is a quote over several lines. Runs of spaces and line breaks compare as one space. What is translated: titles, step text, notes, `###` questions and their answers, list and task items, agenda rows, table cells, chat messages, picture alt text, and each string a `scene.ts` passes through `ctx.t()`. Code and console blocks, data files, pictures and videos stay as they are.
+
+In `scene.ts`, `ctx.t("This is how work flows today.")` gives the string in the language shown. It looks in the scene's own heading, then its section's, then `deck`, so a helper in `section.ts` or `shared/` that many scenes call can have one translation under the section or `deck`. Pass a string literal: `klappe lang` finds the strings to translate by reading the code. A string not passed through `ctx.t()` stays as written, so an existing deck translates its code strings by wrapping the ones it shows. A `components.ts` fence takes its text from `scene.md` and needs nothing.
+
+`npm run lang -- de` (`klappe lang de`) writes `lang/de.md` from the deck: every text in deck order, an empty translation under each new one. Run it again after editing the deck. It keeps every translation, drops the texts that left the deck, and when a text changed it keeps the old translation under the new text, marked `<!-- was: <old text> -->`. Delete that line once the translation is updated. Claude can fill the empty translations; the klappe skill says how.
+
+The deck shows in its own language. `?lang=de` shows it in German, at the same deep link, and so does picking Deutsch in the section list (`S`), which lists the deck's languages when it has more than one. The language is set when the deck loads: picking one reloads the page at the step you were on. klappe's own words and number formats follow the language shown. `outline`, `pdf`, `shot`, `video` and `test` take `--lang <code>`, and the files they write carry it in their name (`dist/<id>-de.pdf`). `build` writes one site with every language.
+
+A text with no translation shows in the source language. The walk names it as a look warning, as does a stale translation: `klappe test --lang de` walks the deck in German, which also checks that the longer German lines still fit (`--strict` fails on them). A `lang/` file for the deck's own language, a heading that names no section or scene, and a `?lang=` the deck has no file for are deck problems. In review mode the in-place text edit writes `scene.md`, so it is off in a translation; write a fix for the German text as a Content finding.
 
 ## Cuts and the appendix
 
@@ -368,6 +399,7 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 - `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
 - `?cut=<name>`: play a cut from `deck.md` `cuts`; see [cuts and the appendix](#cuts-and-the-appendix).
+- `?lang=<code>`: show the deck in a language it has a `lang/<code>.md` for; see [languages](#languages).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
 

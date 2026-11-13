@@ -56,10 +56,11 @@ test('adds the walk and review:wait scripts to a deck repo that lacks it, and ke
     test: 'node klappe/bin/klappe.mjs test',
     walk: 'node klappe/bin/klappe.mjs test',
     'review:wait': 'node klappe/bin/klappe.mjs review-wait',
+    lang: 'node klappe/bin/klappe.mjs lang',
   });
-  writeFileSync(join(dest, 'package.json'), JSON.stringify({ scripts: { walk: 'my own', 'review:wait': 'mine too' } }));
+  writeFileSync(join(dest, 'package.json'), JSON.stringify({ scripts: { walk: 'my own', 'review:wait': 'mine too', lang: 'and this' } }));
   syncClaude(src, dest);
-  expect(scripts()).toEqual({ walk: 'my own', 'review:wait': 'mine too' });
+  expect(scripts()).toEqual({ walk: 'my own', 'review:wait': 'mine too', lang: 'and this' });
   const bare = mkdtempSync(join(tmpdir(), 'dest-'));
   syncClaude(src, bare); // no package.json: nothing to add to
   expect(existsSync(join(bare, 'package.json'))).toBe(false);

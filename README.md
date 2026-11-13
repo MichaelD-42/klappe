@@ -71,6 +71,7 @@ export default scene;
 - **Effects:** shatter, CRT, zoom and blackout transitions; shout-out, swarm, morph, counters, a decoding line, before/after wipe, people figures, a QR code.
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
 - **Presenting:** speaker view with rehearsal timing, overview, section list, autoplay, exercise timers, laser and pen, deep links, shorter cuts of one deck and an appendix for Q&A, opt-in sound, and reduced motion respected (with a `?reducedmotion=0` override).
+- **Languages:** one deck in several languages, a `lang/<code>.md` translation file per language; `npm run lang -- de` writes it, the section list switches, and every export takes `--lang`.
 - **Checks:** a missing picture or data file shows a placeholder on stage and a line in `media/TODO.md`; the self-test and a design lint run in CI.
 - **Themes:** seven built in (`calm`, `bold`, `sorbet`, `lavender`, `daylight`, `forest`, `ink`; dark, light and pastel), built from `--k-*` tokens with bundled fonts; a deck can bring its own.
 
@@ -98,8 +99,9 @@ npm run dev                                        # http://localhost:5173
 | `npm run shot -- <section>[/<scene>[/<step>]]` | PNGs of those steps at 1920x1080 and 1366x768 in `dist/shots/my-talk/`; with no target, every step. `--last` shoots each scene's last step only, `--sheet` a contact sheet per section, `--theme <name>` another theme, `--size 1366x768` one size, `--at <ms>` a step that far into its play, `--url <dev server>` reuses a running `npm run dev`. |
 | `npm run video` | `dist/my-talk.mp4`, the deck in full motion with each step held for its `auto` time or 3 s. `-- --out <file.mp4>`, `--fps`, `--hold <s>`, `--size <w>x<h>`, `--only <section>[/<scene>]` for a clip of those scenes. Needs `ffmpeg` on `PATH`. |
 | `npm run outline` | The deck as text: every step with its note and deep-link ids, and a timing estimate against `duration` in `deck.md`. |
+| `npm run lang -- de` | Writes or updates `decks/my-talk/lang/de.md`, the deck's texts to translate into German. See [languages](docs/reference/deck-format.md#languages). |
 
-`outline`, `pdf`, `video` and `test` take `-- --cut <name>` for a cut from `deck.md` `cuts` (see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)). With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`outline`, `pdf`, `video` and `test` take `-- --cut <name>` for a cut from `deck.md` `cuts` (see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)), and these and `shot` take `-- --lang <code>` for a translation. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 

@@ -12,6 +12,7 @@
     "video": "node bin/klappe.mjs video --deck demo",
     "outline": "node bin/klappe.mjs outline --deck demo",
     "review:wait": "node bin/klappe.mjs review-wait --deck demo",
+    "lang": "node bin/klappe.mjs lang --deck demo",
     "test:unit": "vitest run tests/unit tests/lint",
     "test:e2e": "vitest run tests/e2e",
     "eval:reviewers": "node bin/eval.mjs reviewers",

@@ -7,6 +7,7 @@ klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck fo
 ### Added
 
 - Review mode: **Send to Claude** in the review window marks the step's findings `#### Sent` in `review.md`. `klappe review-wait` (`npm run review:wait`) waits until a finding is sent or reopened and lists the steps, so a Claude Code session told to "watch my review" fixes findings while you go on reviewing. A sent finding you change is a draft again. `init` and `klappe:sync` add the script to a deck repo.
+- Languages: a deck can be shown in other languages from `lang/<code>.md` translation files, one per language, with the scenes and steps of the source deck. `ctx.t("…")` translates a string in `scene.ts`. `klappe lang <code>` (`npm run lang -- <code>`) writes and updates the file, keeping translations and marking the ones whose source changed. `?lang=<code>` or the section list (`S`) picks the language; `outline`, `pdf`, `shot`, `video` and `test` take `--lang`. The walk warns about missing and stale translations. Catalog: `#/basics/translated/1`.
 
 ## 1.0.0 (2026-11-08)
 

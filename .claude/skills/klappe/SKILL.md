@@ -150,6 +150,16 @@ When the user asks you to work on their review, read `decks/<id>/review.md`. The
 - When a finding is unclear, ask in the chat and leave it in the file until the author answers. Add nothing to the file but the `#### Fixed` lines.
 - When the author asks you to watch the review, work only the ready findings: those whose last `####` section is `#### Sent` (the author pressed Send to Claude) or `#### Reopened`; a finding with no `####` section is a draft still being written. Run `npm run review:wait` in the background (add `-- --deck <id>` with several decks); it ends when there are ready findings and lists their deep links. Work them by the rules above, putting `#### Fixed` after `#### Sent`, then start the wait again. Keep going until the author says stop; answer their chat messages in between.
 
+## Translate a deck
+
+A deck in several languages keeps one structure: the source language is `lang` in `deck.md`, and each other language is `decks/<id>/lang/<code>.md` ([languages](klappe/docs/reference/deck-format.md#languages)). Never copy a deck or a scene to translate it.
+
+- Run `npm run lang -- <code>` first and after every change to the deck. It writes each text as a `>` quote under its `## <scope>` heading and keeps the translations already there.
+- Write each translation under its quote, after a blank line. Keep inline Markdown, `:icon:` names, numbers and links as the source has them; translate link labels and alt text. Leave the quotes and headings as they are: they are how a text is found.
+- A `<!-- was: … -->` line means the source changed since the translation was written: update the translation to the new quote, then delete the line.
+- In `scene.ts`, pass each string the audience reads through `ctx.t("…")`, as a literal, then run `npm run lang` again so the file has it. Labels built from data or numbers are not translated.
+- Check with `npm run walk -- --only <section>/<scene> --lang <code>`: it prints each missing or stale translation, and the look warnings of the translated text (German runs about a third longer). Fix a line that no longer fits by shortening the translation, not by changing the layout for one language.
+
 ## Check your work
 
 While you work, check only the scenes you touched:

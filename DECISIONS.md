@@ -512,6 +512,17 @@ Source: an analysis of the session logs of the training deck build: full test ru
   - Why an explicit Send and not a watcher on the file: the window saves as the author types, so a watcher would work half-written sentences. A sent finding that changes is a draft again for the same reason.
   - The cost: each fix commits and reloads the deck while the author reviews.
 
+## 2026-11-13 (1.1.0: languages)
+
+- **A translation is a `lang/<code>.md` file that maps the source deck's texts; there is no `scene.de.md` and no copy of the deck.**
+  - Why: the structure (scenes, steps, code) then comes from the source alone, so a language cannot get its own steps, and a fix to the deck is made once. Parallel files per scene would spread a translation over every scene folder and let step counts drift.
+  - Texts are found by their source text, scoped by scene, not by position: inserting a step does not shift every translation after it. The cost is that editing a source text orphans its translation; `klappe lang` pairs it with the changed text and marks it `<!-- was: … -->` rather than losing it.
+  - The marker is an HTML comment, not a quoted `> was:` line, so it cannot be read as part of a quoted note.
+- **The language is chosen when the deck loads (`?lang=`, a reload from the section list), never swapped on a running deck.**
+  - Why: every effect builds its DOM and measures its text once, at load; swapping words afterwards would leave fitted text at the wrong size and break seek = play. A talk switches language once a week, not mid-sentence.
+- **A missing translation shows the source text and is a walk warning, not a deck problem.**
+  - Why: a deck being translated is shown half-done many times before it is finished; failing it would block every check until the last line is in. `--strict` makes them fail for a final check.
+
 ## 2026-11-08 (1.0.0)
 
 - **1.0.0 ships: the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable. A change that breaks a deck now needs a major version.**
