@@ -35,6 +35,7 @@ export const strings = {
     waitingForApproval: "Fixed, waiting for your approval",
     sendToClaude: "Send to Claude",
     sentToClaude: "Sent to Claude",
+    editOffInTranslation: "Text edits write scene.md, so a double click edits nothing in a translation: put fixes for it in Content.",
     reviewNeedsDev: "Review mode needs the dev server: npm run dev",
     // Effect UI words (src/fx and the default media slot).
     dataMissing: "DATA MISSING",
@@ -106,6 +107,7 @@ export const strings = {
     waitingForApproval: "Behoben, warten auf deine Abnahme",
     sendToClaude: "An Claude senden",
     sentToClaude: "An Claude gesendet",
+    editOffInTranslation: "Textänderungen schreiben scene.md, darum ändert ein Doppelklick in einer Übersetzung nichts: Korrekturen dafür in Inhalt eintragen.",
     reviewNeedsDev: "Der Review-Modus braucht den Dev-Server: npm run dev",
     dataMissing: "DATEN FEHLEN",
     dataError: "DATENFEHLER",

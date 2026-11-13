@@ -159,6 +159,7 @@ export function mountEdit(stage: HTMLElement, ui: HTMLElement, canvases: CanvasR
   stage.addEventListener("dblclick", (e) => {
     const el = pick(e.clientX, e.clientY);
     if (!(el instanceof HTMLElement) || !(el.matches("p[data-step]") || el.localName === "h2") || !source()?.endsWith("scene.md")) return;
+    if (deck.meta.lang !== deck.meta.source) return; // a translation's text is in lang/<code>.md, not scene.md
     drop();
     typing = { el, was: (el.textContent ?? "").trim() };
     el.contentEditable = "plaintext-only";

@@ -111,10 +111,11 @@ export function translateDeck(deck: Deck, code: string, md: string): string[] {
   };
   eachText(deck, (scope, s) => use(scope, s, find(scope, s)) ?? s);
   deck.langWarnings = warnings;
-  // For ctx.t: the first scope that has the text. A miss is the caller's to report.
+  // For ctx.t: the first scope in chain that has the text; a miss is warned about on the first.
   deck.translate = (chain, s) => {
-    const at = chain.find((c) => find(c, s)?.text);
-    return at === undefined ? undefined : use(at, s, find(at, s));
+    if (!s.trim()) return s;
+    const at = chain.find((c) => find(c, s)?.text) ?? chain[0];
+    return use(at, s, find(at, s)) ?? s;
   };
   deck.meta.lang = code;
   return problems;

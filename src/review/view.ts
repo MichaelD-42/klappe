@@ -70,6 +70,7 @@ export function mountReview(root: HTMLElement, deck: Deck, steps: StepAddr[], ch
   });
   buttons.append(button(t("previous", lang), () => send("prev")), button(t("next", lang), () => send("next")), toClaude);
   view.append(place, said, moved, form, buttons, status);
+  if (deck.meta.source && lang !== deck.meta.source) status.before(el("p", "k-rv-moved", t("editOffInTranslation", lang)));
   root.append(view);
 
   let refused = 0; // findings the server would not take: not in the file, so the status keeps saying so

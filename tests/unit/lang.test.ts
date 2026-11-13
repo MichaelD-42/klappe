@@ -113,11 +113,13 @@ test('the source language, an unknown lang and a heading that names nothing are 
 
 test('translate looks a text up in the scene, then its section, then the deck; keys ignore runs of whitespace', () => {
   const md = '## deck\n\n> Shared\n\nGemeinsam\n\n## intro\n\n> Section word\n\nAbschnittswort\n\n## intro/hello\n\n> Own   line\n\nEigene Zeile\n'
-  const t = assembleDeck({ ...deck, 'lang/de.md': md }, {}, 'de').deck.translate!
+  const d = assembleDeck({ ...deck, 'lang/de.md': md }, {}, 'de').deck
+  const t = d.translate!
   expect(t(['intro/hello', 'intro', 'deck'], 'Own line')).toBe('Eigene Zeile')
   expect(t(['intro/hello', 'intro', 'deck'], 'Section word')).toBe('Abschnittswort')
   expect(t(['intro/hello', 'intro', 'deck'], 'Shared')).toBe('Gemeinsam')
-  expect(t(['intro/hello', 'intro', 'deck'], 'Nope')).toBeUndefined()
+  expect(t(['intro/hello', 'intro', 'deck'], 'Nope')).toBe('Nope')
+  expect(d.langWarnings).toContain('#/intro/hello: no de translation for "Nope"')
 })
 
 test('a note over several paragraphs round-trips through writeLang and parseLang', () => {

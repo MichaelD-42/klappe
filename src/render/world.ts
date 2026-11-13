@@ -525,6 +525,7 @@ export function renderWorld(
         problem: (msg) => (problems.push(msg), opts.onProblem?.(msg)),
         reducedMotion: opts.reducedMotion,
         deck: { lang: deck.meta.lang, intensity: deck.meta.intensity, sources },
+        t: (s) => deck.translate?.(attr === "data-section" ? [id, "deck"] : ["deck"], s) ?? s,
       };
     };
 
@@ -542,7 +543,8 @@ export function renderWorld(
     for (const s of sections)
       for (const sc of s.scenes) {
         const tokens = s.module?.tokens;
-        const ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene", tokens), scene: sc.id, doc: sc };
+        const ctx: Ctx = { ...ctxAt(layout.rects[sc.id] ?? { x: 0, y: 0, ...stage }, "data-scene", sc.id, "k-scene", tokens), scene: sc.id, doc: sc };
+        ctx.t = (text) => deck.translate?.([`${s.id}/${sc.id}`, s.id, "deck"], text) ?? text;
         const own = sc.module?.background;
         const bg = own ?? s.module?.background;
         let pin = bg && pins.get(bg);

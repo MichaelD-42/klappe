@@ -191,6 +191,6 @@ async function startDeck(svg: Record<string, string>) {
   if (query.get("autoplay") === "1" && !query.get("selftest")) first.then(() => autoplay.start());
   // The self-test loads only when asked.
   if (query.get("selftest")) import("./selftest")
-      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors }))
+      .then((m) => m.runSelftestIfAsked({ stepper, canvases, steps, stage, problems, errors, langWarnings: deck.langWarnings }))
       .catch((e) => console.error(`selftest: ${e instanceof Error ? e.message : e}`));
 }
