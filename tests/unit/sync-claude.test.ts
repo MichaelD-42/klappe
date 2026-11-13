@@ -46,16 +46,20 @@ test('a file that left skills/klappe/ in klappe leaves the deck repo too; the de
 });
 
 // The agents say `npm run walk -- --only <section>/<scene>`: a deck repo made before that script gets it on sync.
-test('adds the walk script to a deck repo that lacks it, and keeps one the author wrote', () => {
+test('adds the walk and review:wait scripts to a deck repo that lacks it, and keeps one the author wrote', () => {
   const src = mkdtempSync(join(tmpdir(), 'src-'));
   const dest = mkdtempSync(join(tmpdir(), 'dest-'));
   writeFileSync(join(dest, 'package.json'), JSON.stringify({ name: 'talks', scripts: { test: 'node klappe/bin/klappe.mjs test' } }, null, 2) + '\n');
   syncClaude(src, dest);
   const scripts = () => JSON.parse(readFileSync(join(dest, 'package.json'), 'utf8')).scripts;
-  expect(scripts()).toEqual({ test: 'node klappe/bin/klappe.mjs test', walk: 'node klappe/bin/klappe.mjs test' });
-  writeFileSync(join(dest, 'package.json'), JSON.stringify({ scripts: { walk: 'my own' } }));
+  expect(scripts()).toEqual({
+    test: 'node klappe/bin/klappe.mjs test',
+    walk: 'node klappe/bin/klappe.mjs test',
+    'review:wait': 'node klappe/bin/klappe.mjs review-wait',
+  });
+  writeFileSync(join(dest, 'package.json'), JSON.stringify({ scripts: { walk: 'my own', 'review:wait': 'mine too' } }));
   syncClaude(src, dest);
-  expect(scripts().walk).toBe('my own');
+  expect(scripts()).toEqual({ walk: 'my own', 'review:wait': 'mine too' });
   const bare = mkdtempSync(join(tmpdir(), 'dest-'));
   syncClaude(src, bare); // no package.json: nothing to add to
   expect(existsSync(join(bare, 'package.json'))).toBe(false);

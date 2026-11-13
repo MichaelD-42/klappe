@@ -233,3 +233,13 @@ test('theme --logo copies the logo and writes overlay.ts, but never overwrites o
   expect(readFileSync(overlay, 'utf8')).toBe('mine');
   expect(r.stdout).toContain('satisfies OverlayModule');
 });
+
+test('review-wait prints the steps ready for Claude and exits; init adds the review:wait script', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
+  expect(JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).scripts['review:wait']).toBe('node klappe/bin/klappe.mjs review-wait');
+  writeFileSync(join(cwd, 'decks/talk/review.md'), '# Review\n\n## #/intro/hello/1\n\n> Welcome.\n\n### Content\n\nWarmer.\n\n#### Sent\n');
+  const r = spawnSync(process.execPath, [join(__dirname, '../../bin/klappe.mjs'), 'review-wait'], { cwd, encoding: 'utf8', timeout: 30_000 });
+  expect(r.status).toBe(0);
+  expect(r.stdout).toContain('#/intro/hello/1');
+});

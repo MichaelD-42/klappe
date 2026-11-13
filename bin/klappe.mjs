@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import fs from 'node:fs'
 import path from 'node:path'
-import { syncClaude, WALK } from './sync-claude.mjs'
+import { REVIEW_WAIT, syncClaude, WALK } from './sync-claude.mjs'
 
 const klappeDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const [cmd, ...rest] = process.argv.slice(2)
@@ -25,13 +25,14 @@ const usage =
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
   '       klappe shot [--deck <id>] [<section>[/<scene>[/<step>]] ...] [--last] [--sheet] [--theme <name>] [--size <w>x<h>] [--at <ms>] [--url <dev server>]\n' +
   '       klappe video [--deck <id>] [--out <file.mp4>] [--fps <n>] [--hold <s>] [--size <w>x<h>] [--only <section>[/<scene>]]   needs ffmpeg on PATH\n' +
+  '       klappe review-wait [--deck <id>]   waits until review.md has findings sent to Claude, then lists their steps\n' +
   '       klappe --version'
 // --help on a command too: shot took it for nothing and rendered the whole deck.
 if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
   console.log(usage)
   process.exit(0)
 }
-if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme'].includes(cmd)) {
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme', 'review-wait'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
 }
@@ -77,6 +78,7 @@ if (cmd === 'init') {
     build: 'node klappe/bin/klappe.mjs build',
     test: 'node klappe/bin/klappe.mjs test',
     walk: WALK, // the agents' scene walk; the klappe repo has it too, where test is vitest
+    'review:wait': REVIEW_WAIT,
     pdf: 'node klappe/bin/klappe.mjs pdf',
     shot: 'node klappe/bin/klappe.mjs shot',
     video: 'node klappe/bin/klappe.mjs video',
@@ -157,6 +159,16 @@ if (cut !== undefined) {
 }
 // The deck's URL on a server, with the cut.
 const deckUrl = (server) => `${server.resolvedUrls.local[0]}${cut ? `?cut=${encodeURIComponent(cut)}` : ''}`
+if (cmd === 'review-wait') {
+  // Claude runs this in the background while the author reviews: it ends when there is work. vite loads the .ts.
+  const { runnerImport } = await import('vite')
+  const { module } = await runnerImport(path.join(klappeDir, 'src/review/file.ts'))
+  const { waitForReady } = await import('./review-wait.mjs')
+  const file = process.env.KLAPPE_REVIEW_FILE ?? path.join(deckDir, 'review.md')
+  const steps = await waitForReady(file, module.readyFindings)
+  console.log(`Ready for Claude in ${path.relative(process.cwd(), file)}:\n${steps.join('\n')}`)
+  process.exit(0)
+}
 
 // Lists missing media and data files in the deck. bin/todo.mjs may be absent; then this does nothing.
 async function writeTodos() {
