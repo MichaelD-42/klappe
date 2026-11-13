@@ -128,6 +128,25 @@ body {
   color: var(--k-accent);
 }
 
+/* The talk clock (C): bottom right, inside the default safe area, under the panels and the problems box. */
+.k-clock {
+  position: absolute;
+  right: 64px;
+  bottom: 48px;
+  padding: 12px 24px;
+  border-radius: var(--k-radius);
+  background: var(--k-surface);
+  color: var(--k-muted);
+  font: 500 var(--k-size-label) / 1.2 var(--k-font);
+  font-variant-numeric: tabular-nums;
+}
+.k-clock-talk[data-tone="warn"] {
+  color: var(--k-warn);
+}
+.k-clock-talk[data-tone="bad"] {
+  color: var(--k-bad);
+}
+
 .k-problems {
   position: absolute;
   left: 24px;

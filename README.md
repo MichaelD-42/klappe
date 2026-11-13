@@ -117,6 +117,7 @@ Open the deck full screen (F11) and press `N` for the speaker view in a second w
 | `R` | review window (dev server only) |
 | `A` | autoplay; any step key stops it |
 | `T` | start or pause the scene's timer |
+| `C` | talk clock: the time and the time left, blended over the stage; again to hide |
 | `L` / `D` | laser dot / draw on the stage; again to turn off. Each step clears it |
 | `Q` | to the appendix, and again back to where you were |
 | `M` | mute or unmute the deck's sound |

@@ -523,6 +523,13 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **A missing translation shows the source text and is a walk warning, not a deck problem.**
   - Why: a deck being translated is shown half-done many times before it is finished; failing it would block every check until the last line is in. `--strict` makes them fail for a final check.
 
+## 2026-11-13 (1.1.0: talk clock)
+
+- **The talk clock is klappe UI on one key (`C`), not an `overlay.ts` helper, and shows the time of day and the talk time in one box.**
+  - Why: every talk can use it, so no deck should need code for it; one box on one key is less to remember than a clock and a countdown apart. In `.k-ui` it is hidden in every export, like the overview.
+  - The talk time starts at the first move off the step the deck opened on, not at load: a deck opened ten minutes before the talk would otherwise start ten minutes late.
+  - The time of day follows the deck language's own format (12-hour for `en`, 24-hour for `de`), as numbers and dates do everywhere else in klappe.
+
 ## 2026-11-08 (1.0.0)
 
 - **1.0.0 ships: the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable. A change that breaks a deck now needs a major version.**
