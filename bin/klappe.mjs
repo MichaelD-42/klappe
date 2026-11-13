@@ -20,6 +20,8 @@ const usage =
   '       klappe build|outline|init [--deck <id>]\n' +
   '       klappe outline --story   one line per scene: its link and story point\n' +
   '       klappe outline|pdf|video|test --cut <name>   a deck.md cut instead of the whole deck\n' +
+  '       klappe outline|pdf|shot|video|test --lang <code>   the deck in a language from its lang/<code>.md\n' +
+  '       klappe lang <code> [--deck <id>]   writes or updates lang/<code>.md from the deck, for translating\n' +
   '       klappe pdf [--deck <id>] [--handout] [--width <px>] [--quality <1-100>]\n' +
   '       klappe test [--deck <id>] [--only <section>[/<scene>]] [--bail] [--strict] [<vitest file filter>] [-t <name>]\n' +
   '       klappe theme [--deck <id>] --name <name> --colors <hex>,<hex> [--light] [--logo <file.svg|png>] [--force]\n' +
@@ -32,7 +34,7 @@ if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
   console.log(usage)
   process.exit(0)
 }
-if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme', 'review-wait'].includes(cmd)) {
+if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme', 'review-wait', 'lang'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
 }
@@ -157,8 +159,35 @@ if (cut !== undefined) {
     process.exit(1)
   }
 }
-// The deck's URL on a server, with the cut.
-const deckUrl = (server) => `${server.resolvedUrls.local[0]}${cut ? `?cut=${encodeURIComponent(cut)}` : ''}`
+// --lang <code>: the deck in a language it has a lang/<code>.md for; outline, pdf, shot, video and test follow it.
+const lang = rest.includes('--lang') ? rest[rest.lastIndexOf('--lang') + 1] : undefined
+if (lang !== undefined) {
+  const languages = (await (await import('./outline.mjs')).outline(klappeDir, deckDir)).deck.meta.languages ?? []
+  if (!lang || lang.startsWith('-') || !languages.includes(lang)) {
+    console.error(`--lang needs a language the deck has: ${languages.join(', ')}`)
+    process.exit(1)
+  }
+}
+// The deck's URL on a server, with the cut and the language.
+const query = new URLSearchParams({ ...(cut && { cut }), ...(lang && { lang }) }).toString()
+const deckUrl = (server) => `${server.resolvedUrls.local[0]}${query ? `?${query}` : ''}`
+// Exported files carry the cut and the language in their name, so they never overwrite the whole talk's.
+const suffix = `${cut ? `-${cut}` : ''}${lang ? `-${lang}` : ''}`
+if (cmd === 'lang') {
+  const code = rest[0]
+  if (!code || !/^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$/.test(code)) {
+    console.error('usage: klappe lang <code> [--deck <id>], for example klappe lang de')
+    process.exit(1)
+  }
+  try {
+    const r = await (await import('./lang.mjs')).writeLangFile(klappeDir, deckDir, code)
+    console.log(`Wrote ${path.relative(process.cwd(), r.file)}: ${r.texts} texts, ${r.open} to translate${r.stale ? `, ${r.stale} stale` : ''}.`)
+    process.exit(0)
+  } catch (e) {
+    console.error(e.message)
+    process.exit(1)
+  }
+}
 if (cmd === 'review-wait') {
   // Claude runs this in the background while the author reviews: it ends when there is work. vite loads the .ts.
   const { runnerImport } = await import('vite')
@@ -188,15 +217,16 @@ if (cmd === 'test') {
   }
   const bail = rest.includes('--bail')
   const strict = rest.includes('--strict')
-  const own = new Set(['--deck', '--only', '--cut'])
+  const own = new Set(['--deck', '--only', '--cut', '--lang'])
   const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail' && a !== '--strict')
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'
   if (strict) process.env.KLAPPE_STRICT = '1'
   if (cut) process.env.KLAPPE_CUT = cut
+  if (lang) process.env.KLAPPE_LANG = lang
   // Deck problems the parser finds (a duplicate id) stop the run before a browser starts: --only would not see them.
   const { outline, overWords, walkedScenes } = await import('./outline.mjs')
-  const { problems, deck } = await outline(klappeDir, deckDir, { cut: cut ?? null })
+  const { problems, deck } = await outline(klappeDir, deckDir, { cut: cut ?? null, lang: lang ?? null })
   for (const p of problems) console.error(`deck problem: ${p}`)
   if (problems.length) process.exit(1)
   if (only.length) {
@@ -206,12 +236,12 @@ if (cmd === 'test') {
     console.log(`walking ${scenes.length} ${scenes.length === 1 ? 'scene' : 'scenes'}: ${scenes.join(', ')}`)
   }
   // deck.md max-words: reported before the tests, fails the run after them.
-  const long = await overWords(klappeDir, deckDir)
+  const long = await overWords(klappeDir, deckDir, lang ?? null)
   for (const l of long) console.error(`max-words: ${l}`)
   const { startVitest, parseCLI } = await import('vitest/node')
   const { filter, options } = parseCLI(['vitest', ...args])
-  // A cut walks alone: the other e2e tests are klappe's own fixtures and the whole demo.
-  const walkOnly = only.length || cut
+  // A cut or a language walks alone: the other e2e tests are klappe's own fixtures and the whole demo.
+  const walkOnly = only.length || cut || lang
   const vitest = await startVitest('test', walkOnly ? ['tests/e2e/walk.e2e.test.ts'] : filter, {
     ...options,
     ...(walkOnly && { testNamePattern: 'walk passes at', silent: false }), // the look report: vitest hides a passing test's log under an agent
@@ -226,7 +256,7 @@ if (cmd === 'test') {
 
 if (cmd === 'outline') {
   const { outline } = await import('./outline.mjs')
-  const r = await outline(klappeDir, deckDir, { story: rest.includes('--story'), cut: cut ?? null })
+  const r = await outline(klappeDir, deckDir, { story: rest.includes('--story'), cut: cut ?? null, lang: lang ?? null })
   for (const p of r.problems) console.warn(`deck problem: ${p}`)
   process.stdout.write(r.text)
   process.exit(0)
@@ -259,7 +289,7 @@ if (cmd === 'build') {
   await server.listen()
   // --handout: one A4 page per scene with its speaker notes, to send after the talk.
   const handout = rest.includes('--handout')
-  const out = path.join(process.cwd(), 'dist', `${id}${cut ? `-${cut}` : ''}${handout ? '-handout' : ''}.pdf`)
+  const out = path.join(process.cwd(), 'dist', `${id}${suffix}${handout ? '-handout' : ''}.pdf`)
   try {
     const r = await exportPdf(deckUrl(server), out, { handout, width, quality })
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
@@ -271,7 +301,7 @@ if (cmd === 'build') {
   }
 } else if (cmd === 'shot') {
   // Targets are the words that are neither a flag nor a flag's value.
-  const valued = new Set(['--deck', '--theme', '--size', '--at', '--url'])
+  const valued = new Set(['--deck', '--theme', '--size', '--at', '--url', '--lang'])
   const targets = rest.filter((a, k) => !a.startsWith('-') && !valued.has(rest[k - 1]))
   const arg = (flag) => (rest.includes(flag) ? rest[rest.lastIndexOf(flag) + 1] : undefined)
   const { shoot, SIZES } = await import('./shot.mjs')
@@ -292,9 +322,9 @@ if (cmd === 'build') {
   const url = arg('--url')
   const server = url ? null : await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server?.listen()
-  const out = path.join(process.cwd(), 'dist', 'shots', id)
+  const out = path.join(process.cwd(), 'dist', 'shots', `${id}${lang ? `-${lang}` : ''}`)
   try {
-    const opts = { targets, last: rest.includes('--last'), sheet: rest.includes('--sheet'), theme: arg('--theme'), sizes, at: at === undefined ? undefined : +at }
+    const opts = { targets, last: rest.includes('--last'), sheet: rest.includes('--sheet'), theme: arg('--theme'), lang, sizes, at: at === undefined ? undefined : +at }
     const r = await shoot(url ?? server.resolvedUrls.local[0], out, opts)
     for (const u of r.unknown) console.error(`no step matches ${u}; a target is <section>, <section>/<scene> or <section>/<scene>/<step>`)
     for (const p of r.problems) console.warn(`deck problem: ${p}`)
@@ -323,7 +353,7 @@ if (cmd === 'build') {
   }
   if (only.length) {
     const { outline, walkedScenes } = await import('./outline.mjs')
-    const { unknown } = walkedScenes((await outline(klappeDir, deckDir, { cut: cut ?? null })).deck, only)
+    const { unknown } = walkedScenes((await outline(klappeDir, deckDir, { cut: cut ?? null, lang: lang ?? null })).deck, only)
     for (const u of unknown) console.error(`--only ${u}: no scene matches; a target is <section> or <section>/<scene>`)
     if (unknown.length) process.exit(1)
   }
@@ -331,7 +361,7 @@ if (cmd === 'build') {
   const server = await createServer({ configFile, server: { port: 0 }, logLevel: 'warn' })
   await server.listen()
   const part = only.length ? `-${only.map((t) => t.replace(/^#?\/?/, '').replace(/\//g, '-')).join('_')}` : ''
-  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}${cut ? `-${cut}` : ''}${part}.mp4`))
+  const out = path.resolve(arg('--out') ?? path.join('dist', `${id}${suffix}${part}.mp4`))
   // Ctrl-C stops ffmpeg and the browser and drops the partial file, instead of leaving a short video at out.
   const stop = new AbortController()
   process.once('SIGINT', () => stop.abort())

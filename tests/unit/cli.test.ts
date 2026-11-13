@@ -245,3 +245,26 @@ test('review-wait prints the steps ready for Claude and exits; init adds the rev
   expect(r.status).toBe(0);
   expect(r.stdout).toContain('#/intro/hello/1');
 });
+
+test('lang writes lang/<code>.md from the source deck, ctx.t strings by scope, and outline --lang shows it', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  expect(cli(cwd, 'init', '--deck', 'talk').status).toBe(0);
+  const scene = join(cwd, 'decks/talk/sections/10-intro/10-hello');
+  writeFileSync(join(scene, 'scene.ts'), 'export default { build(ctx) { ctx.html.textContent = ctx.t("From code") + ctx.t(\'It\\\'s\') } }\n');
+  mkdirSync(join(cwd, 'decks/talk/shared'), { recursive: true });
+  writeFileSync(join(cwd, 'decks/talk/shared/label.ts'), 'export const label = (ctx) => ctx.t(`Shared`)\n');
+  const r = cli(cwd, 'lang', 'de');
+  expect(r.status).toBe(0);
+  expect(r.stdout).toContain('7 texts, 7 to translate');
+  const file = join(cwd, 'decks/talk/lang/de.md');
+  const md = readFileSync(file, 'utf8');
+  expect(md).toBe('# de\n\n## deck\n\n> talk\n\n> Shared\n\n## intro\n\n> Intro\n\n## intro/hello\n\n> Hello\n\n> Welcome.\n\n> From code\n\n> It\'s\n');
+  writeFileSync(file, md.replace('> Welcome.\n', '> Welcome.\n\nWillkommen.\n'));
+  expect(cli(cwd, 'lang', 'de').stdout).toContain('7 texts, 6 to translate');
+  expect(readFileSync(file, 'utf8')).toContain('> Welcome.\n\nWillkommen.\n');
+  const o = cli(cwd, 'outline', '--lang', 'de');
+  expect(o.status).toBe(0);
+  expect(o.stdout).toContain('1. Willkommen.');
+  expect(cli(cwd, 'outline', '--lang', 'fr').stderr).toContain('--lang needs a language the deck has: en, de');
+  expect(cli(cwd, 'lang', 'en').stderr).toContain('en is the source language');
+});
