@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { applyEdit, parseReview, stepsWithFindings, waitingForApproval } from '../../src/review/file'
+import { applyEdit, parseReview, readyFindings, sentToClaude, stepsWithFindings, waitingForApproval } from '../../src/review/file'
 
 const T = (n: number) => `#/a/s/${n}`
 const order = [T(1), T(2), T(3)]
@@ -171,4 +171,37 @@ test('steps with findings count open ones only; fixed ones wait for approval', (
   expect(stepsWithFindings(t)).toBe(1)
   expect(waitingForApproval(t)).toBe(1)
   expect(waitingForApproval('')).toBe(0)
+})
+
+const draftFile = '# Review\n\n## #/a/s/1\n\n> One.\n\n### Content\n\nToo long.\n'
+const sentFile = `${draftFile}\n#### Sent\n`
+
+test('send marks a draft Sent, with no note; a fixed or reopened finding is not sent again', () => {
+  expect(applyEdit(draftFile, { hash: T(1), quote: 'One.', set: {}, send: ['content'] }, order)).toBe(sentFile)
+  expect(parseReview(sentFile)[0]).toEqual({ hash: T(1), quote: 'One.', findings: { content: 'Too long.' }, sent: ['content'] })
+  expect(applyEdit(sentFile, { hash: T(1), quote: 'One.', set: {}, send: ['content'] }, order)).toBe(sentFile)
+  expect(applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, send: ['content'] }, order)).toBe(fixedFile)
+  const reopened = applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'No.' } }, order)
+  expect(applyEdit(reopened, { hash: T(1), quote: 'One.', set: {}, send: ['content'] }, order)).toBe(reopened)
+  // A category with no finding has nothing to send.
+  expect(applyEdit(draftFile, { hash: T(1), quote: 'One.', set: {}, send: ['visuals'] }, order)).toBe(draftFile)
+})
+
+test('changing a sent finding makes it a draft again; saving the same text keeps it sent; a reopened one stays reopened', () => {
+  expect(applyEdit(sentFile, { hash: T(1), quote: 'One.', set: { content: 'Too long!' } }, order)).toBe(draftFile.replace('Too long.', 'Too long!'))
+  expect(applyEdit(sentFile, { hash: T(1), quote: 'One.', set: { content: 'Too long.' } }, order)).toBe(sentFile)
+  let t = applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'No.' } }, order)
+  t = applyEdit(t, { hash: T(1), quote: 'One.', set: { content: 'Far too long.' } }, order)
+  expect(t.endsWith('#### Reopened\n\nNo.\n')).toBe(true)
+})
+
+test('ready findings are the sent and reopened ones, by step; sent ones count apart and stay open', () => {
+  const reopened = applyEdit(fixedFile, { hash: T(1), quote: 'One.', set: {}, reopen: { content: 'No.' } }, order)
+  let t = applyEdit(reopened, { hash: T(2), quote: 'Two.', set: { visuals: 'V', content: 'C' }, send: ['visuals'] }, order)
+  t = applyEdit(t, { hash: T(3), quote: 'Three.', set: { content: 'Draft.' } }, order)
+  expect(readyFindings(t)).toEqual([T(1), T(2)])
+  expect(readyFindings(fixedFile)).toEqual([])
+  expect(readyFindings('')).toEqual([])
+  expect(sentToClaude(t)).toBe(1)
+  expect(stepsWithFindings(t)).toBe(3)
 })

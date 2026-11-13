@@ -35,6 +35,13 @@ test('approve and reopen pass with categories; anything else in them is refused'
     expect(readEdit({ ...base, ...bad }), JSON.stringify(bad)).toBeNull()
 })
 
+test('send passes with categories; anything else in it is refused', () => {
+  const base = { hash: '#/a/s/1', quote: 'Q', set: {}, order: [] }
+  expect(readEdit({ ...base, send: ['content', 'visuals'] })?.edit.send).toEqual(['content', 'visuals'])
+  for (const bad of [{ send: 'content' }, { send: ['nope'] }, { send: { content: true } }])
+    expect(readEdit({ ...base, ...bad }), JSON.stringify(bad)).toBeNull()
+})
+
 test('replaceText changes the one scene.md line that holds the text: a list item, a task, the title or a question', () => {
   const md = '## Old title\n\n- First step.\n- [x] Done thing\n\n### Why?\n\nBecause.\n'
   expect(replaceText(md, 'First step.', 'First, a step.')).toBe(md.replace('- First step.', '- First, a step.'))
