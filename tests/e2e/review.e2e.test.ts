@@ -314,6 +314,31 @@ test('Reopen needs a note, writes it under the finding and makes the finding edi
   await context.close()
 })
 
+test('Send to Claude marks the step\'s drafts Sent, text typed just before it included, and the status counts them', async () => {
+  const { context, review } = await pair()
+  const send = review.getByRole('button', { name: 'Send to Claude', exact: true })
+  expect(await send.isDisabled()).toBe(true) // nothing to send yet
+  await field(review, 'content').fill('Too long.')
+  expect(await send.isDisabled()).toBe(false)
+  await send.click() // before the save after typing has gone out
+  await expect.poll(onDisk, { timeout: 10_000 }).toBe('# Review\n\n## #/a/first/2\n\n> Step 2.\n\n### Content\n\nToo long.\n\n#### Sent\n')
+  await expect.poll(() => review.locator('.k-rv-status').textContent(), { timeout: 10_000 }).toContain('Sent to Claude: 1')
+  expect(await send.isDisabled()).toBe(true)
+  await context.close()
+})
+
+test('changing a sent finding makes it a draft again, to send once more', async () => {
+  writeFileSync(inject('REVIEW_FILE'), '# Review\n\n## #/a/first/2\n\n> Step 2.\n\n### Content\n\nToo long.\n\n#### Sent\n')
+  const { context, review } = await pair()
+  const send = review.getByRole('button', { name: 'Send to Claude', exact: true })
+  await expect.poll(() => field(review, 'content').inputValue(), { timeout: 10_000 }).toBe('Too long.')
+  expect(await send.isDisabled()).toBe(true)
+  await field(review, 'content').fill('Far too long.')
+  expect(await send.isDisabled()).toBe(false)
+  await expect.poll(onDisk, { timeout: 10_000 }).toBe('# Review\n\n## #/a/first/2\n\n> Step 2.\n\n### Content\n\nFar too long.\n')
+  await context.close()
+})
+
 // Edit mode: R turns it on in the deck window. A drag moves the element as a preview and writes a Move line.
 const MOVE = /^Move p "Step 2\." from \[(\d+), (\d+), (\d+), (\d+)\] to \[(\d+), (\d+), (\d+), (\d+)\]$/
 const stepText = (deck: Page) => deck.locator('div[data-scene="first"] p[data-step="2"]')

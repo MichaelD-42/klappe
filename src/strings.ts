@@ -33,6 +33,8 @@ export const strings = {
     reopen: "Reopen",
     reopenNote: "What is still wrong?",
     waitingForApproval: "Fixed, waiting for your approval",
+    sendToClaude: "Send to Claude",
+    sentToClaude: "Sent to Claude",
     reviewNeedsDev: "Review mode needs the dev server: npm run dev",
     // Effect UI words (src/fx and the default media slot).
     dataMissing: "DATA MISSING",
@@ -102,6 +104,8 @@ export const strings = {
     reopen: "Wieder öffnen",
     reopenNote: "Was stimmt noch nicht?",
     waitingForApproval: "Behoben, warten auf deine Abnahme",
+    sendToClaude: "An Claude senden",
+    sentToClaude: "An Claude gesendet",
     reviewNeedsDev: "Der Review-Modus braucht den Dev-Server: npm run dev",
     dataMissing: "DATEN FEHLEN",
     dataError: "DATENFEHLER",
