@@ -1,10 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { applyEdit, CATEGORIES, STEP_HASH as HASH } from '../src/review/file.ts'
+import { setCut } from '../src/parse/frontmatter.ts'
 
 // The review window's route, dev server only: GET returns review.md, POST applies one step's changed findings.
 const ROUTE = '/__klappe/review'
 const TEXT_ROUTE = '/__klappe/text'
+const CUT_ROUTE = '/__klappe/cut'
 const MAX_TEXT = 20_000 // characters in one finding or quote
 const MAX_STEPS = 10_000
 const MAX_BODY = 2_000_000 // bytes
@@ -65,6 +67,19 @@ export function replaceText(md, from, to) {
   return lines.join('\n')
 }
 
+// A cut from the deck builder's POST body ({ name, sections, skip }), or null. The ids go into deck.md's one-line flow map,
+// so none may hold what would end or split it.
+const ID = /^[^\s,[\]{}:#/"'\\]{1,100}$/
+export function readCut(body) {
+  if (!body || typeof body !== 'object') return null
+  const { name, sections, skip } = body
+  const ids = (v, ok) => Array.isArray(v) && v.length <= 1000 && v.every((x) => typeof x === 'string' && ok(x))
+  if (typeof name !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/i.test(name)) return null
+  if (!ids(sections, (x) => ID.test(x)) || !sections.length) return null
+  if (!ids(skip, (x) => x.split('/').length === 2 && x.split('/').every((p) => ID.test(p)))) return null
+  return { name, sections, skip }
+}
+
 // Only the deck's own pages may write: any page the author visits can reach localhost.
 const sameOrigin = (origin, host) => {
   if (!origin) return true // not a browser's cross-origin request
@@ -110,6 +125,25 @@ export function klappeReview({ file, deckDir }) {
           if (md === null) return send(res, 409, { error: 'the text is not on exactly one line' })
           fs.writeFileSync(at, md)
           send(res, 200, { source: t.source })
+        })
+      })
+      // The deck builder: one cut written into deck.md cuts. Vite then reloads the deck, in that cut.
+      server.middlewares.use(CUT_ROUTE, (req, res) => {
+        if (!sameOrigin(req.headers.origin, req.headers.host)) return send(res, 403, { error: 'other origin' })
+        if (req.method !== 'POST' || !deckDir) return send(res, 405, { error: 'POST' })
+        const chunks = []
+        let size = 0
+        req.on('data', (c) => ((size += c.length) <= MAX_BODY ? chunks.push(c) : req.destroy()))
+        req.on('end', () => {
+          let cut = null
+          try {
+            cut = readCut(JSON.parse(Buffer.concat(chunks).toString('utf8')))
+          } catch {}
+          if (!cut) return send(res, 400, { error: 'not a cut' })
+          const at = path.join(deckDir, 'deck.md')
+          if (!fs.existsSync(at)) return send(res, 404, { error: 'no deck.md' })
+          fs.writeFileSync(at, setCut(fs.readFileSync(at, 'utf8'), cut.name, cut))
+          send(res, 200, { name: cut.name })
         })
       })
       server.middlewares.use(ROUTE, (req, res) => {

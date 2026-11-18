@@ -1,3 +1,4 @@
+import { cutParam, cutUrl } from "../layout";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
 import { button, OverlayPanel } from "./panel";
@@ -40,6 +41,19 @@ export class Selector extends OverlayPanel {
         });
         b.lang = code;
         if (code === lang) b.setAttribute("aria-pressed", "true");
+        row.append(b);
+      }
+    }
+    // A deck with cuts: the whole deck and each cut, on top. Picking one reloads the deck in it at its first step.
+    const cuts = Object.keys(this.deck.meta.cuts ?? {});
+    if (cuts.length) {
+      const row = document.createElement("div");
+      body.prepend(row);
+      row.className = "k-selector-langs k-selector-cuts";
+      const active = cutParam(new URL(location.href).searchParams);
+      for (const name of [null, ...cuts]) {
+        const b = button(name ?? t("wholeDeck", this.deck.meta.lang), () => location.assign(cutUrl(location.href, name)));
+        if (name === active) b.setAttribute("aria-pressed", "true");
         row.append(b);
       }
     }

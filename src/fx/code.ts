@@ -163,9 +163,12 @@ const trim = (src: string) => src.replace(/\n$/, "");
 const splitLines = (src: string) => trim(src).split("\n");
 
 // The code's lines as tokens: Shiki's for a language loadHighlighter loaded, else one plain token per line.
+// A grammar compiles its patterns lazily, on the first line that reaches them: cpp's take about 500 ms cold, 2 s and more on
+// a slow machine, and Shiki's default 500 ms limit per line then shows the rest of that line plain. 5 s still stops a
+// grammar that runs away.
 export const codeLines = (src: string, lang: string): { content: string; color?: string }[][] =>
   hl && wanted.has(lang) && LANGS.includes(lang)
-    ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe" })
+    ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe", tokenizeTimeLimit: 5000 })
     : splitLines(src).map((content) => [{ content }]);
 
 export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {

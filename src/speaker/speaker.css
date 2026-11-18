@@ -74,6 +74,20 @@
   overflow: hidden;
 }
 
+/* The next step's picture: small, under its text. Clicks and keys stay with the speaker view. */
+.k-sp-preview {
+  display: block;
+  margin: 12px 0 32px;
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius);
+  background: var(--k-bg);
+  pointer-events: none;
+}
+
+.k-sp-preview[hidden] {
+  display: none;
+}
+
 .k-sp-buttons {
   display: flex;
   gap: 16px;

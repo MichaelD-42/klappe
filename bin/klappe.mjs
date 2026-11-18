@@ -19,7 +19,7 @@ const usage =
   'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
   '       klappe build|outline|init [--deck <id>]\n' +
   '       klappe outline --story   one line per scene: its link and story point\n' +
-  '       klappe outline|pdf|video|test --cut <name>   a deck.md cut instead of the whole deck\n' +
+  '       klappe outline|pdf|video|test --selection <name>   a deck.md selection instead of the whole deck (--cut works too)\n' +
   '       klappe outline|pdf|shot|video|test --lang <code>   the deck in a language from its lang/<code>.md\n' +
   '       klappe lang <code> [--deck <id>]   writes or updates lang/<code>.md from the deck, for translating\n' +
   '       klappe pdf [--deck <id>] [--handout] [--width <px>] [--quality <1-100>]\n' +
@@ -37,6 +37,35 @@ if ([cmd, ...rest].some((a) => a === '--help' || a === '-h')) {
 if (!['dev', 'build', 'test', 'pdf', 'shot', 'video', 'outline', 'init', 'theme', 'review-wait', 'lang'].includes(cmd)) {
   console.error(usage)
   process.exit(1)
+}
+
+// A deck repo that pulled a klappe update without `npm install` lacks a new or raised dependency, and Vite then fails on
+// an import far from the cause. Resolved as Node does, from klappe's real folder up. init runs before npm install.
+// shortcut: reads ^ ranges only, as klappe's package.json writes them; use the semver package if another kind appears.
+if (cmd !== 'init') {
+  const stale = []
+  const real = fs.realpathSync(klappeDir)
+  const num = (v) => v.split(/[.+-]/).slice(0, 3).map(Number)
+  for (const [name, range] of Object.entries(JSON.parse(fs.readFileSync(path.join(klappeDir, 'package.json'), 'utf8')).dependencies ?? {})) {
+    if (!range.startsWith('^')) continue
+    let dir = real
+    let pkg
+    while (!pkg) {
+      const f = path.join(dir, 'node_modules', name, 'package.json')
+      if (fs.existsSync(f)) pkg = JSON.parse(fs.readFileSync(f, 'utf8'))
+      else if (path.dirname(dir) === dir) break
+      else dir = path.dirname(dir)
+    }
+    if (!pkg) { stale.push(`${name} is missing (klappe needs ${range})`); continue }
+    const [want, have] = [num(range.slice(1)), num(pkg.version)]
+    const lock = want[0] > 0 ? 1 : 2 // ^1.2.3 keeps the major, ^0.2.3 the minor too
+    const ok = want.slice(0, lock).every((n, k) => n === have[k]) && (have[0] - want[0] || have[1] - want[1] || have[2] - want[2]) >= 0
+    if (!ok) stale.push(`${name} ${pkg.version} is installed, klappe needs ${range}`)
+  }
+  if (stale.length) {
+    console.error(`klappe's dependencies are out of date:\n  ${stale.join('\n  ')}\nRun npm install in the deck repo root, then this command again.`)
+    process.exit(1)
+  }
 }
 
 let id = i >= 0 ? rest[i + 1] : undefined
@@ -151,12 +180,14 @@ if (cmd === 'theme') {
 
 process.env.KLAPPE_DECK_DIR = deckDir
 
-// --cut <name>: a cut from deck.md cuts; outline, pdf, video and test follow it. An unknown name stops before a server starts.
-const cut = rest.includes('--cut') ? rest[rest.lastIndexOf('--cut') + 1] : undefined
+// --selection <name> (or its old name --cut): a selection from deck.md selections or cuts; outline, pdf, video and test
+// follow it. An unknown name stops before a server starts.
+const cutFlag = rest.lastIndexOf('--selection') > rest.lastIndexOf('--cut') ? '--selection' : '--cut'
+const cut = rest.includes(cutFlag) ? rest[rest.lastIndexOf(cutFlag) + 1] : undefined
 if (cut !== undefined) {
   const cuts = (await (await import('./outline.mjs')).outline(klappeDir, deckDir)).deck.meta.cuts ?? {}
   if (!cut || cut.startsWith('-') || !cuts[cut]) {
-    console.error(`--cut needs a cut from deck.md cuts: ${Object.keys(cuts).join(', ') || '(none)'}`)
+    console.error(`${cutFlag} needs a ${cutFlag.slice(2)} from deck.md: ${Object.keys(cuts).join(', ') || '(none)'}`)
     process.exit(1)
   }
 }
@@ -218,7 +249,7 @@ if (cmd === 'test') {
   }
   const bail = rest.includes('--bail')
   const strict = rest.includes('--strict')
-  const own = new Set(['--deck', '--only', '--cut', '--lang'])
+  const own = new Set(['--deck', '--only', '--cut', '--selection', '--lang'])
   const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail' && a !== '--strict')
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'

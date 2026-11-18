@@ -1,3 +1,4 @@
+import type { IconNode } from "lucide";
 import type { Panel } from "../input";
 import { t } from "../strings";
 
@@ -7,6 +8,27 @@ export function button(label: string, onClick: () => void, cls = "k-btn"): HTMLB
   b.className = cls;
   b.textContent = label;
   b.addEventListener("click", onClick);
+  return b;
+}
+
+// A Lucide icon as an inline SVG in the text colour.
+export function iconSvg(icon: IconNode): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" }))
+    svg.setAttribute(k, v);
+  for (const [tag, attrs] of icon) {
+    const e = svg.appendChild(document.createElementNS("http://www.w3.org/2000/svg", tag));
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  }
+  return svg;
+}
+
+// A button that shows a Lucide icon; its label is its accessible name and its tooltip.
+export function iconButton(icon: IconNode, label: string, onClick: () => void): HTMLButtonElement {
+  const b = button("", onClick, "k-btn k-btn-icon");
+  b.setAttribute("aria-label", label);
+  b.title = label;
+  b.append(iconSvg(icon));
   return b;
 }
 

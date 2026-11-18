@@ -67,8 +67,10 @@ export function assembleDeck(
     });
   }
   sections.sort(byOrder);
-  for (const [name, { sections: ids }] of Object.entries(meta.cuts ?? {})) {
+  for (const [name, { sections: ids, skip = [] }] of Object.entries(meta.cuts ?? {})) {
     for (const id of ids) if (!sections.some((s) => s.id === id)) problems.push(`deck.md: cut '${name}' names no section '${id}'`);
+    for (const id of skip)
+      if (!sections.some((s) => s.scenes.some((c) => `${s.id}/${c.id}` === id))) problems.push(`deck.md: cut '${name}' skips no scene '${id}'`);
     if (!sections.some((s) => !s.appendix && ids.includes(s.id))) problems.push(`deck.md: cut '${name}' keeps no section of the talk, only the appendix`);
   }
 

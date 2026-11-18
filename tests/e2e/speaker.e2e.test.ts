@@ -102,3 +102,22 @@ test('rehearsal records the seconds per scene in localStorage and shows them aga
   expect(await speaker.locator('.k-sp-plan-row').count()).toBe(0)
   await context.close()
 })
+
+// The speaker view shows the next step as the room will see it: a passive copy of the deck in a frame, one step ahead
+// of the main window. It must never answer on the channel, or the speaker view would show its step as the current one.
+test('a small preview shows the next step and follows the main window', async () => {
+  const { context, main, speaker } = await pair('two-scenes', '#/a/first/2')
+  const frame = speaker.frameLocator('.k-sp-preview')
+  const previewIndex = () =>
+    speaker.evaluate(() => (document.querySelector<HTMLIFrameElement>('.k-sp-preview')?.contentWindow as Window | null)?.klappe?.stepper?.index ?? -1)
+  await expect.poll(previewIndex, { timeout: 30_000 }).toBe(2)
+  await expect.poll(() => frame.locator('.k-ui').isVisible()).toBe(false)
+  expect(await speaker.locator('.k-sp-text').textContent()).toBe('Step 2.')
+  await main.keyboard.press('ArrowRight')
+  await expect.poll(previewIndex).toBe(3)
+  expect(await main.evaluate(() => window.klappe.stepper.index)).toBe(2)
+  // At the last step of the talk there is nothing next to show.
+  await main.keyboard.press('End')
+  await expect.poll(() => speaker.locator('.k-sp-preview').isHidden()).toBe(true)
+  await context.close()
+})

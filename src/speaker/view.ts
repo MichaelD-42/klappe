@@ -1,5 +1,6 @@
 import "./speaker.css";
 import { keyAction } from "../input";
+import { cutParam } from "../layout";
 import { sceneSeconds } from "../plan";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
@@ -64,6 +65,18 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   const time = el("p", "k-sp-time", clock(0));
   const progress = el("p", "k-sp-progress");
   const next = el("p", "k-sp-next");
+  // The next step as the room will see it: the deck again, passive, following the main window one step ahead.
+  const preview = document.createElement("iframe");
+  preview.className = "k-sp-preview";
+  preview.title = t("upNext", lang);
+  preview.tabIndex = -1;
+  preview.style.aspectRatio = `${size.w} / ${size.h}`;
+  preview.style.width = `min(100%, ${((24 * size.w) / size.h).toFixed(1)}vh)`; // at most a quarter of the window high: the buttons stay in view
+  const src = new URL(location.href);
+  src.searchParams.delete("speaker");
+  for (const [k, v] of [["preview", "1"], ["instant", "1"], ["reducedmotion", "1"]]) src.searchParams.set(k, v);
+  src.hash = "";
+  preview.src = src.href;
   const send = (cmd: "next" | "prev" | "goto" | "timer" | "clock" | "appendix" | "mute", i?: number) => channel.send({ t: "cmd", cmd, index: i });
   const buttons = el("div", "k-sp-buttons");
   // Disabled on a scene without a timer, where T does nothing.
@@ -92,7 +105,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   } catch {
     // storage is blocked: rehearsal works for this session only
   }
-  const cut = new URLSearchParams(location.search).get("cut");
+  const cut = cutParam(new URLSearchParams(location.search));
   const rec = rehearsal(`${channelName(deck.meta.title, location.pathname)}:rehearsal${cut === null ? "" : `:cut:${cut}`}`, () => Date.now(), storage);
   const rehearseButton = button(t("rehearse", lang), () => toggleRehearsal());
   const rehearseRow = el("div", "k-sp-buttons");
@@ -124,7 +137,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     plan.replaceChildren(...rows);
   };
   showPlan();
-  side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, progress, el("h2", "k-sp-label", t("upNext", lang)), next, planLabel, plan, rehearseRow, inkRow, buttons);
+  side.append(el("h2", "k-sp-label", t("elapsed", lang)), time, progress, el("h2", "k-sp-label", t("upNext", lang)), next, preview, planLabel, plan, rehearseRow, inkRow, buttons);
   view.append(now, side);
   root.append(view);
 
@@ -140,7 +153,9 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
     notes.textContent = [step?.notes, sc?.notes, ...effectNotes(a.scene)].filter(Boolean).join("\n\n");
     notesLabel.hidden = !notes.textContent;
     const b = steps[index + 1];
-    next.textContent = b && !b.appendix === !a.appendix ? (sceneOf(b)?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);
+    const ahead = b && !b.appendix === !a.appendix;
+    next.textContent = ahead ? (sceneOf(b)?.steps[b.step - 1]?.text ?? "") : t("endOfDeck", lang);
+    preview.hidden = !ahead;
     // The counter counts the main talk; an appendix step counts in the appendix.
     progress.textContent = a.appendix ? `${t("appendix", lang)} ${index - main + 1} / ${steps.length - main}` : `${index + 1} / ${main}`;
     padInk.clear(); // the stage clears its ink on every step

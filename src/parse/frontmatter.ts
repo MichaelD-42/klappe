@@ -88,17 +88,26 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
   for (const k of ["handheld", "sound"]) if (data[k] !== undefined && typeof data[k] !== "boolean") problems.push(`deck.md: ${k} is true or false`);
   const frame = FRAMES[String(data.frame ?? "16:9")];
   if (!frame) problems.push("deck.md: frame is 16:9, 4:3, 1:1 or 9:16");
-  // A cut is its list of section ids, or { sections, duration } for its own target length.
-  const c = data.cuts;
+  // A cut is its list of section ids, in play order, or { sections, skip, duration }: the section/scene ids it leaves out and its
+  // own target length.
   const isMap = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
   const cut = (v: unknown) => {
-    const { sections, duration } = isMap(v) ? v : { sections: v, duration: undefined };
+    const { sections, skip, duration } = isMap(v) ? v : { sections: v, skip: undefined, duration: undefined };
     if (!Array.isArray(sections) || (duration !== undefined && !(typeof duration === "number" && duration > 0))) return undefined;
-    return { sections: sections.map(String), ...(duration !== undefined && { duration }) };
+    if (skip !== undefined && !(Array.isArray(skip) && skip.every((s) => /^[^/\s]+\/[^/\s]+$/.test(String(s))))) return undefined;
+    return { sections: sections.map(String), ...(skip?.length && { skip: skip.map(String) }), ...(duration !== undefined && { duration }) };
   };
-  const cuts = isMap(c) && Object.values(c).every(cut) ? Object.fromEntries(Object.entries(c).map(([k, v]) => [k, cut(v)!])) : undefined;
-  if (c !== undefined && !cuts)
-    problems.push("deck.md: cuts needs { <name>: [<section id>, …] } or { <name>: { sections: […], duration: <minutes> } }");
+  // `selections` is the deck builder's name for cuts; both keys are read, and a name in both takes the selection.
+  const read = (key: "cuts" | "selections") => {
+    const c = data[key];
+    const r = isMap(c) && Object.values(c).every(cut) ? Object.fromEntries(Object.entries(c).map(([k, v]) => [k, cut(v)!])) : undefined;
+    if (c !== undefined && !r)
+      problems.push(`deck.md: ${key} needs { <name>: [<section id>, …] } or { <name>: { sections: […], skip: [<section>/<scene>, …], duration: <minutes> } }`);
+    return r;
+  };
+  const [old, now] = [read("cuts"), read("selections")];
+  for (const k of Object.keys(now ?? {})) if (old?.[k]) problems.push(`deck.md: '${k}' is in both cuts and selections; selections wins`);
+  const cuts = old || now ? { ...old, ...now } : undefined;
   return {
     meta: {
       title,
@@ -117,4 +126,27 @@ export function toDeckMeta(data: Record<string, unknown>): { meta: DeckMeta; pro
     },
     problems,
   };
+}
+
+type Cut = { sections: string[]; skip?: string[]; duration?: number };
+
+// deck.md with the cut `name` set to these sections and skipped scenes, as the deck builder saves it. It goes into the
+// selections line, or the cuts line of a deck that has only that, written anew as one flow map; every other line stays.
+// A cut that existed there keeps its duration.
+export function setCut(md: string, name: string, cut: { sections: string[]; skip: string[] }): string {
+  const { data } = parseFrontmatter(md);
+  const key = data.selections === undefined && data.cuts !== undefined ? "cuts" : "selections";
+  const cuts: Record<string, Cut> = { ...(toDeckMeta({ title: "-", cuts: data[key] }).meta.cuts ?? {}) };
+  const duration = cuts[name]?.duration;
+  cuts[name] = { sections: cut.sections, ...(cut.skip.length && { skip: cut.skip }), ...(duration && { duration }) };
+  const list = (a: string[]) => `[${a.join(", ")}]`;
+  const one = (c: Cut) => `{ sections: ${list(c.sections)}${c.skip ? `, skip: ${list(c.skip)}` : ""}${c.duration ? `, duration: ${c.duration}` : ""} }`;
+  const line = `${key}: { ${Object.entries(cuts).map(([k, c]) => `${k}: ${one(c)}`).join(", ")} }`;
+  const head = /^(\uFEFF?---\r?\n)([\s\S]*?)(\r?\n)?(---\r?\n?)/.exec(md);
+  if (!head) return `---\n${line}\n---\n${md}`;
+  const lines = (head[2] ?? "").split(/\r?\n/);
+  const at = lines.findIndex((l) => new RegExp(`^${key}\\s*:`).test(l));
+  if (at >= 0) lines[at] = line;
+  else lines.push(line);
+  return head[1] + lines.filter((l, i) => l !== "" || i < lines.length - 1).join("\n") + "\n" + head[4] + md.slice(head[0].length);
 }

@@ -188,6 +188,19 @@ body {
   text-align: left;
 }
 
+/* An icon button (the deck builder's): square, the icon at the text's size. */
+.k-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.k-btn-icon svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
 .k-btn:hover,
 .k-btn[aria-current="true"] {
   border-color: var(--k-accent);
@@ -270,6 +283,148 @@ body {
 .k-selector-langs .k-btn[aria-pressed="true"] {
   font-weight: 700;
   background: color-mix(in srgb, var(--k-accent) 14%, transparent);
+}
+
+/* B: the deck builder. A bar on top (a saved cut to load, the name, save), Select all, then the talk's sections in play
+   order with their scenes. */
+.k-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 1300px;
+  min-height: 0;
+  font-size: 30px;
+}
+
+.k-builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 8px; /* room for the focus ring */
+  margin: -8px;
+}
+
+.k-builder-section {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-left: 8px solid color-mix(in srgb, var(--k-fg) 20%, transparent);
+}
+
+.k-builder-section:has(> label input:checked) {
+  border-left-color: var(--k-accent);
+}
+
+.k-builder-section > label {
+  font-weight: 700;
+}
+
+.k-builder-scenes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  padding-left: 48px;
+  font-size: 26px;
+  color: var(--k-muted);
+}
+
+.k-builder label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.k-builder input[type="checkbox"] {
+  width: 28px;
+  height: 28px;
+  accent-color: var(--k-accent);
+}
+
+.k-builder-section .k-btn {
+  padding: 6px;
+}
+
+.k-builder-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.k-builder-bar label {
+  margin-left: 24px;
+}
+
+.k-builder-bar select,
+.k-builder-bar input {
+  font: inherit;
+  color: var(--k-fg);
+  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--k-fg) 30%, transparent);
+  border-radius: 6px;
+  padding: 12px 16px;
+  width: 320px;
+}
+
+.k-builder-pick {
+  position: relative;
+  display: inline-flex;
+  align-self: stretch; /* as tall as the buttons beside it */
+}
+
+.k-builder-bar select {
+  appearance: none;
+  padding-right: 56px; /* room for the chevron */
+  width: auto; /* as wide as its longest name */
+  min-width: 280px;
+  font-size: 24px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--k-fg) 8%, transparent);
+  cursor: pointer;
+}
+
+.k-builder-bar select:hover:not(:disabled),
+.k-builder-bar select:focus-visible {
+  border-color: var(--k-accent);
+}
+
+.k-builder-bar select:focus-visible {
+  outline: 4px solid var(--k-accent);
+  outline-offset: 3px;
+}
+
+.k-builder-bar select:disabled {
+  color: var(--k-muted);
+  cursor: default;
+}
+
+.k-builder-pick svg {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.k-builder-bar select option {
+  background: var(--k-bg);
+}
+
+.k-builder-all {
+  padding: 0 28px;
+  font-weight: 700;
+}
+
+.k-builder-status {
+  margin: -12px 0 0;
+  min-height: 1em;
+  color: var(--k-muted);
+  font-size: 24px;
 }
 
 .k-overview {

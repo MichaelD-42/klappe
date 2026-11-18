@@ -70,7 +70,7 @@ export default scene;
 - **Pointing:** callout, numbered hotspots on a picture, spotlight, focus, a mouse pointer that clicks, types, drags and scrolls, hand-drawn marks (ring, underline, frame, strike, arrow).
 - **Effects:** shatter, CRT, zoom and blackout transitions; shout-out, swarm, morph, counters, a decoding line, before/after wipe, people figures, a QR code.
 - **Backgrounds:** pictures with a slow push, looping video, animated SVG files, an aurora, your own loop, parallax.
-- **Presenting:** speaker view with rehearsal timing, overview, section list, autoplay, exercise timers, laser and pen, deep links, shorter cuts of one deck and an appendix for Q&A, opt-in sound, and reduced motion respected (with a `?reducedmotion=0` override).
+- **Presenting:** speaker view with rehearsal timing, overview, section list, autoplay, exercise timers, laser and pen, deep links, selections of one deck (a two-day and a three-day training) put together in a deck builder, and an appendix for Q&A, opt-in sound, and reduced motion respected (with a `?reducedmotion=0` override).
 - **Languages:** one deck in several languages, a `lang/<code>.md` translation file per language; `npm run lang -- de` writes it, the section list switches, and every export takes `--lang`.
 - **Checks:** a missing picture or data file shows a placeholder on stage and a line in `media/TODO.md`; the self-test and a design lint run in CI.
 - **Themes:** seven built in (`calm`, `bold`, `sorbet`, `lavender`, `daylight`, `forest`, `ink`; dark, light and pastel), built from `--k-*` tokens with bundled fonts; a deck can bring its own.
@@ -101,11 +101,11 @@ npm run dev                                        # http://localhost:5173
 | `npm run outline` | The deck as text: every step with its note and deep-link ids, and a timing estimate against `duration` in `deck.md`. |
 | `npm run lang -- de` | Writes or updates `decks/my-talk/lang/de.md`, the deck's texts to translate into German. See [languages](docs/reference/deck-format.md#languages). |
 
-`outline`, `pdf`, `video` and `test` take `-- --cut <name>` for a cut from `deck.md` `cuts` (see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)), and these and `shot` take `-- --lang <code>` for a translation. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
+`outline`, `pdf`, `video` and `test` take `-- --selection <name>` for a selection from `deck.md` `selections` (the older `--cut` and `cuts` still work; see [cuts and the appendix](docs/reference/deck-format.md#cuts-and-the-appendix)), and these and `shot` take `-- --lang <code>` for a translation. With several decks in one repo, add `-- --deck <id>` to each command. `init` refuses to overwrite `decks/<id>/` and keeps an existing `package.json`, adding the klappe dependency and scripts.
 
 ## Presenting
 
-Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step in large type, its notes, the next step, a clock and where you are (`12 / 40`). `P` there starts a rehearsal that times each scene.
+Open the deck full screen (F11) and press `N` for the speaker view in a second window: the current step in large type, its notes, the next step's text and a small picture of it, a clock and where you are (`12 / 40`). `P` there starts a rehearsal that times each scene.
 
 | Key | Action |
 | --- | --- |
@@ -113,6 +113,7 @@ Open the deck full screen (F11) and press `N` for the speaker view in a second w
 | `←` `Page Up` | previous step |
 | `Home` / `End` | first / last step |
 | `O` / `S` | overview / section list |
+| `B` | deck builder: pick, order and save selections into `deck.md` (dev server only) |
 | `N` | speaker view |
 | `R` | review window (dev server only) |
 | `A` | autoplay; any step key stops it |

@@ -43,7 +43,7 @@ Frontmatter keys, one `key: value` per line. A `# comment` after a number, `true
 - `handheld`: `true` or `false` (default). A barely visible wander of the whole stage while the talk runs, as a camera held by hand: at most 3 px and 0.1°, slow, scaled up 1 % so no edge shows. It is on the wall clock, not a step: it holds still with reduced motion, in the walk, `pdf`, `shot` and `video`. It suits a bold, filmic deck; on a calm deck, where the stage should feel still, leave it off. The review window's edit mode measures under it, so turn it off while you edit by dragging.
 - `sound`: `true` or `false` (default). Turns on [`cue`](effects.md#cue) and `section.ts` `music`; without it a deck with them is silent. Sound plays only on a forward step, never on a seek, jump or step back, and never in the walk, `pdf`, `shot` or `video` (the MP4 has no sound track). `M` mutes and unmutes, also from the speaker view. A browser plays sound only after the first key or click on the page.
 - `duration`: the talk's planned length in minutes, for example `45`. `klappe outline` compares its timing estimate with it, and the speaker view's [rehearsal](#keys) compares the run total.
-- `cuts`: shorter talks from the same deck, by name, each the section ids it keeps, or the ids and its own `duration`: `cuts: { short: { sections: [opening, results], duration: 20 }, long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
+- `selections` (older name `cuts`, still read): versions of the talk from the same deck, by name, each the section ids it keeps in play order, or those ids with `skip` and its own `duration`: `selections: { short: { sections: [opening, results], duration: 20 }, long: [opening, method, results] }`. See [cuts and the appendix](#cuts-and-the-appendix).
 
 ## Languages
 
@@ -77,9 +77,17 @@ A text with no translation shows in the source language. The walk names it as a 
 
 ## Cuts and the appendix
 
-One deck in several lengths: `deck.md` `cuts` names each deck cut and the sections it keeps, and optionally its own `duration` in minutes. Without one, the cut is judged against the deck's `duration`.
+One deck in several versions, a two-day and a three-day training from one set of sections: `deck.md` `selections` names each selection (also called a deck cut), the sections it keeps in the order it plays them, optionally the scenes it skips (`skip`, as `<section>/<scene>`) and its own `duration` in minutes. Without one, the selection is judged against the deck's `duration`.
 
-- `?cut=<name>` in the URL plays that cut: its sections in deck order, the others left out as if parked. Without `?cut`, the whole deck plays.
+```yaml
+selections: { two-days: { sections: [intro, basics, lab, wrap-up], skip: [basics/history], duration: 840 }, short: [intro, wrap-up] }
+```
+
+The older names still work everywhere: `cuts:` in `deck.md` (a deck can have both; a name in both is a deck problem and the `selections` one wins), `?cut=` in the URL and `--cut` on the tools.
+
+- `?selection=<name>` (or `?cut=<name>`) in the URL plays that selection: its sections in the order it lists them, without its skipped scenes, the others left out as if parked. A section whose every scene is skipped is left out. Without one, the whole deck plays.
+- `S`, the section list, has a row on top with "Whole deck" and each selection: a click reloads the deck in it, at its first step. It works in a built deck too.
+- `B` on the dev server opens the deck builder. On top: a drop-down of the saved selections, and **Play** (▶) beside it; the selection's name, and **Save and play** (the disk icon). Every icon button names itself on hover. Picking a selection in the drop-down loads it into the list below (the one playing is loaded when the builder opens; without one, the whole talk, all selected). **Play** plays the picked selection as saved, without your edits. To change one, pick it, edit the list, and **Save and play**: under its name to replace it, under a new name for a new selection. Under it **Select all**, which checks or clears every section and scene (it shows a mixed state when some are off), then every section of the talk with a box to keep it, ↑ and ↓ to move it in the play order, and a box per scene. A section's box checks or clears its scenes; clearing its last scene clears the section, and checking a scene checks it again. **Save and play** writes the selection under its name into `deck.md` (an existing one of that name keeps its `duration`), and the deck reloads in it: into the `selections` line, or the `cuts` line of a deck that has only that. A name is letters, digits and dashes. That line is written anew as one line: a comment on it is lost.
 - A cut moves nothing: every scene keeps its place on its canvas, so a `place()` that reads another scene's rect, and a `shared-canvas` group with a section cut out of the middle, lay out as in the whole deck.
 - Entering the next section the cut shows plays that section's own `transition`.
 - An unknown cut name is a deck problem, and the whole deck plays. A section id a cut names that the deck lacks, and a cut that keeps no section of the talk (an empty list, or only appendix sections), are deck problems too.
@@ -96,7 +104,7 @@ appendix: true
 
 The appendix plays after every other section, whatever its folder number, and every cut keeps it. Next and previous never cross into it or out of it: the talk ends at its last main step, and in the appendix they move between appendix steps. `Q` jumps to the first appendix step, and `Q` again goes back to the step you left. The step counter in the speaker view, `End`, the overlay's `total`, autoplay and `klappe video` leave it out; deep links, the overview, the section list, the walk, `shot` and `pdf` reach it. The overview and the section list put "Appendix" before its title. `klappe outline` and `pdf` print it last, marked as the appendix (in `pdf`, a page that names it), and the outline's estimate leaves it out.
 
-The tools take the cut with `--cut <name>`: `klappe outline --cut short` (the estimate of that cut against its own `duration`, else the deck's), `klappe pdf --cut short` (`dist/<id>-short.pdf`), `klappe video --cut short` (`dist/<id>-short.mp4`) and `klappe test --cut short`, which walks the cut alone. Plain `klappe test` walks the whole deck and its appendix. Catalog: `#/appendix/questions/1`, and the demo's `story` cut.
+The tools take the selection with `--selection <name>` (or `--cut <name>`): `klappe outline --selection short` (the estimate of that selection against its own `duration`, else the deck's), `klappe pdf --selection short` (`dist/<id>-short.pdf`), `klappe video --selection short` (`dist/<id>-short.mp4`) and `klappe test --selection short`, which walks the selection alone. Plain `klappe test` walks the whole deck and its appendix. Catalog: `#/appendix/questions/1`, and the demo's `story` selection.
 
 ## deck.css
 
@@ -382,7 +390,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
 - `Q`: to the appendix and back to where the talk was, also from the speaker view.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `C`: blend the talk clock in or out. `Esc`: turn ink off, else close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list, with a row of the [deck cuts](#cuts-and-the-appendix) on top. `B`: deck builder (dev server only). `N`: speaker view, with a small picture of the next step under its text. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `C`: blend the talk clock in or out. `Esc`: turn ink off, else close a panel.
 - The talk clock is a small box at the bottom right of the audience screen: the time of day, in the deck language's format, and the talk time. With `duration` in `deck.md` (or the cut's) it counts down, `23:10 left`; it turns `--k-warn` in the last 5 minutes (the last fifth of a talk under 25 minutes), and past the end counts up, `+2:15 over`, in `--k-bad`. Without `duration` it shows the time since the start. The talk time starts when the deck first leaves the step it opened on, so opening the deck early costs nothing. `C` in the speaker view, or its Clock button, blends it on the audience screen. It is part of klappe's controls, not of a step: `pdf`, `shot`, `video` and the walk never show it.
 - `M`: mute or unmute the deck's sound, also from the speaker view.
 - `L`: laser dot on the mouse. `D`: draw with the mouse; a stroke holds 2 s, then fades. The same key again turns it off. With ink on, a click on the stage draws instead of stepping; the keys still step, and every step clears the ink. Ink is never part of a step: deep links, `pdf`, `shot` and the walk never show it. The speaker view has the same keys and Laser and Pen buttons: they open a pad in the frame's shape that drives the ink on the stage.
@@ -399,14 +407,14 @@ While the deck window shows, it keeps the screen awake: no screensaver or sleep 
 - `?speaker=1`: open the speaker view.
 - `?review=1`: open the review window; see [review mode](#review-mode).
 - `?theme=<name>`: try another theme without editing the deck; see [themes](themes.md).
-- `?cut=<name>`: play a cut from `deck.md` `cuts`; see [cuts and the appendix](#cuts-and-the-appendix).
+- `?selection=<name>` (or `?cut=<name>`): play a selection from `deck.md` `selections` or `cuts`; see [cuts and the appendix](#cuts-and-the-appendix).
 - `?lang=<code>`: show the deck in a language it has a `lang/<code>.md` for; see [languages](#languages).
 - `?selftest=walk` or `?selftest=ac`: run the self-test. It starts one frame after the web fonts load. A `ctx.problem` call made before the self-test ends still counts, such as one after `document.fonts.ready`. The walk also runs the [look checks](#look-checks).
 - `?offline=1`: online videos show their fallback image (see scene.md).
 
 ## Video export
 
-`npm run video -- [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080] [--cut <name>] [--only <section>[/<scene>]]` renders the deck's talk, without the appendix, to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. `--only` (repeat it, or join targets with commas, as for `test`) renders just those scenes, to `dist/<id>-<section>-<scene>.mp4`, so a clip for a chat or a review never overwrites the whole talk; each run of picked steps enters as it does live, through its camera flight or transition. A target that matches no scene stops the command before a browser starts. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`. The file is written only when the export finishes: a failure or Ctrl-C leaves an earlier export as it was.
+`npm run video -- [--deck <id>] [--out <file.mp4>] [--fps 30] [--hold <s>] [--size 1920x1080] [--selection <name>] [--only <section>[/<scene>]]` renders the deck's talk, without the appendix, to an H.264 MP4 (yuv420p), `dist/<id>.mp4` by default. `--only` (repeat it, or join targets with commas, as for `test`) renders just those scenes, to `dist/<id>-<section>-<scene>.mp4`, so a clip for a chat or a review never overwrites the whole talk; each run of picked steps enters as it does live, through its camera flight or transition. A target that matches no scene stops the command before a browser starts. It needs `ffmpeg` on `PATH` (no npm package); without it the command stops with `klappe video needs ffmpeg on PATH`. The file is written only when the export finishes: a failure or Ctrl-C leaves an earlier export as it was.
 
 Each step plays as it does live, in full motion: camera flights, whips and every section transition included. No frame is recorded in real time: each one is a seek of the timeline to the frame's time, so two runs give the same file and a slow machine gives the same video, only later. After its play, a step's last frame holds for its `auto` seconds, else for `--hold` (default 3). `--size` is the viewport; a deck `frame` other than 16:9 keeps its shape at that width.
 

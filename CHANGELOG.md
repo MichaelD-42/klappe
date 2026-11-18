@@ -2,6 +2,23 @@
 
 klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck format, the `scene.ts` API (`klappe/fx`, `klappe/types`) and the CLI are stable: a change that breaks a deck comes only in a major version, listed under **Changed**. Before 1.0.0 a minor version could break, and said so under **Changed**.
 
+## 1.2.0 (2026-11-18)
+
+### Added
+
+- Deck builder: `B` on the dev server lists the whole talk. Pick a saved selection from a drop-down to play it or to change it, keep or drop each section and scene (with **Select all**), move sections in the play order, and **Save and play** writes the selection under a name into `deck.md` and plays it. A selection can `skip` single scenes (`skip: [basics/history]`). The section list (`S`) has a row of the deck's selections to switch between them, in a built deck too.
+- Cuts are now called selections: `selections:` in `deck.md`, `?selection=` in the URL and `--selection` on `outline`, `pdf`, `video` and `test`. The old names `cuts:`, `?cut=` and `--cut` keep working; a name in both keys is a deck problem, and the selection wins.
+- The speaker view shows a small picture of the next step under its text, as the room will see it.
+
+### Changed
+
+- A cut plays its sections in the order `deck.md` lists them, not in folder order. A cut whose list was out of folder order now plays in that order.
+
+### Fixed
+
+- A deck repo that pulled a klappe update and did not run `npm install` again got an import error from Vite. Every command except `init` now checks that klappe's dependencies are installed at the versions it needs, and if not, names them and says to run `npm install`. The deck template's README says when to run it.
+- A `cpp` code block no longer shows its first line plain from the first keyword on: a line may take up to 5 s to highlight instead of Shiki's 500 ms, which the grammar's first compile ran past on a slower machine.
+
 ## 1.1.0 (2026-11-13)
 
 ### Added

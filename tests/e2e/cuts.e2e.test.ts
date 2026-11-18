@@ -1,5 +1,6 @@
 import { chromium, type Browser, type Page } from '@playwright/test'
 import { afterAll, beforeAll, expect, inject, test } from 'vitest'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { runSelftest } from './driver'
 
 // Deck cuts and the appendix on the fixture cuts. The whole deck: 0 a/one/1, 1 a/one/2, 2 b/two/1, 3 c/three/1, then the
@@ -86,7 +87,7 @@ test('the rehearsal under a cut keeps its own record, against the cut\'s duratio
 test('Q from an appendix reached by the section list goes back to the main step it left', async () => {
   const page = await open('', '#/b/two/1', 2)
   await page.keyboard.press('s')
-  await page.locator('.k-selector .k-btn').nth(3).click()
+  await page.locator('.k-selector > .k-btn').nth(3).click()
   expect(await at(page)).toBe('#/x/spare/1')
   expect(await press(page, 'q')).toBe('#/b/two/1')
   await page.close()
@@ -95,7 +96,7 @@ test('Q from an appendix reached by the section list goes back to the main step 
 test('the overview and the section list mark the appendix', async () => {
   const page = await open('', '', 0)
   await page.keyboard.press('s')
-  expect(await page.locator('.k-selector .k-btn').allTextContents()).toEqual(['A', 'B', 'C', 'Appendix · Backup'])
+  expect(await page.locator('.k-selector > .k-btn').allTextContents()).toEqual(['A', 'B', 'C', 'Appendix · Backup'])
   await page.keyboard.press('o')
   expect(await page.locator('.k-ov-caption').allTextContents()).toEqual(['A', 'B', 'C', 'Appendix · Backup'])
   await page.close()
@@ -126,13 +127,13 @@ test('a deep link into a section the cut leaves out is reported and shows the cu
 
 test('an unknown cut is a deck problem, and the whole deck plays', async () => {
   const page = await open('&cut=nope', '', 0)
-  expect(await page.evaluate(() => window.klappe.problems)).toEqual(["cut 'nope': deck.md has no such cut (short); playing the whole deck"])
+  expect(await page.evaluate(() => window.klappe.problems)).toEqual(["cut 'nope': deck.md has no such cut (short, day); playing the whole deck"])
   expect(await page.evaluate(() => window.klappe.steps.length)).toBe(6)
   await page.close()
 })
 
 test('the walk is green on the whole deck and on the cut, the appendix included', async () => {
-  for (const cut of ['', '&cut=short']) {
+  for (const cut of ['', '&cut=short', '&cut=day']) {
     const r = await runSelftest(`${inject('BASE_URL')}/?selftest=walk&fixture=cuts${cut}`, { w: 1366, h: 768 })
     expect(r.problems).toEqual([])
     expect(r.checks.filter((c) => !c.ok)).toEqual([])
@@ -140,4 +141,114 @@ test('the walk is green on the whole deck and on the cut, the appendix included'
     expect(r.checks.some((c) => c.name.startsWith('step #/b/'))).toBe(!cut)
     expect(r.ok).toBe(true)
   }
+})
+
+test('a cut plays its sections in its own order and leaves its skipped scenes out', async () => {
+  const page = await open('&cut=day', '', 0)
+  expect(await at(page)).toBe('#/c/three/1')
+  expect(await press(page, 'ArrowRight')).toBe('#/a/one/1')
+  expect(await page.evaluate(() => window.klappe.steps.map((s: { section: string }) => s.section))).toEqual(['c', 'a', 'a', 'x', 'x'])
+  expect(await page.evaluate(() => window.klappe.problems)).toEqual([])
+  await page.close()
+})
+
+test('the section list plays a saved cut: the whole deck or a cut, reloaded at its first step', async () => {
+  const page = await open('', '#/a/one/2', 1)
+  await page.keyboard.press('s')
+  const row = page.locator('.k-selector-cuts .k-btn')
+  expect(await row.allTextContents()).toEqual(['Whole deck', 'short', 'day'])
+  expect(await row.first().getAttribute('aria-pressed')).toBe('true')
+  await row.nth(2).click()
+  await page.waitForFunction(() => window.klappe?.stepper?.index === 0 && new URL(location.href).searchParams.get('selection') === 'day', undefined, { timeout: 30_000 })
+  expect(await at(page)).toBe('#/c/three/1')
+  await page.close()
+})
+
+// B on the dev server: the deck builder. A saved cut is picked from a drop-down and loaded, changed and saved under a name
+// into deck.md, then played.
+test('the deck builder loads a saved cut, reorders it and saves it into deck.md, then plays it', async () => {
+  const file = `${inject('TEXT_DIR')}/deck.md`
+  writeFileSync(file, '---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 } }\n---\n')
+  const page = await open('', '#/a/one/1', 0)
+  await page.keyboard.press('b')
+  const panel = page.locator('.k-builder')
+  const sections = () => panel.locator('.k-builder-section > label').allTextContents()
+  const checked = () => panel.locator('.k-builder-section input[data-section]:checked').count()
+  const all = panel.getByLabel('Select all')
+  expect(await sections()).toEqual(['A', 'B', 'C']) // no cut playing: the whole talk, all selected; never the appendix
+  expect(await all.isChecked()).toBe(true)
+  await panel.getByLabel('Saved selections').selectOption('short') // picking a cut loads it
+  expect(await sections()).toEqual(['A', 'C', 'B']) // the cut's order, then the rest of the talk
+  expect(await checked()).toBe(2)
+  expect(await panel.getByLabel('Two', { exact: true }).isChecked()).toBe(false) // a left-out section's scenes show off too
+  expect(await panel.getByLabel('Selection name').inputValue()).toBe('short')
+  expect(await all.evaluate((e: HTMLInputElement) => e.indeterminate)).toBe(true)
+  await all.check()
+  expect(await checked()).toBe(3)
+  await all.uncheck()
+  expect(await checked()).toBe(0)
+  await panel.getByRole('button', { name: 'Save and play' }).click()
+  expect(await panel.locator('.k-builder-status').textContent()).toContain('at least one section')
+  await all.check()
+  await panel.getByRole('button', { name: 'Move up: C' }).click()
+  expect(await sections()).toEqual(['C', 'A', 'B'])
+  const name = panel.getByLabel('Selection name')
+  await name.fill('')
+  await name.pressSequentially('two-days') // typing in the field never steps or opens a panel
+  expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(0)
+  await panel.getByRole('button', { name: 'Save and play' }).click()
+  await expect.poll(() => readFileSync(file, 'utf8'), { timeout: 10_000 }).toBe(
+    '---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 }, two-days: { sections: [c, a, b] } }\n---\n',
+  )
+  await page.waitForFunction(() => new URL(location.href).searchParams.get('selection') === 'two-days', undefined, { timeout: 30_000 })
+  await page.close()
+})
+
+// Play beside the drop-down plays the picked cut as saved: no edit, no write.
+test('the deck builder plays a saved cut picked from the drop-down', async () => {
+  const file = `${inject('TEXT_DIR')}/deck.md`
+  const md = '---\ntitle: Fixture\ncuts: { short: [a] }\n---\n'
+  writeFileSync(file, md)
+  const page = await open('', '#/a/one/1', 0)
+  await page.keyboard.press('b')
+  const panel = page.locator('.k-builder')
+  await panel.getByLabel('Saved selections').selectOption('day')
+  expect(await panel.locator('.k-builder-section > label').allTextContents()).toEqual(['C', 'A', 'B'])
+  await panel.getByRole('button', { name: 'Play', exact: true }).click()
+  await page.waitForFunction(() => new URL(location.href).searchParams.get('selection') === 'day' && window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
+  expect(await at(page)).toBe('#/c/three/1')
+  expect(readFileSync(file, 'utf8')).toBe(md)
+  await page.close()
+})
+
+// Sections and their scenes check like a tree: the last scene off takes its section off, a scene on puts it back.
+test('the deck builder skips a scene, and its section follows its scenes', async () => {
+  const file = `${inject('TEXT_DIR')}/deck.md`
+  writeFileSync(file, '---\ntitle: Fixture\n---\n')
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=two-scenes#/a/first/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
+  await page.keyboard.press('b')
+  const panel = page.locator('.k-builder')
+  expect(await panel.getByLabel('Saved selections').isDisabled()).toBe(true) // the deck has no cuts yet
+  expect(await panel.getByRole('button', { name: 'Play', exact: true }).isDisabled()).toBe(true)
+  const [a, first, second] = ['A', 'First', 'Second'].map((n) => panel.getByLabel(n, { exact: true }))
+  await second.uncheck()
+  expect(await a.isChecked()).toBe(true)
+  expect(await panel.getByLabel('Select all').evaluate((e: HTMLInputElement) => e.indeterminate)).toBe(true)
+  await first.uncheck()
+  expect(await a.isChecked()).toBe(false)
+  await first.check()
+  expect(await a.isChecked()).toBe(true)
+  await panel.getByLabel('Selection name').fill('short')
+  await panel.getByRole('button', { name: 'Save and play' }).click()
+  await expect.poll(() => readFileSync(file, 'utf8'), { timeout: 10_000 }).toBe('---\ntitle: Fixture\nselections: { short: { sections: [a], skip: [a/second] } }\n---\n')
+  await page.close()
+})
+
+test('?selection= plays a cut as ?cut= does', async () => {
+  const page = await open('&selection=short', '#/a/one/2', 1)
+  expect(await page.evaluate(() => window.klappe.steps.map((s: { section: string }) => s.section))).toEqual(['a', 'a', 'c', 'x', 'x'])
+  expect(await page.evaluate(() => window.klappe.problems)).toEqual([])
+  await page.close()
 })
