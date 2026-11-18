@@ -66,7 +66,8 @@ export function buildStepList(deck: Deck, canvases: CanvasLayout[]): StepAddr[] 
   return out;
 }
 
-// The deck a talk plays: with a cut name (?cut=, --cut), only the sections deck.md cuts lists for it, in deck order, and
+// The deck a talk plays: with a cut name (?cut=, --cut), only the sections deck.md cuts lists for it, in its order, without
+// the scenes it skips, and
 // every appendix section, and its own duration if it has one; the appendix sections always go last. linked: the section of the deep link, reported when the
 // cut leaves it out. The canvases come from layoutDeck on the whole deck and keep its rects: a cut moves no scene, so
 // place() and a shared canvas see the deck as written.
@@ -81,7 +82,13 @@ export function cutDeck(
   const ids = cut?.sections;
   if (name !== null && !cut)
     problems.push(`cut '${name}': deck.md has no such cut (${Object.keys(deck.meta.cuts ?? {}).join(", ")}); playing the whole deck`);
-  const kept = deck.sections.filter((s) => s.appendix || !ids || ids.includes(s.id));
+  const skip = new Set(cut?.skip);
+  const rank = (id: string) => (ids ? ids.indexOf(id) : 0);
+  const kept = deck.sections
+    .filter((s) => s.appendix || !ids || ids.includes(s.id))
+    .map((s) => (skip.size ? { ...s, scenes: s.scenes.filter((c) => !skip.has(`${s.id}/${c.id}`)) } : s))
+    .filter((s) => !skip.size || s.scenes.length) // every scene skipped: the section is out too
+    .sort((a, b) => rank(a.id) - rank(b.id)); // stable: the appendix sections (-1) keep their order and go last below
   const has = (id: string) => kept.some((s) => s.id === id);
   if (linked && !has(linked) && deck.sections.some((s) => s.id === linked))
     problems.push(`#/${linked}: the cut '${name}' leaves section '${linked}' out; showing the cut's first step`);

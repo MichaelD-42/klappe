@@ -27,6 +27,7 @@ import { ownWords, t } from "./strings";
 import { Overview } from "./ui/overview";
 import { showProblems } from "./ui/problems";
 import { Selector } from "./ui/selector";
+import { Builder } from "./ui/builder";
 import { mountClock } from "./ui/clock";
 import type { StepAddr } from "./types";
 
@@ -85,11 +86,14 @@ async function startDeck(svg: Record<string, string>) {
   let late: ((msg: string) => void) | undefined;
   const onProblem = (msg: string) => late?.(msg);
   // Wall-clock motion holds still with reduced motion, in the self-test and in klappe video (?selftest=).
-  const still = reducedMotion || query.has("selftest");
+  // ?preview=1: the speaker view's copy of the deck, a step ahead of the main window. It shows and never acts.
+  const preview = query.get("preview") === "1";
+  const still = reducedMotion || preview || query.has("selftest");
   const canvases = renderWorld(deck, layout.canvases, worlds, { reducedMotion, still, svg, onProblem });
   if (deck.meta.handheld && !still) handheld(worlds);
   // Sound starts only on a forward play; the beds hear every move through the first canvas's step listeners.
   allowSound(!!deck.meta.sound && !still);
+  if (preview) ui.hidden = true;
   const beds = musicBeds(deck);
   problems.push(...beds.problems);
   canvases[0]?.stepListeners.push(beds.onStep);
@@ -105,11 +109,13 @@ async function startDeck(svg: Record<string, string>) {
     return stepper.goto(i, "cut");
   };
   const router = new Router(steps, go);
-  stepper.on("step", (a: StepAddr) => router.push(a.index));
+  if (!preview) stepper.on("step", (a: StepAddr) => router.push(a.index)); // the frame's history would be the speaker window's
   const selector = new Selector(ui, deck, steps, () => stepper.index, go);
   const overview = new Overview(ui, deck, canvases, steps, () => stepper.index, go);
+  // B: the deck builder, on the dev server, which saves its cuts into deck.md. It lists the whole deck, not the cut playing.
+  const builder = import.meta.env.KLAPPE_REVIEW ? new Builder(ui, loaded.deck, query.get("cut")) : undefined;
   // The speaker view, history and autoplay move the stage without a key: a panel must not stay open over it.
-  stepper.on("step", () => (overview.close(), selector.close()));
+  stepper.on("step", () => (overview.close(), selector.close(), builder?.close()));
   const speaker = {
     open() {
       const url = new URL(location.href);
@@ -160,13 +166,22 @@ async function startDeck(svg: Record<string, string>) {
   };
   inkPointer(stage, ink, () => inkMode);
   stepper.on("step", ink.clear);
-  const run = bindInput(stepper, { overview, selector, speaker, review, autoplay, timer, clock: talkClock.toggle, ink: inkOn, mute: toggleMute }, stage, steps);
+  const run = bindInput(stepper, { overview, selector, builder, speaker, review, autoplay, timer, clock: talkClock.toggle, ink: inkOn, mute: toggleMute }, stage, steps);
 
-  // The main window is authoritative: it reports every step and runs the speaker's commands.
+  // The main window is authoritative: it reports every step and runs the speaker's commands. The preview only follows
+  // its state, one step on within the talk or within the appendix.
+  if (preview) {
+    channel.on((m) => {
+      const a = m.t === "state" ? steps[m.index] : undefined;
+      const b = a && steps[a.index + 1];
+      if (b && !b.appendix === !a.appendix) go(b.index);
+    });
+    channel.send({ t: "hello" }); // the state may have gone out before this frame loaded
+  }
   const state = (i: number) =>
     channel.send({ t: "state", index: i, timer: !!document.querySelector(`[data-scene="${CSS.escape(steps[i].scene)}"] [data-k-timer]`) });
-  stepper.on("step", (a: StepAddr) => state(a.index));
-  channel.on((m) => {
+  if (!preview) stepper.on("step", (a: StepAddr) => state(a.index));
+  if (!preview) channel.on((m) => {
     if (m.t === "hello" && stepper.index >= 0) state(stepper.index);
     if (m.t === "ink") return applyInk(ink, m);
     if (m.t !== "cmd") return;

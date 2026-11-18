@@ -43,6 +43,25 @@ export class Selector extends OverlayPanel {
         row.append(b);
       }
     }
+    // A deck with cuts: the whole deck and each cut, on top. Picking one reloads the deck in it at its first step.
+    const cuts = Object.keys(this.deck.meta.cuts ?? {});
+    if (cuts.length) {
+      const row = document.createElement("div");
+      body.prepend(row);
+      row.className = "k-selector-langs k-selector-cuts";
+      const active = new URL(location.href).searchParams.get("cut");
+      for (const name of [null, ...cuts]) {
+        const b = button(name ?? t("wholeDeck", this.deck.meta.lang), () => {
+          const url = new URL(location.href);
+          if (name === null) url.searchParams.delete("cut");
+          else url.searchParams.set("cut", name);
+          url.hash = "";
+          location.assign(url);
+        });
+        if (name === active) b.setAttribute("aria-pressed", "true");
+        row.append(b);
+      }
+    }
     body.querySelector('[aria-current="true"]')?.scrollIntoView({ block: "center" });
   }
 }

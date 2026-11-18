@@ -272,6 +272,90 @@ body {
   background: color-mix(in srgb, var(--k-accent) 14%, transparent);
 }
 
+/* B: the deck builder. Saved cuts on top, then the talk's sections in play order with their scenes, then the name. */
+.k-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 1300px;
+  min-height: 0;
+  font-size: 30px;
+}
+
+.k-builder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 8px; /* room for the focus ring */
+  margin: -8px;
+}
+
+.k-builder-section {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 12px 20px;
+  border-left: 8px solid color-mix(in srgb, var(--k-fg) 20%, transparent);
+}
+
+.k-builder-section:has(> label input:checked) {
+  border-left-color: var(--k-accent);
+}
+
+.k-builder-section > label {
+  font-weight: 700;
+}
+
+.k-builder-scenes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  padding-left: 48px;
+  font-size: 26px;
+  color: var(--k-muted);
+}
+
+.k-builder label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.k-builder input[type="checkbox"] {
+  width: 28px;
+  height: 28px;
+  accent-color: var(--k-accent);
+}
+
+.k-builder-section .k-btn {
+  padding: 6px 18px;
+}
+
+.k-builder-save {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.k-builder-save input {
+  font: inherit;
+  color: var(--k-fg);
+  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--k-fg) 30%, transparent);
+  border-radius: 6px;
+  padding: 12px 16px;
+  width: 360px;
+}
+
+.k-builder-status {
+  margin: 0;
+  color: var(--k-muted);
+  font-size: 24px;
+}
+
 .k-overview {
   overflow: auto;
   padding: 8px; /* room for the focus ring */

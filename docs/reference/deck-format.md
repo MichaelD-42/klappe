@@ -77,9 +77,15 @@ A text with no translation shows in the source language. The walk names it as a 
 
 ## Cuts and the appendix
 
-One deck in several lengths: `deck.md` `cuts` names each deck cut and the sections it keeps, and optionally its own `duration` in minutes. Without one, the cut is judged against the deck's `duration`.
+One deck in several versions, a two-day and a three-day training from one set of sections: `deck.md` `cuts` names each deck cut, the sections it keeps in the order it plays them, optionally the scenes it skips (`skip`, as `<section>/<scene>`) and its own `duration` in minutes. Without one, the cut is judged against the deck's `duration`.
 
-- `?cut=<name>` in the URL plays that cut: its sections in deck order, the others left out as if parked. Without `?cut`, the whole deck plays.
+```yaml
+cuts: { two-days: { sections: [intro, basics, lab, wrap-up], skip: [basics/history], duration: 840 }, short: [intro, wrap-up] }
+```
+
+- `?cut=<name>` in the URL plays that cut: its sections in the order it lists them, without its skipped scenes, the others left out as if parked. A section whose every scene is skipped is left out. Without `?cut`, the whole deck plays.
+- `S`, the section list, has a row on top with "Whole deck" and each cut: a click reloads the deck in it, at its first step. It works in a built deck too.
+- `B` on the dev server opens the deck builder: the saved cuts on top (a click loads one; "Whole deck" starts from every section), then every section of the talk with a box to keep it, ↑ and ↓ to move it in the play order, and a box per scene. **Save and play** writes the cut under its name into `deck.md` (an existing cut of that name keeps its `duration`), and the deck reloads in it. A name is letters, digits and dashes. The cuts line is written anew as one line: a comment on it is lost.
 - A cut moves nothing: every scene keeps its place on its canvas, so a `place()` that reads another scene's rect, and a `shared-canvas` group with a section cut out of the middle, lay out as in the whole deck.
 - Entering the next section the cut shows plays that section's own `transition`.
 - An unknown cut name is a deck problem, and the whole deck plays. A section id a cut names that the deck lacks, and a cut that keeps no section of the talk (an empty list, or only appendix sections), are deck problems too.
@@ -382,7 +388,7 @@ If you have your own `tsconfig.json`, add the `paths` entries yourself.
 - Previous: Left arrow, Page Up.
 - Home, End: first and last step of the talk (the [appendix](#cuts-and-the-appendix) is after it).
 - `Q`: to the appendix and back to where the talk was, also from the speaker view.
-- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list. `N`: speaker view. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `C`: blend the talk clock in or out. `Esc`: turn ink off, else close a panel.
+- `O`: overview. One row per section, a 16:9 card per scene. `S`: section list, with a row of the [deck cuts](#cuts-and-the-appendix) on top. `B`: deck builder (dev server only). `N`: speaker view, with a small picture of the next step under its text. `R`: review window (dev server only, see [review mode](#review-mode)). `A`: autoplay. `T`: start or pause the scene's timer. `C`: blend the talk clock in or out. `Esc`: turn ink off, else close a panel.
 - The talk clock is a small box at the bottom right of the audience screen: the time of day, in the deck language's format, and the talk time. With `duration` in `deck.md` (or the cut's) it counts down, `23:10 left`; it turns `--k-warn` in the last 5 minutes (the last fifth of a talk under 25 minutes), and past the end counts up, `+2:15 over`, in `--k-bad`. Without `duration` it shows the time since the start. The talk time starts when the deck first leaves the step it opened on, so opening the deck early costs nothing. `C` in the speaker view, or its Clock button, blends it on the audience screen. It is part of klappe's controls, not of a step: `pdf`, `shot`, `video` and the walk never show it.
 - `M`: mute or unmute the deck's sound, also from the speaker view.
 - `L`: laser dot on the mouse. `D`: draw with the mouse; a stroke holds 2 s, then fades. The same key again turns it off. With ink on, a click on the stage draws instead of stepping; the keys still step, and every step clears the ink. Ink is never part of a step: deep links, `pdf`, `shot` and the walk never show it. The speaker view has the same keys and Laser and Pen buttons: they open a pad in the frame's shape that drives the ink on the stage.

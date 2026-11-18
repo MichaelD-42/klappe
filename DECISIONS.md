@@ -523,6 +523,17 @@ Source: an analysis of the session logs of the training deck build: full test ru
 - **A missing translation shows the source text and is a walk warning, not a deck problem.**
   - Why: a deck being translated is shown half-done many times before it is finished; failing it would block every check until the last line is in. `--strict` makes them fail for a final check.
 
+## 2026-11-18 (deck builder, next-step preview)
+
+- **The deck builder edits deck.md cuts; it is not a second kind of deck configuration.**
+  - Why: a cut already is a deck configuration that every command takes (`--cut` for outline, pdf, video, test). Saving into `deck.md` puts it in git, so a colleague's clone has the two-day and the three-day version too; browser storage would hide it from the CLI and from every other machine. The cost: saving needs the dev server, as review mode does. A built deck can switch between saved cuts in the section list, not make a new one.
+  - Cuts gained a play order (the list's) and `skip` for single scenes, because a training in two lengths reorders and trims inside sections. The order changes how an existing cut listed out of folder order plays; one that listed its sections in folder order plays as before.
+  - A cut still moves no scene: a reordered or trimmed cut keeps the whole deck's rects, so a shared canvas visited out of order flies back across it.
+- **The speaker view's next-step picture is the deck itself in a frame (`?preview=1`), following the main window one step ahead on the speaker channel.**
+  - Why: seek equals play, so a cut to the next step is exactly what the room will see, with no second renderer or screenshots to keep in step. The frame sends nothing on the channel (its state would pass for the main window's), pushes no history, plays no sound, and holds wall-clock motion still. The cost: the speaker window builds the deck a second time.
+- **Every CLI command except `init` checks that klappe's dependencies are installed at the versions klappe's `package.json` asks for.**
+  - Why: `git subtree pull` brings a new or raised dependency, and without `npm install` Vite fails on an import far from the cause. The check names the packages and says to run `npm install`; it reads `^` ranges only, which is all klappe writes.
+
 ## 2026-11-13 (1.1.0: talk clock)
 
 - **The talk clock is klappe UI on one key (`C`), not an `overlay.ts` helper, and shows the time of day and the talk time in one box.**

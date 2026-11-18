@@ -14,7 +14,7 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Section.** A chapter of a deck: a folder `sections/<NN-id>/` with `section.md` (its `# title` and notes) and an optional `section.ts`. Has scenes; part of a deck. Gets its own canvas unless the deck shares one.
 
-**Deck cut.** A shorter talk from the same deck: a name in `deck.md` `cuts`, the section ids it keeps and optionally its own `duration`; `?cut=<name>` plays it, `--cut` on the tools follows it. Not a cut (a move that seeks) and not the `cut` transition.
+**Deck cut.** A version of the talk from the same deck (shorter, or a two-day and a three-day training): a name in `deck.md` `cuts`, the section ids it keeps in play order, optionally the scenes it skips and its own `duration`; the deck builder (`B`) writes them; `?cut=<name>` plays it, `--cut` on the tools follows it. Not a cut (a move that seeks) and not the `cut` transition.
 
 **Appendix.** The sections with `appendix: true` in `section.md`: after the talk, outside next and previous, one key (`Q`) away. Every deck cut keeps them. `StepAddr.appendix` marks their steps.
 

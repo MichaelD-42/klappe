@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { fresh, readEdit, readText, replaceText } from '../../bin/review-plugin.mjs'
+import { fresh, readCut, readEdit, readText, replaceText } from '../../bin/review-plugin.mjs'
 
 const edit = (hash: string, order: string[]) => ({ hash, quote: 'Q', set: { content: 'C' }, order })
 
@@ -67,4 +67,22 @@ test('readText takes a scene.md path inside sections/ only', () => {
   expect(readText(ok)).toEqual(ok)
   for (const source of ['../deck.md', 'sections/10-a/../../x/scene.md', 'sections/a/scene.md', '/etc/scene.md', 'sections/a/b/scene.ts'])
     expect(readText({ ...ok, source }), source).toBeNull()
+})
+
+test('readCut takes a named cut whose ids cannot break the deck.md line', () => {
+  const ok = { name: 'two-days', sections: ['c', 'a'], skip: ['a/a1'] }
+  expect(readCut(ok)).toEqual(ok)
+  for (const bad of [
+    { ...ok, name: '../x' },
+    { ...ok, name: '' },
+    { ...ok, sections: [] },
+    { ...ok, sections: ['a, b'] },
+    { ...ok, sections: ['a]'] },
+    { ...ok, sections: ['x\ncuts: {}'] },
+    { ...ok, skip: ['a'] },
+    { ...ok, skip: ['a/b/c'] },
+    { ...ok, skip: 'a/a1' },
+    null,
+  ])
+    expect(readCut(bad)).toBeNull()
 })

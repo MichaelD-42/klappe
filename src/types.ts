@@ -20,8 +20,9 @@ export interface DeckMeta {
   frame?: { w: number; h: number }; // deck.md frame as the stage size in scene px: 16:9 1920x1080 (default), 4:3, 1:1, 9:16
   duration?: number; // deck.md duration: the planned talk length in minutes
   tempo?: number; // deck.md tempo as a factor on the motion times: slow 1.4, normal 1, fast 0.75
-  // deck.md cuts: a shorter talk by name, the section ids it keeps and its own duration; ?cut=<name> plays one.
-  cuts?: Record<string, { sections: string[]; duration?: number }>;
+  // deck.md cuts: a shorter talk by name, the section ids it keeps in play order, the section/scene ids it skips and its own
+  // duration; ?cut=<name> plays one.
+  cuts?: Record<string, { sections: string[]; skip?: string[]; duration?: number }>;
   handheld?: boolean;
   sound?: boolean; // deck.md sound: true: cue() and section music play; off, a deck with them is silent // deck.md handheld: true: a barely visible wall-clock wander of the stage, as a camera held by hand
 }

@@ -2,7 +2,7 @@ import type { Stepper } from "./stepper";
 import type { StepAddr } from "./types";
 import type { InkMode } from "./ink";
 
-export type Action = "next" | "prev" | "home" | "end" | "appendix" | "overview" | "selector" | "speaker" | "review" | "autoplay" | "timer" | "clock" | "laser" | "pen" | "mute" | "close";
+export type Action = "next" | "prev" | "home" | "end" | "appendix" | "overview" | "selector" | "builder" | "speaker" | "review" | "autoplay" | "timer" | "clock" | "laser" | "pen" | "mute" | "close";
 
 const KEYS: Record<string, Action> = {
   ArrowRight: "next",
@@ -16,6 +16,7 @@ const KEYS: Record<string, Action> = {
   q: "appendix", // Q&A: to the appendix and back
   o: "overview",
   s: "selector",
+  b: "builder", // the deck builder, dev server only
   n: "speaker",
   r: "review",
   a: "autoplay",
@@ -31,6 +32,7 @@ const KEYS: Record<string, Action> = {
 export function keyAction(e: KeyboardEvent): Action | null {
   if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return null;
   const action = KEYS[e.key.length === 1 ? e.key.toLowerCase() : e.key] ?? null;
+  if (e.target instanceof HTMLInputElement && e.target.type === "text") return null; // typing a name, as in the deck builder
   const onButton = e.target instanceof Element && e.target.closest("button, [data-no-advance] *");
   if (action === "next" && (e.key === "Enter" || e.key === " ") && onButton) return null;
   return action;
@@ -47,6 +49,7 @@ export function bindInput(
   ui: {
     overview: Panel;
     selector: Panel;
+    builder?: Panel;
     speaker?: { open(): void };
     review?: { open(): void };
     autoplay?: { stop(): void; toggle(): void };
@@ -63,16 +66,17 @@ export function bindInput(
   stepper.on("step", (a: StepAddr) => {
     if (!a.appendix) back = a.index;
   });
-  const toggle = (p: Panel, other: Panel) => {
-    other.close();
+  const panels = [ui.overview, ui.selector, ...(ui.builder ? [ui.builder] : [])];
+  const toggle = (p: Panel) => {
+    for (const o of panels) if (o !== p) o.close();
     if (p.isOpen) p.close();
     else p.open();
   };
   const run = (a: Action) => {
     const nav = a === "next" || a === "prev" || a === "home" || a === "end" || a === "appendix";
-    if (nav && (ui.overview.isOpen || ui.selector.isOpen)) return; // steps don't move under an open panel
+    if (nav && panels.some((p) => p.isOpen)) return; // steps don't move under an open panel
     if (a !== "autoplay" && a !== "timer" && a !== "clock" && a !== "laser" && a !== "pen" && a !== "mute") ui.autoplay?.stop(); // the timer, clock, ink and mute are not steps: autoplay goes on
-    if (a === "overview" || a === "selector") stepper.cancelAuto(); // no step moves under a panel
+    if (a === "overview" || a === "selector" || a === "builder") stepper.cancelAuto(); // no step moves under a panel
     if (a === "next") stepper.next();
     else if (a === "prev") stepper.prev();
     else if (a === "home") stepper.goto(0, "cut");
@@ -83,8 +87,9 @@ export function bindInput(
         stepper.goto(main, "cut");
       }
     }
-    else if (a === "overview") toggle(ui.overview, ui.selector);
-    else if (a === "selector") toggle(ui.selector, ui.overview);
+    else if (a === "overview") toggle(ui.overview);
+    else if (a === "selector") toggle(ui.selector);
+    else if (a === "builder") ui.builder && toggle(ui.builder);
     else if (a === "speaker") ui.speaker?.open();
     else if (a === "review") ui.review?.open();
     else if (a === "autoplay") ui.autoplay?.toggle();
@@ -93,8 +98,7 @@ export function bindInput(
     else if (a === "laser" || a === "pen") ui.ink?.set(ui.ink.mode === a ? null : a);
     else if (a === "mute") ui.mute?.();
     else if (ui.ink?.mode) ui.ink.set(null); // Esc: ink off first
-    else if (ui.overview.isOpen) ui.overview.close();
-    else ui.selector.close();
+    else for (const p of panels) p.close();
   };
   addEventListener("keydown", (e) => {
     const a = keyAction(e);
