@@ -71,9 +71,6 @@ export async function loadHighlighter(langs: string[]): Promise<void> {
       langs: LANGS.filter((l) => wanted.has(l)).map((l) => GRAMMARS[l]()),
       engine: createJavaScriptRegexEngine(),
     });
-    // A grammar compiles its regexes on its first line; cpp's take over Shiki's 500 ms tokenize limit,
-    // which would cut that line off plain. Pay the compile here, without the limit.
-    for (const lang of hl.getLoadedLanguages()) hl.codeToTokensBase("x", { lang, theme: "klappe", tokenizeTimeLimit: 0 });
   } catch (e) {
     console.error("code: syntax highlighting failed to load; code shows plain", e);
   }
@@ -166,9 +163,12 @@ const trim = (src: string) => src.replace(/\n$/, "");
 const splitLines = (src: string) => trim(src).split("\n");
 
 // The code's lines as tokens: Shiki's for a language loadHighlighter loaded, else one plain token per line.
+// A grammar compiles its patterns lazily, on the first line that reaches them: cpp's take about 500 ms cold, 2 s and more on
+// a slow machine, and Shiki's default 500 ms limit per line then shows the rest of that line plain. 5 s still stops a
+// grammar that runs away.
 export const codeLines = (src: string, lang: string): { content: string; color?: string }[][] =>
   hl && wanted.has(lang) && LANGS.includes(lang)
-    ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe" })
+    ? hl.codeToTokensBase(trim(src), { lang, theme: "klappe", tokenizeTimeLimit: 5000 })
     : splitLines(src).map((content) => [{ content }]);
 
 export function code(ctx: Ctx, opts: CodeOpts): CodeHandle {

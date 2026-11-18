@@ -6,9 +6,7 @@ import { codeLines, LANGS, loadHighlighter } from '../../src/fx/code'
 const SAMPLE: Record<string, string> = { html: '<b>a</b>', xml: '<b>a</b>', markdown: '# a\n`b`', diff: '+ a\n- b\n c', toml: 'a = "b"', dockerfile: 'FROM node', yaml: 'a: "b"' }
 test('every bundled language highlights', async () => {
   await loadHighlighter(LANGS)
-  // Each grammar compiles at load: a cold first line (cpp: ~500 ms) hits Shiki's 500 ms limit and ends plain.
-  const ms = (l: string) => { const t = performance.now(); codeLines(SAMPLE[l] ?? 'if (x) { return "a" } // b', l); return performance.now() - t }
-  expect(LANGS.filter((l) => ms(l) > 100)).toEqual([])
+  // Each language's first line, cold: cpp's compile runs past Shiki's default 500 ms limit on a slow machine and ended plain.
   const colours = (l: string) => new Set(codeLines(SAMPLE[l] ?? 'if (x) { return "a" } // b', l).flat().map((t) => t.color)).size
   expect(LANGS.filter((l) => colours(l) < 2)).toEqual([])
   expect(LANGS).toEqual(expect.arrayContaining(['go', 'rust', 'java', 'kotlin', 'csharp', 'c', 'cpp', 'ruby', 'php', 'swift', 'dockerfile', 'toml', 'xml', 'markdown', 'diff', 'hcl']))
