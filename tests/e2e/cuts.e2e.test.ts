@@ -164,29 +164,84 @@ test('the section list plays a saved cut: the whole deck or a cut, reloaded at i
   await page.close()
 })
 
-// B on the dev server: the deck builder. It loads a cut, changes it and saves it under a name into deck.md, then plays it.
-test('the deck builder saves a cut with its order and skipped scenes into deck.md and plays it', async () => {
+// B on the dev server: the deck builder. A saved cut is picked from a drop-down and loaded, changed and saved under a name
+// into deck.md, then played.
+test('the deck builder loads a saved cut, reorders it and saves it into deck.md, then plays it', async () => {
   const file = `${inject('TEXT_DIR')}/deck.md`
   writeFileSync(file, '---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 } }\n---\n')
   const page = await open('', '#/a/one/1', 0)
   await page.keyboard.press('b')
   const panel = page.locator('.k-builder')
-  await panel.locator('.k-builder-cuts .k-btn', { hasText: 'short' }).click()
   const sections = () => panel.locator('.k-builder-section > label').allTextContents()
-  expect(await sections()).toEqual(['A', 'C', 'B']) // the cut's order, then the rest of the talk; never the appendix
-  expect(await panel.locator('.k-builder-section input[type=checkbox][data-section]:checked').count()).toBe(2)
+  const checked = () => panel.locator('.k-builder-section input[data-section]:checked').count()
+  const all = panel.getByLabel('Select all')
+  expect(await sections()).toEqual(['A', 'B', 'C']) // no cut playing: the whole talk, all selected; never the appendix
+  expect(await all.isChecked()).toBe(true)
+  await panel.getByLabel('Saved cuts').selectOption('short') // picking a cut loads it
+  expect(await sections()).toEqual(['A', 'C', 'B']) // the cut's order, then the rest of the talk
+  expect(await checked()).toBe(2)
+  expect(await panel.getByLabel('Two', { exact: true }).isChecked()).toBe(false) // a left-out section's scenes show off too
+  expect(await panel.getByLabel('Cut name').inputValue()).toBe('short')
+  expect(await all.evaluate((e: HTMLInputElement) => e.indeterminate)).toBe(true)
+  await all.check()
+  expect(await checked()).toBe(3)
+  await all.uncheck()
+  expect(await checked()).toBe(0)
+  await panel.getByRole('button', { name: 'Save and play' }).click()
+  expect(await panel.locator('.k-builder-status').textContent()).toContain('at least one section')
+  await all.check()
   await panel.getByRole('button', { name: 'Move up: C' }).click()
   expect(await sections()).toEqual(['C', 'A', 'B'])
-  await panel.getByLabel('B', { exact: true }).check()
-  await panel.getByLabel('Two', { exact: true }).uncheck()
   const name = panel.getByLabel('Cut name')
   await name.fill('')
   await name.pressSequentially('two-days') // typing in the field never steps or opens a panel
   expect(await page.evaluate(() => window.klappe.stepper.index)).toBe(0)
   await panel.getByRole('button', { name: 'Save and play' }).click()
   await expect.poll(() => readFileSync(file, 'utf8'), { timeout: 10_000 }).toBe(
-    '---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 }, two-days: { sections: [c, a, b], skip: [b/two] } }\n---\n',
+    '---\ntitle: Fixture\nduration: 30\ncuts: { short: { sections: [a, c], duration: 10 }, two-days: { sections: [c, a, b] } }\n---\n',
   )
   await page.waitForFunction(() => new URL(location.href).searchParams.get('cut') === 'two-days', undefined, { timeout: 30_000 })
+  await page.close()
+})
+
+// Play beside the drop-down plays the picked cut as saved: no edit, no write.
+test('the deck builder plays a saved cut picked from the drop-down', async () => {
+  const file = `${inject('TEXT_DIR')}/deck.md`
+  const md = '---\ntitle: Fixture\ncuts: { short: [a] }\n---\n'
+  writeFileSync(file, md)
+  const page = await open('', '#/a/one/1', 0)
+  await page.keyboard.press('b')
+  const panel = page.locator('.k-builder')
+  await panel.getByLabel('Saved cuts').selectOption('day')
+  expect(await panel.locator('.k-builder-section > label').allTextContents()).toEqual(['C', 'A', 'B'])
+  await panel.getByRole('button', { name: 'Play', exact: true }).click()
+  await page.waitForFunction(() => new URL(location.href).searchParams.get('cut') === 'day' && window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
+  expect(await at(page)).toBe('#/c/three/1')
+  expect(readFileSync(file, 'utf8')).toBe(md)
+  await page.close()
+})
+
+// Sections and their scenes check like a tree: the last scene off takes its section off, a scene on puts it back.
+test('the deck builder skips a scene, and its section follows its scenes', async () => {
+  const file = `${inject('TEXT_DIR')}/deck.md`
+  writeFileSync(file, '---\ntitle: Fixture\n---\n')
+  const page = await browser.newPage()
+  await page.goto(`${inject('BASE_URL')}/?fixture=two-scenes#/a/first/1`)
+  await page.waitForFunction(() => window.klappe?.stepper?.index === 0, undefined, { timeout: 30_000 })
+  await page.keyboard.press('b')
+  const panel = page.locator('.k-builder')
+  expect(await panel.getByLabel('Saved cuts').isDisabled()).toBe(true) // the deck has no cuts yet
+  expect(await panel.getByRole('button', { name: 'Play', exact: true }).isDisabled()).toBe(true)
+  const [a, first, second] = ['A', 'First', 'Second'].map((n) => panel.getByLabel(n, { exact: true }))
+  await second.uncheck()
+  expect(await a.isChecked()).toBe(true)
+  expect(await panel.getByLabel('Select all').evaluate((e: HTMLInputElement) => e.indeterminate)).toBe(true)
+  await first.uncheck()
+  expect(await a.isChecked()).toBe(false)
+  await first.check()
+  expect(await a.isChecked()).toBe(true)
+  await panel.getByLabel('Cut name').fill('short')
+  await panel.getByRole('button', { name: 'Save and play' }).click()
+  await expect.poll(() => readFileSync(file, 'utf8'), { timeout: 10_000 }).toBe('---\ntitle: Fixture\ncuts: { short: { sections: [a], skip: [a/second] } }\n---\n')
   await page.close()
 })

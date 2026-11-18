@@ -6,7 +6,7 @@ klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck fo
 
 ### Added
 
-- Deck builder: `B` on the dev server lists the whole talk. Keep or drop each section and scene, move sections in the play order, and **Save and play** writes the cut under a name into `deck.md` `cuts` and plays it. A cut can now `skip` single scenes (`skip: [basics/history]`). The section list (`S`) has a row of the deck's cuts to switch between them, in a built deck too.
+- Deck builder: `B` on the dev server lists the whole talk. Pick a saved cut from a drop-down to play it or to change it, keep or drop each section and scene (with **Select all**), move sections in the play order, and **Save and play** writes the cut under a name into `deck.md` `cuts` and plays it. A cut can now `skip` single scenes (`skip: [basics/history]`). The section list (`S`) has a row of the deck's cuts to switch between them, in a built deck too.
 - The speaker view shows a small picture of the next step under its text, as the room will see it.
 
 ### Changed
