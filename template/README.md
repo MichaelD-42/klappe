@@ -10,6 +10,8 @@ A klappe deck. `deck.md` holds the settings, `sections/` the scenes in folder or
 
 `max-words: 12` in `deck.md` makes `klappe test` fail a step whose text runs longer. Raise it or remove it if this talk needs more.
 
+After cloning the deck repo and after every pull that updates klappe, run `npm install` in the repo root; klappe stops with a hint when it was skipped. Once per machine, `npx playwright install chromium` for the tests, `shot` and the PDF.
+
 From the repo root:
 
 ```

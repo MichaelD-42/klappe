@@ -268,3 +268,45 @@ test('lang writes lang/<code>.md from the source deck, ctx.t strings by scope, a
   expect(cli(cwd, 'outline', '--lang', 'fr').stderr).toContain('--lang needs a language the deck has: en, de');
   expect(cli(cwd, 'lang', 'en').stderr).toContain('en is the source language');
 });
+
+// A deck repo that pulled a klappe update adding or raising a dependency, then forgot `npm install`: the CLI says so
+// instead of failing later on an import Vite cannot resolve.
+function klappeCopy(deps: Record<string, string>, installed: Record<string, string>) {
+  const root = mkdtempSync(join(tmpdir(), 'deckrepo-'));
+  const fake = join(root, 'klappe');
+  mkdirSync(join(fake, 'bin'), { recursive: true });
+  for (const f of ['klappe.mjs', 'sync-claude.mjs']) copyFileSync(join(__dirname, '../../bin', f), join(fake, 'bin', f));
+  writeFileSync(join(fake, 'package.json'), JSON.stringify({ name: 'klappe', version: '9.9.9', dependencies: deps }));
+  for (const [name, version] of Object.entries(installed)) {
+    mkdirSync(join(root, 'node_modules', name), { recursive: true });
+    writeFileSync(join(root, 'node_modules', name, 'package.json'), JSON.stringify({ name, version }));
+  }
+  return { root, run: (...args: string[]) => spawnSync(process.execPath, [join(fake, 'bin/klappe.mjs'), ...args], { cwd: root, encoding: 'utf8' }) };
+}
+
+test('a dependency klappe needs and the deck repo lacks stops the CLI with npm install', () => {
+  const r = klappeCopy({ katex: '^0.19.1', gsap: '^3.15.0' }, { gsap: '3.15.2' }).run('dev', '--deck', 'talk');
+  expect(r.status).toBe(1);
+  expect(r.stderr).toContain('katex');
+  expect(r.stderr).toContain('npm install');
+});
+
+test('an installed dependency older than klappe needs stops the CLI with npm install', () => {
+  for (const [range, old] of [['^3.15.0', '3.12.9'], ['^3.15.0', '2.9.0'], ['^0.2.0', '0.1.3']]) {
+    const r = klappeCopy({ gsap: range }, { gsap: old }).run('outline', '--deck', 'talk');
+    expect(r.status, `${old} for ${range}`).toBe(1);
+    expect(r.stderr).toContain(`gsap ${old}`);
+  }
+});
+
+test('installed dependencies that satisfy klappe let the CLI go on', () => {
+  const r = klappeCopy({ gsap: '^3.15.0', uqr: '^0.1.3' }, { gsap: '3.16.0', uqr: '0.1.4' }).run('dev', '--deck', 'talk');
+  expect(r.stderr).not.toContain('npm install');
+  expect(r.stderr).toContain('Deck not found'); // got past the check
+});
+
+test('init runs before npm install, so it skips the check', () => {
+  const { root, run } = klappeCopy({ katex: '^0.19.1' }, {});
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'd' }));
+  expect(run('init', '--deck', 'talk').stderr).not.toContain('npm install');
+});
