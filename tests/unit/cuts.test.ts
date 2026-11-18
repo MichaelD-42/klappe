@@ -104,6 +104,19 @@ describe("cutDeck", () => {
   });
 });
 
+describe("selections, the new name for cuts", () => {
+  it("reads selections as cuts, and both keys together", () => {
+    const { data } = parseFrontmatter("---\ncuts: { short: [a] }\nselections: { day: { sections: [c, a], skip: [a/a1] } }\n---\n");
+    expect(toDeckMeta({ title: "x", ...data }).meta.cuts).toEqual({ short: { sections: ["a"] }, day: { sections: ["c", "a"], skip: ["a/a1"] } });
+    expect(toDeckMeta({ title: "x", selections: ["a"] }).problems).toContain(
+      "deck.md: selections needs { <name>: [<section id>, …] } or { <name>: { sections: […], skip: [<section>/<scene>, …], duration: <minutes> } }",
+    );
+  });
+  it("reports a name in both keys", () => {
+    expect(toDeckMeta({ title: "x", cuts: { day: ["a"] }, selections: { day: ["b"] } }).problems).toContain("deck.md: 'day' is in both cuts and selections; selections wins");
+  });
+});
+
 describe("cut skip", () => {
   const files = { ...FILES, "sections/10-a/20-a2/scene.md": "## A2\n\n- three\n", "deck.md": "---\ntitle: T\ncuts: { day: { sections: [a, c], skip: [a/a1] } }\n---\n" };
   it("reads skip, the section/scene ids a cut leaves out", () => {
@@ -141,9 +154,13 @@ describe("setCut", () => {
   it("replaces a cut of the same name and keeps its duration", () => {
     expect(cutsOf(setCut(md, "short", { sections: ["b"], skip: [] }))?.short).toEqual({ sections: ["b"], duration: 20 });
   });
-  it("adds a cuts line to a deck.md without one", () => {
+  it("adds a selections line to a deck.md without one", () => {
     const out = setCut("---\ntitle: T\n---\n# x\n", "day", { sections: ["a"], skip: [] });
-    expect(out).toBe("---\ntitle: T\ncuts: { day: { sections: [a] } }\n---\n# x\n");
+    expect(out).toBe("---\ntitle: T\nselections: { day: { sections: [a] } }\n---\n# x\n");
+  });
+  it("writes into selections when the deck has both keys, and leaves the cuts line as it is", () => {
+    const both = "---\ntitle: T\ncuts: { old: [a] }\nselections: { new: [b] }\n---\n";
+    expect(setCut(both, "day", { sections: ["c"], skip: [] })).toBe("---\ntitle: T\ncuts: { old: [a] }\nselections: { new: { sections: [b] }, day: { sections: [c] } }\n---\n");
   });
 });
 

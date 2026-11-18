@@ -19,7 +19,7 @@ const usage =
   'usage: klappe dev [--deck <id>] [--port <n>] [--strictPort]\n' +
   '       klappe build|outline|init [--deck <id>]\n' +
   '       klappe outline --story   one line per scene: its link and story point\n' +
-  '       klappe outline|pdf|video|test --cut <name>   a deck.md cut instead of the whole deck\n' +
+  '       klappe outline|pdf|video|test --selection <name>   a deck.md selection instead of the whole deck (--cut works too)\n' +
   '       klappe outline|pdf|shot|video|test --lang <code>   the deck in a language from its lang/<code>.md\n' +
   '       klappe lang <code> [--deck <id>]   writes or updates lang/<code>.md from the deck, for translating\n' +
   '       klappe pdf [--deck <id>] [--handout] [--width <px>] [--quality <1-100>]\n' +
@@ -180,12 +180,14 @@ if (cmd === 'theme') {
 
 process.env.KLAPPE_DECK_DIR = deckDir
 
-// --cut <name>: a cut from deck.md cuts; outline, pdf, video and test follow it. An unknown name stops before a server starts.
-const cut = rest.includes('--cut') ? rest[rest.lastIndexOf('--cut') + 1] : undefined
+// --selection <name> (or its old name --cut): a selection from deck.md selections or cuts; outline, pdf, video and test
+// follow it. An unknown name stops before a server starts.
+const cutFlag = rest.lastIndexOf('--selection') > rest.lastIndexOf('--cut') ? '--selection' : '--cut'
+const cut = rest.includes(cutFlag) ? rest[rest.lastIndexOf(cutFlag) + 1] : undefined
 if (cut !== undefined) {
   const cuts = (await (await import('./outline.mjs')).outline(klappeDir, deckDir)).deck.meta.cuts ?? {}
   if (!cut || cut.startsWith('-') || !cuts[cut]) {
-    console.error(`--cut needs a cut from deck.md cuts: ${Object.keys(cuts).join(', ') || '(none)'}`)
+    console.error(`${cutFlag} needs a ${cutFlag.slice(2)} from deck.md: ${Object.keys(cuts).join(', ') || '(none)'}`)
     process.exit(1)
   }
 }
@@ -247,7 +249,7 @@ if (cmd === 'test') {
   }
   const bail = rest.includes('--bail')
   const strict = rest.includes('--strict')
-  const own = new Set(['--deck', '--only', '--cut', '--lang'])
+  const own = new Set(['--deck', '--only', '--cut', '--selection', '--lang'])
   const args = rest.filter((a, k) => !own.has(a) && !own.has(rest[k - 1]) && a !== '--bail' && a !== '--strict')
   if (only.length) process.env.KLAPPE_ONLY = only.join(',')
   if (bail) process.env.KLAPPE_BAIL = '1'

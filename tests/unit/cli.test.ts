@@ -108,7 +108,7 @@ test('--cut picks a deck.md cut, and an unknown one stops the command', () => {
   expect(r.stdout).not.toContain('## b:');
   const bad = cli(cwd, 'pdf', '--deck', 'x', '--cut', 'nope');
   expect(bad.status).toBe(1);
-  expect(bad.stderr).toContain('--cut needs a cut from deck.md cuts: short');
+  expect(bad.stderr).toContain('--cut needs a cut from deck.md: short');
 }, 30_000);
 
 // pdf --width and --quality: a value out of range stops before a server starts.
@@ -310,3 +310,25 @@ test('init runs before npm install, so it skips the check', () => {
   writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'd' }));
   expect(run('init', '--deck', 'talk').stderr).not.toContain('npm install');
 });
+
+// --selection is the new name for --cut; both read deck.md selections and cuts.
+test('--selection picks a selection as --cut does, and names the choices for an unknown one', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cli-'));
+  const deck = join(cwd, 'decks', 'talk');
+  mkdirSync(join(deck, 'sections', '10-a', '10-one'), { recursive: true });
+  mkdirSync(join(deck, 'sections', '20-b', '10-two'), { recursive: true });
+  writeFileSync(join(deck, 'deck.md'), '---\ntitle: T\nselections: { short: [b] }\n---\n');
+  writeFileSync(join(deck, 'sections', '10-a', 'section.md'), '# A\n');
+  writeFileSync(join(deck, 'sections', '10-a', '10-one', 'scene.md'), '## One\n\n- one\n');
+  writeFileSync(join(deck, 'sections', '20-b', 'section.md'), '# B\n');
+  writeFileSync(join(deck, 'sections', '20-b', '10-two', 'scene.md'), '## Two\n\n- two\n');
+  for (const flag of ['--selection', '--cut']) {
+    const r = cli(cwd, 'outline', '--deck', 'talk', flag, 'short');
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain('## b: B');
+    expect(r.stdout).not.toContain('## a: A');
+  }
+  const bad = cli(cwd, 'outline', '--deck', 'talk', '--selection', 'nope');
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toContain('--selection needs a selection from deck.md: short');
+}, 30_000);

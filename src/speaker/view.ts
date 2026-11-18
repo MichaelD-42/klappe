@@ -1,5 +1,6 @@
 import "./speaker.css";
 import { keyAction } from "../input";
+import { cutParam } from "../layout";
 import { sceneSeconds } from "../plan";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
@@ -104,7 +105,7 @@ export function mountSpeaker(root: HTMLElement, deck: Deck, steps: StepAddr[], c
   } catch {
     // storage is blocked: rehearsal works for this session only
   }
-  const cut = new URLSearchParams(location.search).get("cut");
+  const cut = cutParam(new URLSearchParams(location.search));
   const rec = rehearsal(`${channelName(deck.meta.title, location.pathname)}:rehearsal${cut === null ? "" : `:cut:${cut}`}`, () => Date.now(), storage);
   const rehearseButton = button(t("rehearse", lang), () => toggleRehearsal());
   const rehearseRow = el("div", "k-sp-buttons");

@@ -7,7 +7,7 @@ import { gsap } from "gsap";
 import { Autoplay } from "./autoplay";
 import { installErrorCapture } from "./errors";
 import { loadDeck } from "./deck/load";
-import { buildStepList, cutDeck, layoutDeck } from "./layout";
+import { buildStepList, cutDeck, cutParam, layoutDeck } from "./layout";
 import { mountStage } from "./render/stage";
 import { loadTransitions } from "./fx/transitions";
 import { componentProblems, loadParts } from "./render/parts";
@@ -43,7 +43,7 @@ problems.push(...ownWords(loaded.deck.strings)); // before any view builds its w
 // Laid out whole, then cut (?cut=) and the appendix moved last: a cut moves no scene on its canvas.
 const whole = layoutDeck(loaded.deck);
 problems.push(...whole.problems);
-const layout = cutDeck(loaded.deck, query.get("cut"), decode(location.hash.replace(/^#\/?/, "").split("/")[0]), whole.canvases);
+const layout = cutDeck(loaded.deck, cutParam(query), decode(location.hash.replace(/^#\/?/, "").split("/")[0]), whole.canvases);
 problems.push(...layout.problems);
 const deck = layout.deck;
 const steps = buildStepList(deck, layout.canvases);
@@ -113,7 +113,7 @@ async function startDeck(svg: Record<string, string>) {
   const selector = new Selector(ui, deck, steps, () => stepper.index, go);
   const overview = new Overview(ui, deck, canvases, steps, () => stepper.index, go);
   // B: the deck builder, on the dev server, which saves its cuts into deck.md. It lists the whole deck, not the cut playing.
-  const builder = import.meta.env.KLAPPE_REVIEW ? new Builder(ui, loaded.deck, query.get("cut")) : undefined;
+  const builder = import.meta.env.KLAPPE_REVIEW ? new Builder(ui, loaded.deck, cutParam(query)) : undefined;
   // The speaker view, history and autoplay move the stage without a key: a panel must not stay open over it.
   stepper.on("step", () => (overview.close(), selector.close(), builder?.close()));
   const speaker = {

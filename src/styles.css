@@ -369,8 +369,46 @@ body {
   width: 320px;
 }
 
+.k-builder-pick {
+  position: relative;
+  display: inline-flex;
+  align-self: stretch; /* as tall as the buttons beside it */
+}
+
 .k-builder-bar select {
+  appearance: none;
+  padding-right: 56px; /* room for the chevron */
+  width: auto; /* as wide as its longest name */
+  min-width: 280px;
+  font-size: 24px;
+  font-weight: 600;
   background: color-mix(in srgb, var(--k-fg) 8%, transparent);
+  cursor: pointer;
+}
+
+.k-builder-bar select:hover:not(:disabled),
+.k-builder-bar select:focus-visible {
+  border-color: var(--k-accent);
+}
+
+.k-builder-bar select:focus-visible {
+  outline: 4px solid var(--k-accent);
+  outline-offset: 3px;
+}
+
+.k-builder-bar select:disabled {
+  color: var(--k-muted);
+  cursor: default;
+}
+
+.k-builder-pick svg {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .k-builder-bar select option {

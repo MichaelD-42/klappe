@@ -1,7 +1,8 @@
+import { cutUrl } from "../layout";
 import { t } from "../strings";
 import type { Deck } from "../types";
 import type { IconNode } from "lucide";
-import { iconButton, OverlayPanel } from "./panel";
+import { iconButton, iconSvg, OverlayPanel } from "./panel";
 
 // Lucide icons (ISC), inline: importing "lucide" would pull every icon in dev.
 const PLAY: IconNode = [["path", { d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" }]]; // play
@@ -10,6 +11,7 @@ const SAVE: IconNode = [
   ["path", { d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" }],
   ["path", { d: "M7 3v4a1 1 0 0 0 1 1h7" }],
 ]; // save
+const CHEVRON: IconNode = [["path", { d: "m6 9 6 6 6-6" }]]; // chevron-down
 const UP: IconNode = [["path", { d: "m5 12 7-7 7 7" }], ["path", { d: "M12 19V5" }]]; // arrow-up
 const DOWN: IconNode = [["path", { d: "M12 5v14" }], ["path", { d: "m19 12-7 7-7-7" }]]; // arrow-down
 
@@ -83,26 +85,25 @@ export class Builder extends OverlayPanel {
     bar.className = "k-builder-bar";
     const names = Object.keys(this.deck.meta.cuts ?? {});
     const pick = document.createElement("select");
-    pick.setAttribute("aria-label", t("savedCuts", lang));
+    pick.setAttribute("aria-label", t("savedSelections", lang));
     pick.dataset.focus = "pick";
     pick.disabled = !names.length;
-    pick.append(new Option(t(names.length ? "pickCut" : "noCuts", lang), "", false, this.loaded === null), ...names.map((n) => new Option(n, n, false, n === this.loaded)));
+    pick.append(new Option(t(names.length ? "pickSelection" : "noSelections", lang), "", false, this.loaded === null), ...names.map((n) => new Option(n, n, false, n === this.loaded)));
     pick.addEventListener("change", () => (this.load(pick.value || null), this.render("pick")));
-    const play = iconButton(PLAY, t("play", lang), () => {
-      const url = new URL(location.href);
-      url.searchParams.set("cut", pick.value);
-      url.hash = "";
-      location.assign(url);
-    });
+    const play = iconButton(PLAY, t("play", lang), () => location.assign(cutUrl(location.href, pick.value)));
     play.disabled = !this.loaded;
     const label = document.createElement("label");
     const input = Object.assign(document.createElement("input"), { type: "text", value: this.name, spellcheck: false });
     input.addEventListener("input", () => (this.name = input.value));
-    label.append(t("cutName", lang), input);
+    label.append(t("selectionName", lang), input);
     const status = document.createElement("p");
     status.className = "k-builder-status";
     status.setAttribute("role", "status");
-    bar.append(pick, play, label, iconButton(SAVE, t("saveAndPlay", lang), () => void this.save(status)));
+    // The select draws no arrow of its own (appearance: none); the chevron sits over it and lets clicks through.
+    const box = document.createElement("span");
+    box.className = "k-builder-pick";
+    box.append(pick, iconSvg(CHEVRON));
+    bar.append(box, play, label, iconButton(SAVE, t("saveAndPlay", lang), () => void this.save(status)));
     // Select all: checked when every section and scene is, mixed when some are.
     const ids = this.order;
     const full = ids.every((id) => this.on.has(id)) && !this.skip.size;
@@ -158,15 +159,12 @@ export class Builder extends OverlayPanel {
   private async save(status: HTMLElement): Promise<void> {
     const sections = this.order.filter((id) => this.on.has(id));
     if (!/^[a-z0-9][a-z0-9-]*$/i.test(this.name) || !sections.length) {
-      status.textContent = t("cutNeeds", this.lang);
+      status.textContent = t("selectionNeeds", this.lang);
       return;
     }
     const skip = [...this.skip].filter((k) => sections.includes(k.split("/")[0]));
     const before = location.href;
-    const url = new URL(before);
-    url.searchParams.set("cut", this.name);
-    url.hash = "";
-    history.replaceState(null, "", url);
+    history.replaceState(null, "", cutUrl(before, this.name));
     const res = await fetch("/__klappe/cut", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: this.name, sections, skip }) }).catch(() => null);
     if (res?.ok) return location.reload();
     history.replaceState(null, "", before);

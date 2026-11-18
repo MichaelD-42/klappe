@@ -1,3 +1,4 @@
+import { cutParam, cutUrl } from "../layout";
 import { t } from "../strings";
 import type { Deck, StepAddr } from "../types";
 import { button, OverlayPanel } from "./panel";
@@ -49,15 +50,9 @@ export class Selector extends OverlayPanel {
       const row = document.createElement("div");
       body.prepend(row);
       row.className = "k-selector-langs k-selector-cuts";
-      const active = new URL(location.href).searchParams.get("cut");
+      const active = cutParam(new URL(location.href).searchParams);
       for (const name of [null, ...cuts]) {
-        const b = button(name ?? t("wholeDeck", this.deck.meta.lang), () => {
-          const url = new URL(location.href);
-          if (name === null) url.searchParams.delete("cut");
-          else url.searchParams.set("cut", name);
-          url.hash = "";
-          location.assign(url);
-        });
+        const b = button(name ?? t("wholeDeck", this.deck.meta.lang), () => location.assign(cutUrl(location.href, name)));
         if (name === active) b.setAttribute("aria-pressed", "true");
         row.append(b);
       }

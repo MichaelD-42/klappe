@@ -8,13 +8,13 @@ The words klappe's code, docs, skill and agents use, each with one meaning. Wher
 
 **Deck repo.** A git repo that holds one or more decks and klappe itself in `klappe/` (`klappe init` sets it up). The klappe repo is a deck repo too, with the demo deck.
 
-**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`, `cuts`. Type `DeckMeta` (`duration` is read by `klappe outline` and the rehearsal; a cut carries its own).
+**deck.md.** The deck's frontmatter: `title`, `lang`, `theme`, `intensity`, `confidential`, `shared-canvas`, `safe-area`, `duration`, `selections` (or `cuts`). Type `DeckMeta` (`duration` is read by `klappe outline` and the rehearsal; a cut carries its own).
 
 **Deck component.** A fence the deck registers itself in `components.ts`: a function from the fence body and info to the scene's step functions, used like a built-in fence. A name a built-in fence has is a deck problem and the built-in wins.
 
 **Section.** A chapter of a deck: a folder `sections/<NN-id>/` with `section.md` (its `# title` and notes) and an optional `section.ts`. Has scenes; part of a deck. Gets its own canvas unless the deck shares one.
 
-**Deck cut.** A version of the talk from the same deck (shorter, or a two-day and a three-day training): a name in `deck.md` `cuts`, the section ids it keeps in play order, optionally the scenes it skips and its own `duration`; the deck builder (`B`) writes them; `?cut=<name>` plays it, `--cut` on the tools follows it. Not a cut (a move that seeks) and not the `cut` transition.
+**Selection (deck cut).** A version of the talk from the same deck (shorter, or a two-day and a three-day training): a name in `deck.md` `selections` (older name `cuts`), the section ids it keeps in play order, optionally the scenes it skips and its own `duration`; the deck builder (`B`) writes them; `?selection=<name>` (or `?cut=`) plays it, `--selection` (or `--cut`) on the tools follows it. In the code it is still `cuts` (`DeckMeta.cuts`, `cutDeck`). Not a cut (a move that seeks) and not the `cut` transition.
 
 **Appendix.** The sections with `appendix: true` in `section.md`: after the talk, outside next and previous, one key (`Q`) away. Every deck cut keeps them. `StepAddr.appendix` marks their steps.
 
