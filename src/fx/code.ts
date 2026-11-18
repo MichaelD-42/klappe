@@ -71,6 +71,9 @@ export async function loadHighlighter(langs: string[]): Promise<void> {
       langs: LANGS.filter((l) => wanted.has(l)).map((l) => GRAMMARS[l]()),
       engine: createJavaScriptRegexEngine(),
     });
+    // A grammar compiles its regexes on its first line; cpp's take over Shiki's 500 ms tokenize limit,
+    // which would cut that line off plain. Pay the compile here, without the limit.
+    for (const lang of hl.getLoadedLanguages()) hl.codeToTokensBase("x", { lang, theme: "klappe", tokenizeTimeLimit: 0 });
   } catch (e) {
     console.error("code: syntax highlighting failed to load; code shows plain", e);
   }

@@ -16,6 +16,7 @@ klappe follows [semantic versioning](https://semver.org). From 1.0.0 the deck fo
 ### Fixed
 
 - A deck repo that pulled a klappe update and did not run `npm install` again got an import error from Vite. Every command except `init` now checks that klappe's dependencies are installed at the versions it needs, and if not, names them and says to run `npm install`. The deck template's README says when to run it.
+- A `cpp` code block no longer shows its first line plain from the first keyword on: the grammar compiles while the deck loads, not on that line, where it ran past Shiki's 500 ms limit on a slower machine.
 
 ## 1.1.0 (2026-11-13)
 
